@@ -1,0 +1,5 @@
+# Exclude obj directory (object files for Makefile build)
+/obj
+
+Exclude the  build directory
+build/*
