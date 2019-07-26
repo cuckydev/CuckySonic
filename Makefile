@@ -23,7 +23,9 @@ LIBS += `pkg-config --libs sdl2 --static`
 
 #Sources to compile
 SOURCES = \
-	Main
+	Main \
+	Error \
+	Render \
 
 #What to compile
 OBJECTS = $(addprefix obj/$(FILENAME)/, $(addsuffix .o, $(SOURCES)))
