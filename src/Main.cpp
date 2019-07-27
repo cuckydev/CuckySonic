@@ -7,7 +7,7 @@
 int main(int argc, char *argv[])
 {
 	//Initialize SDL2
-	LOG("Initializing SDL2\n");
+	LOG(("Initializing SDL2... "));
 	
 	if (SDL_Init(SDL_INIT_EVERYTHING) < 0)
 	{
@@ -15,14 +15,14 @@ int main(int argc, char *argv[])
 		return -1; //Nothing to clean up, we can just return our failure
 	}
 	
-	LOG("Success\n");
+	LOG(("Success\n"));
 	
 	//Initialize game sub-systems
 	bool noError = true;
 	
 	if ((noError = InitializeRender()))
 	{
-		//TODO: Run game
+		//Run game code
 		
 	}
 	
@@ -30,11 +30,11 @@ int main(int argc, char *argv[])
 	QuitRender();
 	
 	//Quit SDL2
-	LOG("Ending SDL2\n");
+	LOG(("Ending SDL2... "));
 	
 	SDL_Quit();
 	
-	LOG("Success\n");
+	LOG(("Success!\n"));
 	
 	//Failed exit
 	if (!noError)
