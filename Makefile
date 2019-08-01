@@ -25,7 +25,9 @@ LIBS += `pkg-config --libs sdl2 --static`
 SOURCES = \
 	Main \
 	Error \
+	Path \
 	Render \
+	Game \
 
 #What to compile
 OBJECTS = $(addprefix obj/$(FILENAME)/, $(addsuffix .o, $(SOURCES)))

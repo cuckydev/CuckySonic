@@ -1,8 +1,10 @@
 #include "SDL.h"
 
-#include "Render.h"
 #include "Error.h"
 #include "Log.h"
+#include "Path.h"
+#include "Render.h"
+#include "Game.h"
 
 int main(int argc, char *argv[])
 {
@@ -20,14 +22,12 @@ int main(int argc, char *argv[])
 	//Initialize game sub-systems
 	bool noError = true;
 	
-	if ((noError = InitializeRender()))
-	{
-		//Run game code
-		
-	}
+	if ((noError = (InitializePath() && InitializeRender())))
+		noError = EnterGameLoop();
 	
 	//End game sub-systems
 	QuitRender();
+	QuitPath();
 	
 	//Quit SDL2
 	LOG(("Ending SDL2... "));

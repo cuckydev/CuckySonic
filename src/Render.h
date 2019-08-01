@@ -1,4 +1,5 @@
 #pragma once
+#include "SDL_render.h"
 #include "SDL_pixels.h"
 #include <stdint.h>
 
@@ -29,6 +30,64 @@
 			return Error("Illegal framebuffer byte size");				\
 			break;														\
 	}
+	
+//Palette line
+struct PALCOLOR
+{
+	uint32_t colour;		//The natively formatted colour
+	uint8_t r, g, b;		//The original RGB colours
+	uint8_t ogr, ogg, ogb;	//For palette effects such as fading
+};
+
+struct PALETTE
+{
+	PALCOLOR colour[0x100];
+};
+
+inline void SetPaletteColour(PALCOLOR *palColour, uint8_t r, uint8_t g, uint8_t b);
+inline void ModifyPaletteColour(PALCOLOR *palColour, uint8_t r, uint8_t g, uint8_t b);
+
+//Texture class
+class TEXTURE
+{
+	private:
+		//Texture data
+		uint8_t *texture;
+		size_t width;
+		size_t height;
+		
+	public:
+		//Status
+		const char *fail;
+		
+	public:
+		TEXTURE(const char *path);
+		~TEXTURE();
+		
+		bool Draw(PALETTE *palette, SDL_Rect *src, int x, int y);
+};
+	
+//Render queue structure
+#define RENDERQUEUE_LENGTH 0x200
+
+struct RENDERQUEUE
+{
+	uint8_t renderType;
+	SDL_Rect dest;
+	union
+	{
+		struct
+		{
+			int srcX, srcY;
+			PALETTE *palette;
+			TEXTURE *texture;
+		} texture;
+		struct
+		{
+			PALCOLOR *colour;
+		} solid;
+	};
+};
 
 //Software framebuffer class
 class SOFTWAREBUFFER
@@ -37,6 +96,10 @@ class SOFTWAREBUFFER
 		//Our framebuffer
 		void *buffer;
 		SDL_PixelFormat *format;
+		
+		//Render queue
+		RENDERQUEUE queue[RENDERQUEUE_LENGTH];
+		RENDERQUEUE *queueEntry;
 		
 		//Dimensions
 		size_t width;
@@ -52,6 +115,8 @@ class SOFTWAREBUFFER
 		SOFTWAREBUFFER(uint32_t bufFormat, size_t bufWidth, size_t bufHeight);
 		~SOFTWAREBUFFER();
 		
+		inline uint32_t RGB(uint8_t r, uint8_t g, uint8_t b);
+		
 		bool RenderToScreen();
 };
 
@@ -62,4 +127,3 @@ extern SOFTWAREBUFFER *gSoftwareBuffer;
 
 bool InitializeRender();
 void QuitRender();
-bool SetPixelColor(unsigned int x, unsigned int y, uint8_t r, uint8_t g, uint8_t b);
