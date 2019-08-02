@@ -9,30 +9,18 @@
 #define SCREEN_SCALE	2
 
 //Set pixel macro
-#define SET_BUFFER_PIXEL(buffer, bytes, pixel, value)					\
-	switch (bytes)														\
-	{																	\
-		case 1:															\
-			((uint8_t*)buffer)[pixel] = value;							\
-			break;														\
-		case 2:															\
-			((uint16_t*)buffer)[pixel] = value;							\
-			break;														\
-		case 3:															\
-			((uint8_t*)buffer)[pixel * 3 + 0] = ((uint8_t*)&value)[0];	\
-			((uint8_t*)buffer)[pixel * 3 + 1] = ((uint8_t*)&value)[1];	\
-			((uint8_t*)buffer)[pixel * 3 + 2] = ((uint8_t*)&value)[2];	\
-			break;														\
-		case 4:															\
-			((uint32_t*)buffer)[pixel] = value;							\
-			break;														\
-		default:														\
-			return Error("Illegal framebuffer byte size");				\
-			break;														\
-	}
+#define SET_BUFFER_PIXEL1(buffer, bytes, pixel, value)	{ ((uint8_t*)buffer)[pixel] = value; }
+
+#define SET_BUFFER_PIXEL2(buffer, bytes, pixel, value)	{ ((uint16_t*)buffer)[pixel] = value; }
+
+#define SET_BUFFER_PIXEL3(buffer, bytes, pixel, value)	{ ((uint8_t*)buffer)[pixel * 3 + 0] = ((uint8_t*)&value)[0];	\
+														((uint8_t*)buffer)[pixel * 3 + 1] = ((uint8_t*)&value)[1];	\
+														((uint8_t*)buffer)[pixel * 3 + 2] = ((uint8_t*)&value)[2]; }
+														
+#define SET_BUFFER_PIXEL4(buffer, bytes, pixel, value)	{ ((uint32_t*)buffer)[pixel] = value; }
 	
 //Palette line
-struct PALCOLOR
+struct PALCOLOUR
 {
 	uint32_t colour;		//The natively formatted colour
 	uint8_t r, g, b;		//The original RGB colours
@@ -41,22 +29,21 @@ struct PALCOLOR
 
 struct PALETTE
 {
-	PALCOLOR colour[0x100];
+	PALCOLOUR colour[0x100];
 };
 
-inline void SetPaletteColour(PALCOLOR *palColour, uint8_t r, uint8_t g, uint8_t b);
-inline void ModifyPaletteColour(PALCOLOR *palColour, uint8_t r, uint8_t g, uint8_t b);
+void SetPaletteColour(PALCOLOUR *palColour, uint8_t r, uint8_t g, uint8_t b);
+void ModifyPaletteColour(PALCOLOUR *palColour, uint8_t r, uint8_t g, uint8_t b);
 
 //Texture class
 class TEXTURE
 {
-	private:
+	public:
 		//Texture data
 		uint8_t *texture;
 		size_t width;
 		size_t height;
 		
-	public:
 		//Status
 		const char *fail;
 		
@@ -64,16 +51,25 @@ class TEXTURE
 		TEXTURE(const char *path);
 		~TEXTURE();
 		
-		bool Draw(PALETTE *palette, SDL_Rect *src, int x, int y);
+		void Draw(PALETTE *palette, SDL_Rect *src, int x, int y);
 };
 	
 //Render queue structure
 #define RENDERQUEUE_LENGTH 0x200
 
+enum RENDERQUEUE_TYPE
+{
+	RENDERQUEUE_TEXTURE,
+	RENDERQUEUE_SOLID,
+};
+
 struct RENDERQUEUE
 {
-	uint8_t renderType;
+	//Shared
+	RENDERQUEUE_TYPE type;
 	SDL_Rect dest;
+	
+	//Our union for different types
 	union
 	{
 		struct
@@ -84,7 +80,7 @@ struct RENDERQUEUE
 		} texture;
 		struct
 		{
-			PALCOLOR *colour;
+			PALCOLOUR *colour;
 		} solid;
 	};
 };
@@ -93,8 +89,7 @@ struct RENDERQUEUE
 class SOFTWAREBUFFER
 {
 	public:
-		//Our framebuffer
-		void *buffer;
+		//Our framebuffer specifications
 		SDL_PixelFormat *format;
 		
 		//Render queue
@@ -102,8 +97,8 @@ class SOFTWAREBUFFER
 		RENDERQUEUE *queueEntry;
 		
 		//Dimensions
-		size_t width;
-		size_t height;
+		int width;
+		int height;
 		
 		//Status
 		const char *fail;
@@ -112,12 +107,12 @@ class SOFTWAREBUFFER
 		SDL_Texture *texture;
 		
 	public:
-		SOFTWAREBUFFER(uint32_t bufFormat, size_t bufWidth, size_t bufHeight);
+		SOFTWAREBUFFER(uint32_t bufFormat, int bufWidth, int bufHeight);
 		~SOFTWAREBUFFER();
 		
 		inline uint32_t RGB(uint8_t r, uint8_t g, uint8_t b);
 		
-		bool RenderToScreen();
+		bool RenderToScreen(PALCOLOUR *backgroundColour);
 };
 
 //Globals
