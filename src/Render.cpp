@@ -26,7 +26,7 @@ TEXTURE::TEXTURE(const char *path)
 	
 	LOG(("Loading texture from %s...\n", filepath));
 	SDL_Surface *bitmap = SDL_LoadBMP(filepath);
-	if (!bitmap)
+	if (bitmap == NULL)
 	{
 		fail = SDL_GetError();
 		return;
@@ -39,11 +39,30 @@ TEXTURE::TEXTURE(const char *path)
 		return;
 	}
 	
+	//Create our palette using the image's palette
+	if ((loadedPalette = new PALETTE) == NULL)
+	{
+		fail = "Failed to allocate palette for texture";
+		return;
+	}
+	
+	for (int i = 0; i < 0x100; i++)
+	{
+		if (bitmap->format->palette->ncolors)
+			SetPaletteColour(&loadedPalette->colour[i], bitmap->format->palette->colors[i].r, bitmap->format->palette->colors[i].g, bitmap->format->palette->colors[i].b);
+		else
+			SetPaletteColour(&loadedPalette->colour[i], 0, 0, 0);
+	}
+	
 	//Allocate texture data
-	texture = (uint8_t*)malloc(bitmap->w * bitmap->h);
+	if ((texture = (uint8_t*)malloc(bitmap->h * bitmap->pitch)) == NULL)
+	{
+		fail = "Failed to allocate texture buffer copy for texture";
+		return;
+	}
 	
 	//Copy our data
-	memcpy(texture, bitmap->pixels, bitmap->w * bitmap->h);
+	memcpy(texture, bitmap->pixels, bitmap->h * bitmap->pitch);
 	width = bitmap->w;
 	height = bitmap->h;
 	
@@ -55,6 +74,7 @@ TEXTURE::~TEXTURE()
 {
 	//Free data
 	free(texture);
+	delete loadedPalette;
 }
 
 void TEXTURE::Draw(PALETTE *palette, SDL_Rect *src, int x, int y)
@@ -106,6 +126,12 @@ void TEXTURE::Draw(PALETTE *palette, SDL_Rect *src, int x, int y)
 	gSoftwareBuffer->queueEntry->dest = {x, y, src->w, src->h};
 	gSoftwareBuffer->queueEntry->texture.srcX = src->x;
 	gSoftwareBuffer->queueEntry->texture.srcY = src->y;
+	
+	gSoftwareBuffer->queueEntry->texture.clipL = x < 0 ? -x : 0;
+	gSoftwareBuffer->queueEntry->texture.clipT = y < 0 ? -y : 0;
+	gSoftwareBuffer->queueEntry->texture.clipR = x + src->w > gSoftwareBuffer->width ? (x + src->w - gSoftwareBuffer->width) : 0;
+	gSoftwareBuffer->queueEntry->texture.clipB = y + src->h > gSoftwareBuffer->height ? (y + src->h - gSoftwareBuffer->height) : 0;
+	
 	gSoftwareBuffer->queueEntry->texture.palette = palette;
 	gSoftwareBuffer->queueEntry->texture.texture = this;
 	
@@ -139,6 +165,12 @@ void ModifyPaletteColour(PALCOLOUR *palColour, uint8_t r, uint8_t g, uint8_t b)
 	palColour->r = r;
 	palColour->g = g;
 	palColour->b = b;
+}
+
+void RegenPaletteColour(PALCOLOUR *palColour)
+{
+	//Set formatted colour
+	palColour->colour = gSoftwareBuffer->RGB(palColour->r, palColour->g, palColour->b);
 }
 
 //Software buffer class
@@ -175,33 +207,31 @@ inline uint32_t SOFTWAREBUFFER::RGB(uint8_t r, uint8_t g, uint8_t b)
 }
 
 #define SBRTSD(macro)	\
-	for (int fx = 0; fx < width; fx++)	\
-		for (int fy = 0; fy < height; fy++)	\
-			macro(writeBuffer, bpp, fx + fy * width, backgroundColour->colour);	\
+	for (int px = 0; px < width * height; px++)	\
+		macro(writeBuffer, bpp, px, backgroundColour->colour);	\
 		\
 	for (RENDERQUEUE *entry = queue; entry != queueEntry; entry++)	\
 	{	\
 		switch (entry->type)	\
 		{	\
 			case RENDERQUEUE_TEXTURE:	\
-				renderRect.x = (entry->dest.x < 0) ? (entry->texture.srcX - entry->dest.x) : entry->texture.srcX;	\
-				renderRect.y = (entry->dest.y < 0) ? (entry->texture.srcY - entry->dest.y) : entry->texture.srcY;	\
-				renderRect.w = ((entry->dest.x + entry->dest.w) >= width) ? entry->dest.w - ((entry->dest.x + entry->dest.w) - width) : entry->dest.w;	\
-				renderRect.h = ((entry->dest.y + entry->dest.h) >= height) ? entry->dest.h - ((entry->dest.y + entry->dest.h) - height) : entry->dest.h;	\
+				fpx = (entry->texture.srcX + entry->texture.clipL) + (entry->texture.srcY + entry->texture.clipT) * entry->texture.texture->width;	\
+				dpx = (entry->dest.x + entry->texture.clipL) + (entry->dest.y + entry->texture.clipT) * width;	\
 					\
-				for (int fx = renderRect.x; fx < (renderRect.x + renderRect.w); fx++)	\
+				for (int fy = entry->texture.srcY + entry->texture.clipT; fy < (entry->texture.srcY + entry->dest.h - entry->texture.clipB); fy++)	\
 				{	\
-					for (int fy = renderRect.y; fy < (renderRect.y + renderRect.h); fy++)	\
+					for (int fx = entry->texture.srcX + entry->texture.clipL; fx < (entry->texture.srcX + entry->dest.w - entry->texture.clipR); fx++)	\
 					{	\
-						int dx = entry->dest.x + (fx - entry->texture.srcX);	\
-						int dy = entry->dest.y + (fy - entry->texture.srcY);	\
+						const uint8_t index = entry->texture.texture->texture[fpx];	\
+						fpx++;	\
 							\
-						const uint8_t index = entry->texture.texture->texture[fx + fy * entry->texture.texture->width];	\
-						if (!index)	\
-							continue;	\
-							\
-						macro(writeBuffer, bpp, dx + dy * width, entry->texture.palette->colour[index].colour);	\
+						if (index)	\
+							macro(writeBuffer, bpp, dpx, entry->texture.palette->colour[index].colour);	\
+						dpx++;	\
 					}	\
+						\
+					fpx += entry->texture.clipR + entry->texture.srcX + entry->texture.clipL;	\
+					dpx += width - entry->dest.w + entry->texture.clipR + entry->texture.clipL;	\
 				}	\
 				break;	\
 			default:	\
@@ -219,7 +249,7 @@ bool SOFTWAREBUFFER::RenderToScreen(PALCOLOUR *backgroundColour)
 	
 	//Render to our buffer
 	const uint8_t bpp = format->BytesPerPixel;
-	SDL_Rect renderRect;
+	int fpx, dpx;
 	
 	switch (bpp)
 	{
@@ -278,7 +308,7 @@ bool SOFTWAREBUFFER::RenderToScreen(PALCOLOUR *backgroundColour)
 		}
 	}
 	
-	return false;
+	return true;
 }
 
 //Sub-system

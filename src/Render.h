@@ -34,6 +34,7 @@ struct PALETTE
 
 void SetPaletteColour(PALCOLOUR *palColour, uint8_t r, uint8_t g, uint8_t b);
 void ModifyPaletteColour(PALCOLOUR *palColour, uint8_t r, uint8_t g, uint8_t b);
+void RegenPaletteColour(PALCOLOUR *palColour);
 
 //Texture class
 class TEXTURE
@@ -41,8 +42,11 @@ class TEXTURE
 	public:
 		//Texture data
 		uint8_t *texture;
-		size_t width;
-		size_t height;
+		int width;
+		int height;
+		
+		//Loaded palette
+		PALETTE *loadedPalette;
 		
 		//Status
 		const char *fail;
@@ -55,7 +59,7 @@ class TEXTURE
 };
 	
 //Render queue structure
-#define RENDERQUEUE_LENGTH 0x200
+#define RENDERQUEUE_LENGTH 0x1000
 
 enum RENDERQUEUE_TYPE
 {
@@ -75,6 +79,7 @@ struct RENDERQUEUE
 		struct
 		{
 			int srcX, srcY;
+			int clipL, clipT, clipR, clipB;
 			PALETTE *palette;
 			TEXTURE *texture;
 		} texture;

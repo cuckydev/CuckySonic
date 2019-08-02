@@ -27,7 +27,10 @@ SOURCES = \
 	Error \
 	Path \
 	Render \
+	Event \
+	Fade \
 	Game \
+	GM_Splash \
 
 #What to compile
 OBJECTS = $(addprefix obj/$(FILENAME)/, $(addsuffix .o, $(SOURCES)))
