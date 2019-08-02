@@ -6,9 +6,7 @@
 #include "Render.h"
 #include "Fade.h"
 
-#include "SDL_mouse.h"
-
-#define SPLASH_TIME 1500
+#define SPLASH_TIME 150
 
 bool GM_Splash(bool *noError)
 {
@@ -22,9 +20,6 @@ bool GM_Splash(bool *noError)
 	
 	//Make our palette white
 	FillPaletteWhite(splashTexture->loadedPalette);
-	
-	//TEST: FUNNY SONIC CURSOR!!!
-	TEXTURE *sonicTexture = new TEXTURE("data/Sonic.bmp");
 	
 	//Our loop
 	bool noExit = true;
@@ -46,12 +41,6 @@ bool GM_Splash(bool *noError)
 		SDL_Rect src = {0, 0, splashTexture->width, splashTexture->height};
 		splashTexture->Draw(splashTexture->loadedPalette, &src, (SCREEN_WIDTH - splashTexture->width) / 2, (SCREEN_HEIGHT - splashTexture->height) / 2);
 		
-		//Render sonic the hedgehog
-		int x, y;
-		SDL_GetMouseState(&x, &y);
-		SDL_Rect sonSrc = {0, 0, 32, 40};
-		sonicTexture->Draw(sonicTexture->loadedPalette, &sonSrc, x / 2 - 16, y / 2 - 20);
-		
 		//Render our software buffer to the screen (using the first colour of our splash texture, should be white)
 		if (!(*noError = gSoftwareBuffer->RenderToScreen(&splashTexture->loadedPalette->colour[0])))
 			return false;
@@ -62,7 +51,6 @@ bool GM_Splash(bool *noError)
 	
 	//Unload our splash screen texture
 	delete splashTexture;
-	delete sonicTexture;
 	
 	//Go to title
 	gGameMode = GAMEMODE_TITLE;

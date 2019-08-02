@@ -79,7 +79,6 @@ struct RENDERQUEUE
 		struct
 		{
 			int srcX, srcY;
-			int clipL, clipT, clipR, clipB;
 			PALETTE *palette;
 			TEXTURE *texture;
 		} texture;
@@ -116,6 +115,8 @@ class SOFTWAREBUFFER
 		~SOFTWAREBUFFER();
 		
 		inline uint32_t RGB(uint8_t r, uint8_t g, uint8_t b);
+		
+		void DrawQuad(SDL_Rect *quad, PALCOLOUR *colour);
 		
 		bool RenderToScreen(PALCOLOUR *backgroundColour);
 };

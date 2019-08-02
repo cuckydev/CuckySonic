@@ -79,42 +79,6 @@ TEXTURE::~TEXTURE()
 
 void TEXTURE::Draw(PALETTE *palette, SDL_Rect *src, int x, int y)
 {
-	/*
-	//Get soft buffer properties
-	const void* buffer = gSoftwareBuffer->buffer;
-	const uint8_t bpp = gSoftwareBuffer->format->BytesPerPixel;
-	const int width = gSoftwareBuffer->width;
-	const int height = gSoftwareBuffer->height;
-	
-	//Clip our rect
-	SDL_Rect renderRect;
-	renderRect.x = (x < 0) ? (src->x - x) : src->x;
-	renderRect.y = (y < 0) ? (src->y - y) : src->y;
-	renderRect.w = ((x + src->w) >= width) ? src->w - ((x + src->w) - width) : src->w;
-	renderRect.h = ((y + src->h) >= height) ? src->h - ((y + src->h) - height) : src->h;
-	
-	const int right = renderRect.x + renderRect.w;
-	const int bottom = renderRect.y + renderRect.h;
-	
-	//Render to the software buffer (TODO: do some optimization)
-	for (int fx = renderRect.x; fx < right; fx++)
-	{
-		for (int fy = renderRect.y; fy < bottom; fy++)
-		{
-			int dx = x + (fx - src->x);
-			int dy = y + (fy - src->y);
-			
-			const uint8_t index = texture[fx + fy * width];
-			if (!index)
-				continue;
-			
-			SET_BUFFER_PIXEL(buffer, bpp, dx + dy * width, palette->colour[index].colour);
-		}
-	}
-	
-	return true;
-	*/
-	
 	//Check if this is in view bounds (if not, just return, no point in clogging the queue with stuff that will not be rendered)
 	if (x <= -src->w || x >= gSoftwareBuffer->width)
 		return;
@@ -127,11 +91,28 @@ void TEXTURE::Draw(PALETTE *palette, SDL_Rect *src, int x, int y)
 	gSoftwareBuffer->queueEntry->texture.srcX = src->x;
 	gSoftwareBuffer->queueEntry->texture.srcY = src->y;
 	
-	gSoftwareBuffer->queueEntry->texture.clipL = x < 0 ? -x : 0;
-	gSoftwareBuffer->queueEntry->texture.clipT = y < 0 ? -y : 0;
-	gSoftwareBuffer->queueEntry->texture.clipR = x + src->w > gSoftwareBuffer->width ? (x + src->w - gSoftwareBuffer->width) : 0;
-	gSoftwareBuffer->queueEntry->texture.clipB = y + src->h > gSoftwareBuffer->height ? (y + src->h - gSoftwareBuffer->height) : 0;
+	//Clip top & left
+	if (x < 0)
+	{
+		gSoftwareBuffer->queueEntry->dest.x -= x;
+		gSoftwareBuffer->queueEntry->dest.w += x;
+		gSoftwareBuffer->queueEntry->texture.srcX -= x;
+	}
 	
+	if (y < 0)
+	{
+		gSoftwareBuffer->queueEntry->dest.y -= y;
+		gSoftwareBuffer->queueEntry->dest.h += y;
+		gSoftwareBuffer->queueEntry->texture.srcY -= y;
+	}
+	
+	//Clip right and bottom
+	if (gSoftwareBuffer->queueEntry->dest.x > (gSoftwareBuffer->width - gSoftwareBuffer->queueEntry->dest.w))
+		gSoftwareBuffer->queueEntry->dest.w -= gSoftwareBuffer->queueEntry->dest.x - (gSoftwareBuffer->width - gSoftwareBuffer->queueEntry->dest.w);
+	if (gSoftwareBuffer->queueEntry->dest.y > (gSoftwareBuffer->height - gSoftwareBuffer->queueEntry->dest.h))
+		gSoftwareBuffer->queueEntry->dest.h -= gSoftwareBuffer->queueEntry->dest.y - (gSoftwareBuffer->height - gSoftwareBuffer->queueEntry->dest.h);
+	
+	//Set palette and texture references
 	gSoftwareBuffer->queueEntry->texture.palette = palette;
 	gSoftwareBuffer->queueEntry->texture.texture = this;
 	
@@ -201,11 +182,52 @@ SOFTWAREBUFFER::~SOFTWAREBUFFER()
 	SDL_FreeFormat(format);
 }
 
+//Colour format function
 inline uint32_t SOFTWAREBUFFER::RGB(uint8_t r, uint8_t g, uint8_t b)
 {
 	return SDL_MapRGB(format, r, g, b);
 }
 
+//Drawing functions (no-class)
+void SOFTWAREBUFFER::DrawQuad(SDL_Rect *quad, PALCOLOUR *colour)
+{
+	//Check if this is in view bounds (if not, just return, no point in clogging the queue with stuff that will not be rendered)
+	if (quad->x <= -quad->w || quad->x >= gSoftwareBuffer->width)
+		return;
+	if (quad->y <= -quad->h || quad->y >= gSoftwareBuffer->height)
+		return;
+	
+	//Set the member of the render queue
+	gSoftwareBuffer->queueEntry->type = RENDERQUEUE_SOLID;
+	gSoftwareBuffer->queueEntry->dest = *quad;
+	
+	//Clip top & left
+	if (quad->x < 0)
+	{
+		gSoftwareBuffer->queueEntry->dest.x -= quad->x;
+		gSoftwareBuffer->queueEntry->dest.w += quad->x;
+	}
+	
+	if (quad->y < 0)
+	{
+		gSoftwareBuffer->queueEntry->dest.y -= quad->y;
+		gSoftwareBuffer->queueEntry->dest.h += quad->y;
+	}
+	
+	//Clip right and bottom
+	if (gSoftwareBuffer->queueEntry->dest.x > (gSoftwareBuffer->width - gSoftwareBuffer->queueEntry->dest.w))
+		gSoftwareBuffer->queueEntry->dest.w -= gSoftwareBuffer->queueEntry->dest.x - (gSoftwareBuffer->width - gSoftwareBuffer->queueEntry->dest.w);
+	if (gSoftwareBuffer->queueEntry->dest.y > (gSoftwareBuffer->height - gSoftwareBuffer->queueEntry->dest.h))
+		gSoftwareBuffer->queueEntry->dest.h -= gSoftwareBuffer->queueEntry->dest.y - (gSoftwareBuffer->height - gSoftwareBuffer->queueEntry->dest.h);
+	
+	//Set colour reference
+	gSoftwareBuffer->queueEntry->solid.colour = colour;
+	
+	//Push forward in queue
+	gSoftwareBuffer->queueEntry++;
+}
+
+//Render the software buffer to the screen
 #define SBRTSD(macro)	\
 	for (int px = 0; px < width * height; px++)	\
 		macro(writeBuffer, bpp, px, backgroundColour->colour);	\
@@ -215,12 +237,12 @@ inline uint32_t SOFTWAREBUFFER::RGB(uint8_t r, uint8_t g, uint8_t b)
 		switch (entry->type)	\
 		{	\
 			case RENDERQUEUE_TEXTURE:	\
-				fpx = (entry->texture.srcX + entry->texture.clipL) + (entry->texture.srcY + entry->texture.clipT) * entry->texture.texture->width;	\
-				dpx = (entry->dest.x + entry->texture.clipL) + (entry->dest.y + entry->texture.clipT) * width;	\
+				fpx = entry->texture.srcX + entry->texture.srcY * entry->texture.texture->width;	\
+				dpx = entry->dest.x + entry->dest.y * width;	\
 					\
-				for (int fy = entry->texture.srcY + entry->texture.clipT; fy < (entry->texture.srcY + entry->dest.h - entry->texture.clipB); fy++)	\
+				for (int fy = entry->texture.srcY; fy < entry->texture.srcY + entry->dest.h; fy++)	\
 				{	\
-					for (int fx = entry->texture.srcX + entry->texture.clipL; fx < (entry->texture.srcX + entry->dest.w - entry->texture.clipR); fx++)	\
+					for (int fx = entry->texture.srcX; fx < entry->texture.srcX + entry->dest.w; fx++)	\
 					{	\
 						const uint8_t index = entry->texture.texture->texture[fpx];	\
 						fpx++;	\
@@ -230,8 +252,22 @@ inline uint32_t SOFTWAREBUFFER::RGB(uint8_t r, uint8_t g, uint8_t b)
 						dpx++;	\
 					}	\
 						\
-					fpx += entry->texture.texture->width - (entry->texture.srcX + entry->dest.w) + entry->texture.srcX + entry->texture.clipL + entry->texture.clipR;	\
-					dpx += width - entry->dest.w + entry->texture.clipR + entry->texture.clipL;	\
+					fpx += entry->texture.texture->width - (entry->texture.srcX + entry->dest.w) + entry->texture.srcX;	\
+					dpx += width - entry->dest.w;	\
+				}	\
+				break;	\
+			case RENDERQUEUE_SOLID:	\
+				dpx = entry->dest.x + entry->dest.y * width;	\
+					\
+				for (int fy = entry->dest.y; fy < entry->dest.y + entry->dest.h; fy++)	\
+				{	\
+					for (int fx = entry->dest.x; fx < entry->dest.x + entry->dest.w; fx++)	\
+					{	\
+						macro(writeBuffer, bpp, dpx, entry->solid.colour->colour);	\
+						dpx++;	\
+					}	\
+						\
+					dpx += width - entry->dest.w;	\
 				}	\
 				break;	\
 			default:	\
