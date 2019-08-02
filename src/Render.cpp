@@ -230,7 +230,7 @@ inline uint32_t SOFTWAREBUFFER::RGB(uint8_t r, uint8_t g, uint8_t b)
 						dpx++;	\
 					}	\
 						\
-					fpx += entry->texture.clipR + entry->texture.srcX + entry->texture.clipL;	\
+					fpx += entry->texture.texture->width - (entry->texture.srcX + entry->dest.w) + entry->texture.srcX + entry->texture.clipL + entry->texture.clipR;	\
 					dpx += width - entry->dest.w + entry->texture.clipR + entry->texture.clipL;	\
 				}	\
 				break;	\
