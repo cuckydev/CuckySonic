@@ -34,7 +34,7 @@ bool GM_Splash(bool *noError)
 			break;
 		
 		//Fade in/out
-		if (frame < FADE_TIME)
+		if (frame < (FADE_TIME * 2) && (frame & 0x1))
 			PaletteFadeInFromWhite(splashTexture->loadedPalette);
 		if (frame >= SPLASH_TIME - FADE_TIME)
 			noExit = !PaletteFadeOutToBlack(splashTexture->loadedPalette);

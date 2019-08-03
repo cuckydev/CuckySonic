@@ -55,10 +55,10 @@ TEXTURE::TEXTURE(const char *path)
 	}
 	
 	//Allocate texture data
-	texture = (uint8_t*)malloc(bitmap->h * bitmap->pitch);
-	textureXFlip = (uint8_t*)malloc(bitmap->h * bitmap->pitch);
-	textureYFlip = (uint8_t*)malloc(bitmap->h * bitmap->pitch);
-	textureXYFlip = (uint8_t*)malloc(bitmap->h * bitmap->pitch);
+	texture = (uint8_t*)malloc(bitmap->w * bitmap->h);
+	textureXFlip = (uint8_t*)malloc(bitmap->w * bitmap->h);
+	textureYFlip = (uint8_t*)malloc(bitmap->w * bitmap->h);
+	textureXYFlip = (uint8_t*)malloc(bitmap->w * bitmap->h);
 	
 	if (!(texture && textureXFlip && textureYFlip && textureXYFlip))
 	{
@@ -72,9 +72,9 @@ TEXTURE::TEXTURE(const char *path)
 		for (int y = 0; y < bitmap->h; y++)
 		{
 			texture[x + y * bitmap->w] = ((uint8_t*)bitmap->pixels)[x + y * bitmap->w];
-			textureXFlip[x + y * bitmap->w] = ((uint8_t*)bitmap->pixels)[(bitmap->w - x - 1) + y * bitmap->w];//((uint8_t*)bitmap->pixels)[(bitmap->h * bitmap->pitch - 1) - pixel];
-			textureYFlip[x + y * bitmap->w] = ((uint8_t*)bitmap->pixels)[x + (bitmap->h - y - 1) * bitmap->w];//((uint8_t*)bitmap->pixels)[(bitmap->h * bitmap->pitch - 1) - pixel];
-			textureXYFlip[x + y * bitmap->w] = ((uint8_t*)bitmap->pixels)[(bitmap->w - x - 1) + (bitmap->h - y - 1) * bitmap->w];//((uint8_t*)bitmap->pixels)[(bitmap->h * bitmap->pitch - 1) - pixel];
+			textureXFlip[x + y * bitmap->w] = ((uint8_t*)bitmap->pixels)[(bitmap->w - x - 1) + y * bitmap->w];
+			textureYFlip[x + y * bitmap->w] = ((uint8_t*)bitmap->pixels)[x + (bitmap->h - y - 1) * bitmap->w];
+			textureXYFlip[x + y * bitmap->w] = ((uint8_t*)bitmap->pixels)[(bitmap->w - x - 1) + (bitmap->h - y - 1) * bitmap->w];
 		}
 	}
 	
@@ -85,6 +85,39 @@ TEXTURE::TEXTURE(const char *path)
 	SDL_FreeSurface(bitmap);
 }
 
+TEXTURE::TEXTURE(uint8_t *data, int dWidth, int dHeight)
+{
+	fail = NULL;
+	loadedPalette = NULL;
+	
+	//Allocate texture data
+	texture = (uint8_t*)malloc(dWidth * dHeight);
+	textureXFlip = (uint8_t*)malloc(dWidth * dHeight);
+	textureYFlip = (uint8_t*)malloc(dWidth * dHeight);
+	textureXYFlip = (uint8_t*)malloc(dWidth * dHeight);
+	
+	if (!(texture && textureXFlip && textureYFlip && textureXYFlip))
+	{
+		fail = "Failed to allocate texture buffer";
+		return;
+	}
+	
+	//Copy our data
+	for (int x = 0; x < dWidth; x++)
+	{
+		for (int y = 0; y < dHeight; y++)
+		{
+			texture[x + y * dWidth] = data[x + y * dWidth];
+			textureXFlip[x + y * dWidth] = data[(dWidth - x - 1) + y * dWidth];
+			textureYFlip[x + y * dWidth] = data[x + (dHeight - y - 1) * dWidth];
+			textureXYFlip[x + y * dWidth] = data[(dWidth - x - 1) + (dHeight - y - 1) * dWidth];
+		}
+	}
+	
+	width = dWidth;
+	height = dHeight;
+}
+
 TEXTURE::~TEXTURE()
 {
 	//Free data
@@ -92,7 +125,9 @@ TEXTURE::~TEXTURE()
 	free(textureXFlip);
 	free(textureYFlip);
 	free(textureXYFlip);
-	delete loadedPalette;
+	
+	if (loadedPalette != NULL)
+		delete loadedPalette;
 }
 
 void TEXTURE::Draw(PALETTE *palette, SDL_Rect *src, int x, int y, bool xFlip, bool yFlip)

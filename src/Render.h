@@ -56,6 +56,7 @@ class TEXTURE
 		
 	public:
 		TEXTURE(const char *path);
+		TEXTURE(uint8_t *data, int dWidth, int dHeight);
 		~TEXTURE();
 		
 		void Draw(PALETTE *palette, SDL_Rect *src, int x, int y, bool xFlip, bool yFlip);
