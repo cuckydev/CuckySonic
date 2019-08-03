@@ -6,7 +6,9 @@
 #include "Render.h"
 #include "Fade.h"
 
-#define SPLASH_TIME 150
+#include "Mappings.h"
+
+#define SPLASH_TIME 32000
 
 bool GM_Splash(bool *noError)
 {
@@ -17,6 +19,10 @@ bool GM_Splash(bool *noError)
 		*noError = Error(splashTexture->fail);
 		return false;
 	}
+	
+	//TEST: Mappings
+	TEXTURE *sonicTexture = new TEXTURE("data/Sonic.bmp");
+	MAPPINGS *sonicMappings = new MAPPINGS("data/Sonic.map");
 	
 	//Make our palette white
 	FillPaletteWhite(splashTexture->loadedPalette);
@@ -41,6 +47,10 @@ bool GM_Splash(bool *noError)
 		SDL_Rect src = {0, 0, splashTexture->width, splashTexture->height};
 		splashTexture->Draw(splashTexture->loadedPalette, &src, (SCREEN_WIDTH - splashTexture->width) / 2, (SCREEN_HEIGHT - splashTexture->height) / 2);
 		
+		//Draw Sonic
+		int sonFrame = (frame >> 3) % sonicMappings->size;
+		sonicTexture->Draw(sonicTexture->loadedPalette, &sonicMappings->rect[sonFrame], 160 - sonicMappings->origin[sonFrame].x, 112 - sonicMappings->origin[sonFrame].y);
+		
 		//Render our software buffer to the screen (using the first colour of our splash texture, should be white)
 		if (!(*noError = gSoftwareBuffer->RenderToScreen(&splashTexture->loadedPalette->colour[0])))
 			return false;
@@ -51,6 +61,9 @@ bool GM_Splash(bool *noError)
 	
 	//Unload our splash screen texture
 	delete splashTexture;
+	
+	delete sonicTexture;
+	delete sonicMappings;
 	
 	//Go to title
 	gGameMode = GAMEMODE_TITLE;

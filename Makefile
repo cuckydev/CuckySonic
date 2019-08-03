@@ -29,6 +29,7 @@ SOURCES = \
 	Render \
 	Event \
 	Fade \
+	Mappings \
 	Game \
 	GM_Splash \
 
