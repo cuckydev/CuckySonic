@@ -32,6 +32,8 @@ SOURCES = \
 	Mappings \
 	Game \
 	GM_Splash \
+	GM_Title \
+	GM_Game \
 
 #What to compile
 OBJECTS = $(addprefix obj/$(FILENAME)/, $(addsuffix .o, $(SOURCES)))

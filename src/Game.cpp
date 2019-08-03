@@ -1,4 +1,5 @@
 #include "Game.h"
+#include "Log.h"
 #include "Error.h"
 #include "GM.h"
 
@@ -17,10 +18,18 @@ bool EnterGameLoop()
 	
 	while (noExit)
 	{
+		LOG(("%d\n", (int)gGameMode));
 		switch (gGameMode)
 		{
 			case GAMEMODE_SPLASH:
 				noExit = GM_Splash(&noError);
+				break;
+			case GAMEMODE_TITLE:
+				noExit = GM_Title(&noError);
+				break;
+			case GAMEMODE_DEMO:
+			case GAMEMODE_GAME:
+				noExit = GM_Game(&noError);
 				break;
 			default:
 				noExit = false;

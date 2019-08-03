@@ -6,8 +6,6 @@
 #include "Render.h"
 #include "Fade.h"
 
-#include "Mappings.h"
-
 #define SPLASH_TIME 150
 
 bool GM_Splash(bool *noError)
@@ -37,7 +35,7 @@ bool GM_Splash(bool *noError)
 		if (frame < (FADE_TIME * 2) && (frame & 0x1))
 			PaletteFadeInFromWhite(splashTexture->loadedPalette);
 		if (frame >= SPLASH_TIME - FADE_TIME)
-			noExit = !PaletteFadeOutToBlack(splashTexture->loadedPalette);
+			PaletteFadeOutToBlack(splashTexture->loadedPalette);
 		
 		//Render our splash texture
 		SDL_Rect src = {0, 0, splashTexture->width, splashTexture->height};
@@ -47,8 +45,9 @@ bool GM_Splash(bool *noError)
 		if (!(*noError = gSoftwareBuffer->RenderToScreen(&splashTexture->loadedPalette->colour[0])))
 			return false;
 		
-		//Increment frame counter
-		frame++;
+		//Increment frame counter (and end once we reach splash time)
+		if (frame++ >= SPLASH_TIME)
+			break;
 	}
 	
 	//Unload our splash screen texture
