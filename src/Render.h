@@ -42,6 +42,9 @@ class TEXTURE
 	public:
 		//Texture data
 		uint8_t *texture;
+		uint8_t *textureXFlip;
+		uint8_t *textureYFlip;
+		uint8_t *textureXYFlip;
 		int width;
 		int height;
 		
@@ -55,7 +58,7 @@ class TEXTURE
 		TEXTURE(const char *path);
 		~TEXTURE();
 		
-		void Draw(PALETTE *palette, SDL_Rect *src, int x, int y);
+		void Draw(PALETTE *palette, SDL_Rect *src, int x, int y, bool xFlip, bool yFlip);
 };
 	
 //Render queue structure
@@ -81,6 +84,7 @@ struct RENDERQUEUE
 			int srcX, srcY;
 			PALETTE *palette;
 			TEXTURE *texture;
+			uint8_t *srcBuffer;
 		} texture;
 		struct
 		{
