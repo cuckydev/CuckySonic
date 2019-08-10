@@ -280,6 +280,9 @@ class PLAYER
 		
 		bool Spindash();
 		
+		void JumpAbilities();
+		void JumpHeight();
+		void ChgJumpDir();
 		bool Jump();
 		
 		void MoveLeft();

@@ -296,7 +296,104 @@ bool PLAYER::Spindash()
 	return false;
 }
 
-//Jumping function
+//Jump ability functions
+void PLAYER::JumpAbilities()
+{
+	if (jumpAbility == 0 && (controlPress.a || controlPress.b || controlPress.c))
+	{
+		//Perform our ability
+		//status.rollJumping = false; //Also commented out because this would be awkward without any abilities
+		
+		//No ability code yet
+		
+		jumpAbility = 1;
+	}
+}
+
+//Jumping functions
+void PLAYER::JumpHeight()
+{
+	if (status.jumping)
+	{
+		//Slow us down if ABC is released when jumping
+		int16_t minVelocity = status.underwater ? -0x200 : -0x400;
+		
+		if (minVelocity <= yVel)
+			JumpAbilities();
+		else if (!controlHeld.a && !controlHeld.b && !controlHeld.c)
+			yVel = minVelocity;
+	}
+	else
+	{
+		//Cap our upwards velocity
+		if (!status.pinballMode && yVel < -0xFC0)
+			yVel = -0xFC0;
+	}
+}
+
+void PLAYER::ChgJumpDir()
+{
+	//Move left and right
+	if (!status.rollJumping)
+	{
+		int16_t newVelocity = xVel;
+		
+		//Move left if left is held
+		if (controlHeld.left)
+		{
+			//Accelerate left
+			status.xFlip = true;
+			newVelocity -= acceleration * 2;
+			
+			//Don't accelerate past the top speed
+			if (newVelocity <= -top)
+			{
+				newVelocity += acceleration * 2;
+				if (newVelocity >= -top)
+					newVelocity = -top;
+			}
+		}
+		
+		//Move right if right is held
+		if (controlHeld.right)
+		{
+			//Accelerate right
+			status.xFlip = false;
+			newVelocity += acceleration * 2;
+			
+			//Don't accelerate past the top speed
+			if (newVelocity >= top)
+			{
+				newVelocity -= acceleration * 2;
+				if (newVelocity <= top)
+					newVelocity = top;
+			}
+		}
+		
+		//Copy our new velocity to our velocity
+		xVel = newVelocity;
+	}
+	
+	//Air drag
+	if (yVel >= -0x400 && yVel < 0)
+	{
+		int16_t drag = xVel / 0x20;
+		
+		if (drag > 0)
+		{
+			xVel -= drag;
+			if (xVel < 0)
+				xVel = 0;
+		}
+		else
+		{
+			xVel -= drag;
+			if (xVel >= 0)
+				xVel = 0;
+		}
+	}
+}
+
 bool PLAYER::Jump()
 {
 	if (controlPress.a || controlPress.b || controlPress.c)
@@ -353,6 +450,7 @@ bool PLAYER::Jump()
 				xRadius = rollXRadius;
 				yRadius = rollYRadius;
 				anim = PLAYERANIMATION_ROLL;
+				status.inBall = true;
 				
 				//Shift us down to the ground
 				if (status.reverseGravity)
@@ -691,7 +789,7 @@ void PLAYER::LevelBoundSide(uint16_t bound)
 void PLAYER::LevelBound()
 {
 	//Get our next position and boundaries
-	int16_t nextPos = (xPosLong + (xVel * 0x100)) / 0x10000;
+	uint16_t nextPos = (xPosLong + (xVel * 0x100)) / 0x10000;
 	uint16_t leftBound = 0 + 0x10;
 	uint16_t rightBound = SCREEN_WIDTH - 0x18; //For some reason the right boundary is 8 pixels greater than the left boundary
 	
@@ -952,17 +1050,22 @@ void PLAYER::Update()
 						//Standing / walking on ground
 						if (Spindash() && Jump())
 						{
-							//bsr.w	Player_SlopeResist
+							//Handle slope gravity and our movement
+							//SlopeResist();
 							Move();
 							Roll();
+							
+							//Keep us in level bounds
 							LevelBound();
 							
+							//Move according to our velocity
 							xPosLong += xVel * 0x100;
 							if (status.reverseGravity)
 								yPosLong -= yVel * 0x100;
 							else
 								yPosLong += yVel * 0x100;
 							
+							//Handle collision and falling off of slopes
 							//AnglePos();
 							//SlopeRepel();
 						}
@@ -976,15 +1079,20 @@ void PLAYER::Update()
 						//Rolling on the ground
 						if (status.pinballMode || Jump())
 						{
+							//Handle slope gravity and our movement
 							RollSpeed();
+							
+							//Keep us in level bounds
 							LevelBound();
 							
+							//Move according to our velocity
 							xPosLong += xVel * 0x100;
 							if (status.reverseGravity)
 								yPosLong -= yVel * 0x100;
 							else
 								yPosLong += yVel * 0x100;
 							
+							//Handle collision and falling off of slopes
 							//AnglePos();
 							//SlopeRepel();
 						}
@@ -992,6 +1100,25 @@ void PLAYER::Update()
 					else if (status.inBall == true && status.inAir == true)
 					{
 						//Jumping or rolled off of a ledge
+						
+						//Handle our movement
+						JumpHeight();
+						ChgJumpDir();
+						
+						//Keep us in level bounds
+						LevelBound();
+						
+						//Move according to our velocity
+						xPosLong += xVel * 0x100;
+						if (status.reverseGravity)
+							yPosLong -= yVel * 0x100;
+						else
+							yPosLong += yVel * 0x100;
+						
+						//Gravity (0x38 above water, 0x10 below water)
+						yVel += 0x38;
+						if (status.underwater)
+							yVel -= 0x28;
 					}
 				}
 				
