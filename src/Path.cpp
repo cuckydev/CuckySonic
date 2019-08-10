@@ -20,7 +20,7 @@ char *AllocPath(const char *string, const char *append)
 
 bool InitializePath()
 {
-	LOG(("Initializing path sub-system... "));
+	LOG(("Initializing paths... "));
 	
 	gBasePath = SDL_GetBasePath();
 	gPrefPath = SDL_GetPrefPath(GAME_ORGANIZATION, GAME_TITLE);
@@ -46,7 +46,7 @@ bool InitializePath()
 
 void QuitPath()
 {
-	LOG(("Ending path sub-system... "));
+	LOG(("Ending paths... "));
 	
 	SDL_free(gBasePath);
 	SDL_free(gPrefPath);

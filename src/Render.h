@@ -121,6 +121,7 @@ class SOFTWAREBUFFER
 		
 		inline uint32_t RGB(uint8_t r, uint8_t g, uint8_t b);
 		
+		void DrawPoint(int x, int y, PALCOLOUR *colour);
 		void DrawQuad(SDL_Rect *quad, PALCOLOUR *colour);
 		
 		bool RenderToScreen(PALCOLOUR *backgroundColour);

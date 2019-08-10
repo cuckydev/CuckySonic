@@ -35,6 +35,7 @@ TEXTURE::TEXTURE(const char *path)
 	//Check if this format is valid
 	if (bitmap->format->palette == NULL || bitmap->format->BytesPerPixel > 1)
 	{
+		SDL_FreeSurface(bitmap);
 		fail = "Bitmap is not an 8-bit indexed .bmp";
 		return;
 	}
@@ -42,6 +43,7 @@ TEXTURE::TEXTURE(const char *path)
 	//Create our palette using the image's palette
 	if ((loadedPalette = new PALETTE) == NULL)
 	{
+		SDL_FreeSurface(bitmap);
 		fail = "Failed to allocate palette for texture";
 		return;
 	}
@@ -62,6 +64,13 @@ TEXTURE::TEXTURE(const char *path)
 	
 	if (!(texture && textureXFlip && textureYFlip && textureXYFlip))
 	{
+		SDL_FreeSurface(bitmap);
+		
+		free(texture); //This frees any buffers that successfully allocated
+		free(textureXFlip);
+		free(textureYFlip);
+		free(textureXYFlip);
+		
 		fail = "Failed to allocate texture buffer";
 		return;
 	}
@@ -98,6 +107,11 @@ TEXTURE::TEXTURE(uint8_t *data, int dWidth, int dHeight)
 	
 	if (!(texture && textureXFlip && textureYFlip && textureXYFlip))
 	{
+		free(texture); //This frees any buffers that successfully allocated
+		free(textureXFlip);
+		free(textureYFlip);
+		free(textureXYFlip);
+		
 		fail = "Failed to allocate texture buffer";
 		return;
 	}
@@ -126,7 +140,7 @@ TEXTURE::~TEXTURE()
 	free(textureYFlip);
 	free(textureXYFlip);
 	
-	if (loadedPalette != NULL)
+	if (loadedPalette)
 		delete loadedPalette;
 }
 
@@ -280,42 +294,61 @@ inline uint32_t SOFTWAREBUFFER::RGB(uint8_t r, uint8_t g, uint8_t b)
 }
 
 //Drawing functions (no-class)
-void SOFTWAREBUFFER::DrawQuad(SDL_Rect *quad, PALCOLOUR *colour)
+void SOFTWAREBUFFER::DrawPoint(int x, int y, PALCOLOUR *colour)
 {
 	//Check if this is in view bounds (if not, just return, no point in clogging the queue with stuff that will not be rendered)
-	if (quad->x <= -quad->w || quad->x >= gSoftwareBuffer->width)
+	if (x < 0 || x >= width)
 		return;
-	if (quad->y <= -quad->h || quad->y >= gSoftwareBuffer->height)
+	if (y < 0 || y >= height)
 		return;
 	
 	//Set the member of the render queue
-	gSoftwareBuffer->queueEntry->type = RENDERQUEUE_SOLID;
-	gSoftwareBuffer->queueEntry->dest = *quad;
+	queueEntry->type = RENDERQUEUE_SOLID;
+	queueEntry->dest = {x, y, 1, 1};
+	
+	//Set colour reference
+	queueEntry->solid.colour = colour;
+	
+	//Push forward in queue
+	queueEntry++;
+}
+
+void SOFTWAREBUFFER::DrawQuad(SDL_Rect *quad, PALCOLOUR *colour)
+{
+	//Check if this is in view bounds (if not, just return, no point in clogging the queue with stuff that will not be rendered)
+	if (quad->x <= -quad->w || quad->x >= width)
+		return;
+	if (quad->y <= -quad->h || quad->y >= height)
+		return;
+	
+	//Set the member of the render queue
+	queueEntry->type = RENDERQUEUE_SOLID;
+	queueEntry->dest = *quad;
 	
 	//Clip top & left
 	if (quad->x < 0)
 	{
-		gSoftwareBuffer->queueEntry->dest.x -= quad->x;
-		gSoftwareBuffer->queueEntry->dest.w += quad->x;
+		queueEntry->dest.x -= quad->x;
+		queueEntry->dest.w += quad->x;
 	}
 	
 	if (quad->y < 0)
 	{
-		gSoftwareBuffer->queueEntry->dest.y -= quad->y;
-		gSoftwareBuffer->queueEntry->dest.h += quad->y;
+		queueEntry->dest.y -= quad->y;
+		queueEntry->dest.h += quad->y;
 	}
 	
 	//Clip right and bottom
-	if (gSoftwareBuffer->queueEntry->dest.x > (gSoftwareBuffer->width - gSoftwareBuffer->queueEntry->dest.w))
-		gSoftwareBuffer->queueEntry->dest.w -= gSoftwareBuffer->queueEntry->dest.x - (gSoftwareBuffer->width - gSoftwareBuffer->queueEntry->dest.w);
-	if (gSoftwareBuffer->queueEntry->dest.y > (gSoftwareBuffer->height - gSoftwareBuffer->queueEntry->dest.h))
-		gSoftwareBuffer->queueEntry->dest.h -= gSoftwareBuffer->queueEntry->dest.y - (gSoftwareBuffer->height - gSoftwareBuffer->queueEntry->dest.h);
+	if (queueEntry->dest.x > (width - queueEntry->dest.w))
+		queueEntry->dest.w -= queueEntry->dest.x - (width - queueEntry->dest.w);
+	if (queueEntry->dest.y > (height - queueEntry->dest.h))
+		queueEntry->dest.h -= queueEntry->dest.y - (height - queueEntry->dest.h);
 	
 	//Set colour reference
-	gSoftwareBuffer->queueEntry->solid.colour = colour;
+	queueEntry->solid.colour = colour;
 	
 	//Push forward in queue
-	gSoftwareBuffer->queueEntry++;
+	queueEntry++;
 }
 
 //Render the software buffer to the screen

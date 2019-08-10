@@ -5,6 +5,7 @@
 #include "Event.h"
 #include "Render.h"
 #include "Fade.h"
+#include "Input.h"
 
 #define SPLASH_TIME 150
 
@@ -13,10 +14,7 @@ bool GM_Splash(bool *noError)
 	//Load our splash image
 	TEXTURE *splashTexture = new TEXTURE("data/Splash.bmp");
 	if (splashTexture->fail != NULL)
-	{
-		*noError = Error(splashTexture->fail);
-		return false;
-	}
+		return (*noError = false);
 	
 	//Make our palette white
 	FillPaletteWhite(splashTexture->loadedPalette);
@@ -34,8 +32,10 @@ bool GM_Splash(bool *noError)
 		//Fade in/out
 		if (frame < (FADE_TIME * 2) && (frame & 0x1))
 			PaletteFadeInFromWhite(splashTexture->loadedPalette);
-		if (frame >= SPLASH_TIME - FADE_TIME)
+		else if (frame >= SPLASH_TIME - FADE_TIME)
 			PaletteFadeOutToBlack(splashTexture->loadedPalette);
+		else if (gController[0].held.a || gController[0].held.b || gController[0].held.c)
+			frame = SPLASH_TIME - FADE_TIME; //Skip splash screen if ABC is pressed
 		
 		//Render our splash texture
 		SDL_Rect src = {0, 0, splashTexture->width, splashTexture->height};

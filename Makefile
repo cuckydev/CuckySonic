@@ -28,12 +28,15 @@ SOURCES = \
 	Path \
 	Render \
 	Event \
+	Input \
+	MathUtil \
 	Fade \
 	Mappings \
 	Game \
 	GM_Splash \
 	GM_Title \
 	GM_Game \
+	Player
 
 #What to compile
 OBJECTS = $(addprefix obj/$(FILENAME)/, $(addsuffix .o, $(SOURCES)))

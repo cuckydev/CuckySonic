@@ -4,6 +4,7 @@
 #include "Log.h"
 #include "Path.h"
 #include "Render.h"
+#include "Input.h"
 #include "Game.h"
 
 int main(int argc, char *argv[])
@@ -17,15 +18,16 @@ int main(int argc, char *argv[])
 		return -1; //Nothing to clean up, we can just return our failure
 	}
 	
-	LOG(("Success\n"));
+	LOG(("Success!\n"));
 	
 	//Initialize game sub-systems
 	bool noError = true;
 	
-	if ((noError = (InitializePath() && InitializeRender())))
+	if ((noError = (InitializePath() && InitializeRender() && InitializeInput())))
 		noError = EnterGameLoop();
 	
 	//End game sub-systems
+	QuitInput();
 	QuitRender();
 	QuitPath();
 	

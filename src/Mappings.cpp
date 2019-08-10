@@ -21,6 +21,17 @@ MAPPINGS::MAPPINGS(const char *path)
 	rect = (SDL_Rect*)calloc(size, sizeof(SDL_Rect));
 	origin = (SDL_Point*)calloc(size, sizeof(SDL_Point));
 	
+	if (rect == NULL || origin == NULL)
+	{
+		SDL_RWclose(fp);
+		
+		free(rect); //Free in the case that one successfully allocated
+		free(origin);
+		
+		fail = "Failed to allocate rect and origin arrays";
+		return;
+	}
+	
 	//Read from the file
 	for (int i = 0; i < size; i++)
 	{
