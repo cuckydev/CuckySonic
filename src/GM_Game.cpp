@@ -23,6 +23,8 @@ bool GM_Game(bool *noError)
 		if ((noExit = HandleEvents()) == false)
 			break;
 		
+		level->Draw();
+		
 		//Render our software buffer to the screen (using the first colour of our splash texture, should be white)
 		if (!(*noError = gSoftwareBuffer->RenderToScreen(NULL)))
 			return false;

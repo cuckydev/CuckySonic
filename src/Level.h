@@ -20,7 +20,7 @@ struct LEVELTABLE
 	const char *alternateMapPath;
 	const char *collisionNormalPath;
 	const char *collisionRotatedPath;
-	const char *angleMapPath;
+	const char *collisionAnglePath;
 };
 
 struct CHUNKMAPPING
@@ -38,6 +38,21 @@ struct CHUNKMAPPING
 	} tile[8 * 8];
 };
 
+struct LAYOUT
+{
+	int width;
+	int height;
+	uint16_t *foreground;
+	uint16_t *background;
+};
+
+struct COLLISIONTILE
+{
+	int8_t normal[0x10];
+	int8_t rotated[0x10];
+	uint8_t angle;
+};
+
 class LEVEL
 {
 	public:
@@ -48,11 +63,7 @@ class LEVEL
 		
 		//Layout data
 		LEVELFORMAT format;
-		
-		int layoutWidth;
-		int layoutHeight;
-		uint16_t *layoutForeground;
-		uint16_t *layoutBackground;
+		LAYOUT layout;
 		
 		//Chunk mapping
 		CHUNKMAPPING *chunkMapping;
@@ -61,6 +72,8 @@ class LEVEL
 		uint16_t *normalMap;
 		uint16_t *alternateMap;
 		
+		//Collision tiles
+		COLLISIONTILE *collisionTile;
 	public:
 		LEVEL(int id);
 		~LEVEL();
