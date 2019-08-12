@@ -206,7 +206,7 @@ uint8_t PLAYER::AngleIn(uint8_t angleSide, int16_t *distance, int16_t *distance2
 	return outAngle;
 }
 
-void PLAYER::CheckFloor(int16_t *distance, int16_t *distance2, uint8_t *angle)
+void PLAYER::CheckFloor(int16_t *distance, int16_t *distance2, uint8_t *outAngle)
 {
 	int16_t retDistance = FindFloor(x.pos + xRadius, y.pos + yRadius, topSolidLayer, false, &primaryAngle);
 	int16_t retDistance2 = FindFloor(x.pos - xRadius, y.pos + yRadius, topSolidLayer, false, &secondaryAngle);
@@ -219,8 +219,106 @@ void PLAYER::CheckFloor(int16_t *distance, int16_t *distance2, uint8_t *angle)
 	if (distance2 != NULL)
 		*distance2 = retDistance2;
 
-	if (angle != NULL)
-		*angle = retAngle;
+	if (outAngle != NULL)
+		*outAngle = retAngle;
+}
+
+int16_t PLAYER::CheckCeiling(COLLISIONLAYER layer, uint8_t *outAngle)
+{
+	int16_t retDistance = FindFloor(x.pos + xRadius, y.pos - yRadius, layer, true, &primaryAngle);
+	int16_t retDistance2 = FindFloor(x.pos - xRadius, y.pos - yRadius, layer, true, &secondaryAngle);
+
+	uint8_t retAngle = AngleIn(0x80, &retDistance, &retDistance2);
+
+	if (outAngle != NULL)
+		*outAngle = retAngle;
+	return retDistance2;
+}
+
+//Get distance functions
+uint8_t PLAYER::AngleSide(uint8_t angleSide)
+{
+	return (primaryAngle & 0x01) ? angleSide : primaryAngle;
+}
+
+int16_t PLAYER::CheckFloorDist(int16_t xPos, int16_t yPos, COLLISIONLAYER layer, uint8_t *outAngle)
+{
+	int16_t distance = FindFloor(xPos, yPos + 10, layer, false, &primaryAngle);
+	if (outAngle != NULL)
+		*outAngle = AngleSide(0x00);
+	return distance;
+}
+
+int16_t PLAYER::CheckCeilingDist(int16_t xPos, int16_t yPos, COLLISIONLAYER layer, uint8_t *outAngle)
+{
+	int16_t distance = FindFloor(xPos, yPos - 10, layer, true, &primaryAngle);
+	if (outAngle != NULL)
+		*outAngle = AngleSide(0x80);
+	return distance;
+}
+
+int16_t PLAYER::CheckLeftWallDist(int16_t xPos, int16_t yPos, COLLISIONLAYER layer, uint8_t *outAngle)
+{
+	int16_t distance = FindWall(xPos - 10, yPos, layer, true, &primaryAngle);
+	if (outAngle != NULL)
+		*outAngle = AngleSide(0x40);
+	return distance;
+}
+
+int16_t PLAYER::CheckRightWallDist(int16_t xPos, int16_t yPos, COLLISIONLAYER layer, uint8_t *outAngle)
+{
+	int16_t distance = FindWall(xPos + 10, yPos, layer, false, &primaryAngle);
+	if (outAngle != NULL)
+		*outAngle = AngleSide(0xC0);
+	return distance;
+}
+
+//Calculate room in front of us
+int16_t PLAYER::CalcRoomInFront(uint8_t moveAngle)
+{
+	int16_t xPos = (xPosLong + (xVel * 0x100)) / 0x10000;
+	int16_t yPos = (yPosLong + (yVel * 0x100)) / 0x10000;
+
+	primaryAngle = moveAngle;
+	secondaryAngle = moveAngle;
+	uint8_t offAngle = moveAngle;
+
+	if (offAngle + 0x20 >= 0x80)
+	{
+		if (offAngle >= 0x80)
+			--offAngle;
+
+		offAngle += 0x20;
+	}
+	else
+	{
+		if (offAngle >= 0x80)
+			++offAngle;
+
+		offAngle += 0x1F;
+	}
+
+	offAngle &= 0xC0;
+
+	if (offAngle == 0)
+	{
+		return CheckFloorDist(xPos, yPos, lrbSolidLayer, NULL);
+	}
+	else if (offAngle == 0x80)
+	{
+		return CheckCeilingDist(xPos, yPos, lrbSolidLayer, NULL);
+	}
+	else
+	{
+		//If at a low angle, offset the position down 8 pixels
+		if ((angle & 0x38) == 0)
+			yPos += 8;
+		
+		if (offAngle == 0x40)
+			return CheckLeftWallDist(xPos, yPos, lrbSolidLayer, NULL);
+		else
+			return CheckRightWallDist(xPos, yPos, lrbSolidLayer, NULL);
+	}
 }
 
 //Ground collision function
@@ -424,6 +522,48 @@ void PLAYER::AnglePos()
 	}
 }
 
+void PLAYER::CheckWallsOnGround()
+{
+	if (((angle & 0x3F) == 0 || ((angle + 0x40) & 0xFF) < 0x80) && inertia != 0)
+	{
+		uint8_t faceAngle = angle + (inertia < 0 ? 0x40 : -0x40);
+		int16_t distance = CalcRoomInFront(faceAngle);
+
+		if (distance < 0)
+		{
+			distance *= 0x100;
+
+			switch ((faceAngle + 0x20) & 0xC0)
+			{
+				case 0:
+				{
+					yVel += distance;
+					break;
+				}
+				case 0x40:
+				{
+					xVel -= distance;
+					status.pushing = true;
+					inertia = 0;
+					break;
+				}
+				case 0x80:
+				{
+					yVel -= distance;
+					break;
+				}
+				case 0xC0:
+				{
+					xVel += distance;
+					status.pushing = true;
+					inertia = 0;
+					break;
+				}
+			}
+		}
+	}
+}
+
 //Air collision functions
 void PLAYER::DoLevelCollision()
 {
@@ -435,6 +575,21 @@ void PLAYER::DoLevelCollision()
 		case 0x00: //Moving downwards
 		{
 			int16_t distance, distance2;
+			
+			//Check for wall collisions
+			distance = CheckLeftWallDist(x.pos, y.pos, lrbSolidLayer, NULL);
+			if (distance < 0)
+			{
+				x.pos -= distance;
+				xVel = 0;
+			}
+			
+			distance = CheckRightWallDist(x.pos, y.pos, lrbSolidLayer, NULL);
+			if (distance < 0)
+			{
+				x.pos += distance;
+				xVel = 0;
+			}
 			
 			//Check for collision with the floor
 			uint8_t floorAngle;
@@ -473,21 +628,86 @@ void PLAYER::DoLevelCollision()
 		
 		case 0x40: //Moving to the left
 		{
-			int16_t distance;
-			
-			//Collide with the floor
-			if (yVel >= 0)
-			{
-				uint8_t floorAngle;
-				CheckFloor(NULL, &distance, &floorAngle);
+			//Collide with walls
+			int16_t distance = CheckLeftWallDist(x.pos, y.pos, lrbSolidLayer, NULL);
 
+			if (distance < 0)
+			{
+				x.pos -= distance;
+				xVel = 0;
+				inertia = yVel;
+			}
+			else
+			{
+				//Collide with ceilings
+				distance = CheckCeiling(lrbSolidLayer, NULL);
+				
 				if (distance < 0)
 				{
-					y.pos += distance;
-					angle = floorAngle;
-					ResetOnFloor();
+					y.pos -= distance;
+					if (yVel < 0)
+						yVel = 0;
+				}
+				else
+				{
+					if (yVel >= 0)
+					{
+						//Collide with the floor
+						uint8_t floorAngle;
+						CheckFloor(NULL, &distance, &floorAngle);
+
+						if (distance < 0)
+						{
+							y.pos += distance;
+							angle = floorAngle;
+							ResetOnFloor();
+							yVel = 0;
+							inertia = xVel;
+						}
+					}
+				}
+			}
+			break;
+		}
+		
+		case 0x80: //Moving upwards
+		{
+			//Check for wall collisions
+			int16_t distance = CheckLeftWallDist(x.pos, y.pos, lrbSolidLayer, NULL);
+			if (distance < 0)
+			{
+				x.pos -= distance;
+				xVel = 0;
+			}
+			
+			distance = CheckRightWallDist(x.pos, y.pos, lrbSolidLayer, NULL);
+			if (distance < 0)
+			{
+				x.pos += distance;
+				xVel = 0;
+			}
+			
+			//Check for collision with the floor
+			uint8_t ceilingAngle;
+			distance = CheckCeiling(lrbSolidLayer, &ceilingAngle);
+			
+			if (distance < 0)
+			{
+				//Clip out of ceiling
+				y.pos -= distance;
+				
+				//Are we going to land and walk on this ceiling?
+				if (((ceilingAngle + 0x20) & 0x40) == 0)
+				{
+					//Hault velocity
 					yVel = 0;
-					inertia = xVel;
+				}
+				else
+				{
+					//Land on ceiling
+					angle = ceilingAngle;
+					ResetOnFloor();
+					inertia = ceilingAngle >= 0x80 ? -yVel : yVel;
 				}
 			}
 			break;
@@ -495,21 +715,43 @@ void PLAYER::DoLevelCollision()
 		
 		case 0xC0: //Moving to the right
 		{
-			int16_t distance;
-			
-			//Collide with the floor
-			if (yVel >= 0)
-			{
-				uint8_t angle;
-				CheckFloor(NULL, &distance, &angle);
+			//Collide with walls
+			int16_t distance = CheckRightWallDist(x.pos, y.pos, lrbSolidLayer, NULL);
 
+			if (distance < 0)
+			{
+				x.pos += distance;
+				xVel = 0;
+				inertia = yVel;
+			}
+			else
+			{
+				//Collide with ceilings
+				distance = CheckCeiling(lrbSolidLayer, NULL);
+				
 				if (distance < 0)
 				{
-					y.pos += distance;
-					angle = angle;
-					ResetOnFloor();
-					yVel = 0;
-					inertia = xVel;
+					y.pos -= distance;
+					if (yVel < 0)
+						yVel = 0;
+				}
+				else
+				{
+					if (yVel >= 0)
+					{
+						//Collide with the floor
+						uint8_t floorAngle;
+						CheckFloor(NULL, &distance, &floorAngle);
+
+						if (distance < 0)
+						{
+							y.pos += distance;
+							angle = floorAngle;
+							ResetOnFloor();
+							yVel = 0;
+							inertia = xVel;
+						}
+					}
 				}
 			}
 			break;
@@ -1156,6 +1398,9 @@ void PLAYER::Move()
 	GetSine(angle, &sin, &cos);
 	xVel = (cos * inertia) / 0x100;
 	yVel = (sin * inertia) / 0x100;
+	
+	//Collide with walls
+	CheckWallsOnGround();
 }
 
 //Rolling functions
@@ -1300,6 +1545,9 @@ void PLAYER::RollSpeed()
 		xVel = -0x1000;
 	if (xVel >= 0x1000)
 		xVel = 0x1000;
+	
+	//Collide with walls
+	CheckWallsOnGround();
 }
 
 //Level boundary function

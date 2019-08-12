@@ -279,10 +279,20 @@ class PLAYER
 		~PLAYER();
 		
 		uint8_t AngleIn(uint8_t angleSide, int16_t *distance, int16_t *distance2);
-		void CheckFloor(int16_t *distance, int16_t *distance2, uint8_t *angle);
+		void CheckFloor(int16_t *distance, int16_t *distance2, uint8_t *outAngle);
+		int16_t CheckCeiling(COLLISIONLAYER layer, uint8_t *outAngle);
+		
+		uint8_t AngleSide(uint8_t angleSide);
+		int16_t CheckFloorDist(int16_t xPos, int16_t yPos, COLLISIONLAYER layer, uint8_t *outAngle);
+		int16_t CheckCeilingDist(int16_t xPos, int16_t yPos, COLLISIONLAYER layer, uint8_t *outAngle);
+		int16_t CheckLeftWallDist(int16_t xPos, int16_t yPos, COLLISIONLAYER layer, uint8_t *outAngle);
+		int16_t CheckRightWallDist(int16_t xPos, int16_t yPos, COLLISIONLAYER layer, uint8_t *outAngle);
+		
+		int16_t CalcRoomInFront(uint8_t moveAngle);
 		
 		int16_t Angle(int16_t distance, int16_t distance2);
 		void AnglePos();
+		void CheckWallsOnGround();
 		
 		void DoLevelCollision();
 		
