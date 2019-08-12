@@ -485,10 +485,10 @@ void LEVEL::Draw()
 		case LEVELFORMAT_CHUNK128_SONIC2:
 		case LEVELFORMAT_CHUNK128:
 		{
-			int chunkLeft = 0;//camera->x / 128;
-			int chunkTop = 0;//camera->y / 128;
-			int chunkRight = 0x80;//(camera->x + SCREEN_WIDTH) / 128;
-			int chunkBottom = 0x10;//(camera->y + SCREEN_HEIGHT) / 128;
+			int chunkLeft = camera->x / 128;
+			int chunkTop = camera->y / 128;
+			int chunkRight = (camera->x + SCREEN_WIDTH) / 128;
+			int chunkBottom = (camera->y + SCREEN_HEIGHT) / 128;
 			
 			for (int x = chunkLeft; x <= chunkRight; x++)
 			{
