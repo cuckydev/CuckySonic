@@ -19,12 +19,13 @@ const long double framerateMilliseconds = (1000.0 / FRAMERATE);
 //Texture class
 TEXTURE::TEXTURE(const char *path)
 {
+	LOG(("Loading texture from %s... ", path));
+	
 	fail = NULL;
 	
 	//Load bitmap
 	GET_GLOBAL_PATH(filepath, path);
 	
-	LOG(("Loading texture from %s...\n", filepath));
 	SDL_Surface *bitmap = SDL_LoadBMP(filepath);
 	if (bitmap == NULL)
 	{
@@ -92,10 +93,14 @@ TEXTURE::TEXTURE(const char *path)
 	
 	//Free bitmap surface
 	SDL_FreeSurface(bitmap);
+	
+	LOG(("Success!\n"));
 }
 
 TEXTURE::TEXTURE(uint8_t *data, int dWidth, int dHeight)
 {
+	LOG(("Loading texture from memory location %p dimensions %dx%d... ", (void*)data, dWidth, dHeight));
+	
 	fail = NULL;
 	loadedPalette = NULL;
 	
@@ -130,6 +135,8 @@ TEXTURE::TEXTURE(uint8_t *data, int dWidth, int dHeight)
 	
 	width = dWidth;
 	height = dHeight;
+	
+	LOG(("Success!\n"));
 }
 
 TEXTURE::~TEXTURE()

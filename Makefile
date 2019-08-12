@@ -37,7 +37,8 @@ SOURCES = \
 	GM_Splash \
 	GM_Title \
 	GM_Game \
-	Player
+	Player \
+	Camera \
 
 #What to compile
 OBJECTS = $(addprefix obj/$(FILENAME)/, $(addsuffix .o, $(SOURCES)))

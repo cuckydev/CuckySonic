@@ -5,6 +5,8 @@
 #include "Path.h"
 #include "Log.h"
 #include "Error.h"
+#include "Level.h"
+#include "Game.h"
 #include "GameConstants.h"
 
 //animation data
@@ -78,8 +80,8 @@ const uint8_t* animationList[] = {
 
 PLAYER::PLAYER(const char *specPath, PLAYER *myFollow, int myController)
 {
+	LOG(("Creating a player with spec %s and controlled by controller %d...\n", specPath, myController));
 	memset(this, 0, sizeof(PLAYER));
-	y.pos = 0x80;
 	
 	//Equivalent of routine 0
 	routine = PLAYERROUTINE_CONTROL;
@@ -172,6 +174,8 @@ PLAYER::PLAYER(const char *specPath, PLAYER *myFollow, int myController)
 	}
 	
 	recordPos = 0;
+	
+	LOG(("Success!\n"));
 }
 
 PLAYER::~PLAYER()
@@ -249,7 +253,7 @@ bool PLAYER::Spindash()
 			inertia = spindashSpeed[spindashCounter / 0x100];
 		
 		//Lock the camera behind us
-		//cameraScrollDelay = (0x2000 + (inertia - 0x800) * 2) % (PLAYER_RECORD_LENGTH << 8);
+		scrollDelay = (0x2000 - (inertia - 0x800) * 2) % (PLAYER_RECORD_LENGTH << 8);
 		
 		//Revert if facing left
 		if (status.xFlip)
@@ -923,8 +927,8 @@ void PLAYER::LevelBound()
 {
 	//Get our next position and boundaries
 	uint16_t nextPos = (xPosLong + (xVel * 0x100)) / 0x10000;
-	uint16_t leftBound = 0 + 0x10;
-	uint16_t rightBound = SCREEN_WIDTH - 0x18; //For some reason the right boundary is 8 pixels greater than the left boundary
+	uint16_t leftBound = gLevelLeftBoundary + 0x10;
+	uint16_t rightBound = gLevelRightBoundary - 0x18; //For some reason the right boundary is 8 pixels greater than the left boundary
 	
 	//Clip us into the boundaries
 	if (nextPos < leftBound)
@@ -1312,5 +1316,5 @@ void PLAYER::Draw()
 	if (renderFlags.yFlip)
 		origY = mapRect->h - origY;
 	
-	texture->Draw(texture->loadedPalette, mapRect, x.pos - origX, y.pos - origY, renderFlags.xFlip, renderFlags.yFlip);
+	texture->Draw(texture->loadedPalette, mapRect, x.pos - origX - gLevel->camera->x, y.pos - origY - gLevel->camera->y, renderFlags.xFlip, renderFlags.yFlip);
 }

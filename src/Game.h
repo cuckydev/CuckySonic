@@ -1,4 +1,6 @@
 #pragma once
+#include "Level.h"
+
 enum GAMEMODE
 {
 	GAMEMODE_SPLASH,		//"Sega" screen, but can be used for general splash
@@ -12,5 +14,6 @@ enum GAMEMODE
 };
 
 extern GAMEMODE gGameMode;
+extern LEVEL *gLevel;
 
 bool EnterGameLoop();

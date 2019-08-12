@@ -258,6 +258,8 @@ class PLAYER
 		bool controlLock;
 		
 		//Position and status records
+		unsigned int scrollDelay = 0;
+		
 		struct
 		{
 			int16_t x, y;

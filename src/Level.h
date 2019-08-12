@@ -1,6 +1,10 @@
 #pragma once
 #include <stdint.h>
 #include "Render.h"
+#include "Player.h"
+#include "Camera.h"
+
+#define PLAYERS 1
 
 enum LEVELFORMAT
 {
@@ -21,21 +25,28 @@ struct LEVELTABLE
 	const char *collisionNormalPath;
 	const char *collisionRotatedPath;
 	const char *collisionAnglePath;
+	
+	//Start location
+	uint16_t startX, startY;
+};
+
+struct CHUNKMAPPINGTILE
+{
+	//Solidity
+	bool altLRB : 1;
+	bool altTop : 1;
+	bool norLRB : 1;
+	bool norTop : 1;
+	//Flip
+	bool yFlip : 1;
+	bool xFlip : 1;
+	//Tile index
+	uint16_t tile : 10;
 };
 
 struct CHUNKMAPPING
 {
-	struct
-	{
-		//Solidity
-		bool altLRB : 1;
-		bool altTop : 1;
-		bool norLRB : 1;
-		bool norTop : 1;
-		bool yFlip : 1;
-		bool xFlip : 1;
-		uint16_t tile : 10;
-	} tile[8 * 8];
+	CHUNKMAPPINGTILE tile[8 * 8];
 };
 
 struct LAYOUT
@@ -74,6 +85,11 @@ class LEVEL
 		
 		//Collision tiles
 		COLLISIONTILE *collisionTile;
+		
+		//Players and objects
+		PLAYER *player[PLAYERS];
+		CAMERA *camera;
+		
 	public:
 		LEVEL(int id);
 		~LEVEL();
@@ -81,3 +97,9 @@ class LEVEL
 		void Update();
 		void Draw();
 };
+
+extern uint16_t gLevelLeftBoundary;
+extern uint16_t gLevelRightBoundary;
+extern uint16_t gLevelTopBoundary;
+extern uint16_t gLevelBottomBoundary;
+extern LEVELTABLE gLevelTable[];

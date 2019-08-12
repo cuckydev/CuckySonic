@@ -7,8 +7,13 @@
 
 LEVELTABLE gLevelTable[] = {
 	//Green Hill Zone Act 1
-	{LEVELFORMAT_CHUNK128_SONIC2, "data/Level/GHZ/ghz1.lay", "data/Level/GHZ/ghz.chk", "data/Level/GHZ/ghz.nor", "data/Level/GHZ/ghz.alt", "data/Level/sonic1.can", "data/Level/sonic1.car", "data/Level/sonic1.ang"},
+	{LEVELFORMAT_CHUNK128_SONIC2, "data/Level/GHZ/ghz1.lay", "data/Level/GHZ/ghz.chk", "data/Level/GHZ/ghz.nor", "data/Level/GHZ/ghz.alt", "data/Level/sonic1.can", "data/Level/sonic1.car", "data/Level/sonic1.ang", 0x50, 0x3B0},
 };
+
+uint16_t gLevelLeftBoundary;
+uint16_t gLevelRightBoundary;
+uint16_t gLevelTopBoundary;
+uint16_t gLevelBottomBoundary;
 
 LEVEL::LEVEL(int id)
 {
@@ -69,9 +74,9 @@ LEVEL::LEVEL(int id)
 			for (int line = 0; line < layout.height; line++)
 			{
 				for (int fx = 0; fx < layout.width; fx++)
-					layout.foreground[line * layout.height + fx] = SDL_ReadU8(layoutFile);
+					layout.foreground[line * layout.width + fx] = SDL_ReadU8(layoutFile);
 				for (int bx = 0; bx < layout.width; bx++)
-					layout.background[line * layout.height + bx] = SDL_ReadU8(layoutFile);
+					layout.background[line * layout.width + bx] = SDL_ReadU8(layoutFile);
 			}
 			
 			SDL_RWclose(layoutFile);
@@ -373,6 +378,71 @@ LEVEL::LEVEL(int id)
 	tileTexture->loadedPalette = newPalette;
 	free(texData);
 	
+	//Set level boundaries
+	gLevelLeftBoundary = 0;
+	gLevelTopBoundary = 0;
+	
+	switch (format)
+	{
+		case LEVELFORMAT_CHUNK128_SONIC2:
+		case LEVELFORMAT_CHUNK128:
+			gLevelRightBoundary = layout.width * 128;
+			gLevelBottomBoundary = layout.height * 128;
+			break;
+		default:
+			gLevelRightBoundary = 0x7FFF;
+			gLevelBottomBoundary = 0x7FFF;
+			break;
+	}
+	
+	//Create our players
+	PLAYER *follow = NULL;
+	
+	for (int i = 0; i < PLAYERS; i++)
+	{
+		player[i] = new PLAYER("data/Sonic/sonic", follow, 0);
+		
+		if (player[i] == NULL)
+		{
+			Error(fail = player[i]->fail);
+		
+			free(layout.foreground);
+			free(layout.background);
+			free(chunkMapping);
+			free(normalMap);
+			free(alternateMap);
+			free(collisionTile);
+			delete tileTexture;
+			
+			for (int v = 0; v < i; v++)
+				delete player[v];
+			return;
+		}
+		
+		player[i]->x.pos = tableEntry->startX - (i * 18);
+		player[i]->y.pos = tableEntry->startY;
+		follow = player[i];
+	}
+	
+	//Create our camera
+	camera = new CAMERA(player[0]);
+	if (camera == NULL)
+	{
+		Error(fail = "Failed to create our camera");
+	
+		free(layout.foreground);
+		free(layout.background);
+		free(chunkMapping);
+		free(normalMap);
+		free(alternateMap);
+		free(collisionTile);
+		delete tileTexture;
+		
+		for (int i = 0; i < PLAYERS; i++)
+			delete player[i];
+		return;
+	}
+	
 	LOG(("Success!\n"));
 }
 
@@ -380,6 +450,7 @@ LEVEL::~LEVEL()
 {
 	LOG(("Unloading level... "));
 	
+	//Free our level data
 	free(layout.foreground);
 	free(layout.background);
 	free(chunkMapping);
@@ -388,10 +459,66 @@ LEVEL::~LEVEL()
 	free(collisionTile);
 	delete tileTexture;
 	
+	//Free players and objects
+	for (int i = 0; i < PLAYERS; i++)
+		delete player[i];
+	delete camera;
+	
 	LOG(("Success!\n"));
+}
+
+void LEVEL::Update()
+{
+	//Update players
+	for (int i = 0; i < PLAYERS; i++)
+		player[i]->Update();
+	
+	//Update camera
+	camera->Track(player[0]);
 }
 
 void LEVEL::Draw()
 {
+	//Draw stage (temp)
+	switch (format)
+	{
+		case LEVELFORMAT_CHUNK128_SONIC2:
+		case LEVELFORMAT_CHUNK128:
+		{
+			int chunkLeft = 0;//camera->x / 128;
+			int chunkTop = 0;//camera->y / 128;
+			int chunkRight = 0x80;//(camera->x + SCREEN_WIDTH) / 128;
+			int chunkBottom = 0x10;//(camera->y + SCREEN_HEIGHT) / 128;
+			
+			for (int x = chunkLeft; x <= chunkRight; x++)
+			{
+				if (x < 0 || x >= layout.width)
+					continue;
+				
+				for (int y = chunkTop; y <= chunkBottom; y++)
+				{
+					if (y < 0 || y >= layout.height)
+						continue;
+					
+					for (int tx = 0; tx < 8; tx++)
+					{
+						for (int ty = 0; ty < 8; ty++)
+						{
+							CHUNKMAPPINGTILE *tile = &chunkMapping[layout.foreground[y * layout.width + x]].tile[ty * 8 + tx];
+							SDL_Rect tileSrc = {0, tile->tile * 16, 16, 16};
+							tileTexture->Draw(tileTexture->loadedPalette, &tileSrc, x * 128 + tx * 16 - camera->x, y * 128 + ty * 16 - camera->y, tile->xFlip, tile->yFlip);
+						}
+					}
+				}
+			}
+			break;
+		}
+		default:
+			LOG(("Unhandled format for drawing\n"));
+			break;
+	}
 	
+	//Draw players (we draw backwards, we want the leader to be drawn first)
+	for (int i = PLAYERS - 1; i >= 0; i--)
+		player[i]->Draw();
 }
