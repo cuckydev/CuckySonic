@@ -33,7 +33,7 @@ bool InitializeInput()
 
 void QuitInput()
 {
-	LOG(("Ending render sub-system... "));
+	LOG(("Ending input... "));
 	
 	//TODO: Disconnect controllers
 	

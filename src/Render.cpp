@@ -353,8 +353,11 @@ void SOFTWAREBUFFER::DrawQuad(SDL_Rect *quad, PALCOLOUR *colour)
 
 //Render the software buffer to the screen
 #define SBRTSD(macro)	\
-	for (int px = 0; px < width * height; px++)	\
-		macro(writeBuffer, bpp, px, backgroundColour->colour);	\
+	if (backgroundColour != NULL)	\
+	{	\
+		for (int px = 0; px < width * height; px++)	\
+			macro(writeBuffer, bpp, px, backgroundColour->colour);	\
+	}	\
 		\
 	for (RENDERQUEUE *entry = queue; entry != queueEntry; entry++)	\
 	{	\

@@ -5,21 +5,17 @@
 #include "Event.h"
 #include "Render.h"
 #include "Fade.h"
-#include "Player.h"
+#include "Level.h"
 
 bool GM_Game(bool *noError)
 {
+	//Load level (GHZ1 for testing)
+	LEVEL *level = new LEVEL(0);
+	if (level->fail != NULL)
+		return (*noError = false);
+	
 	//Our loop
 	bool noExit = true;
-	
-	//Background colour for testing
-	PALCOLOUR backColour;
-	SetPaletteColour(&backColour, 255, 0, 255);
-	ModifyPaletteColour(&backColour, 0, 0, 0);
-	
-	PLAYER *player = new PLAYER("data/Sonic", NULL, 0);
-	if (player->fail != NULL)
-		return (*noError = false);
 	
 	while (noExit && *noError)
 	{
@@ -27,21 +23,14 @@ bool GM_Game(bool *noError)
 		if ((noExit = HandleEvents()) == false)
 			break;
 		
-		//Fade in background
-		FadeInFromBlack(&backColour);
-		
-		//Sonic the hedgehog
-		player->Update();
-		player->Draw();
-		
 		//Render our software buffer to the screen (using the first colour of our splash texture, should be white)
-		if (!(*noError = gSoftwareBuffer->RenderToScreen(&backColour)))
+		if (!(*noError = gSoftwareBuffer->RenderToScreen(NULL)))
 			return false;
 	}
 	
-	delete player;
+	//Unload level
+	delete level;
 	
-	//Return to title
-	gGameMode = GAMEMODE_TITLE;
+	//Exit
 	return noExit;
 }

@@ -32,6 +32,7 @@ SOURCES = \
 	MathUtil \
 	Fade \
 	Mappings \
+	Level \
 	Game \
 	GM_Splash \
 	GM_Title \
@@ -57,5 +58,8 @@ obj/$(FILENAME)/%.o: src/%.cpp
 	@$(CXX) $(CXXFLAGS) $< -o $@ -c
 	@echo Compiled!
 
+include $(wildcard $(DEPENDENCIES))
+
+#Remove all our compiled objects
 clean:
 	@rm -rf build obj

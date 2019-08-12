@@ -283,7 +283,12 @@ class PLAYER
 		void JumpAbilities();
 		void JumpHeight();
 		void ChgJumpDir();
+		void JumpAngle();
 		bool Jump();
+		
+		void SlopeResist();
+		void RollRepel();
+		void SlopeRepel();
 		
 		void MoveLeft();
 		void MoveRight();

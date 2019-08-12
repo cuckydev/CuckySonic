@@ -394,6 +394,59 @@ void PLAYER::ChgJumpDir()
 	}
 }
 
+void PLAYER::JumpAngle()
+{
+	//Bring our angle down back upwards
+	if (angle != 0)
+	{
+		if (angle >= 0x80)
+		{
+			angle += 2;
+			if (angle < 0x80)
+				angle = 0;
+		}
+		else
+		{
+			angle -= 2;
+			if (angle >= 0x80)
+				angle = 0;
+		}
+	}
+	
+	//Handle our flipping
+	uint8_t nextFlipAngle = flipAngle;
+	
+	if (nextFlipAngle != 0)
+	{
+		if (inertia >= 0 || flipTurned)
+		{
+			if (nextFlipAngle >= 0x100 - flipSpeed && flipsRemaining-- == 0)
+			{
+				flipsRemaining = 0;
+				nextFlipAngle = 0;
+			}
+			else
+			{
+				nextFlipAngle += flipSpeed;
+			}
+		}
+		else
+		{
+			if (nextFlipAngle < flipSpeed && flipsRemaining-- == 0)
+			{
+				flipsRemaining = 0;
+				nextFlipAngle = 0;
+			}
+			else
+			{
+				nextFlipAngle -= flipSpeed;
+			}
+		}
+		
+		flipAngle = nextFlipAngle;
+	}
+}
+
 bool PLAYER::Jump()
 {
 	if (controlPress.a || controlPress.b || controlPress.c)
@@ -468,6 +521,86 @@ bool PLAYER::Jump()
 	}
 	
 	return true;
+}
+
+//Slope gravity related functions
+void PLAYER::SlopeResist()
+{
+	if (((angle + 0x60) & 0xFF) < 0xC0)
+	{
+		//Get our slope gravity
+		int16_t sin;
+		GetSine(angle, &sin, NULL);
+		sin = (sin * 0x20) / 0x100;
+		
+		//Apply our slope gravity (if our inertia is non-zero, always apply, if it is 0, apply if the force is at least 0xD units per frame)
+		if (inertia != 0)
+		{
+			if (inertia < 0)
+				inertia += sin;
+			else if (sin != 0)
+				inertia += sin;
+		}
+		else
+		{
+			if (abs(sin) >= 0xD)
+				inertia += sin;
+		}
+	}
+}
+
+void PLAYER::RollRepel()
+{
+	if (((angle + 0x60) & 0xFF) < 0xC0)
+	{
+		//Get our slope gravity
+		int16_t sin;
+		GetSine(angle, &sin, NULL);
+		sin = (sin * 0x50) / 0x100;
+		
+		//Apply our slope gravity (divide by 4 if opposite to our inertia sign)
+		if (inertia >= 0)
+		{
+			if (sin < 0)
+				sin /= 4;
+			inertia += sin;
+		}
+		else
+		{
+			if (sin >= 0)
+				sin /= 4;
+			inertia += sin;
+		}
+	}
+}
+
+void PLAYER::SlopeRepel()
+{
+	if (!status.stickToConvex)
+	{
+		if (moveLock == 0)
+		{
+			//Are we on a steep enough slope and going too slow?
+			if (((angle + 0x18) & 0xFF) >= 0x30 && abs(inertia) < 0x280)
+			{
+				//Lock our controls for 30 frames (half a second)
+				moveLock = 30;
+				
+				//Slide down the slope, or fall off if very steep
+				if (((angle + 0x30) & 0xFF) >= 0x60)
+					status.inAir = true;
+				else if (((angle + 0x30) & 0xFF) >= 0x30)
+					inertia += 0x80;
+				else
+					inertia -= 0x80;
+			}
+		}
+		else
+		{
+			//Decrement moveLock every frame it's non-zero
+			moveLock--;
+		}
+	}
 }
 
 //Movement functions
@@ -1045,13 +1178,14 @@ void PLAYER::Update()
 				else
 				{
 					//The original uses the two bits for a jump table, but we can't do that because it'd be horrible
+					
+					//Standing / walking on ground
 					if (status.inBall == false && status.inAir == false)
 					{
-						//Standing / walking on ground
 						if (Spindash() && Jump())
 						{
 							//Handle slope gravity and our movement
-							//SlopeResist();
+							SlopeResist();
 							Move();
 							Roll();
 							
@@ -1067,40 +1201,12 @@ void PLAYER::Update()
 							
 							//Handle collision and falling off of slopes
 							//AnglePos();
-							//SlopeRepel();
+							SlopeRepel();
 						}
 					}
+					//In mid-air, falling
 					else if (status.inBall == false && status.inAir == true)
 					{
-						//In mid-air, falling
-					}
-					else if (status.inBall == true && status.inAir == false)
-					{
-						//Rolling on the ground
-						if (status.pinballMode || Jump())
-						{
-							//Handle slope gravity and our movement
-							RollSpeed();
-							
-							//Keep us in level bounds
-							LevelBound();
-							
-							//Move according to our velocity
-							xPosLong += xVel * 0x100;
-							if (status.reverseGravity)
-								yPosLong -= yVel * 0x100;
-							else
-								yPosLong += yVel * 0x100;
-							
-							//Handle collision and falling off of slopes
-							//AnglePos();
-							//SlopeRepel();
-						}
-					}
-					else if (status.inBall == true && status.inAir == true)
-					{
-						//Jumping or rolled off of a ledge
-						
 						//Handle our movement
 						JumpHeight();
 						ChgJumpDir();
@@ -1119,6 +1225,64 @@ void PLAYER::Update()
 						yVel += 0x38;
 						if (status.underwater)
 							yVel -= 0x28;
+						
+						//Handle our angle receding when we run / jump off of a ledge
+						JumpAngle();
+						
+						//Handle collision
+						//DoLevelCollision();
+					}
+					//Rolling on the ground
+					else if (status.inBall == true && status.inAir == false)
+					{
+						if (status.pinballMode || Jump())
+						{
+							//Handle slope gravity and our movement
+							RollRepel();
+							RollSpeed();
+							
+							//Keep us in level bounds
+							LevelBound();
+							
+							//Move according to our velocity
+							xPosLong += xVel * 0x100;
+							if (status.reverseGravity)
+								yPosLong -= yVel * 0x100;
+							else
+								yPosLong += yVel * 0x100;
+							
+							//Handle collision and falling off of slopes
+							//AnglePos();
+							SlopeRepel();
+						}
+					}
+					//Jumping or rolled off of a ledge
+					else if (status.inBall == true && status.inAir == true)
+					{
+						//Handle our movement
+						JumpHeight();
+						ChgJumpDir();
+						
+						//Keep us in level bounds
+						LevelBound();
+						
+						//Move according to our velocity
+						xPosLong += xVel * 0x100;
+						if (status.reverseGravity)
+							yPosLong -= yVel * 0x100;
+						else
+							yPosLong += yVel * 0x100;
+						
+						//Gravity (0x38 above water, 0x10 below water)
+						yVel += 0x38;
+						if (status.underwater)
+							yVel -= 0x28;
+						
+						//Handle our angle receding when we run / jump off of a ledge
+						JumpAngle();
+						
+						//Handle collision
+						//DoLevelCollision();
 					}
 				}
 				
