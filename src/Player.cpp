@@ -700,7 +700,6 @@ void PLAYER::JumpAbilities()
 		//status.rollJumping = false; //Also commented out because this would be awkward without any abilities
 		
 		//No ability code yet
-		yVel = -0x900;
 		
 		jumpAbility = 1;
 	}
