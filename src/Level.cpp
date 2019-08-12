@@ -8,6 +8,8 @@
 LEVELTABLE gLevelTable[] = {
 	//Green Hill Zone Act 1
 	{LEVELFORMAT_CHUNK128_SONIC2, "data/Level/GHZ/ghz1.lay", "data/Level/GHZ/ghz.chk", "data/Level/GHZ/ghz.nor", "data/Level/GHZ/ghz.alt", "data/Level/sonic1.can", "data/Level/sonic1.car", "data/Level/sonic1.ang", 0x50, 0x3B0},
+	//Spring Yard Zone Act 1
+	{LEVELFORMAT_CHUNK128_SONIC2, "data/Level/SYZ/syz1.lay", "data/Level/SYZ/syz.chk", "data/Level/SYZ/syz.nor", "data/Level/SYZ/syz.alt", "data/Level/sonic1.can", "data/Level/sonic1.car", "data/Level/sonic1.ang", 0x50, 0x3B0},
 };
 
 uint16_t gLevelLeftBoundary;

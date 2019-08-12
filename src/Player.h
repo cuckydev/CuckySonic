@@ -278,6 +278,18 @@ class PLAYER
 		PLAYER(const char *specPath, PLAYER *myFollow, int myController);
 		~PLAYER();
 		
+		uint8_t AngleIn(uint8_t angleSide, int16_t *distance, int16_t *distance2);
+		void CheckFloor(int16_t *distance, int16_t *distance2, uint8_t *angle);
+		
+		int16_t Angle(int16_t distance, int16_t distance2);
+		void AnglePos();
+		
+		void DoLevelCollision();
+		
+		void ResetOnFloor();
+		void ResetOnFloor2();
+		void ResetOnFloor3();
+		
 		void RecordPos();
 		
 		bool Spindash();

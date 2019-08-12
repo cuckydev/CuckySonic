@@ -186,6 +186,397 @@ PLAYER::~PLAYER()
 		delete mappings;
 }
 
+//Generic collision functions
+uint8_t PLAYER::AngleIn(uint8_t angleSide, int16_t *distance, int16_t *distance2)
+{
+	uint8_t outAngle = secondaryAngle;
+
+	if (*distance2 > *distance)
+	{
+		outAngle = primaryAngle;
+
+		int16_t temp = *distance; //Keep a copy because we're swapping the distances
+		*distance = *distance2;
+		*distance2 = temp;
+	}
+
+	//If the angle is a multi-side angled block, use our given angle side
+	if (outAngle & 1)
+		outAngle = angleSide;
+	return outAngle;
+}
+
+void PLAYER::CheckFloor(int16_t *distance, int16_t *distance2, uint8_t *angle)
+{
+	int16_t retDistance = FindFloor(x.pos + xRadius, y.pos + yRadius, topSolidLayer, false, &primaryAngle);
+	int16_t retDistance2 = FindFloor(x.pos - xRadius, y.pos + yRadius, topSolidLayer, false, &secondaryAngle);
+
+	uint8_t retAngle = AngleIn(0x00, &retDistance, &retDistance2);
+
+	if (distance != NULL)
+		*distance = retDistance;
+
+	if (distance2 != NULL)
+		*distance2 = retDistance2;
+
+	if (angle != NULL)
+		*angle = retAngle;
+}
+
+//Ground collision function
+int16_t PLAYER::Angle(int16_t distance, int16_t distance2)
+{
+	//Get which distance is closer and use that for our calculation purposes
+	int16_t outDistance = distance2;
+	uint8_t thisAngle = secondaryAngle;
+	
+	if (distance2 > distance)
+	{
+		thisAngle = distance2 > distance ? primaryAngle : secondaryAngle;
+		outDistance = distance;
+	}
+
+	//Invert angle 2 if the difference is negative
+	uint8_t angle2 = thisAngle - angle;
+	if (angle2 >= 0x80)
+		angle2 = -angle2;
+	
+	//If the angle's least significant bit is set (a tile that has different angles for each side), or the angle difference is greater than 0x20, use the angle of the face's side
+	if (thisAngle & 1 || angle2 >= 0x20)
+		thisAngle = (angle + 0x20) & 0xC0;
+
+	angle = thisAngle;
+	return outDistance;
+}
+
+void PLAYER::AnglePos()
+{
+	if (status.shouldNotFall)
+	{
+		//Default to just standing on flat ground if we're standing on an object or something
+		primaryAngle = 0;
+		secondaryAngle = 0;
+	}
+	else
+	{
+		//Set primary and secondary angle to 3
+		primaryAngle = 3;
+		secondaryAngle = 3;
+		
+		//Get the angle to use for determining our ground orientation (floor, wall, or ceiling)
+		uint8_t offAngle = angle;
+		if (((angle + 0x20) & 0xFF) >= 0x80)
+		{
+			if (angle >= 0x80)
+				--offAngle;
+			offAngle += 0x20;
+		}
+		else
+		{
+			if (angle >= 0x80)
+				++offAngle;
+			offAngle += 0x1F;
+		}
+		
+		//Handle our individual surface collisions
+		switch (offAngle & 0xC0)
+		{
+			case 0x00: //Floor
+			{
+				int16_t distance = FindFloor(x.pos + xRadius, y.pos + yRadius, topSolidLayer, false, &primaryAngle);
+				int16_t distance2 = FindFloor(x.pos - xRadius, y.pos + yRadius, topSolidLayer, false, &secondaryAngle);
+				int16_t nearestDifference = Angle(distance, distance2);
+				
+				if (nearestDifference < 0)
+				{
+					//I'm not sure why this checks for a specific range, if the distance is negative, it will be colliding with a floor for sure
+					if (nearestDifference >= -14)
+						y.pos += nearestDifference;
+				}
+				else if (nearestDifference > 0)
+				{
+					//Get how far we can clip down to the floor
+					uint8_t clipLength = abs(xVel / 0x100) + 4;
+					if (clipLength >= 14)
+						clipLength = 14;
+
+					if (nearestDifference > clipLength && !status.stickToConvex)
+					{
+						//If we're running off of a ledge, enter air state
+						status.inAir = true;
+						status.pushing = false;
+						nextAnim = PLAYERANIMATION_RUN;
+					}
+					else
+					{
+						//Move down to floor surface
+						y.pos += nearestDifference;
+					}
+				}
+				break;
+			}
+			
+			case 0x40: //Wall to the left of us
+			{
+				int16_t distance = FindWall(x.pos - yRadius, y.pos - xRadius, topSolidLayer, true, &primaryAngle);
+				int16_t distance2 = FindWall(x.pos - yRadius, y.pos + xRadius, topSolidLayer, true, &secondaryAngle);
+				int16_t nearestDifference = Angle(distance, distance2);
+				
+				if (nearestDifference < 0)
+				{
+					//I'm not sure why this checks for a specific range, if the distance is negative, it will be colliding with a floor for sure
+					if (nearestDifference >= -14)
+						x.pos -= nearestDifference;
+				}
+				else if (nearestDifference > 0)
+				{
+					//Get how far we can clip down to the floor
+					uint8_t clipLength = abs(yVel / 0x100) + 4;
+					if (clipLength >= 14)
+						clipLength = 14;
+
+					if (nearestDifference > clipLength && !status.stickToConvex)
+					{
+						//If we're running off of a ledge, enter air state
+						status.inAir = true;
+						status.pushing = false;
+						nextAnim = PLAYERANIMATION_RUN;
+					}
+					else
+					{
+						//Move down to floor surface
+						x.pos -= nearestDifference;
+					}
+				}
+				break;
+			}
+			
+			case 0x80: //Ceiling
+			{
+				int16_t distance = FindFloor(x.pos + xRadius, y.pos - yRadius, topSolidLayer, true, &primaryAngle);
+				int16_t distance2 = FindFloor(x.pos - xRadius, y.pos - yRadius, topSolidLayer, true, &secondaryAngle);
+				int16_t nearestDifference = Angle(distance, distance2);
+				
+				if (nearestDifference < 0)
+				{
+					//I'm not sure why this checks for a specific range, if the distance is negative, it will be colliding with a floor for sure
+					if (nearestDifference >= -14)
+						y.pos -= nearestDifference;
+				}
+				else if (nearestDifference > 0)
+				{
+					//Get how far we can clip down to the floor
+					uint8_t clipLength = abs(xVel / 0x100) + 4;
+					if (clipLength >= 14)
+						clipLength = 14;
+
+					if (nearestDifference > clipLength && !status.stickToConvex)
+					{
+						//If we're running off of a ledge, enter air state
+						status.inAir = true;
+						status.pushing = false;
+						nextAnim = PLAYERANIMATION_RUN;
+					}
+					else
+					{
+						//Move down to floor surface
+						y.pos -= nearestDifference;
+					}
+				}
+				break;
+			}
+			
+			case 0xC0: //Wall to the right of us
+			{
+				int16_t distance = FindWall(x.pos + yRadius, y.pos - xRadius, topSolidLayer, false, &primaryAngle);
+				int16_t distance2 = FindWall(x.pos + yRadius, y.pos + xRadius, topSolidLayer, false, &secondaryAngle);
+				int16_t nearestDifference = Angle(distance, distance2);
+				
+				if (nearestDifference < 0)
+				{
+					//I'm not sure why this checks for a specific range, if the distance is negative, it will be colliding with a floor for sure
+					if (nearestDifference >= -14)
+						x.pos += nearestDifference;
+				}
+				else if (nearestDifference > 0)
+				{
+					//Get how far we can clip down to the floor
+					uint8_t clipLength = abs(yVel / 0x100) + 4;
+					if (clipLength >= 14)
+						clipLength = 14;
+
+					if (nearestDifference > clipLength && !status.stickToConvex)
+					{
+						//If we're running off of a ledge, enter air state
+						status.inAir = true;
+						status.pushing = false;
+						nextAnim = PLAYERANIMATION_RUN;
+					}
+					else
+					{
+						//Move down to floor surface
+						x.pos += nearestDifference;
+					}
+				}
+				break;
+			}
+		}
+	}
+}
+
+//Air collision functions
+void PLAYER::DoLevelCollision()
+{
+	//Get the primary angle we're moving in
+	uint8_t moveAngle = GetAtan(xVel, yVel);
+	
+	switch ((moveAngle - 0x20) & 0xC0)
+	{
+		case 0x00: //Moving downwards
+		{
+			int16_t distance, distance2;
+			
+			//Check for collision with the floor
+			uint8_t floorAngle;
+			CheckFloor(&distance, &distance2, &floorAngle);
+			
+			//Are we touching the floor (and within clip length)
+			const int8_t clipLength = -((yVel / 0x100) + 8);
+			if (distance2 < 0 && (distance2 >= clipLength || distance >= clipLength))
+			{
+				y.pos += distance2;
+				angle = floorAngle;
+				ResetOnFloor();
+				
+				//Get our inertia from our global speeds
+				if ((angle + 0x20) & 0x40)
+				{
+					xVel = 0;
+					if (yVel > 0xFC0)
+						yVel = 0xFC0;
+
+					inertia = angle >= 0x80 ? -yVel : yVel;
+				}
+				else if ((angle + 0x10) & 0x20)
+				{
+					yVel /= 2;
+					inertia = angle >= 0x80 ? -yVel : yVel;
+				}
+				else
+				{
+					yVel = 0;
+					inertia = xVel;
+				}
+			}
+			break;
+		}
+		
+		case 0x40: //Moving to the left
+		{
+			int16_t distance;
+			
+			//Collide with the floor
+			if (yVel >= 0)
+			{
+				uint8_t floorAngle;
+				CheckFloor(NULL, &distance, &floorAngle);
+
+				if (distance < 0)
+				{
+					y.pos += distance;
+					angle = floorAngle;
+					ResetOnFloor();
+					yVel = 0;
+					inertia = xVel;
+				}
+			}
+			break;
+		}
+		
+		case 0xC0: //Moving to the right
+		{
+			int16_t distance;
+			
+			//Collide with the floor
+			if (yVel >= 0)
+			{
+				uint8_t angle;
+				CheckFloor(NULL, &distance, &angle);
+
+				if (distance < 0)
+				{
+					y.pos += distance;
+					angle = angle;
+					ResetOnFloor();
+					yVel = 0;
+					inertia = xVel;
+				}
+			}
+			break;
+		}
+	}
+}
+
+//Functions for landing on the ground
+void PLAYER::ResetOnFloor()
+{
+	if (status.pinballMode)
+	{
+		//Do not exit ball form if in pinball mode
+		ResetOnFloor3();
+	}
+	else
+	{
+		//Exit ball form
+		anim = PLAYERANIMATION_WALK;
+		ResetOnFloor2();
+	}
+}
+
+void PLAYER::ResetOnFloor2()
+{
+	//Keep track of our previous height
+	uint8_t oldYRadius = yRadius;
+	xRadius = defaultXRadius;
+	yRadius = defaultYRadius;
+	
+	if (status.inBall)
+	{
+		//Exit ball form
+		status.inBall = false;
+		anim = PLAYERANIMATION_WALK; //again
+		
+		//Shift up to ground level
+		uint8_t difference = yRadius - oldYRadius;
+		if (status.reverseGravity)
+			y.pos += difference;
+		else
+			y.pos -= difference;
+	}
+
+	ResetOnFloor3();
+}
+
+void PLAYER::ResetOnFloor3()
+{
+	//Exit airborne state
+	status.inAir = false;
+	status.pushing = false;
+	status.rollJumping = false;
+	status.jumping = false;
+	
+	//Chain_Bonus_counter = 0;
+	
+	//Clear flipping
+	flipAngle = 0;
+	flipTurned = 0;
+	flipsRemaining = 0;
+	
+	//Jump ability
+	jumpAbility = 0;
+	//TODO: Bubble shield and what-not
+}
+
 //Record our position in the records
 void PLAYER::RecordPos()
 {
@@ -296,7 +687,7 @@ bool PLAYER::Spindash()
 	
 	//Collide with the level (S3K has code to crush you against the foreground layer from the background here)
 	LevelBound();
-	//AnglePos();
+	AnglePos();
 	return false;
 }
 
@@ -309,6 +700,7 @@ void PLAYER::JumpAbilities()
 		//status.rollJumping = false; //Also commented out because this would be awkward without any abilities
 		
 		//No ability code yet
+		yVel = -0x900;
 		
 		jumpAbility = 1;
 	}
@@ -1204,7 +1596,7 @@ void PLAYER::Update()
 								yPosLong += yVel * 0x100;
 							
 							//Handle collision and falling off of slopes
-							//AnglePos();
+							AnglePos();
 							SlopeRepel();
 						}
 					}
@@ -1234,7 +1626,7 @@ void PLAYER::Update()
 						JumpAngle();
 						
 						//Handle collision
-						//DoLevelCollision();
+						DoLevelCollision();
 					}
 					//Rolling on the ground
 					else if (status.inBall == true && status.inAir == false)
@@ -1256,7 +1648,7 @@ void PLAYER::Update()
 								yPosLong += yVel * 0x100;
 							
 							//Handle collision and falling off of slopes
-							//AnglePos();
+							AnglePos();
 							SlopeRepel();
 						}
 					}
@@ -1286,7 +1678,7 @@ void PLAYER::Update()
 						JumpAngle();
 						
 						//Handle collision
-						//DoLevelCollision();
+						DoLevelCollision();
 					}
 				}
 				

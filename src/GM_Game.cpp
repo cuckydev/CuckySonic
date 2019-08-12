@@ -14,7 +14,7 @@ bool GM_Game(bool *noError)
 	PALCOLOUR blank;
 	SetPaletteColour(&blank, 0xFF, 0x00, 0xFF);
 	
-	//Load level (GHZ1 for testing)
+	//Load level (SYZ1 for testing)
 	gLevel = new LEVEL(0);
 	if (gLevel->fail != NULL)
 		return (*noError = false);
