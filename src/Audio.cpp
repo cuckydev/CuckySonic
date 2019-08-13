@@ -53,7 +53,7 @@ SOUND::SOUND(const char *path)
 	
 	//Build our audio CVT
 	SDL_AudioCVT wavCVT;
-	if (SDL_BuildAudioCVT(&wavCVT, wavSpec.format, wavSpec.channels, wavSpec.freq, AUDIO_F32, 2, AUDIO_FREQUENCY) < 0)
+	if (SDL_BuildAudioCVT(&wavCVT, wavSpec.format, wavSpec.channels, wavSpec.freq, AUDIO_F32, 2, wavSpec.freq) < 0)
 	{
 		Error(fail = SDL_GetError());
 		SDL_FreeWAV(wavBuffer);
@@ -85,7 +85,7 @@ SOUND::SOUND(const char *path)
 	
 	//Initialize other properties
 	sample = 0.0;
-	frequency = AUDIO_FREQUENCY;
+	frequency = wavSpec.freq;
 	volume = 1.0f;
 	volumeL = 1.0f;
 	volumeR = 1.0f;
