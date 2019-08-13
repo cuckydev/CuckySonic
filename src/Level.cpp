@@ -407,7 +407,7 @@ LEVEL::LEVEL(int id)
 	{
 		player[i] = new PLAYER("data/Sonic/sonic", follow, 0);
 		
-		if (player[i] == NULL)
+		if (player[i]->fail)
 		{
 			Error(fail = player[i]->fail);
 		

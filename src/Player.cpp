@@ -2,6 +2,7 @@
 
 #include "Player.h"
 #include "MathUtil.h"
+#include "Audio.h"
 #include "Path.h"
 #include "Log.h"
 #include "Error.h"
@@ -106,7 +107,9 @@ PLAYER::PLAYER(const char *specPath, PLAYER *myFollow, int myController)
 	}
 	
 	//Read properties from the specifications
-	GET_APPEND_PATH(plrSpecPath, specPath, ".psp");
+	GET_APPEND_PATH(plrSpecPathNG, specPath, ".psp");
+	GET_GLOBAL_PATH(plrSpecPath, plrSpecPathNG);
+	
 	SDL_RWops *playerSpec = SDL_RWFromFile(plrSpecPath, "rb");
 	
 	if (playerSpec == NULL)
@@ -910,7 +913,7 @@ bool PLAYER::Spindash()
 		{
 			//Play animation and sound
 			anim = PLAYERANIMATION_SPINDASH;
-			//PlaySound(SOUNDID_SPINDASH_REV);
+			PlaySound(SOUNDID_SPINDASH_REV);
 			
 			//Set spindash variables
 			spindashing = true;
@@ -957,7 +960,7 @@ bool PLAYER::Spindash()
 		//Actually go into the roll routine
 		status.inBall = true;
 		//spindashDust.anim = 0;
-		//PlaySound(SOUNDID_SPINDASH_RELEASE);
+		PlaySound(SOUNDID_SPINDASH_RELEASE);
 	}
 	//Charging spindash
 	else
@@ -980,7 +983,7 @@ bool PLAYER::Spindash()
 			//Restart the spindash animation and play the rev sound
 			anim = PLAYERANIMATION_SPINDASH;
 			nextAnim = PLAYERANIMATION_WALK;
-			//PlaySound(SOUNDID_SPINDASH_REV);
+			PlaySound(SOUNDID_SPINDASH_REV);
 			
 			//Increase our spindash counter
 			spindashCounter += 0x200;
@@ -1190,7 +1193,7 @@ bool PLAYER::Jump()
 			status.jumping = true;
 			status.stickToConvex = false;
 			
-			//PlaySound(SOUNDID_JUMP);
+			PlaySound(SOUNDID_JUMP);
 			
 			//Handle our collision and roll state
 			xRadius = defaultXRadius;
@@ -1343,7 +1346,7 @@ void PLAYER::MoveLeft()
 		//Do skid animation if on a floor and above 0x400 units per frame
 		if (((angle + 0x20) & 0xC0) == 0 && inertia >= 0x400)
 		{
-			//PlaySound(SOUNDID_SKID);
+			PlaySound(SOUNDID_SKID);
 			anim = PLAYERANIMATION_SKID;
 			status.xFlip = false;
 			
@@ -1392,7 +1395,7 @@ void PLAYER::MoveRight()
 		//Do skid animation if on a floor and above 0x400 units per frame
 		if (((angle + 0x20) & 0xC0) == 0 && inertia <= -0x400)
 		{
-			//PlaySound(SOUNDID_SKID);
+			PlaySound(SOUNDID_SKID);
 			anim = PLAYERANIMATION_SKID;
 			status.xFlip = true;
 			
@@ -1490,7 +1493,7 @@ void PLAYER::Roll()
 						y.pos += 5;
 					
 					//Play the sound
-					//PlaySound(SOUNDID_ROLL);
+					PlaySound(SOUNDID_ROLL);
 					
 					//Code that doesn't trigger (leftover from Sonic 1's S-tubes)
 					if (inertia == 0)

@@ -29,6 +29,7 @@ SOURCES = \
 	Render \
 	Event \
 	Input \
+	Audio \
 	MathUtil \
 	Fade \
 	Mappings \
