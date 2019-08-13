@@ -474,8 +474,6 @@ LEVEL::~LEVEL()
 
 void LEVEL::Update()
 {
-	collisionDebugPoint = 0;
-	
 	//Update players
 	for (int i = 0; i < PLAYERS; i++)
 		player[i]->Update();
@@ -528,11 +526,4 @@ void LEVEL::Draw()
 	//Draw players (we draw backwards, we want the leader to be drawn first)
 	for (int i = PLAYERS - 1; i >= 0; i--)
 		player[i]->Draw();
-	
-	//Draw collision debug
-	for (int i = 0; i < collisionDebugPoint; i++)
-	{
-		SDL_Rect quad = {collisionDebug[i][0] - 1 - camera->x, collisionDebug[i][1] - 1 - camera->y, 2, 2};
-		gSoftwareBuffer->DrawQuad(&quad, &tileTexture->loadedPalette->colour[4]);
-	}
 }

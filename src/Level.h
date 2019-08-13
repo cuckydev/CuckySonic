@@ -90,10 +90,6 @@ class LEVEL
 		PLAYER *player[PLAYERS];
 		CAMERA *camera;
 		
-		//Collision debug
-		int collisionDebug[0x80][2];
-		int collisionDebugPoint = 0;
-		
 	public:
 		LEVEL(int id);
 		~LEVEL();
