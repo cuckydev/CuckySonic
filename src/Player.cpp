@@ -273,6 +273,67 @@ int16_t PLAYER::CheckRightWallDist(int16_t xPos, int16_t yPos, COLLISIONLAYER la
 	return distance;
 }
 
+//Left and right ceiling distance functions
+int16_t PLAYER::CheckLeftCeilingDist(COLLISIONLAYER layer, uint8_t *outAngle)
+{
+	int16_t distance = FindWall(x.pos - yRadius, y.pos - xRadius, layer, true, &primaryAngle);
+	int16_t distance2 = FindWall(x.pos - yRadius, y.pos + xRadius, layer, true, &secondaryAngle);
+
+	uint8_t angle = AngleIn(0x40, &distance, &distance2);
+
+	if (outAngle)
+		*outAngle = angle;
+
+	return distance2;
+}
+
+int16_t PLAYER::CheckRightCeilingDist(COLLISIONLAYER layer, uint8_t *outAngle)
+{
+	int16_t distance = FindWall(x.pos + yRadius, y.pos - xRadius, layer, false, &primaryAngle);
+	int16_t distance2 = FindWall(x.pos + yRadius, y.pos + xRadius, layer, false, &secondaryAngle);
+
+	uint8_t angle = AngleIn(0xC0, &distance, &distance2);
+
+	if (outAngle)
+		*outAngle = angle;
+
+	return distance2;
+}
+
+//Calculate room on top of us
+int16_t PLAYER::CalcRoomOverHead(uint8_t upAngle)
+{
+	primaryAngle = upAngle;
+	secondaryAngle = upAngle;
+
+	int16_t distance;
+	switch ((upAngle + 0x20) & 0xC0)
+	{
+		case 0:
+		{
+			CheckFloor(NULL, &distance, NULL);
+			break;
+		}
+		case 0x40:
+		{
+			distance = CheckLeftCeilingDist(lrbSolidLayer, NULL);
+			break;
+		}
+		case 0x80:
+		{
+			distance = CheckCeiling(lrbSolidLayer, NULL);
+			break;
+		}
+		case 0xC0:
+		{
+			distance = CheckRightCeilingDist(lrbSolidLayer, NULL);
+			break;
+		}
+	}
+
+	return distance;
+}
+
 //Calculate room in front of us
 int16_t PLAYER::CalcRoomInFront(uint8_t moveAngle)
 {
@@ -673,7 +734,8 @@ void PLAYER::DoLevelCollision()
 		case 0x80: //Moving upwards
 		{
 			//Check for wall collisions
-			int16_t distance = CheckLeftWallDist(x.pos, y.pos, lrbSolidLayer, NULL);
+			int16_t distance;
+			distance = CheckLeftWallDist(x.pos, y.pos, lrbSolidLayer, NULL);
 			if (distance < 0)
 			{
 				x.pos -= distance;
@@ -1022,7 +1084,7 @@ void PLAYER::ChgJumpDir()
 			if (xVel < 0)
 				xVel = 0;
 		}
-		else
+		else if (drag < 0)
 		{
 			xVel -= drag;
 			if (xVel >= 0)
@@ -1095,7 +1157,7 @@ bool PLAYER::Jump()
 		headAngle -= 0x80;
 		
 		//Don't jump if under a low ceiling
-		//if (CalcRoomOverHead(headAngle) >= 6)
+		if (CalcRoomOverHead(headAngle) >= 6)
 		{
 			//Get the velocity of our jump
 			int16_t jumpVelocity;

@@ -288,6 +288,10 @@ class PLAYER
 		int16_t CheckLeftWallDist(int16_t xPos, int16_t yPos, COLLISIONLAYER layer, uint8_t *outAngle);
 		int16_t CheckRightWallDist(int16_t xPos, int16_t yPos, COLLISIONLAYER layer, uint8_t *outAngle);
 		
+		int16_t CheckLeftCeilingDist(COLLISIONLAYER layer, uint8_t *outAngle);
+		int16_t CheckRightCeilingDist(COLLISIONLAYER layer, uint8_t *outAngle);
+
+		int16_t CalcRoomOverHead(uint8_t upAngle);
 		int16_t CalcRoomInFront(uint8_t moveAngle);
 		
 		int16_t Angle(int16_t distance, int16_t distance2);

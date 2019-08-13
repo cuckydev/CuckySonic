@@ -75,6 +75,9 @@ int16_t FindFloor2(int16_t x, int16_t y, COLLISIONLAYER layer, bool flipped, uin
 
 int16_t FindFloor(int16_t x, int16_t y, COLLISIONLAYER layer, bool flipped, uint8_t *angle)
 {
+	gLevel->collisionDebug[gLevel->collisionDebugPoint][0] = x;
+	gLevel->collisionDebug[gLevel->collisionDebugPoint++][1] = y;
+	
 	//Flip our y-position if flipped
 	if (flipped)
 		y ^= 0xF;
@@ -184,6 +187,9 @@ int16_t FindWall2(int16_t x, int16_t y, COLLISIONLAYER layer, bool flipped, uint
 
 int16_t FindWall(int16_t x, int16_t y, COLLISIONLAYER layer, bool flipped, uint8_t *angle)
 {
+	gLevel->collisionDebug[gLevel->collisionDebugPoint][0] = x;
+	gLevel->collisionDebug[gLevel->collisionDebugPoint++][1] = y;
+	
 	//Flip our x-position if flipped
 	if (flipped)
 		x ^= 0xF;
