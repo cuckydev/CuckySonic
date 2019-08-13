@@ -501,7 +501,7 @@ void LEVEL::DynamicBoundaries()
 	{
 		//Move up to the boundary smoothly
 		if ((camera->y + SCREEN_HEIGHT) > gLevelBottomBoundary)
-			gLevelBottomBoundary2 = camera->y;
+			gLevelBottomBoundary2 = (camera->y + SCREEN_HEIGHT);
 		
 		//Move
 		gLevelBottomBoundary2 -= move;
