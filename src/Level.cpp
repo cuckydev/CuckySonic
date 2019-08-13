@@ -18,6 +18,7 @@ uint16_t gLevelLeftBoundary;
 uint16_t gLevelRightBoundary;
 uint16_t gLevelTopBoundary;
 uint16_t gLevelBottomBoundary;
+uint16_t gLevelBottomBoundary2;
 
 LEVEL::LEVEL(int id)
 {
@@ -28,7 +29,7 @@ LEVEL::LEVEL(int id)
 	if (id < 0)
 		Error(fail = "Invalid level ID given");
 	
-	LEVELTABLE *tableEntry = &gLevelTable[id];
+	LEVELTABLE *tableEntry = &gLevelTable[levelId = id];
 	
 	//Open our layout file
 	GET_GLOBAL_PATH(layoutPath, tableEntry->layoutPath);
@@ -393,10 +394,12 @@ LEVEL::LEVEL(int id)
 		case LEVELFORMAT_CHUNK128:
 			gLevelRightBoundary = layout.width * 128;
 			gLevelBottomBoundary = layout.height * 128;
+			gLevelBottomBoundary2 = gLevelBottomBoundary;
 			break;
 		default:
 			gLevelRightBoundary = 0x7FFF;
 			gLevelBottomBoundary = 0x7FFF;
+			gLevelBottomBoundary2 = gLevelBottomBoundary;
 			break;
 	}
 	
@@ -448,6 +451,10 @@ LEVEL::LEVEL(int id)
 		return;
 	}
 	
+	//Handle dynamic boundaries
+	DynamicBoundaries();
+	gLevelBottomBoundary2 = gLevelBottomBoundary;
+	
 	LOG(("Success!\n"));
 }
 
@@ -472,6 +479,44 @@ LEVEL::~LEVEL()
 	LOG(("Success!\n"));
 }
 
+void LEVEL::DynamicBoundaries()
+{
+	//Get our bottom boundary
+	switch (levelId)
+	{
+		case 0: //Green Hill Zone Act 1
+			if (camera->x < 0x1780)
+				gLevelBottomBoundary = 0x3E0;
+			else
+				gLevelBottomBoundary = 0x4E0;
+			break;
+		default:
+			break;
+	}
+	
+	//Move up/down to the boundary
+	int16_t move = 2;
+
+	if (gLevelBottomBoundary < gLevelBottomBoundary2)
+	{
+		//Move up to the boundary smoothly
+		if ((camera->y + SCREEN_HEIGHT) > gLevelBottomBoundary)
+			gLevelBottomBoundary2 = camera->y;
+		
+		//Move
+		gLevelBottomBoundary2 -= move;
+	}
+	else if (gLevelBottomBoundary > gLevelBottomBoundary2)
+	{
+		//Move faster if in mid-air
+		if ((camera->y + 8 + SCREEN_HEIGHT) >= gLevelBottomBoundary2 && player[0]->status.inAir)
+			move *= 4;
+		
+		//Move
+		gLevelBottomBoundary2 += move;
+	}
+}
+
 void LEVEL::Update()
 {
 	//Update players
@@ -480,6 +525,9 @@ void LEVEL::Update()
 	
 	//Update camera
 	camera->Track(player[0]);
+	
+	//Update level boundaries
+	DynamicBoundaries();
 }
 
 void LEVEL::Draw()

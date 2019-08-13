@@ -66,6 +66,6 @@ void CAMERA::Track(PLAYER *trackPlayer)
 		y = gLevelTopBoundary;
 	if (x > gLevelRightBoundary - SCREEN_WIDTH)
 		x = gLevelRightBoundary - SCREEN_WIDTH;
-	if (y > gLevelBottomBoundary - SCREEN_HEIGHT)
-		y = gLevelBottomBoundary - SCREEN_HEIGHT;
+	if (y > gLevelBottomBoundary2 - SCREEN_HEIGHT)
+		y = gLevelBottomBoundary2 - SCREEN_HEIGHT;
 }

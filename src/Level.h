@@ -5,6 +5,7 @@
 #include "Camera.h"
 
 #define PLAYERS 1
+#define OBJECTS 0x200
 
 enum LEVELFORMAT
 {
@@ -69,6 +70,9 @@ class LEVEL
 	public:
 		const char *fail;
 		
+		//Level ID
+		int levelId;
+		
 		//Tile texture
 		TEXTURE *tileTexture;
 		
@@ -94,6 +98,8 @@ class LEVEL
 		LEVEL(int id);
 		~LEVEL();
 		
+		void DynamicBoundaries();
+		
 		void Update();
 		void Draw();
 };
@@ -102,4 +108,6 @@ extern uint16_t gLevelLeftBoundary;
 extern uint16_t gLevelRightBoundary;
 extern uint16_t gLevelTopBoundary;
 extern uint16_t gLevelBottomBoundary;
+extern uint16_t gLevelBottomBoundary2;
+
 extern LEVELTABLE gLevelTable[];
