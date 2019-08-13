@@ -53,7 +53,7 @@ SOUND::SOUND(const char *path)
 	
 	//Build our audio CVT
 	SDL_AudioCVT wavCVT;
-	if (SDL_BuildAudioCVT(&wavCVT, wavSpec.format, wavSpec.channels, wavSpec.freq, AUDIO_F32, 1, AUDIO_FREQUENCY) < 0)
+	if (SDL_BuildAudioCVT(&wavCVT, wavSpec.format, wavSpec.channels, wavSpec.freq, AUDIO_F32, 2, AUDIO_FREQUENCY) < 0)
 	{
 		Error(fail = SDL_GetError());
 		SDL_FreeWAV(wavBuffer);
@@ -153,17 +153,21 @@ void SOUND::Mix(float *stream, int samples)
 	const double freqMove = frequency / AUDIO_FREQUENCY;
 	for (int i = 0; i < samples; i++)
 	{
-		//Get the in-between sample this is (linear interpolation)
-		const float sample1 = buffer[(int)sample];
-		const float sample2 = (((int)sample + 1) >= size) ? 0 : buffer[(int)sample + 1];
+		float *channelVolume = &volumeL;
 		
-		//Interpolate sample
-		const float subPos = (float)fmod(sample, 1.0);
-		const float sampleOut = sample1 + (sample2 - sample1) * subPos;
+		for (int channel = 0; channel < 2; channel++)
+		{
+			//Get the in-between sample this is (linear interpolation)
+			const float sample1 = buffer[(int)sample * 2 + channel];
+			const float sample2 = (((int)sample + 1) >= size) ? 0 : buffer[(int)sample * 2 + channel + 1];
+			
+			//Interpolate sample
+			const float subPos = (float)fmod(sample, 1.0);
+			const float sampleOut = sample1 + (sample2 - sample1) * subPos;
 
-		//Mix
-		*stream++ += sampleOut * volume * volumeL;
-		*stream++ += sampleOut * volume * volumeR;
+			//Mix
+			*stream++ += sampleOut * volume * (*channelVolume++);
+		}
 
 		//Increment position
 		sample += freqMove;
