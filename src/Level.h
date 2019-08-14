@@ -2,6 +2,7 @@
 #include <stdint.h>
 #include "Render.h"
 #include "Player.h"
+#include "Object.h"
 #include "Camera.h"
 
 #define PLAYERS 1

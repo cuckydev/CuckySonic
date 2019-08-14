@@ -29,6 +29,8 @@ SOUND *sounds = NULL;
 
 SOUND::SOUND(const char *path)
 {
+	LOG(("Creating a sound from %s... ", path));
+	
 	//Wait for audio device to be finished and lock it
 	SDL_LockAudioDevice(audioDevice);
 	
@@ -96,6 +98,8 @@ SOUND::SOUND(const char *path)
 	
 	//Resume audio device
 	SDL_UnlockAudioDevice(audioDevice);
+	
+	LOG(("Success!\n"));
 }
 
 SOUND::~SOUND()
@@ -235,9 +239,9 @@ bool LoadAllSoundEffects()
 //Subsystem functions
 bool InitializeAudio()
 {
-	LOG(("Initializing audio... "));
+	LOG(("Initializing audio...\n"));
 	
-	//Initialize our audio device
+	//Open our audio device
 	SDL_AudioSpec want;
 	want.freq = AUDIO_FREQUENCY;
 	want.samples = AUDIO_SAMPLES;

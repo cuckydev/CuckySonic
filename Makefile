@@ -5,10 +5,6 @@ ifeq ($(RELEASE), 1)
 else
 	CXXFLAGS = -O0 -g -DDEBUG
 	FILENAME_DEF = debug
-	
-	ifeq ($(LEAKCHECK), 1)
-		CXXFLAGS += -DLEAKCHECK -include stb_leakcheck.h
-	endif
 endif
 
 FILENAME ?= $(FILENAME_DEF)
@@ -18,7 +14,7 @@ ifeq ($(CONSOLE), 1)
 endif
 
 #CXX flags and libraries
-CXXFLAGS += `pkg-config --cflags sdl2` -Wall -Wextra -pedantic -static
+CXXFLAGS += `pkg-config --cflags sdl2` -Wall -Wextra -pedantic -Wformat-overflow=0 -static
 LIBS += `pkg-config --libs sdl2 --static`
 
 #Sources to compile
