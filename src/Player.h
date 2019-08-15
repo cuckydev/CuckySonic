@@ -331,6 +331,7 @@ class PLAYER
 		void MoveRight();
 		void Move();
 		
+		void ChkRoll();
 		void Roll();
 		void RollLeft();
 		void RollRight();

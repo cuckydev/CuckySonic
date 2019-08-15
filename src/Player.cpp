@@ -1581,6 +1581,31 @@ void PLAYER::Move()
 }
 
 //Rolling functions
+void PLAYER::ChkRoll()
+{
+	if (!status.inBall)
+	{
+		//Enter ball state
+		status.inBall = true;
+		xRadius = rollXRadius;
+		yRadius = rollYRadius;
+		anim = PLAYERANIMATION_ROLL;
+		
+		//This is supposed to keep us on the ground, but when we're on a ceiling, it does... not that
+		if (status.reverseGravity)
+			y.pos -= 5;
+		else
+			y.pos += 5;
+		
+		//Play the sound
+		PlaySound(SOUNDID_ROLL);
+		
+		//Code that doesn't trigger (leftover from Sonic 1's S-tubes)
+		if (inertia == 0)
+			inertia = 0x200;
+	}
+}
+
 void PLAYER::Roll()
 {
 	if (!controlHeld.left && !controlHeld.right)
@@ -1588,35 +1613,9 @@ void PLAYER::Roll()
 		if (controlHeld.down)
 		{
 			if (abs(inertia) >= 0x100)
-			{
-				//Roll
-				if (!status.inBall)
-				{
-					//Enter ball state
-					status.inBall = true;
-					xRadius = rollXRadius;
-					yRadius = rollYRadius;
-					anim = PLAYERANIMATION_ROLL;
-					
-					//This is supposed to keep us on the ground, but when we're on a ceiling, it does... not that
-					if (status.reverseGravity)
-						y.pos -= 5;
-					else
-						y.pos += 5;
-					
-					//Play the sound
-					PlaySound(SOUNDID_ROLL);
-					
-					//Code that doesn't trigger (leftover from Sonic 1's S-tubes)
-					if (inertia == 0)
-						inertia = 0x200;
-				}
-			}
+				PLAYER::ChkRoll();
 			else
-			{
-				//Duck
 				anim = PLAYERANIMATION_DUCK;
-			}
 		}
 		else if (anim == PLAYERANIMATION_DUCK)
 		{

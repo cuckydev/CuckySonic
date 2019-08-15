@@ -113,7 +113,7 @@ class LEVEL
 		LEVEL(int id);
 		~LEVEL();
 		
-		void DynamicBoundaries();
+		void DynamicEvents();
 		
 		void Update();
 		void Draw();

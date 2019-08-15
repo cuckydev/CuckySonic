@@ -603,8 +603,8 @@ LEVEL::LEVEL(int id)
 		return;
 	}
 	
-	//Handle dynamic boundaries
-	DynamicBoundaries();
+	//Handle dynamic events
+	DynamicEvents();
 	bottomBoundary2 = bottomBoundary;
 	
 	LOG(("Success!\n"));
@@ -641,16 +641,34 @@ LEVEL::~LEVEL()
 	LOG(("Success!\n"));
 }
 
-void LEVEL::DynamicBoundaries()
+void LEVEL::DynamicEvents()
 {
 	//Get our bottom boundary
 	switch (levelId)
 	{
-		case 0: //Green Hill Zone Act 1
-			if (camera->x < 0x1780)
-				bottomBoundary = 0x3E0;
-			else
-				bottomBoundary = 0x4E0;
+		case 0: //Green Hill Zone
+			if (levelId == 0)
+			{
+				//Update boundaries (GHZ1)
+				if (camera->x < 0x1780)
+					bottomBoundary = 0x3E0;
+				else
+					bottomBoundary = 0x4E0;
+			}
+			
+			//Handle S-tube force rolling (temp)
+			for (int i = 0; i < PLAYERS; i++)
+			{
+				uint16_t chunk = layout.foreground[(player[i]->y.pos / 128) * layout.width + (player[i]->x.pos / 128)];
+				if (chunk >= 0x75 && chunk <= 0x7C)
+				{
+					if (!player[i]->status.pinballMode)
+						player[i]->ChkRoll();
+					player[i]->status.pinballMode = true;
+				}
+				else
+					player[i]->status.pinballMode = false;
+			}
 			break;
 		default:
 			break;
@@ -692,8 +710,8 @@ void LEVEL::Update()
 	//Update camera
 	camera->Track(this, player[0]);
 	
-	//Update level boundaries
-	DynamicBoundaries();
+	//Update level dynamic events
+	DynamicEvents();
 }
 
 void LEVEL::Draw()
