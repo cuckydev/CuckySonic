@@ -6,6 +6,7 @@
 #include "Render.h"
 #include "Fade.h"
 #include "Input.h"
+#include "Audio.h"
 
 #define SPLASH_TIME 150
 
@@ -36,6 +37,12 @@ bool GM_Splash(bool *noError)
 			PaletteFadeOutToBlack(splashTexture->loadedPalette);
 		else if (gController[0].held.a || gController[0].held.b || gController[0].held.c)
 			frame = SPLASH_TIME - FADE_TIME; //Skip splash screen if ABC is pressed
+		
+		if (gController[0].press.start && gDebugEnabled == false)
+		{
+			PlaySound(SOUNDID_JUMP);
+			gDebugEnabled = true;
+		}
 		
 		//Render our splash texture
 		SDL_Rect src = {0, 0, splashTexture->width, splashTexture->height};

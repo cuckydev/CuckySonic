@@ -93,6 +93,7 @@ class LEVEL
 		
 		//Players and objects
 		PLAYER *player[PLAYERS];
+		OBJECT *object[OBJECTS];
 		CAMERA *camera;
 		
 	public:

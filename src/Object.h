@@ -1,4 +1,9 @@
 #pragma once
+#include <stdint.h>
+#include "Render.h"
+#include "Mappings.h"
+#include "LevelCollision.h"
+
 class OBJECT
 {
 	public:
@@ -6,7 +11,7 @@ class OBJECT
 		const char *fail;
 		
 		//Object type
-		int objectType;
+		int type;
 		
 		//Rendering stuff
 		struct
@@ -20,6 +25,8 @@ class OBJECT
 			bool bit6 : 1;
 			bool onScreen : 1;
 		} renderFlags;
+		
+		bool doRender;
 		
 		//Our texture and mappings
 		TEXTURE *texture;
@@ -104,7 +111,7 @@ class OBJECT
 		uint8_t subtype;			//Object sub-type
 		uint8_t respawnIndex;		//Index of this object in the respawn table, this is to not respawn unloaded enemies / monitors
 		
-		uint8_t angle;		//Angle
+		uint8_t angle;	//Angle
 		void *parent;	//Our parent object or player
 		
 		//Our collision layers
@@ -123,7 +130,7 @@ class OBJECT
 		};
 		
 	public:
-		OBJECT(int type);
+		OBJECT(int objectType, uint8_t objectSubtype);
 		~OBJECT();
 		
 		void Update();

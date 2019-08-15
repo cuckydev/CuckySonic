@@ -86,6 +86,8 @@ class PLAYER
 			bool onScreen : 1;
 		} renderFlags;
 		
+		bool doRender;
+		
 		//Our texture and mappings
 		TEXTURE *texture;
 		MAPPINGS *mappings;
@@ -177,6 +179,7 @@ class PLAYER
 			bool pinballMode : 1;		//If set, the player is forced to be rolling constantly (S-tubes, Casino Night things)
 			bool stickToConvex : 1;		//If set, the collision will never detect us as running off of a ledge, or when we would normally detach from a ramp when going too fast (the wheel glitch from Carnival Night)
 			bool reverseGravity : 1;	//If set, gravity is reversed (No, really?)
+			bool windTunnel : 1;		//Inside a wind tunnel (Labyrinth Zone, Hydrocity)
 		} status;
 		
 		//Items we have
@@ -243,7 +246,10 @@ class PLAYER
 		bool super;
 		
 		//In debug flag
-		bool debug;
+		uint16_t debug;
+		int debugAccel;
+		uint8_t debugSpeed;
+		int debugObject;
 		
 		//Character type id (ex. Sonic, Tails, Knuckles, or anything else)
 		CHARACTERTYPE characterType;
@@ -279,8 +285,8 @@ class PLAYER
 		~PLAYER();
 		
 		uint8_t AngleIn(uint8_t angleSide, int16_t *distance, int16_t *distance2);
-		void CheckFloor(int16_t *distance, int16_t *distance2, uint8_t *outAngle);
-		int16_t CheckCeiling(COLLISIONLAYER layer, uint8_t *outAngle);
+		void CheckFloor(COLLISIONLAYER layer, int16_t *distance, int16_t *distance2, uint8_t *outAngle);
+		void CheckCeiling(COLLISIONLAYER layer, int16_t *distance, int16_t *distance2, uint8_t *outAngle);
 		
 		uint8_t AngleSide(uint8_t angleSide);
 		int16_t CheckFloorDist(int16_t xPos, int16_t yPos, COLLISIONLAYER layer, uint8_t *outAngle);
@@ -334,6 +340,9 @@ class PLAYER
 		void Animate();
 		
 		void Update();
-		
 		void Draw();
+		
+		void RestoreStateDebug();
+		void DebugControl();
+		void DebugMode();
 };

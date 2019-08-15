@@ -5,6 +5,7 @@
 
 #include "SDL_events.h"
 
+bool gDebugEnabled = false;
 GAMEMODE gGameMode;
 
 bool EnterGameLoop()
@@ -18,7 +19,6 @@ bool EnterGameLoop()
 	
 	while (noExit)
 	{
-		LOG(("%d\n", (int)gGameMode));
 		switch (gGameMode)
 		{
 			case GAMEMODE_SPLASH:

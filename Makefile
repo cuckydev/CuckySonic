@@ -14,7 +14,7 @@ ifeq ($(CONSOLE), 1)
 endif
 
 #CXX flags and libraries
-CXXFLAGS += `pkg-config --cflags sdl2` -Wall -Wextra -pedantic -Wformat-overflow=0 -static
+CXXFLAGS += `pkg-config --cflags sdl2` -MMD -MP -MF -Wall -Wextra -pedantic -Wformat-overflow=0 -static
 LIBS += `pkg-config --libs sdl2 --static`
 
 #Sources to compile
@@ -36,6 +36,7 @@ SOURCES = \
 	GM_Title \
 	GM_Game \
 	Player \
+	Object \
 	Camera \
 
 #What to compile
@@ -56,6 +57,8 @@ obj/$(FILENAME)/%.o: src/%.cpp
 	@echo Compiling $<
 	@$(CXX) $(CXXFLAGS) $< -o $@ -c
 	@echo Compiled!
+	
+include $(wildcards $(DEPENDENCIES))
 
 #Remove all our compiled objects
 clean:

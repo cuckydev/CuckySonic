@@ -432,6 +432,8 @@ LEVEL::LEVEL(int id)
 		follow = player[i];
 	}
 	
+	//Load our objects
+	
 	//Create our camera
 	camera = new CAMERA(player[0]);
 	if (camera == NULL)

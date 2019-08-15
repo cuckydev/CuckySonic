@@ -209,10 +209,10 @@ uint8_t PLAYER::AngleIn(uint8_t angleSide, int16_t *distance, int16_t *distance2
 	return outAngle;
 }
 
-void PLAYER::CheckFloor(int16_t *distance, int16_t *distance2, uint8_t *outAngle)
+void PLAYER::CheckFloor(COLLISIONLAYER layer, int16_t *distance, int16_t *distance2, uint8_t *outAngle)
 {
-	int16_t retDistance = FindFloor(x.pos + xRadius, y.pos + yRadius, topSolidLayer, false, &primaryAngle);
-	int16_t retDistance2 = FindFloor(x.pos - xRadius, y.pos + yRadius, topSolidLayer, false, &secondaryAngle);
+	int16_t retDistance = FindFloor(x.pos + xRadius, y.pos + yRadius, layer, false, &primaryAngle);
+	int16_t retDistance2 = FindFloor(x.pos - xRadius, y.pos + yRadius, layer, false, &secondaryAngle);
 
 	uint8_t retAngle = AngleIn(0x00, &retDistance, &retDistance2);
 
@@ -226,16 +226,21 @@ void PLAYER::CheckFloor(int16_t *distance, int16_t *distance2, uint8_t *outAngle
 		*outAngle = retAngle;
 }
 
-int16_t PLAYER::CheckCeiling(COLLISIONLAYER layer, uint8_t *outAngle)
+void PLAYER::CheckCeiling(COLLISIONLAYER layer, int16_t *distance, int16_t *distance2, uint8_t *outAngle)
 {
 	int16_t retDistance = FindFloor(x.pos + xRadius, y.pos - yRadius, layer, true, &primaryAngle);
 	int16_t retDistance2 = FindFloor(x.pos - xRadius, y.pos - yRadius, layer, true, &secondaryAngle);
 
 	uint8_t retAngle = AngleIn(0x80, &retDistance, &retDistance2);
 
+	if (distance != NULL)
+		*distance = retDistance;
+
+	if (distance2 != NULL)
+		*distance2 = retDistance2;
+	
 	if (outAngle != NULL)
 		*outAngle = retAngle;
-	return retDistance2;
 }
 
 //Get distance functions
@@ -314,7 +319,7 @@ int16_t PLAYER::CalcRoomOverHead(uint8_t upAngle)
 	{
 		case 0:
 		{
-			CheckFloor(NULL, &distance, NULL);
+			CheckFloor(topSolidLayer, NULL, &distance, NULL);
 			break;
 		}
 		case 0x40:
@@ -324,7 +329,7 @@ int16_t PLAYER::CalcRoomOverHead(uint8_t upAngle)
 		}
 		case 0x80:
 		{
-			distance = CheckCeiling(lrbSolidLayer, NULL);
+			CheckCeiling(lrbSolidLayer, NULL, &distance, NULL);
 			break;
 		}
 		case 0xC0:
@@ -413,6 +418,11 @@ int16_t PLAYER::Angle(int16_t distance, int16_t distance2)
 
 void PLAYER::AnglePos()
 {
+	//Invert angle if gravity is reversed
+	bool reverseGravity = status.reverseGravity;
+	if (reverseGravity)
+		angle = -(angle + 0x40) - 0x40;
+	
 	if (status.shouldNotFall)
 	{
 		//Default to just standing on flat ground if we're standing on an object or something
@@ -584,6 +594,10 @@ void PLAYER::AnglePos()
 			}
 		}
 	}
+	
+	//Revert angle if gravity is reversed
+	if (reverseGravity)
+		angle = -(angle + 0x40) - 0x40;
 }
 
 void PLAYER::CheckWallsOnGround()
@@ -644,6 +658,7 @@ void PLAYER::DoLevelCollision()
 			distance = CheckLeftWallDist(x.pos, y.pos, lrbSolidLayer, NULL);
 			if (distance < 0)
 			{
+				//Clip out and stop our velocity
 				x.pos -= distance;
 				xVel = 0;
 			}
@@ -651,25 +666,44 @@ void PLAYER::DoLevelCollision()
 			distance = CheckRightWallDist(x.pos, y.pos, lrbSolidLayer, NULL);
 			if (distance < 0)
 			{
+				//Clip out and stop our velocity
 				x.pos += distance;
 				xVel = 0;
 			}
 			
 			//Check for collision with the floor
 			uint8_t floorAngle;
-			CheckFloor(&distance, &distance2, &floorAngle);
+			
+			if (!status.reverseGravity)
+			{
+				CheckFloor(topSolidLayer, &distance, &distance2, &floorAngle);
+			}
+			else
+			{
+				CheckCeiling(lrbSolidLayer, &distance, &distance2, &floorAngle);
+				floorAngle = -(floorAngle + 0x40) - 0x40;
+			}
 			
 			//Are we touching the floor (and within clip length)
 			const int8_t clipLength = -((yVel / 0x100) + 8);
 			if (distance2 < 0 && (distance2 >= clipLength || distance >= clipLength))
 			{
-				y.pos += distance2;
+				//Inherit the floor's angle
 				angle = floorAngle;
+				
+				//Clip out of floor
+				if (!status.reverseGravity)
+					y.pos += distance2;
+				else
+					y.pos -= distance2;
+				
+				//Land on floor
 				ResetOnFloor();
 				
 				//Get our inertia from our global speeds
 				if ((angle + 0x20) & 0x40)
 				{
+					//If floor is greater than 45 degrees, use our full vertical velocity (capped at 0xFC0)
 					xVel = 0;
 					if (yVel > 0xFC0)
 						yVel = 0xFC0;
@@ -678,11 +712,13 @@ void PLAYER::DoLevelCollision()
 				}
 				else if ((angle + 0x10) & 0x20)
 				{
+					//If floor is greater than 22.5 degrees, use our halved vertical velocity
 					yVel /= 2;
 					inertia = angle >= 0x80 ? -yVel : yVel;
 				}
 				else
 				{
+					//If floor is less than 22.5 degrees, use our horizontal velocity
 					yVel = 0;
 					inertia = xVel;
 				}
@@ -692,42 +728,87 @@ void PLAYER::DoLevelCollision()
 		
 		case 0x40: //Moving to the left
 		{
-			//Collide with walls
+			//Collide with walls to the left of us
 			int16_t distance = CheckLeftWallDist(x.pos, y.pos, lrbSolidLayer, NULL);
 
 			if (distance < 0)
 			{
+				//Clip out of the wall
 				x.pos -= distance;
+				
+				//Stop our velocity
 				xVel = 0;
-				inertia = yVel;
+				inertia = yVel; //This affects walk / run animations to make them usually appear slower
 			}
 			else
 			{
 				//Collide with ceilings
-				distance = CheckCeiling(lrbSolidLayer, NULL);
-				
-				if (distance < 0)
+				if (!status.reverseGravity)
 				{
-					y.pos -= distance;
-					if (yVel < 0)
-						yVel = 0;
+					CheckCeiling(topSolidLayer, NULL, &distance, NULL);
 				}
 				else
 				{
-					if (yVel >= 0)
+					CheckFloor(lrbSolidLayer, NULL, &distance, NULL);
+				}
+				
+				if (distance < 0)
+				{
+					if (distance > -14)
 					{
-						//Collide with the floor
-						uint8_t floorAngle;
-						CheckFloor(NULL, &distance, &floorAngle);
-
+						//Clip out of ceiling
+						if (!status.reverseGravity)
+							y.pos -= distance;
+						else
+							y.pos += distance;
+						
+						//Stop our vertical velocity
+						if (yVel < 0)
+							yVel = 0;
+					}
+					else
+					{
+						//Collide with walls to the right?
+						int16_t distance = CheckRightWallDist(x.pos, y.pos, lrbSolidLayer, NULL);
+						
 						if (distance < 0)
 						{
-							y.pos += distance;
-							angle = floorAngle;
-							ResetOnFloor();
-							yVel = 0;
-							inertia = xVel;
+							x.pos += distance;
+							xVel = 0;
 						}
+					}
+				}
+				else if (status.windTunnel || yVel >= 0)
+				{
+					//Collide with the floor
+					uint8_t floorAngle;
+					if (!status.reverseGravity)
+					{
+						CheckFloor(topSolidLayer, NULL, &distance, &floorAngle);
+					}
+					else
+					{
+						CheckCeiling(lrbSolidLayer, NULL, &distance, &floorAngle);
+						floorAngle = -(floorAngle + 0x40) - 0x40;
+					}
+					
+					if (distance < 0)
+					{
+						//Clip out of floor
+						if (!status.reverseGravity)
+							y.pos += distance;
+						else
+							y.pos -= distance;
+						
+						//Inherit floor's angle
+						angle = floorAngle;
+						
+						//Inherit horizontal velocity
+						yVel = 0;
+						inertia = xVel;
+						
+						//Land on floor
+						ResetOnFloor();
 					}
 				}
 			}
@@ -741,6 +822,7 @@ void PLAYER::DoLevelCollision()
 			distance = CheckLeftWallDist(x.pos, y.pos, lrbSolidLayer, NULL);
 			if (distance < 0)
 			{
+				//Clip out of the wall and stop our velocity
 				x.pos -= distance;
 				xVel = 0;
 			}
@@ -748,23 +830,35 @@ void PLAYER::DoLevelCollision()
 			distance = CheckRightWallDist(x.pos, y.pos, lrbSolidLayer, NULL);
 			if (distance < 0)
 			{
+				//Clip out of the wall and stop our velocity
 				x.pos += distance;
 				xVel = 0;
 			}
 			
-			//Check for collision with the floor
+			//Check for collision with ceilings
 			uint8_t ceilingAngle;
-			distance = CheckCeiling(lrbSolidLayer, &ceilingAngle);
+			if (!status.reverseGravity)
+			{
+				CheckCeiling(topSolidLayer, NULL, &distance, &ceilingAngle);
+			}
+			else
+			{
+				CheckFloor(lrbSolidLayer, NULL, &distance, &ceilingAngle);
+				ceilingAngle = -(ceilingAngle + 0x40) - 0x40;
+			}
 			
 			if (distance < 0)
 			{
 				//Clip out of ceiling
-				y.pos -= distance;
+				if (status.reverseGravity)
+					y.pos -= distance;
+				else
+					y.pos += distance;
 				
-				//Are we going to land and walk on this ceiling?
+				//If ceiling is less than 135 degrees, land on it, otherwise be stopped by it
 				if (((ceilingAngle + 0x20) & 0x40) == 0)
 				{
-					//Hault velocity
+					//Stop our vertical velocity
 					yVel = 0;
 				}
 				else
@@ -785,37 +879,68 @@ void PLAYER::DoLevelCollision()
 
 			if (distance < 0)
 			{
+				//Clip out of the wall
 				x.pos += distance;
+				
+				//Stop our velocity
 				xVel = 0;
-				inertia = yVel;
+				inertia = yVel; //This affects walk / run animations to make them usually appear slower
 			}
 			else
 			{
 				//Collide with ceilings
-				distance = CheckCeiling(lrbSolidLayer, NULL);
-				
-				if (distance < 0)
+				if (!status.reverseGravity)
 				{
-					y.pos -= distance;
-					if (yVel < 0)
-						yVel = 0;
+					CheckCeiling(topSolidLayer, NULL, &distance, NULL);
 				}
 				else
 				{
-					if (yVel >= 0)
+					CheckFloor(lrbSolidLayer, NULL, &distance, NULL);
+				}
+				
+				if (distance < 0)
+				{
+					//Clip out of ceiling (NOTE: There's no "> -14" check here, unlike moving left)
+					if (!status.reverseGravity)
+						y.pos -= distance;
+					else
+						y.pos += distance;
+					
+					//Stop our vertical velocity
+					if (yVel < 0)
+						yVel = 0;
+				}
+				else if (status.windTunnel || yVel >= 0)
+				{
+					//Collide with the floor
+					uint8_t floorAngle;
+					if (!status.reverseGravity)
 					{
-						//Collide with the floor
-						uint8_t floorAngle;
-						CheckFloor(NULL, &distance, &floorAngle);
-
-						if (distance < 0)
-						{
+						CheckFloor(topSolidLayer, NULL, &distance, &floorAngle);
+					}
+					else
+					{
+						CheckCeiling(lrbSolidLayer, NULL, &distance, &floorAngle);
+						floorAngle = -(floorAngle + 0x40) - 0x40;
+					}
+					
+					if (distance < 0)
+					{
+						//Clip out of floor
+						if (!status.reverseGravity)
 							y.pos += distance;
-							angle = floorAngle;
-							ResetOnFloor();
-							yVel = 0;
-							inertia = xVel;
-						}
+						else
+							y.pos -= distance;
+						
+						//Inherit floor's angle
+						angle = floorAngle;
+						
+						//Inherit horizontal velocity
+						yVel = 0;
+						inertia = xVel;
+						
+						//Land on floor
+						ResetOnFloor();
 					}
 				}
 			}
@@ -1464,6 +1589,12 @@ void PLAYER::Move()
 	xVel = (cos * inertia) / 0x100;
 	yVel = (sin * inertia) / 0x100;
 	
+	//Cap our global horizontal speed
+	if (xVel <= -0x1000)
+		xVel = -0x1000;
+	if (xVel >= 0x1000)
+		xVel = 0x1000;
+	
 	//Collide with walls
 	CheckWallsOnGround();
 }
@@ -1605,7 +1736,7 @@ void PLAYER::RollSpeed()
 	xVel = (cos * inertia) / 0x100;
 	yVel = (sin * inertia) / 0x100;
 	
-	//Cap our global horizontal speed for some reason
+	//Cap our global horizontal speed
 	if (xVel <= -0x1000)
 		xVel = -0x1000;
 	if (xVel >= 0x1000)
@@ -1859,43 +1990,82 @@ void PLAYER::Animate()
 //Update
 void PLAYER::Update()
 {
-	if (debug)
+	switch (debug & 0xFF)
 	{
-		//Debug mode (UNIMPLEMENTED)
-		debug = false;
-	}
-	else
-	{
-		//Run code
-		switch (routine)
-		{
-			case PLAYERROUTINE_CONTROL:
-				
-				//Copy the given controller's inputs if not locked
-				if (!controlLock)
-				{
-					controlHeld = gController[controller].held;
-					controlPress = gController[controller].press;
-				}
-				
-				if (objectControl.disableOurMovement)
-				{
-					//Enable our jump abilities
-					jumpAbility = 0;
-				}
-				else
-				{
-					//The original uses the two bits for a jump table, but we can't do that because it'd be horrible
+		case 0:
+			//Run main player code
+			switch (routine)
+			{
+				case PLAYERROUTINE_CONTROL:
+					//Handle our debug buttons
+					if (gDebugEnabled && controller == 0)
+					{
+						//Toggle our reverse gravity
+						if (gController[controller].press.a)
+							status.reverseGravity ^= 1;
+						
+						//Enable debug mode
+						if (gController[controller].press.b)
+						{
+							//Unlock controls
+							controlLock = false;
+							
+							//Enter the debug mode
+							if (gController[controller].held.c)
+								debug = 2; //Mapping tester
+							else
+								debug = 1; //Object placement
+							return;
+						}
+					}
 					
-					//Standing / walking on ground
-					if (status.inBall == false && status.inAir == false)
+					//Copy the given controller's inputs if not locked
+					if (!controlLock)
 					{
-						if (Spindash() && Jump())
+						controlHeld = gController[controller].held;
+						controlPress = gController[controller].press;
+					}
+					
+					if (objectControl.disableOurMovement)
+					{
+						//Enable our jump abilities
+						jumpAbility = 0;
+					}
+					else
+					{
+						//The original uses the two bits for a jump table, but we can't do that because it'd be horrible
+						
+						//Standing / walking on ground
+						if (status.inBall == false && status.inAir == false)
 						{
-							//Handle slope gravity and our movement
-							SlopeResist();
-							Move();
-							Roll();
+							if (Spindash() && Jump())
+							{
+								//Handle slope gravity and our movement
+								SlopeResist();
+								Move();
+								Roll();
+								
+								//Keep us in level bounds
+								LevelBound();
+								
+								//Move according to our velocity
+								xPosLong += xVel * 0x100;
+								if (status.reverseGravity)
+									yPosLong -= yVel * 0x100;
+								else
+									yPosLong += yVel * 0x100;
+								
+								//Handle collision and falling off of slopes
+								AnglePos();
+								SlopeRepel();
+							}
+						}
+						//In mid-air, falling
+						else if (status.inBall == false && status.inAir == true)
+						{
+							//Handle our movement
+							JumpHeight();
+							ChgJumpDir();
 							
 							//Keep us in level bounds
 							LevelBound();
@@ -1907,47 +2077,47 @@ void PLAYER::Update()
 							else
 								yPosLong += yVel * 0x100;
 							
-							//Handle collision and falling off of slopes
-							AnglePos();
-							SlopeRepel();
+							//Gravity (0x38 above water, 0x10 below water)
+							yVel += 0x38;
+							if (status.underwater)
+								yVel -= 0x28;
+							
+							//Handle our angle receding when we run / jump off of a ledge
+							JumpAngle();
+							
+							//Handle collision
+							DoLevelCollision();
 						}
-					}
-					//In mid-air, falling
-					else if (status.inBall == false && status.inAir == true)
-					{
-						//Handle our movement
-						JumpHeight();
-						ChgJumpDir();
-						
-						//Keep us in level bounds
-						LevelBound();
-						
-						//Move according to our velocity
-						xPosLong += xVel * 0x100;
-						if (status.reverseGravity)
-							yPosLong -= yVel * 0x100;
-						else
-							yPosLong += yVel * 0x100;
-						
-						//Gravity (0x38 above water, 0x10 below water)
-						yVel += 0x38;
-						if (status.underwater)
-							yVel -= 0x28;
-						
-						//Handle our angle receding when we run / jump off of a ledge
-						JumpAngle();
-						
-						//Handle collision
-						DoLevelCollision();
-					}
-					//Rolling on the ground
-					else if (status.inBall == true && status.inAir == false)
-					{
-						if (status.pinballMode || Jump())
+						//Rolling on the ground
+						else if (status.inBall == true && status.inAir == false)
 						{
-							//Handle slope gravity and our movement
-							RollRepel();
-							RollSpeed();
+							if (status.pinballMode || Jump())
+							{
+								//Handle slope gravity and our movement
+								RollRepel();
+								RollSpeed();
+								
+								//Keep us in level bounds
+								LevelBound();
+								
+								//Move according to our velocity
+								xPosLong += xVel * 0x100;
+								if (status.reverseGravity)
+									yPosLong -= yVel * 0x100;
+								else
+									yPosLong += yVel * 0x100;
+								
+								//Handle collision and falling off of slopes
+								AnglePos();
+								SlopeRepel();
+							}
+						}
+						//Jumping or rolled off of a ledge
+						else if (status.inBall == true && status.inAir == true)
+						{
+							//Handle our movement
+							JumpHeight();
+							ChgJumpDir();
 							
 							//Keep us in level bounds
 							LevelBound();
@@ -1959,66 +2129,172 @@ void PLAYER::Update()
 							else
 								yPosLong += yVel * 0x100;
 							
-							//Handle collision and falling off of slopes
-							AnglePos();
-							SlopeRepel();
+							//Gravity (0x38 above water, 0x10 below water)
+							yVel += 0x38;
+							if (status.underwater)
+								yVel -= 0x28;
+							
+							//Handle our angle receding when we run / jump off of a ledge
+							JumpAngle();
+							
+							//Handle collision
+							DoLevelCollision();
 						}
 					}
-					//Jumping or rolled off of a ledge
-					else if (status.inBall == true && status.inAir == true)
-					{
-						//Handle our movement
-						JumpHeight();
-						ChgJumpDir();
-						
-						//Keep us in level bounds
-						LevelBound();
-						
-						//Move according to our velocity
-						xPosLong += xVel * 0x100;
-						if (status.reverseGravity)
-							yPosLong -= yVel * 0x100;
-						else
-							yPosLong += yVel * 0x100;
-						
-						//Gravity (0x38 above water, 0x10 below water)
-						yVel += 0x38;
-						if (status.underwater)
-							yVel -= 0x28;
-						
-						//Handle our angle receding when we run / jump off of a ledge
-						JumpAngle();
-						
-						//Handle collision
-						DoLevelCollision();
-					}
-				}
-				
-				//TODO: Level wrapping
-				//bsr.s	Sonic_Display
-				//bsr.w	SonicKnux_SuperHyper
-				RecordPos();
-				//bsr.w	Sonic_Water
-				
-				Animate();
-				break;
-		}
+					
+					//TODO: Level wrapping
+					//bsr.s	Sonic_Display
+					//bsr.w	SonicKnux_SuperHyper
+					RecordPos();
+					//bsr.w	Sonic_Water
+					
+					Animate();
+					break;
+			}
+			break;
+		
+		case 1: //Object placement mode
+			DebugMode();
+			break;
+			
+		case 2: //Mapping test mode
+			//Exit if B is pressed
+			if (gController[controller].press.b)
+				debug = 0;
+			
+			//Cycle through our mappings
+			mappingFrame++;
+			mappingFrame %= mappings->size;
+			break;
 	}
 }
 
 //Draw our player
 void PLAYER::Draw()
 {
-	//Draw the player sprite
-	SDL_Rect *mapRect = &mappings->rect[mappingFrame];
-	SDL_Point *mapOrig = &mappings->origin[mappingFrame];
+	if (doRender)
+	{
+		//Draw our sprite
+		SDL_Rect *mapRect = &mappings->rect[mappingFrame];
+		SDL_Point *mapOrig = &mappings->origin[mappingFrame];
+		
+		int origX = mapOrig->x;
+		int origY = mapOrig->y;
+		if (renderFlags.xFlip)
+			origX = mapRect->w - origX;
+		if (renderFlags.yFlip)
+			origY = mapRect->h - origY;
+		
+		int alignX = renderFlags.alignPlane ? gLevel->camera->x : 0;
+		int alignY = renderFlags.alignPlane ? gLevel->camera->y : 0;
+		texture->Draw(texture->loadedPalette, mapRect, x.pos - origX - alignX, y.pos - origY - alignY, renderFlags.xFlip, renderFlags.yFlip);
+	}
+	else
+	{
+		doRender = true;
+	}
+}
+
+//Debug mode
+void PLAYER::RestoreStateDebug()
+{
+	anim = PLAYERANIMATION_WALK;
+	x.sub = 0;
+	y.sub = 0;
+	memset(&objectControl, 0, sizeof(objectControl));
+	spindashing = false;
+	xVel = 0;
+	yVel = 0;
+	inertia = 0;
+	memset(&status, 0, sizeof(status));
+	routine = PLAYERROUTINE_CONTROL;
+}
+
+void PLAYER::DebugControl()
+{
+	//Move in the direction held
+	CONTROLMASK selectedControl = gController[controller].held;
 	
-	int origX = mapOrig->x;
-	int origY = mapOrig->y;
-	if (renderFlags.xFlip)
-		origX = mapRect->w - origX;
-	if (renderFlags.yFlip)
-		origY = mapRect->h - origY;
+	if (gController[controller].held.up || gController[controller].held.down || gController[controller].held.left || gController[controller].held.right)
+	{
+		//Handle our acceleration and speed
+		if (--debugAccel == 0)
+		{
+			debugAccel = 1;
+			if (++debugSpeed == 0)
+				debugSpeed = 0xFF;
+		}
+		else
+			selectedControl = gController[controller].press;
+		
+		//Move according to our speed and direction
+		int32_t calcSpeed = (debugSpeed + 1) * 0x1000;
+		
+		if (selectedControl.up)
+		{
+			yPosLong -= calcSpeed;
+			if (yPosLong < gLevelTopBoundary * 0x10000)
+				yPosLong = gLevelTopBoundary * 0x10000;
+		}
+		else if (selectedControl.down)
+		{
+			yPosLong += calcSpeed;
+			if (yPosLong > gLevelBottomBoundary * 0x10000)
+				yPosLong = gLevelBottomBoundary * 0x10000;
+		}
+		
+		if (selectedControl.left)
+		{
+			xPosLong -= calcSpeed;
+			if (xPosLong < 0) //Doesn't check left boundary, just 0
+				xPosLong = 0;
+		}
+		else if (selectedControl.right)
+		{
+			xPosLong += calcSpeed;
+			//There's no boundary check here at all!
+		}
+	}
+	else
+	{
+		//Reset our speed and timer
+		debugAccel = 12;
+		debugSpeed = 15;
+	}
 	
-	texture->Draw(texture->loadedPalette, mapRect, x.pos - origX - gLevel->camera->x, y.pos - origY - gLevel->camera->y, renderFlags.xFlip, renderFlags.yFlip);
+	//Handle pressed buttons
+	
+	if (gController[controller].press.b)
+	{
+		//Exit debug mode
+		debug = 0;
+		/*
+		move	#$2700,sr
+		jsr	(HUD_DrawInitial).l
+		move.b	#1,(Update_HUD_score).w
+		move.b	#-$80,(Update_HUD_ring_count).w
+		move	#$2300,sr
+		lea	(Player_1).w,a1
+		move.l	($FFFFFFCA).w,$C(a1)
+		move.w	($FFFFFFCE).w,$A(a1)
+		*/
+		RestoreStateDebug();
+		xRadius = defaultXRadius;
+		yRadius = defaultYRadius;
+	}
+}
+
+void PLAYER::DebugMode()
+{
+	switch (debug >> 8)
+	{
+		case 0:
+			debug += 0x100;
+			debugAccel = 12;
+			debugSpeed = 1;
+		//Fallthrough
+		case 1:
+			DebugControl();
+			break;
+	}
 }

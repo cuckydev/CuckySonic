@@ -13,6 +13,8 @@ enum GAMEMODE
 	GAMEMODE_CREDITS,		//Credits sequence
 };
 
+extern bool gDebugEnabled;
+
 extern GAMEMODE gGameMode;
 extern LEVEL *gLevel;
 
