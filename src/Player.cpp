@@ -745,11 +745,11 @@ void PLAYER::DoLevelCollision()
 				//Collide with ceilings
 				if (!status.reverseGravity)
 				{
-					CheckCeiling(topSolidLayer, NULL, &distance, NULL);
+					CheckCeiling(lrbSolidLayer, NULL, &distance, NULL);
 				}
 				else
 				{
-					CheckFloor(lrbSolidLayer, NULL, &distance, NULL);
+					CheckFloor(topSolidLayer, NULL, &distance, NULL);
 				}
 				
 				if (distance < 0)
@@ -839,11 +839,11 @@ void PLAYER::DoLevelCollision()
 			uint8_t ceilingAngle;
 			if (!status.reverseGravity)
 			{
-				CheckCeiling(topSolidLayer, NULL, &distance, &ceilingAngle);
+				CheckCeiling(lrbSolidLayer, NULL, &distance, &ceilingAngle);
 			}
 			else
 			{
-				CheckFloor(lrbSolidLayer, NULL, &distance, &ceilingAngle);
+				CheckFloor(topSolidLayer, NULL, &distance, &ceilingAngle);
 				ceilingAngle = -(ceilingAngle + 0x40) - 0x40;
 			}
 			
@@ -891,11 +891,11 @@ void PLAYER::DoLevelCollision()
 				//Collide with ceilings
 				if (!status.reverseGravity)
 				{
-					CheckCeiling(topSolidLayer, NULL, &distance, NULL);
+					CheckCeiling(lrbSolidLayer, NULL, &distance, NULL);
 				}
 				else
 				{
-					CheckFloor(lrbSolidLayer, NULL, &distance, NULL);
+					CheckFloor(topSolidLayer, NULL, &distance, NULL);
 				}
 				
 				if (distance < 0)
