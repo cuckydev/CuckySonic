@@ -84,7 +84,7 @@ SOUND::SOUND(const char *path)
 	
 	//Use the data given
 	buffer = (float*)wavCVT.buf;
-	size = wavCVT.len / sizeof(float);
+	size = (wavLength * wavCVT.len_mult) / sizeof(float) / 2;
 	
 	//Initialize other properties
 	sample = 0.0;

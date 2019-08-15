@@ -314,29 +314,21 @@ int16_t PLAYER::CalcRoomOverHead(uint8_t upAngle)
 	primaryAngle = upAngle;
 	secondaryAngle = upAngle;
 
-	int16_t distance;
+	int16_t distance = 0;
 	switch ((upAngle + 0x20) & 0xC0)
 	{
 		case 0:
-		{
 			CheckFloor(topSolidLayer, NULL, &distance, NULL);
 			break;
-		}
 		case 0x40:
-		{
 			distance = CheckLeftCeilingDist(lrbSolidLayer, NULL);
 			break;
-		}
 		case 0x80:
-		{
 			CheckCeiling(lrbSolidLayer, NULL, &distance, NULL);
 			break;
-		}
 		case 0xC0:
-		{
 			distance = CheckRightCeilingDist(lrbSolidLayer, NULL);
 			break;
-		}
 	}
 
 	return distance;
@@ -744,13 +736,9 @@ void PLAYER::DoLevelCollision()
 			{
 				//Collide with ceilings
 				if (!status.reverseGravity)
-				{
 					CheckCeiling(lrbSolidLayer, NULL, &distance, NULL);
-				}
 				else
-				{
 					CheckFloor(topSolidLayer, NULL, &distance, NULL);
-				}
 				
 				if (distance < 0)
 				{
@@ -890,13 +878,9 @@ void PLAYER::DoLevelCollision()
 			{
 				//Collide with ceilings
 				if (!status.reverseGravity)
-				{
 					CheckCeiling(lrbSolidLayer, NULL, &distance, NULL);
-				}
 				else
-				{
 					CheckFloor(topSolidLayer, NULL, &distance, NULL);
-				}
 				
 				if (distance < 0)
 				{

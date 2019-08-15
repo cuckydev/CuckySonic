@@ -378,14 +378,11 @@ void SOFTWAREBUFFER::DrawQuad(SDL_Rect *quad, PALCOLOUR *colour)
 				{	\
 					for (int fx = entry->texture.srcX; fx < entry->texture.srcX + entry->dest.w; fx++)	\
 					{	\
-						const uint8_t index = entry->texture.srcBuffer[fpx];	\
-						fpx++;	\
-							\
+						const uint8_t index = entry->texture.srcBuffer[fpx++];	\
 						if (index)	\
 							macro(writeBuffer, bpp, dpx, entry->texture.palette->colour[index].colour);	\
 						dpx++;	\
 					}	\
-						\
 					fpx += entry->texture.texture->width - entry->dest.w;	\
 					dpx += width - entry->dest.w;	\
 				}	\
@@ -400,7 +397,6 @@ void SOFTWAREBUFFER::DrawQuad(SDL_Rect *quad, PALCOLOUR *colour)
 						macro(writeBuffer, bpp, dpx, entry->solid.colour->colour);	\
 						dpx++;	\
 					}	\
-						\
 					dpx += width - entry->dest.w;	\
 				}	\
 				break;	\
