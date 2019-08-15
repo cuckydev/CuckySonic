@@ -6,13 +6,14 @@
 #include "Camera.h"
 
 #define PLAYERS 1
-#define OBJECTS 0x200
 
 enum LEVELFORMAT
 {
 	LEVELFORMAT_CHUNK128,
 	LEVELFORMAT_CHUNK128_SONIC2,
 };
+
+typedef void (*OBJECTFUNCTION)(OBJECT*);
 
 struct LEVELTABLE
 {
@@ -27,6 +28,11 @@ struct LEVELTABLE
 	const char *collisionNormalPath;
 	const char *collisionRotatedPath;
 	const char *collisionAnglePath;
+	
+	//Objects
+	const char *objectPath;
+	OBJECTFUNCTION *objectFunctionList;
+	const char *ringPath;
 	
 	//Start location
 	uint16_t startX, startY;
@@ -91,9 +97,16 @@ class LEVEL
 		//Collision tiles
 		COLLISIONTILE *collisionTile;
 		
+		//Boundaries
+		uint16_t leftBoundary;
+		uint16_t rightBoundary;
+		uint16_t topBoundary;
+		uint16_t bottomBoundary;
+		uint16_t bottomBoundary2;
+		
 		//Players and objects
 		PLAYER *player[PLAYERS];
-		OBJECT *object[OBJECTS];
+		OBJECT *objectList;
 		CAMERA *camera;
 		
 	public:
@@ -105,11 +118,5 @@ class LEVEL
 		void Update();
 		void Draw();
 };
-
-extern uint16_t gLevelLeftBoundary;
-extern uint16_t gLevelRightBoundary;
-extern uint16_t gLevelTopBoundary;
-extern uint16_t gLevelBottomBoundary;
-extern uint16_t gLevelBottomBoundary2;
 
 extern LEVELTABLE gLevelTable[];

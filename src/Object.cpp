@@ -1,25 +1,61 @@
 #include "Object.h"
 #include "Game.h"
+#include "Log.h"
+#include "Error.h"
 
-OBJECT::OBJECT(int objectType, uint8_t objectSubtype)
+OBJECT::OBJECT(OBJECT **linkedList, void (*objectFunction)(OBJECT *object))
 {
-
+	memset(this, 0, sizeof(OBJECT));
+	
+	//Set type and subtype
+	function = objectFunction;
+	
+	//Attach to linked list (if applicable)
+	if (linkedList != NULL)
+	{
+		next = *linkedList;
+		list = linkedList;
+		*linkedList = this;
+	}
 }
 
 OBJECT::~OBJECT()
 {
+	//Unload texture and mappings
+	if (texture)
+		delete texture;
+	if (mappings)
+		delete mappings;
 	
+	//Detach from linked list
+	if (list != NULL)
+	{
+		for (OBJECT **object = list; *object != NULL; object = &(*object)->next)
+		{
+			if (*object == this)
+			{
+				*object = next;
+				break;
+			}
+		}
+	}
 }
 
 void OBJECT::Update()
 {
-	
+	//Run our object code
+	if (function != NULL)
+		function(this);
 }
 
 void OBJECT::Draw()
 {
 	if (doRender)
 	{
+		//Don't draw if we don't have textures or mappings
+		if (texture == NULL || mappings == NULL)
+			return;
+		
 		//Draw our sprite
 		SDL_Rect *mapRect = &mappings->rect[mappingFrame];
 		SDL_Point *mapOrig = &mappings->origin[mappingFrame];

@@ -38,6 +38,7 @@ SOURCES = \
 	Player \
 	Object \
 	Camera \
+	Objects/PathSwitcher \
 
 #What to compile
 OBJECTS = $(addprefix obj/$(FILENAME)/, $(addsuffix .o, $(SOURCES)))

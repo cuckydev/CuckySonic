@@ -5,21 +5,282 @@
 #include "Log.h"
 #include "Error.h"
 
-LEVELTABLE gLevelTable[] = {
-	//Green Hill Zone Act 1
-	{LEVELFORMAT_CHUNK128_SONIC2, "data/Level/GHZ/ghz1.lay", "data/Level/GHZ/ghz.chk", "data/Level/GHZ/ghz.nor", "data/Level/GHZ/ghz.alt", "data/Level/sonic1.can", "data/Level/sonic1.car", "data/Level/sonic1.ang", 0x50, 0x3B0},
-	//Spring Yard Zone Act 1
-	{LEVELFORMAT_CHUNK128_SONIC2, "data/Level/SYZ/syz1.lay", "data/Level/SYZ/syz.chk", "data/Level/SYZ/syz.nor", "data/Level/SYZ/syz.alt", "data/Level/sonic1.can", "data/Level/sonic1.car", "data/Level/sonic1.ang", 0x50, 0x3B0},
-	//Emerald Hill Zone Act 1
-	{LEVELFORMAT_CHUNK128_SONIC2, "data/Level/EHZ/ehz1.lay", "data/Level/EHZ/ehz.chk", "data/Level/EHZ/ehz.nor", "data/Level/EHZ/ehz.alt", "data/Level/sonic2.can", "data/Level/sonic2.car", "data/Level/sonic2.ang", 0x60, 0x28F},
+//Object function lists
+#include "Objects.h"
+
+OBJECTFUNCTION objFuncSonic1[] = {
+	NULL,
+	NULL,
+	NULL,
+	&ObjPathSwitcher,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
 };
 
-uint16_t gLevelLeftBoundary;
-uint16_t gLevelRightBoundary;
-uint16_t gLevelTopBoundary;
-uint16_t gLevelBottomBoundary;
-uint16_t gLevelBottomBoundary2;
+//Our level table
+LEVELTABLE gLevelTable[] = {
+	//Green Hill Zone Act 1
+	{LEVELFORMAT_CHUNK128_SONIC2, "data/Level/GHZ/ghz1.lay", "data/Level/GHZ/ghz.chk", "data/Level/GHZ/ghz.nor", "data/Level/GHZ/ghz.alt", "data/Level/sonic1.can", "data/Level/sonic1.car", "data/Level/sonic1.ang", "data/Level/GHZ/ghz1.obj", objFuncSonic1, NULL, 0x50, 0x3B0},
+	//Spring Yard Zone Act 1
+	{LEVELFORMAT_CHUNK128_SONIC2, "data/Level/SYZ/syz1.lay", "data/Level/SYZ/syz.chk", "data/Level/SYZ/syz.nor", "data/Level/SYZ/syz.alt", "data/Level/sonic1.can", "data/Level/sonic1.car", "data/Level/sonic1.ang", "data/Level/GHZ/ghz1.obj", objFuncSonic1, NULL, 0x50, 0x3B0},
+	//Emerald Hill Zone Act 1
+	{LEVELFORMAT_CHUNK128_SONIC2, "data/Level/EHZ/ehz1.lay", "data/Level/EHZ/ehz.chk", "data/Level/EHZ/ehz.nor", "data/Level/EHZ/ehz.alt", "data/Level/sonic2.can", "data/Level/sonic2.car", "data/Level/sonic2.ang", NULL, NULL, NULL, 0x60, 0x28F},
+};
 
+//Level boundaries
+
+
+//Level class
 LEVEL::LEVEL(int id)
 {
 	LOG(("Loading level ID %d...\n", id));
@@ -385,21 +646,21 @@ LEVEL::LEVEL(int id)
 	free(texData);
 	
 	//Set level boundaries
-	gLevelLeftBoundary = 0;
-	gLevelTopBoundary = 0;
+	leftBoundary = 0;
+	topBoundary = 0;
 	
 	switch (format)
 	{
 		case LEVELFORMAT_CHUNK128_SONIC2:
 		case LEVELFORMAT_CHUNK128:
-			gLevelRightBoundary = layout.width * 128;
-			gLevelBottomBoundary = layout.height * 128;
-			gLevelBottomBoundary2 = gLevelBottomBoundary;
+			rightBoundary = layout.width * 128;
+			bottomBoundary = layout.height * 128;
+			bottomBoundary2 = bottomBoundary;
 			break;
 		default:
-			gLevelRightBoundary = 0x7FFF;
-			gLevelBottomBoundary = 0x7FFF;
-			gLevelBottomBoundary2 = gLevelBottomBoundary;
+			rightBoundary = 0x7FFF;
+			bottomBoundary = 0x7FFF;
+			bottomBoundary2 = bottomBoundary;
 			break;
 	}
 	
@@ -432,10 +693,81 @@ LEVEL::LEVEL(int id)
 		follow = player[i];
 	}
 	
-	//Load our objects
+	//Open our object file
+	if (tableEntry->objectPath != NULL)
+	{
+		GET_GLOBAL_PATH(objectPath, tableEntry->objectPath);
+		SDL_RWops *objectFile = SDL_RWFromFile(objectPath, "rb");
+		
+		if (objectFile == NULL)
+		{
+			Error(fail = SDL_GetError());
+		
+			free(layout.foreground);
+			free(layout.background);
+			free(chunkMapping);
+			free(normalMap);
+			free(alternateMap);
+			free(collisionTile);
+			delete tileTexture;
+			
+			for (int i = 0; i < PLAYERS; i++)
+				delete player[i];
+			return;
+		}
+		
+		//Read our object data
+		int objects = SDL_RWsize(objectFile) / 6;
+		
+		for (int i = 0; i < objects; i++)
+		{
+			int16_t xPos = SDL_ReadBE16(objectFile);
+			int16_t word2 = SDL_ReadBE16(objectFile);
+			int16_t yPos = word2 & 0x0FFF;
+			
+			uint8_t id = SDL_ReadU8(objectFile);
+			uint8_t subtype = SDL_ReadU8(objectFile);
+			
+			OBJECT *newObject = new OBJECT(&objectList, tableEntry->objectFunctionList[id]);
+			if (newObject == NULL)
+			{
+				Error(fail = "Failed to create object");
+			
+				free(layout.foreground);
+				free(layout.background);
+				free(chunkMapping);
+				free(normalMap);
+				free(alternateMap);
+				free(collisionTile);
+				delete tileTexture;
+				
+				SDL_RWclose(objectFile);
+				
+				for (int v = 0; i < PLAYERS; i++)
+					delete player[i];
+				
+				for (OBJECT *object = objectList; object != NULL;)
+				{
+					OBJECT *next = object->next;
+					delete object;
+					object = next;
+				}
+				return;
+			}
+			
+			//Apply data
+			newObject->x.pos = xPos;
+			newObject->y.pos = yPos;
+			newObject->status.xFlip = (word2 & 0x8000) != 0;
+			newObject->status.yFlip = (word2 & 0x4000) != 0;
+			newObject->subtype = subtype;
+		}
+		
+		SDL_RWclose(objectFile);
+	}
 	
 	//Create our camera
-	camera = new CAMERA(player[0]);
+	camera = new CAMERA(this, player[0]);
 	if (camera == NULL)
 	{
 		Error(fail = "Failed to create our camera");
@@ -450,12 +782,19 @@ LEVEL::LEVEL(int id)
 		
 		for (int i = 0; i < PLAYERS; i++)
 			delete player[i];
+		
+		for (OBJECT *object = objectList; object != NULL;)
+		{
+			OBJECT *next = object->next;
+			delete object;
+			object = next;
+		}
 		return;
 	}
 	
 	//Handle dynamic boundaries
 	DynamicBoundaries();
-	gLevelBottomBoundary2 = gLevelBottomBoundary;
+	bottomBoundary2 = bottomBoundary;
 	
 	LOG(("Success!\n"));
 }
@@ -473,9 +812,19 @@ LEVEL::~LEVEL()
 	free(collisionTile);
 	delete tileTexture;
 	
-	//Free players and objects
+	//Free players
 	for (int i = 0; i < PLAYERS; i++)
 		delete player[i];
+	
+	//Free objects
+	for (OBJECT *object = objectList; object != NULL;)
+	{
+		OBJECT *next = object->next;
+		delete object;
+		object = next;
+	}
+	
+	//Free camera
 	delete camera;
 	
 	LOG(("Success!\n"));
@@ -488,9 +837,9 @@ void LEVEL::DynamicBoundaries()
 	{
 		case 0: //Green Hill Zone Act 1
 			if (camera->x < 0x1780)
-				gLevelBottomBoundary = 0x3E0;
+				bottomBoundary = 0x3E0;
 			else
-				gLevelBottomBoundary = 0x4E0;
+				bottomBoundary = 0x4E0;
 			break;
 		default:
 			break;
@@ -499,23 +848,23 @@ void LEVEL::DynamicBoundaries()
 	//Move up/down to the boundary
 	int16_t move = 2;
 
-	if (gLevelBottomBoundary < gLevelBottomBoundary2)
+	if (bottomBoundary < bottomBoundary2)
 	{
 		//Move up to the boundary smoothly
-		if ((camera->y + SCREEN_HEIGHT) > gLevelBottomBoundary)
-			gLevelBottomBoundary2 = (camera->y + SCREEN_HEIGHT);
+		if ((camera->y + SCREEN_HEIGHT) > bottomBoundary)
+			bottomBoundary2 = (camera->y + SCREEN_HEIGHT);
 		
 		//Move
-		gLevelBottomBoundary2 -= move;
+		bottomBoundary2 -= move;
 	}
-	else if (gLevelBottomBoundary > gLevelBottomBoundary2)
+	else if (bottomBoundary > bottomBoundary2)
 	{
 		//Move faster if in mid-air
-		if ((camera->y + 8 + SCREEN_HEIGHT) >= gLevelBottomBoundary2 && player[0]->status.inAir)
+		if ((camera->y + 8 + SCREEN_HEIGHT) >= bottomBoundary2 && player[0]->status.inAir)
 			move *= 4;
 		
 		//Move
-		gLevelBottomBoundary2 += move;
+		bottomBoundary2 += move;
 	}
 }
 
@@ -525,8 +874,12 @@ void LEVEL::Update()
 	for (int i = 0; i < PLAYERS; i++)
 		player[i]->Update();
 	
+	//Update objects
+	for (OBJECT *object = objectList; object != NULL; object = object->next)
+		object->Update();
+	
 	//Update camera
-	camera->Track(player[0]);
+	camera->Track(this, player[0]);
 	
 	//Update level boundaries
 	DynamicBoundaries();
@@ -534,6 +887,8 @@ void LEVEL::Update()
 
 void LEVEL::Draw()
 {
+	//TODO: proper priority
+	
 	//Draw stage (temp)
 	switch (format)
 	{
@@ -572,6 +927,10 @@ void LEVEL::Draw()
 			LOG(("Unhandled format for drawing\n"));
 			break;
 	}
+	
+	//Draw objects
+	for (OBJECT *object = objectList; object != NULL; object = object->next)
+		object->Draw();
 	
 	//Draw players (we draw backwards, we want the leader to be drawn first)
 	for (int i = PLAYERS - 1; i >= 0; i--)

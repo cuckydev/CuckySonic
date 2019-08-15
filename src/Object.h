@@ -10,8 +10,8 @@ class OBJECT
 		//Fail
 		const char *fail;
 		
-		//Object type
-		int type;
+		//Object sub-type
+		int subtype;
 		
 		//Rendering stuff
 		struct
@@ -108,7 +108,6 @@ class OBJECT
 		
 		uint8_t routine;			//Routine
 		uint8_t routineSecondary;	//Routine Secondary
-		uint8_t subtype;			//Object sub-type
 		uint8_t respawnIndex;		//Index of this object in the respawn table, this is to not respawn unloaded enemies / monitors
 		
 		uint8_t angle;	//Angle
@@ -129,8 +128,12 @@ class OBJECT
 			int32_t scratchS32[0x4];
 		};
 		
+		OBJECT *next;
+		OBJECT **list;
+		void (*function)(OBJECT *object);
+		
 	public:
-		OBJECT(int objectType, uint8_t objectSubtype);
+		OBJECT(OBJECT **linkedList, void (*objectFunction)(OBJECT *object));
 		~OBJECT();
 		
 		void Update();

@@ -1794,8 +1794,8 @@ void PLAYER::LevelBound()
 {
 	//Get our next position and boundaries
 	uint16_t nextPos = (xPosLong + (xVel * 0x100)) / 0x10000;
-	uint16_t leftBound = gLevelLeftBoundary + 0x10;
-	uint16_t rightBound = gLevelRightBoundary - 0x18; //For some reason the right boundary is 8 pixels greater than the left boundary
+	uint16_t leftBound = gLevel->leftBoundary + 0x10;
+	uint16_t rightBound = gLevel->rightBoundary - 0x18; //For some reason the right boundary is 8 pixels greater than the left boundary
 	
 	//Clip us into the boundaries
 	if (nextPos < leftBound)
@@ -1804,7 +1804,7 @@ void PLAYER::LevelBound()
 		LevelBoundSide(rightBound);
 	
 	//Die if reached bottom boundary
-	if (status.reverseGravity ? (y.pos <= gLevelTopBoundary) : (y.pos >= gLevelBottomBoundary))
+	if (status.reverseGravity ? (y.pos <= gLevel->topBoundary) : (y.pos >= gLevel->bottomBoundary))
 	{
 		x.pos = nextPos;
 		x.sub = 0;
@@ -2248,6 +2248,10 @@ void PLAYER::Draw()
 {
 	if (doRender)
 	{
+		//Don't draw if we don't have textures or mappings
+		if (texture == NULL || mappings == NULL)
+			return;
+		
 		//Draw our sprite
 		SDL_Rect *mapRect = &mappings->rect[mappingFrame];
 		SDL_Point *mapOrig = &mappings->origin[mappingFrame];
@@ -2307,14 +2311,14 @@ void PLAYER::DebugControl()
 		if (selectedControl.up)
 		{
 			yPosLong -= calcSpeed;
-			if (yPosLong < gLevelTopBoundary * 0x10000)
-				yPosLong = gLevelTopBoundary * 0x10000;
+			if (yPosLong < gLevel->topBoundary * 0x10000)
+				yPosLong = gLevel->topBoundary * 0x10000;
 		}
 		else if (selectedControl.down)
 		{
 			yPosLong += calcSpeed;
-			if (yPosLong > gLevelBottomBoundary * 0x10000)
-				yPosLong = gLevelBottomBoundary * 0x10000;
+			if (yPosLong > gLevel->bottomBoundary * 0x10000)
+				yPosLong = gLevel->bottomBoundary * 0x10000;
 		}
 		
 		if (selectedControl.left)
