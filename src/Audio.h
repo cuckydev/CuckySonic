@@ -71,6 +71,7 @@ class SOUND
 		
 		double sample;
 		double frequency;
+		double baseFrequency;
 		
 		float volume;
 		float volumeL;
@@ -89,6 +90,7 @@ class SOUND
 		
 		void SetVolume(float setVolume);
 		void SetPan(float setVolumeL, float setVolumeR);
+		void SetFrequency(double setFrequency);
 		
 		void Mix(float *stream, int samples);
 };

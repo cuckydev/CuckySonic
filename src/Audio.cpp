@@ -1,4 +1,5 @@
 #include "SDL_audio.h"
+#include "SDL_timer.h"
 
 #include "Audio.h"
 #include "Log.h"
@@ -93,6 +94,7 @@ SOUND::SOUND(const char *path)
 	//Initialize other properties
 	sample = 0.0;
 	frequency = wavSpec.freq;
+	baseFrequency = frequency;
 	volume = 1.0f;
 	volumeL = 1.0f;
 	volumeR = 1.0f;
@@ -126,6 +128,7 @@ SOUND::SOUND(SOUND *ourParent)
 	//Initialize other properties
 	sample = 0.0;
 	frequency = ourParent->frequency;
+	baseFrequency = frequency;
 	volume = 1.0f;
 	volumeL = 1.0f;
 	volumeR = 1.0f;
@@ -213,6 +216,18 @@ void SOUND::SetPan(float setVolumeL, float setVolumeR)
 	SDL_UnlockAudioDevice(audioDevice);
 }
 
+void SOUND::SetFrequency(double setFrequency)
+{
+	//Wait for audio device to be finished and lock it
+	SDL_LockAudioDevice(audioDevice);
+	
+	//Set our frequency to the frequency given
+	frequency = setFrequency;
+	
+	//Resume audio device
+	SDL_UnlockAudioDevice(audioDevice);
+}
+
 void SOUND::Mix(float *stream, int samples)
 {
 	if (!playing)
@@ -271,17 +286,45 @@ void AudioCallback(void *userdata, uint8_t *stream, int length)
 //Play sound functions
 bool ringPanLeft = false;
 
+unsigned int spindashPitch = 0;	//Spindash's pitch increase in semi-tones
+unsigned int spindashTimer = 0;	//Timer for the spindash pitch to reset
+bool spindashLast = false;	//Set to 1 if spindash was the last sound, set to 0 if it wasn't (resets the spindash pitch)
+
 void PlaySound(SOUNDID id)
 {
 	SOUNDID playId = id;
 	
 	//Sound specifics go here (i.e ring panning, or spindash rev frequency)
-	if (id == SOUNDID_RING)
+	if (id == SOUNDID_SPINDASH_REV)
 	{
-		//Flip between left and right every time the sound plays
-		ringPanLeft ^= 1;
-		playId = ringPanLeft ? SOUNDID_RING_LEFT : SOUNDID_RING_RIGHT;
-		soundEffects[playId]->SetPan(ringPanLeft ? 1.0f : 0.0f, ringPanLeft ? 0.0f : 1.0f);
+		//Check spindash pitch clear
+		if (!spindashLast || SDL_GetTicks() > spindashTimer)
+		{
+			spindashLast = true;
+			spindashPitch = 0;
+		}
+		
+		//Set spindash pitch
+		soundEffects[playId]->SetFrequency(soundEffects[playId]->baseFrequency * std::pow(2.0, (double)spindashPitch / 12.0));
+		
+		//Increment pitch
+		if (spindashPitch++ >= 12)
+			spindashPitch = 12;
+		spindashTimer = SDL_GetTicks() + 1000;
+	}
+	else
+	{
+		//Clear spindash last
+		spindashLast = false;
+		
+		//Ring sound
+		if (id == SOUNDID_RING)
+		{
+			//Flip between left and right every time the sound plays
+			ringPanLeft ^= 1;
+			playId = ringPanLeft ? SOUNDID_RING_LEFT : SOUNDID_RING_RIGHT;
+			soundEffects[playId]->SetPan(ringPanLeft ? 1.0f : 0.0f, ringPanLeft ? 0.0f : 1.0f);
+		}
 	}
 	
 	//Get our sound
