@@ -81,10 +81,10 @@ TEXTURE::TEXTURE(const char *path)
 	{
 		for (int y = 0; y < bitmap->h; y++)
 		{
-			texture[x + y * bitmap->w] = ((uint8_t*)bitmap->pixels)[x + y * bitmap->w];
-			textureXFlip[x + y * bitmap->w] = ((uint8_t*)bitmap->pixels)[(bitmap->w - x - 1) + y * bitmap->w];
-			textureYFlip[x + y * bitmap->w] = ((uint8_t*)bitmap->pixels)[x + (bitmap->h - y - 1) * bitmap->w];
-			textureXYFlip[x + y * bitmap->w] = ((uint8_t*)bitmap->pixels)[(bitmap->w - x - 1) + (bitmap->h - y - 1) * bitmap->w];
+			texture[x + y * bitmap->w] = ((uint8_t*)bitmap->pixels)[x + y * bitmap->pitch];
+			textureXFlip[x + y * bitmap->w] = ((uint8_t*)bitmap->pixels)[(bitmap->w - x - 1) + y * bitmap->pitch];
+			textureYFlip[x + y * bitmap->w] = ((uint8_t*)bitmap->pixels)[x + (bitmap->h - y - 1) * bitmap->pitch];
+			textureXYFlip[x + y * bitmap->w] = ((uint8_t*)bitmap->pixels)[(bitmap->w - x - 1) + (bitmap->h - y - 1) * bitmap->pitch];
 		}
 	}
 	
