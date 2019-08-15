@@ -5,10 +5,12 @@
 #include "Event.h"
 #include "Render.h"
 #include "Fade.h"
+#include "MathUtil.h"
 #include "Input.h"
 #include "Audio.h"
 
-#define SPLASH_TIME 150
+#define SPLASH_TIME 200
+#define SPLASH_WARP 80
 
 bool GM_Splash(bool *noError)
 {
@@ -31,12 +33,23 @@ bool GM_Splash(bool *noError)
 			break;
 		
 		//Fade in/out
-		if (frame < (FADE_TIME * 2) && (frame & 0x1))
-			PaletteFadeInFromWhite(splashTexture->loadedPalette);
+		if (frame < (FADE_TIME * 4) && (frame % 4) == 0)
+		{
+			if (PaletteFadeInFromWhite(splashTexture->loadedPalette))
+				PlaySound(SOUNDID_SPLASHJINGLE);
+		}
 		else if (frame >= SPLASH_TIME - FADE_TIME)
+		{
 			PaletteFadeOutToBlack(splashTexture->loadedPalette);
-		else if (gController[0].held.a || gController[0].held.b || gController[0].held.c)
-			frame = SPLASH_TIME - FADE_TIME; //Skip splash screen if ABC is pressed
+		}
+		else
+		{
+			if (gController[0].held.a || gController[0].held.b || gController[0].held.c)
+			{
+				frame = SPLASH_TIME - FADE_TIME; //Skip splash screen if ABC is pressed
+				StopSound(SOUNDID_SPLASHJINGLE);
+			}
+		}
 		
 		if (gController[0].held.a && gController[0].held.b && gController[0].held.c && gController[0].press.start && gDebugEnabled == false)
 		{
@@ -45,8 +58,22 @@ bool GM_Splash(bool *noError)
 		}
 		
 		//Render our splash texture
-		SDL_Rect src = {0, 0, splashTexture->width, splashTexture->height};
-		splashTexture->Draw(splashTexture->loadedPalette, &src, (SCREEN_WIDTH - splashTexture->width) / 2, (SCREEN_HEIGHT - splashTexture->height) / 2, false, false);
+		SDL_Rect src = {0, 0, splashTexture->width, 1};
+		
+		for (int line = 0; line < splashTexture->height; line++)
+		{
+			//Get our draw offset
+			int16_t sin;
+			GetSine((line & 0xFE) + frame, &sin, NULL);
+			
+			int xOff = (sin * 2) * (frame < SPLASH_WARP ? (SPLASH_WARP - frame) : 0) / SPLASH_WARP;
+			if (line & 0x1)
+				xOff = -xOff;
+			
+			//Draw this line
+			splashTexture->Draw(splashTexture->loadedPalette, &src, (SCREEN_WIDTH - splashTexture->width) / 2 + xOff, (SCREEN_HEIGHT - splashTexture->height) / 2 + line, false, false);
+			src.y++;
+		}
 		
 		//Render our software buffer to the screen (using the first colour of our splash texture, should be white)
 		if (!(*noError = gSoftwareBuffer->RenderToScreen(&splashTexture->loadedPalette->colour[0])))

@@ -28,6 +28,7 @@ SOUNDDEFINITION soundDefinition[SOUNDID_MAX] = {
 	{SOUNDCHANNEL_NULL,	"data/Audio/Sound/Ring.wav", SOUNDID_NULL},
 	{SOUNDCHANNEL_FM4,	NULL, SOUNDID_RING}, //SOUNDID_RING_LEFT
 	{SOUNDCHANNEL_FM3,	NULL, SOUNDID_RING}, //SOUNDID_RING_RIGHT
+	{SOUNDCHANNEL_DAC,	"data/Audio/Sound/SplashJingle.wav", SOUNDID_NULL},
 };
 
 //Sound class
@@ -338,6 +339,14 @@ void PlaySound(SOUNDID id)
 	//Actually play our sound
 	if (sound != NULL)
 		sound->Play();
+	return;
+}
+
+void StopSound(SOUNDID id)
+{
+	//Stop the given sound
+	if (soundEffects[id] != NULL)
+		soundEffects[id]->Stop();
 	return;
 }
 

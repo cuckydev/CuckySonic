@@ -24,6 +24,7 @@ enum SOUNDID
 	SOUNDID_RING,
 	SOUNDID_RING_LEFT,
 	SOUNDID_RING_RIGHT,
+	SOUNDID_SPLASHJINGLE,
 	SOUNDID_MAX,
 };
 
@@ -41,6 +42,7 @@ enum SOUNDCHANNEL
 	SOUNDCHANNEL_FM3,
 	SOUNDCHANNEL_FM4,
 	SOUNDCHANNEL_FM5,
+	SOUNDCHANNEL_DAC,
 };
 
 struct MUSICDEFINITION
@@ -97,6 +99,7 @@ class SOUND
 
 //Audio functions
 void PlaySound(SOUNDID id);
+void StopSound(SOUNDID id);
 
 bool InitializeAudio();
 void QuitAudio();
