@@ -215,6 +215,7 @@ class PLAYER
 		struct
 		{
 			bool disableOurMovement : 1;	//Disables our movement functions
+			bool disableWallCollision : 1;	//Disables collision with walls
 			bool disableObjectInteract : 1;	//Disables generic interaction with objects (we'll still otherwise collide with objects that have separate detection, such as bubbles, springs, and other solid objects, though)
 		} objectControl;
 		

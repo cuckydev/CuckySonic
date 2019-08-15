@@ -38,7 +38,7 @@ bool GM_Splash(bool *noError)
 		else if (gController[0].held.a || gController[0].held.b || gController[0].held.c)
 			frame = SPLASH_TIME - FADE_TIME; //Skip splash screen if ABC is pressed
 		
-		if (gController[0].press.start && gDebugEnabled == false)
+		if (gController[0].held.a && gController[0].held.b && gController[0].held.c && gController[0].press.start && gDebugEnabled == false)
 		{
 			PlaySound(SOUNDID_RING);
 			gDebugEnabled = true;

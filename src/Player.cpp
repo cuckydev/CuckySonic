@@ -338,7 +338,7 @@ int16_t PLAYER::CalcRoomOverHead(uint8_t upAngle)
 int16_t PLAYER::CalcRoomInFront(uint8_t moveAngle)
 {
 	int16_t xPos = (xPosLong + (xVel * 0x100)) / 0x10000;
-	int16_t yPos = (yPosLong + (yVel * 0x100)) / 0x10000;
+	int16_t yPos = (yPosLong + (yVel * (status.reverseGravity ? -0x100 : 0x100))) / 0x10000;
 
 	primaryAngle = moveAngle;
 	secondaryAngle = moveAngle;
@@ -594,6 +594,9 @@ void PLAYER::AnglePos()
 
 void PLAYER::CheckWallsOnGround()
 {
+	if (objectControl.disableWallCollision)
+		return;
+	
 	if (((angle & 0x3F) == 0 || ((angle + 0x40) & 0xFF) < 0x80) && inertia != 0)
 	{
 		uint8_t faceAngle = angle + (inertia < 0 ? 0x40 : -0x40);
@@ -1573,12 +1576,6 @@ void PLAYER::Move()
 	xVel = (cos * inertia) / 0x100;
 	yVel = (sin * inertia) / 0x100;
 	
-	//Cap our global horizontal speed
-	if (xVel <= -0x1000)
-		xVel = -0x1000;
-	if (xVel >= 0x1000)
-		xVel = 0x1000;
-	
 	//Collide with walls
 	CheckWallsOnGround();
 }
@@ -2244,9 +2241,6 @@ void PLAYER::Update()
 			mappingFrame %= mappings->size;
 			break;
 	}
-	
-	if (controlPress.start)
-		PlaySound(SOUNDID_RING);
 }
 
 //Draw our player
