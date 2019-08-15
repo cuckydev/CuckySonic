@@ -18,6 +18,10 @@ CAMERA::~CAMERA()
 
 void CAMERA::Track(PLAYER *trackPlayer)
 {
+	//Don't move if locked
+	if (trackPlayer->cameraLock)
+		return;
+	
 	//Get our track positions
 	int trackX = trackPlayer->x.pos, trackY = trackPlayer->y.pos;
 	

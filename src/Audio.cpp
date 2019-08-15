@@ -22,6 +22,7 @@ SOUNDDEFINITION soundDefinition[SOUNDID_MAX] = {
 	{SOUNDCHANNEL_PSG2, "data/Audio/Sound/Skid.wav"},
 	{SOUNDCHANNEL_FM5,  "data/Audio/Sound/SpindashRev.wav"},
 	{SOUNDCHANNEL_FM5,  "data/Audio/Sound/SpindashRelease.wav"},
+	{SOUNDCHANNEL_FM5,	"data/Audio/Sound/Death.wav"}
 };
 
 //Sound class

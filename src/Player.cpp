@@ -1746,6 +1746,57 @@ void PLAYER::RollSpeed()
 	CheckWallsOnGround();
 }
 
+//Hurt and death functions
+void PLAYER::DeadCheckRespawn()
+{
+	//Lock our camera
+	int16_t cameraY = gLevel->camera->y;
+	cameraLock = true;
+	
+	//Cancel spindash
+	spindashing = false;
+	
+	//Check if we're off-screen
+	if (status.reverseGravity)
+	{
+		if (y.pos > cameraY - 0x10)
+			return;
+	}
+	else
+	{
+		if (y.pos < cameraY + (SCREEN_HEIGHT + 0x20))
+			return;
+	}
+	
+	//Enter respawn state
+	routine = PLAYERROUTINE_RESET_LEVEL;
+	restartCountdown = 60;
+}
+
+void PLAYER::KillCharacter()
+{
+	if (debug == 0)
+	{
+		//Reset our state
+		item.hasShield = false;
+		item.isInvincible = false;
+		item.hasSpeedShoes = false;
+		status.isSliding = false;
+		routine = PLAYERROUTINE_DEATH;
+		ResetOnFloor2();
+		status.inAir = true;
+		
+		//Set our velocity
+		xVel = 0;
+		yVel = -0x700;
+		inertia = 0;
+		
+		//Do animation and sound
+		anim = PLAYERANIMATION_DEATH;
+		PlaySound(SOUNDID_DEATH);
+	}
+}
+
 //Level boundary function
 void PLAYER::LevelBoundSide(uint16_t bound)
 {
@@ -1770,6 +1821,16 @@ void PLAYER::LevelBound()
 		LevelBoundSide(leftBound);
 	else if (nextPos > rightBound)
 		LevelBoundSide(rightBound);
+	
+	//Die if reached bottom boundary
+	if (status.reverseGravity ? (y.pos <= gLevelTopBoundary) : (y.pos >= gLevelBottomBoundary))
+	{
+		x.pos = nextPos;
+		x.sub = 0;
+		xVel = 0;
+		inertia = 0;
+		KillCharacter();
+	}
 }
 
 //Animation update
@@ -2150,6 +2211,38 @@ void PLAYER::Update()
 					
 					Animate();
 					break;
+					
+				case PLAYERROUTINE_HURT:
+					break;
+					
+				case PLAYERROUTINE_DEATH:
+					//Handle our debug buttons
+					if (gDebugEnabled && controller == 0)
+					{
+						if (gController[controller].press.b)
+						{
+							debug = 1;
+							return;
+						}
+					}
+					
+					//Check if we should respawn soon
+					DeadCheckRespawn();
+					
+					//Move and fall
+					xPosLong += xVel * 0x100;
+					if (status.reverseGravity)
+						yPosLong -= yVel * 0x100;
+					else
+						yPosLong += yVel * 0x100;
+					yVel += 0x38;
+					
+					//Record Pos
+					RecordPos();
+					break;
+					
+				case PLAYERROUTINE_RESET_LEVEL:
+					break;
 			}
 			break;
 		
@@ -2290,6 +2383,7 @@ void PLAYER::DebugMode()
 	{
 		case 0:
 			debug += 0x100;
+			cameraLock = false;
 			debugAccel = 12;
 			debugSpeed = 1;
 		//Fallthrough

@@ -263,9 +263,11 @@ class PLAYER
 		CONTROLMASK controlPress;
 		bool controlLock;
 		
-		//Position and status records
-		unsigned int scrollDelay = 0;
+		//Camera scrolling
+		unsigned int scrollDelay;
+		bool cameraLock;
 		
+		//Position and status records
 		struct
 		{
 			int16_t x, y;
@@ -332,6 +334,10 @@ class PLAYER
 		void RollLeft();
 		void RollRight();
 		void RollSpeed();
+		
+		void DeadCheckRespawn();
+		
+		void KillCharacter();
 		
 		void LevelBoundSide(uint16_t bound);
 		void LevelBound();

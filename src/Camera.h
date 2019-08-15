@@ -5,8 +5,8 @@
 class CAMERA
 {
 	public:
-		int16_t x = 0;
-		int16_t y = 0;
+		int16_t x;
+		int16_t y;
 		
 	public:
 		CAMERA(PLAYER *trackPlayer);
