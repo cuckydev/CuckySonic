@@ -17,12 +17,16 @@ MUSICDEFINITION musicDefinition[MUSICID_MAX] = {
 //Sound effects
 SOUND *soundEffects[SOUNDID_MAX];
 SOUNDDEFINITION soundDefinition[SOUNDID_MAX] = {
-	{SOUNDCHANNEL_PSG1, "data/Audio/Sound/Jump.wav"},
-	{SOUNDCHANNEL_FM4,  "data/Audio/Sound/Roll.wav"},
-	{SOUNDCHANNEL_PSG2, "data/Audio/Sound/Skid.wav"},
-	{SOUNDCHANNEL_FM5,  "data/Audio/Sound/SpindashRev.wav"},
-	{SOUNDCHANNEL_FM5,  "data/Audio/Sound/SpindashRelease.wav"},
-	{SOUNDCHANNEL_FM5,	"data/Audio/Sound/Death.wav"}
+	{SOUNDCHANNEL_NULL, NULL, SOUNDID_NULL}, //SOUNDID_NULL
+	{SOUNDCHANNEL_PSG0, "data/Audio/Sound/Jump.wav", SOUNDID_NULL},
+	{SOUNDCHANNEL_FM3,  "data/Audio/Sound/Roll.wav", SOUNDID_NULL},
+	{SOUNDCHANNEL_PSG1, "data/Audio/Sound/Skid.wav", SOUNDID_NULL},
+	{SOUNDCHANNEL_FM4,  "data/Audio/Sound/SpindashRev.wav", SOUNDID_NULL},
+	{SOUNDCHANNEL_FM4,  "data/Audio/Sound/SpindashRelease.wav", SOUNDID_NULL},
+	{SOUNDCHANNEL_FM4,	"data/Audio/Sound/Death.wav", SOUNDID_NULL},
+	{SOUNDCHANNEL_NULL,	"data/Audio/Sound/Ring.wav", SOUNDID_NULL},
+	{SOUNDCHANNEL_FM4,	NULL, SOUNDID_RING}, //SOUNDID_RING_LEFT
+	{SOUNDCHANNEL_FM3,	NULL, SOUNDID_RING}, //SOUNDID_RING_RIGHT
 };
 
 //Sound class
@@ -103,6 +107,39 @@ SOUND::SOUND(const char *path)
 	LOG(("Success!\n"));
 }
 
+SOUND::SOUND(SOUND *ourParent)
+{
+	LOG(("Creating a sound from parent %p... ", ourParent));
+	
+	//Wait for audio device to be finished and lock it
+	SDL_LockAudioDevice(audioDevice);
+	
+	//Clear class memory
+	memset(this, 0, sizeof(SOUND));
+	
+	//Use our data from the parent
+	parent = ourParent;
+	
+	buffer = ourParent->buffer;
+	size = ourParent->size;
+	
+	//Initialize other properties
+	sample = 0.0;
+	frequency = ourParent->frequency;
+	volume = 1.0f;
+	volumeL = 1.0f;
+	volumeR = 1.0f;
+	
+	//Attach to the linked list
+	next = sounds;
+	sounds = this;
+	
+	//Resume audio device
+	SDL_UnlockAudioDevice(audioDevice);
+	
+	LOG(("Success!\n"));
+}
+
 SOUND::~SOUND()
 {
 	//Wait for audio device to be finished and lock it
@@ -118,8 +155,9 @@ SOUND::~SOUND()
 		}
 	}
 	
-	//Free our data
-	free(buffer);
+	//Free our data (do not free if we're a child of another sound)
+	if (parent == NULL)
+		free(buffer);
 	
 	//Resume audio device
 	SDL_UnlockAudioDevice(audioDevice);
@@ -145,6 +183,31 @@ void SOUND::Stop()
 	
 	//Stop playing
 	playing = false;
+	
+	//Resume audio device
+	SDL_UnlockAudioDevice(audioDevice);
+}
+
+void SOUND::SetVolume(float setVolume)
+{
+	//Wait for audio device to be finished and lock it
+	SDL_LockAudioDevice(audioDevice);
+	
+	//Set our volume to the volume given
+	volume = setVolume;
+	
+	//Resume audio device
+	SDL_UnlockAudioDevice(audioDevice);
+}
+
+void SOUND::SetPan(float setVolumeL, float setVolumeR)
+{
+	//Wait for audio device to be finished and lock it
+	SDL_LockAudioDevice(audioDevice);
+	
+	//Set our volume to the volume given
+	volumeL = setVolumeL;
+	volumeR = setVolumeR;
 	
 	//Resume audio device
 	SDL_UnlockAudioDevice(audioDevice);
@@ -206,16 +269,27 @@ void AudioCallback(void *userdata, uint8_t *stream, int length)
 }
 
 //Play sound functions
+bool ringPanLeft = false;
+
 void PlaySound(SOUNDID id)
 {
-	//Get our sound
-	SOUND *sound = soundEffects[id];
+	SOUNDID playId = id;
 	
 	//Sound specifics go here (i.e ring panning, or spindash rev frequency)
+	if (id == SOUNDID_RING)
+	{
+		//Flip between left and right every time the sound plays
+		ringPanLeft ^= 1;
+		playId = ringPanLeft ? SOUNDID_RING_LEFT : SOUNDID_RING_RIGHT;
+		soundEffects[playId]->SetPan(ringPanLeft ? 1.0f : 0.0f, ringPanLeft ? 0.0f : 1.0f);
+	}
+	
+	//Get our sound
+	SOUND *sound = soundEffects[playId];
 	
 	//Stop sounds of the same channel
 	for (int i = 0; i < SOUNDID_MAX; i++)
-		if (soundEffects[i] != NULL && soundDefinition[i].channel == soundDefinition[id].channel)
+		if (soundEffects[i] != NULL && soundDefinition[i].channel == soundDefinition[playId].channel)
 			soundEffects[i]->Stop();
 	
 	//Actually play our sound
@@ -229,7 +303,16 @@ bool LoadAllSoundEffects()
 {
 	for (int i = 0; i < SOUNDID_MAX; i++)
 	{
-		soundEffects[i] = new SOUND(soundDefinition[i].path);
+		if (soundDefinition[i].path != NULL)
+			soundEffects[i] = new SOUND(soundDefinition[i].path); //Load from path
+		else if (soundDefinition[i].parent != SOUNDID_NULL)
+			soundEffects[i] = new SOUND(soundEffects[soundDefinition[i].parent]); //Load from parent
+		else
+		{
+			soundEffects[i] = NULL;
+			continue;
+		}
+		
 		if (soundEffects[i]->fail)
 			return false;
 	}

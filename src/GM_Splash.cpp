@@ -40,7 +40,7 @@ bool GM_Splash(bool *noError)
 		
 		if (gController[0].press.start && gDebugEnabled == false)
 		{
-			PlaySound(SOUNDID_JUMP);
+			PlaySound(SOUNDID_RING);
 			gDebugEnabled = true;
 		}
 		

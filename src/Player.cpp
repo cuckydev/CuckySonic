@@ -2244,6 +2244,9 @@ void PLAYER::Update()
 			mappingFrame %= mappings->size;
 			break;
 	}
+	
+	if (controlPress.start)
+		PlaySound(SOUNDID_RING);
 }
 
 //Draw our player

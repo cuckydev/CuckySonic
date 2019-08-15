@@ -14,28 +14,33 @@ enum MUSICID
 //Sound ids
 enum SOUNDID
 {
+	SOUNDID_NULL,
 	SOUNDID_JUMP,
 	SOUNDID_ROLL,
 	SOUNDID_SKID,
 	SOUNDID_SPINDASH_REV,
 	SOUNDID_SPINDASH_RELEASE,
 	SOUNDID_DEATH,
+	SOUNDID_RING,
+	SOUNDID_RING_LEFT,
+	SOUNDID_RING_RIGHT,
 	SOUNDID_MAX,
 };
 
 //Definitions
 enum SOUNDCHANNEL
 {
+	SOUNDCHANNEL_NULL,
+	SOUNDCHANNEL_PSG0,
 	SOUNDCHANNEL_PSG1,
 	SOUNDCHANNEL_PSG2,
 	SOUNDCHANNEL_PSG3,
-	SOUNDCHANNEL_PSG4,
+	SOUNDCHANNEL_FM0,
 	SOUNDCHANNEL_FM1,
 	SOUNDCHANNEL_FM2,
 	SOUNDCHANNEL_FM3,
 	SOUNDCHANNEL_FM4,
 	SOUNDCHANNEL_FM5,
-	SOUNDCHANNEL_FM6,
 };
 
 struct MUSICDEFINITION
@@ -48,6 +53,7 @@ struct SOUNDDEFINITION
 {
 	SOUNDCHANNEL channel;
 	const char *path;
+	SOUNDID parent;
 };
 
 //Sound class
@@ -71,13 +77,19 @@ class SOUND
 		float volumeR;
 		
 		SOUND *next;
+		SOUND *parent;
 		
 	public:
 		SOUND(const char *path);
+		SOUND(SOUND *ourParent);
 		~SOUND();
 		
 		void Play();
 		void Stop();
+		
+		void SetVolume(float setVolume);
+		void SetPan(float setVolumeL, float setVolumeR);
+		
 		void Mix(float *stream, int samples);
 };
 
