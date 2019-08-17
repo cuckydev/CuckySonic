@@ -11,40 +11,75 @@
 #include "GameConstants.h"
 
 //animation data
-const uint8_t animationWalk[] =			{0xFF,0x08,0x09,0x0A,0x0B,0x06,0x07,0xFF};
-const uint8_t animationRun[] =			{0xFF,0x1E,0x1F,0x20,0x21,0xFF,0xFF,0xFF};
-const uint8_t animationRoll[] =			{0xFE,0x2E,0x2F,0x30,0x31,0x32,0xFF,0xFF};
-const uint8_t animationRoll2[] =		{0xFE,0x2E,0x2F,0x32,0x30,0x31,0x32,0xFF};
-const uint8_t animationPush[] =			{0xFD,0x45,0x46,0x47,0x48,0xFF,0xFF,0xFF};
-const uint8_t animationIdle[] =			{0x17,0x01,0x01,0x01,0x01,0x01,0x01,0x01,0x01,0x01,0x01,0x01,0x01,0x03,0x02,0x02,0x02,0x03,0x04,0xFE,0x02};
-const uint8_t animationBalance[] =		{0x1F,0x3A,0x3B,0xFF};
-const uint8_t animationLookUp[] =		{0x3F,0x05,0xFF};
-const uint8_t animationDuck[] =			{0x3F,0x39,0xFF};
-const uint8_t animationSpindash[] =		{0x00,0x58,0x59,0x58,0x5A,0x58,0x5B,0x58,0x5C,0x58,0x5D,0xFF};
-const uint8_t animationWarp1[] =		{0x3F,0x33,0xFF};
-const uint8_t animationWarp2[] =		{0x3F,0x34,0xFF};
-const uint8_t animationWarp3[] =		{0x3F,0x35,0xFF};
-const uint8_t animationWarp4[] =		{0x3F,0x36,0xFF};
-const uint8_t animationSkid[] =			{0x07,0x37,0x38,0xFF};
-const uint8_t animationFloat1[] =		{0x07,0x3C,0x3F,0xFF};
-const uint8_t animationFloat2[] =		{0x07,0x3C,0x3D,0x53,0x3E,0x54,0xFF};
-const uint8_t animationSpring[] =		{0x2F,0x40,0xFD,0x00};
-const uint8_t animationHang[] =			{0x04,0x41,0x42,0xFF};
-const uint8_t animationLeap1[] =		{0x0F,0x43,0x43,0x43,0xFE,0x01};
-const uint8_t animationLeap2[] =		{0x0F,0x43,0x44,0xFE,0x01};
-const uint8_t animationSurf[] =			{0x3F,0x49,0xFF};
-const uint8_t animationGetAir[] =		{0x0B,0x56,0x56,0x0A,0x0B,0xFD,0x00};
-const uint8_t animationBurnt[] =		{0x20,0x4B,0xFF};
-const uint8_t animationDrown[] =		{0x20,0x4C,0xFF};
-const uint8_t animationDeath[] =		{0x03,0x4D,0xFF};
-const uint8_t animationShrink[] =		{0x03,0x4E,0x4F,0x50,0x51,0x52,0x00,0xFE,0x01};
-const uint8_t animationHurt[] =			{0x03,0x55,0xFF};
-const uint8_t animationWaterSlide[] =	{0x07,0x55,0x57,0xFF};
-const uint8_t animationNull[] =			{0x77,0x00,0xFD,0x00};
-const uint8_t animationFloat3[] =		{0x03,0x3C,0x3D,0x53,0x3E,0x54,0xFF};
-const uint8_t animationFloat4[] =		{0x03,0x3C,0xFD,0x00};
+static const uint8_t animationWalk[] =			{0xFF,0x08,0x09,0x0A,0x0B,0x06,0x07,0xFF};
+static const uint8_t animationRun[] =			{0xFF,0x1E,0x1F,0x20,0x21,0xFF,0xFF,0xFF};
+static const uint8_t animationRoll[] =			{0xFE,0x2E,0x2F,0x30,0x31,0x32,0xFF,0xFF};
+static const uint8_t animationRoll2[] =			{0xFE,0x2E,0x2F,0x32,0x30,0x31,0x32,0xFF};
+static const uint8_t animationPush[] =			{0xFD,0x45,0x46,0x47,0x48,0xFF,0xFF,0xFF};
+static const uint8_t animationIdle[] =			{0x17,0x01,0x01,0x01,0x01,0x01,0x01,0x01,0x01,0x01,0x01,0x01,0x01,0x03,0x02,0x02,0x02,0x03,0x04,0xFE,0x02};
+static const uint8_t animationBalance[] =		{0x1F,0x3A,0x3B,0xFF};
+static const uint8_t animationLookUp[] =		{0x3F,0x05,0xFF};
+static const uint8_t animationDuck[] =			{0x3F,0x39,0xFF};
+static const uint8_t animationSpindash[] =		{0x00,0x58,0x59,0x58,0x5A,0x58,0x5B,0x58,0x5C,0x58,0x5D,0xFF};
+static const uint8_t animationWarp1[] =			{0x3F,0x33,0xFF};
+static const uint8_t animationWarp2[] =			{0x3F,0x34,0xFF};
+static const uint8_t animationWarp3[] =			{0x3F,0x35,0xFF};
+static const uint8_t animationWarp4[] =			{0x3F,0x36,0xFF};
+static const uint8_t animationSkid[] =			{0x07,0x37,0x38,0xFF};
+static const uint8_t animationFloat1[] =		{0x07,0x3C,0x3F,0xFF};
+static const uint8_t animationFloat2[] =		{0x07,0x3C,0x3D,0x53,0x3E,0x54,0xFF};
+static const uint8_t animationSpring[] =		{0x2F,0x40,0xFD,0x00};
+static const uint8_t animationHang[] =			{0x04,0x41,0x42,0xFF};
+static const uint8_t animationLeap1[] =			{0x0F,0x43,0x43,0x43,0xFE,0x01};
+static const uint8_t animationLeap2[] =			{0x0F,0x43,0x44,0xFE,0x01};
+static const uint8_t animationSurf[] =			{0x3F,0x49,0xFF};
+static const uint8_t animationGetAir[] =		{0x0B,0x56,0x56,0x0A,0x0B,0xFD,0x00};
+static const uint8_t animationBurnt[] =			{0x20,0x4B,0xFF};
+static const uint8_t animationDrown[] =			{0x20,0x4C,0xFF};
+static const uint8_t animationDeath[] =			{0x03,0x4D,0xFF};
+static const uint8_t animationShrink[] =		{0x03,0x4E,0x4F,0x50,0x51,0x52,0x00,0xFE,0x01};
+static const uint8_t animationHurt[] =			{0x03,0x55,0xFF};
+static const uint8_t animationWaterSlide[] =	{0x07,0x55,0x57,0xFF};
+static const uint8_t animationNull[] =			{0x77,0x00,0xFD,0x00};
+static const uint8_t animationFloat3[] =		{0x03,0x3C,0x3D,0x53,0x3E,0x54,0xFF};
+static const uint8_t animationFloat4[] =		{0x03,0x3C,0xFD,0x00};
 
-const uint8_t* animationList[] = {
+static const uint8_t* animationList[] = {
+	animationWalk,
+	animationRun,
+	animationRoll,
+	animationRoll2,
+	animationPush,
+	animationIdle,
+	animationBalance,
+	animationLookUp,
+	animationDuck,
+	animationSpindash,
+	animationWarp1,
+	animationWarp2,
+	animationWarp3,
+	animationWarp4,
+	animationSkid,
+	animationFloat1,
+	animationFloat2,
+	animationSpring,
+	animationHang,
+	animationLeap1,
+	animationLeap2,
+	animationSurf,
+	animationGetAir,
+	animationBurnt,
+	animationDrown,
+	animationDeath,
+	animationShrink,
+	animationHurt,
+	animationWaterSlide,
+	animationNull,
+	animationFloat3,
+	animationFloat4,
+};
+
+static const uint8_t* animationListSuper[] = {
 	animationWalk,
 	animationRun,
 	animationRoll,
@@ -469,7 +504,7 @@ void PLAYER::AnglePos()
 						//If we're running off of a ledge, enter air state
 						status.inAir = true;
 						status.pushing = false;
-						nextAnim = PLAYERANIMATION_RUN;
+						prevAnim = PLAYERANIMATION_RUN;
 					}
 					else
 					{
@@ -504,7 +539,7 @@ void PLAYER::AnglePos()
 						//If we're running off of a ledge, enter air state
 						status.inAir = true;
 						status.pushing = false;
-						nextAnim = PLAYERANIMATION_RUN;
+						prevAnim = PLAYERANIMATION_RUN;
 					}
 					else
 					{
@@ -539,7 +574,7 @@ void PLAYER::AnglePos()
 						//If we're running off of a ledge, enter air state
 						status.inAir = true;
 						status.pushing = false;
-						nextAnim = PLAYERANIMATION_RUN;
+						prevAnim = PLAYERANIMATION_RUN;
 					}
 					else
 					{
@@ -574,7 +609,7 @@ void PLAYER::AnglePos()
 						//If we're running off of a ledge, enter air state
 						status.inAir = true;
 						status.pushing = false;
-						nextAnim = PLAYERANIMATION_RUN;
+						prevAnim = PLAYERANIMATION_RUN;
 					}
 					else
 					{
@@ -1094,7 +1129,7 @@ bool PLAYER::Spindash()
 		{
 			//Restart the spindash animation and play the rev sound
 			anim = PLAYERANIMATION_SPINDASH;
-			nextAnim = PLAYERANIMATION_WALK;
+			prevAnim = PLAYERANIMATION_WALK;
 			PlaySound(SOUNDID_SPINDASH_REV);
 			
 			//Increase our spindash counter
@@ -1429,7 +1464,7 @@ void PLAYER::MoveLeft()
 		{
 			status.xFlip = true;
 			status.pushing = false;
-			nextAnim = PLAYERANIMATION_RUN;
+			prevAnim = PLAYERANIMATION_RUN;
 		}
 		
 		//Accelerate
@@ -1478,7 +1513,7 @@ void PLAYER::MoveRight()
 		{
 			status.xFlip = false;
 			status.pushing = false;
-			nextAnim = PLAYERANIMATION_RUN;
+			prevAnim = PLAYERANIMATION_RUN;
 		}
 		
 		//Accelerate
@@ -1793,8 +1828,8 @@ void PLAYER::LevelBound()
 {
 	//Get our next position and boundaries
 	uint16_t nextPos = (xPosLong + (xVel * 0x100)) / 0x10000;
-	uint16_t leftBound = gLevel->leftBoundary + 0x10;
-	uint16_t rightBound = gLevel->rightBoundary - 0x18; //For some reason the right boundary is 8 pixels greater than the left boundary
+	uint16_t leftBound = gLevel->leftBoundary2 + 0x10;
+	uint16_t rightBound = gLevel->rightBoundary2 + 0x40 - 0x18;
 	
 	//Clip us into the boundaries
 	if (nextPos < leftBound)
@@ -1814,216 +1849,405 @@ void PLAYER::LevelBound()
 }
 
 //Animation update
+void PLAYER::FrameCommand(const uint8_t* animation)
+{
+	switch (animation[1 + animFrame])
+	{
+		case 0xFF: //Restart animation
+			animFrame = 0;
+			break;
+		case 0xFE: //Go back X amount of frames
+			animFrame -= animation[2 + animFrame];
+			break;
+		case 0xFD: //Switch to X animation
+			anim = (PLAYERANIMATION)animation[2 + animFrame];
+			return;
+		default:
+			return;
+	}
+	
+	//Advance frame
+	mappingFrame = animation[1 + animFrame];
+	animFrame++;
+}
+
 void PLAYER::AdvanceFrame(const uint8_t* animation)
 {
-	//Advance our frame
-	uint8_t frame = animation[1 + animFrame];
-	
-	//Handle specific commands
-	if (frame >= 0x80)
+	//Handle commands
+	if (animation[1 + animFrame] >= 0xFC)
 	{
-		switch (frame)
-		{
-			case 0xFF:
-				animFrame = 0;
-				frame = animation[1];
-				break;
-			case 0xFE:
-				animFrame -= animation[2 + animFrame];
-				frame = animation[1 + animFrame];
-				break;
-			case 0xFD:
-				anim = (PLAYERANIMATION)animation[2 + animFrame];
-				return;
-			default:
-				return;
-		}
+		FrameCommand(animation);
+		return;
 	}
-
-	mappingFrame = frame;
-	++animFrame;
+	
+	//Advance frame otherwise
+	mappingFrame = animation[1 + animFrame];
+	animFrame++;
 }
+
+const uint8_t flipTypeMapping[] = {0}; //, MAPPINGFRAME_FLIP1 + 12, MAPPINGFRAME_FLIP1 + 24, MAPPINGFRAME_FLIP1 + 24};
 
 void PLAYER::Animate()
 {
-	//If next animation is not equal to our current animation, switch
-	if (anim != nextAnim)
+	//Get our animation list to reference
+	const uint8_t **aniList;
+	if (super)
+		aniList = animationListSuper;
+	else
+		aniList = animationList;
+	
+	//Handle animation reset based on prevAnim
+	if (anim != prevAnim)
 	{
-		nextAnim = anim;
+		prevAnim = anim;
 		animFrame = 0;
 		animFrameDuration = 0;
 		status.pushing = false;
 	}
 	
-	//Handle our animation
-	const uint8_t** myAnimationList = animationList;
-	const uint8_t* animation = myAnimationList[anim];
+	//Get the animation to reference
+	const uint8_t *animation = aniList[anim];
 	
-	//If our first byte is a frame duration
-	if (animation[0] < 0x80)
+	if (animation[0] < 0x80) //Generic animation
 	{
-		//Copy our flip
+		//Wait for next frame (and copy our flip)
 		renderFlags.xFlip = status.xFlip;
-		renderFlags.yFlip = status.reverseGravity;
+		renderFlags.yFlip = false;
 		
 		if (--animFrameDuration >= 0)
 			return;
-		
 		animFrameDuration = animation[0];
+		
 		AdvanceFrame(animation);
+		return;
 	}
 	else
 	{
-		//Wait until we should advance frame
-		if (--animFrameDuration >= 0)
-			return;
-		
-		if (animation[0] == 0xFF)
+		if (animation[0] == 0xFF) //Is a walking variant
 		{
-			//Walk animation
-			if (flipAngle == 0)
+			if (flipType == 0 && flipAngle == 0) //Not flipping
 			{
-				uint8_t offAngle = angle;
-				if (offAngle < 0x80)
-					--offAngle;
+				//Get the 45 degree increment to rotate our sprites at
+				uint8_t rotAngle = angle;
+				if (rotAngle > 0 && rotAngle < 0x80) //This was added in Sonic 2 to make floor rotation more consistent
+					rotAngle--;
 				
-				if (!status.xFlip)
-					offAngle = ~offAngle;
+				if (!status.xFlip) //Invert angle if not flipped horizontally
+					rotAngle = ~rotAngle;
 				
-				offAngle += 0x10;
+				rotAngle += 0x10;
 				
-				//Get our horizontal flip, and flip according to angle
-				renderFlags.xFlip = status.xFlip;
-				
-				if (offAngle >= 0x80)
+				//Set our horizontal and vertical flip if tilted over 180 degrees
+				if (rotAngle >= 0x80)
 				{
-					renderFlags.xFlip = !renderFlags.xFlip;
-					renderFlags.yFlip = !status.reverseGravity;
+					renderFlags.xFlip = !status.xFlip;
+					renderFlags.yFlip = true;
 				}
 				else
 				{
-					renderFlags.yFlip = status.reverseGravity;
+					renderFlags.xFlip = status.xFlip;
+					renderFlags.yFlip = false;
 				}
 				
-				//Walking, not pushing
-				if (!status.pushing)
+				//Run our animation
+				if (!status.pushing) //Not pushing
 				{
-					//Convert our angle down to 45 degree intervals
-					offAngle /= 0x20;
-					offAngle &= 3;
+					//Get our angle increment
+					uint8_t angleIncrement = (rotAngle / 0x20) & 0x3; //Halved from the original, so this is the actual increment
 					
-					//Get our animation speed
-					uint16_t speed = abs(inertia);
+					//Get our speed factor
+					uint16_t speedFactor = abs(inertia);
 					if (status.isSliding)
-						speed *= 2;
+						speedFactor *= 2;
 					
 					if (!super)
 					{
-						//Get which animation to use
-						const uint8_t *walkAnimation = myAnimationList[PLAYERANIMATION_RUN];
-						if (speed < 0x600)
+						//Get the animation to use
+						if (speedFactor >= 0x600)
 						{
-							walkAnimation = myAnimationList[PLAYERANIMATION_WALK];
-							offAngle *= 6;
+							//Run animation (at or above 0x600 speed)
+							animation = animationList[PLAYERANIMATION_RUN];
+							angleIncrement *= 4;
 						}
 						else
 						{
-							offAngle *= 4;
+							//Walk animation (below 0x600 speed)
+							animation = animationList[PLAYERANIMATION_WALK];
+							angleIncrement *= 6;
 						}
 						
-						//Apply our animation speed
-						speed = -speed + 0x800;
+						//Check if our animation is going to loop
+						if (animation[1 + animFrame] == 0xFF)
+							animFrame = 0;
+						
+						mappingFrame = animation[1 + animFrame] + angleIncrement;
 
-						if (speed >= 0x8000)
-							speed = 0;
-						
-						animFrameDuration = speed / 0x100;
-						
-						//Advance frame and offset by offAngle
-						AdvanceFrame(walkAnimation);
-						mappingFrame += offAngle;
+						//Wait for the next frame
+						if (--animFrameDuration < 0)
+						{
+							//Set our frame duration
+							speedFactor = -speedFactor + 0x800;
+							if (speedFactor >= 0x8000)
+								speedFactor = 0;
+							animFrameDuration = speedFactor / 0x100;
+							
+							//Increment frame
+							animFrame++;
+						}
 						return;
 					}
 					else
 					{
-						//Get which animation to use
-						const uint8_t *walkAnimation = myAnimationList[PLAYERANIMATION_RUN];
-						if (speed < 0x800)
-						{
-							walkAnimation = myAnimationList[PLAYERANIMATION_WALK];
-							offAngle *= 8;
-						}
-						
-						//Apply our animation speed
-						speed = -speed + 0x800;
-
-						if (speed >= 0x8000)
-							speed = 0;
-						
-						animFrameDuration = speed / 0x100;
-						
-						//Advance frame and offset by offAngle
-						AdvanceFrame(walkAnimation);
-						mappingFrame += offAngle;
+						//Super walk and running (no super frames atm)
 						return;
 					}
 				}
 				else
 				{
+					//Wait for next frame
 					if (--animFrameDuration >= 0)
 						return;
+
+					//Set frame duration
+					uint16_t speedFactor = -abs(inertia) + 0x800;
+					if (speedFactor >= 0x8000)
+						speedFactor = 0;
+					animFrameDuration = speedFactor / 0x40;
 					
-					//Set our animation speed
-					animFrameDuration = -abs(inertia) + 0x800 >= 0x8000 ? 0 : (-abs(inertia) + 0x800) / 0x40;
-					animation = myAnimationList[PLAYERANIMATION_PUSH];
+					//Set animation and flip
+					animation = aniList[PLAYERANIMATION_PUSH];
 					renderFlags.xFlip = status.xFlip;
-					renderFlags.yFlip = status.reverseGravity;
+					renderFlags.yFlip = false;
 					
+					//Advance frame
 					AdvanceFrame(animation);
+					return;
 				}
 			}
 			else
 			{
-				return;
+				//Flipping
+				uint8_t type = flipType & 0x7F; //Don't include the direction flip bit
+				
+				if (type == 0)
+				{
+					uint8_t thisAngle = flipAngle;
+					
+					if (!status.xFlip)
+					{
+						//Clear our render flip
+						renderFlags.xFlip = false;
+						renderFlags.yFlip = false;
+						
+						//Set our mapping frame according to angle and the type
+						if (flipType >= 0x80)
+						{
+							renderFlags.yFlip = true;
+							thisAngle = ~thisAngle;
+							thisAngle += 0x8F;
+						}
+						else
+						{
+							thisAngle += 0xB;
+						}
+						
+						//mappingFrame = (thisAngle / 0x16) + MAPPINGFRAME_FLIP1; //No mapping frame enum or FLIP1
+						animFrameDuration = 0;
+					}
+					else
+					{
+						//Clear our render flip
+						renderFlags.xFlip = false;
+						renderFlags.yFlip = false;
+						
+						//Set our mapping frame according to angle and the type
+						if (flipType >= 0x80)
+						{
+							renderFlags.xFlip = true;
+							thisAngle += 0xB;
+						}
+						else
+						{
+							renderFlags.xFlip = true;
+							renderFlags.yFlip = true;
+							thisAngle = ~thisAngle;
+							thisAngle += 0x8F;
+						}
+						
+						//mappingFrame = (thisAngle / 0x16) + MAPPINGFRAME_FLIP1; //No mapping frame enum or FLIP1
+						animFrameDuration = 0;
+					}
+				}
+				else
+				{
+					uint8_t mapFrame = type < 4 ? flipTypeMapping[type] : 0; //The original doesn't account for type being 4 or greater
+					
+					switch (type)
+					{
+						case 1:
+						{
+							uint8_t thisAngle = flipAngle;
+							
+							if (!status.xFlip)
+							{
+								//Clear our render flip
+								renderFlags.xFlip = false;
+								renderFlags.yFlip = false;
+								
+								//Set our mapping frame
+								mappingFrame = ((thisAngle - 0x8) / 0x16) + mapFrame;
+								animFrameDuration = 0;
+							}
+							else
+							{
+								//Clear our render flip
+								renderFlags.xFlip = true;
+								renderFlags.yFlip = false;
+								
+								//Set our mapping frame
+								mappingFrame = ((thisAngle - 0x8) / 0x16) + mapFrame;
+								animFrameDuration = 0;
+							}
+							break;
+						}
+						case 2:
+						{
+							uint8_t thisAngle = flipAngle;
+							
+							if (!status.xFlip)
+							{
+								//Clear our render flip
+								renderFlags.xFlip = false;
+								renderFlags.yFlip = false;
+								
+								//Set our mapping frame
+								mappingFrame = ((thisAngle + 0xB) / 0x16) + mapFrame;
+								animFrameDuration = 0;
+							}
+							else
+							{
+								//Clear our render flip
+								renderFlags.xFlip = true;
+								renderFlags.yFlip = true;
+								
+								//Set our mapping frame
+								mappingFrame = (((~thisAngle) + 0x8F) / 0x16) + mapFrame;
+								animFrameDuration = 0;
+							}
+							break;
+						}
+						case 3:
+						{
+							uint8_t thisAngle = flipAngle;
+							
+							if (!status.xFlip)
+							{
+								//Clear our render flip
+								renderFlags.xFlip = false;
+								renderFlags.yFlip = true;
+								
+								//Set our mapping frame
+								mappingFrame = (((~thisAngle) + 0x8F) / 0x16) + mapFrame;
+								animFrameDuration = 0;
+							}
+							else
+							{
+								//Clear our render flip
+								renderFlags.xFlip = true;
+								renderFlags.yFlip = false;
+								
+								//Set our mapping frame
+								mappingFrame = ((thisAngle + 0xB) / 0x16) + mapFrame;
+								animFrameDuration = 0;
+							}
+							break;
+						}
+						case 4:
+						{
+							uint8_t thisAngle = flipAngle;
+							
+							if (!status.xFlip)
+							{
+								//Clear our render flip
+								renderFlags.xFlip = false;
+								renderFlags.yFlip = false;
+								
+								//Get the angle to use
+								if (flipType >= 0x80)
+									thisAngle += 0xB;
+								else
+									thisAngle += 0xB; //nice
+								
+								//Set our mapping frame
+								//mappingFrame = (thisAngle / 0x16) + MAPPINGFRAME_FLIP1; //No mapping frame enum or FLIP1
+								animFrameDuration = 0;
+							}
+							else
+							{
+								//Get the angle to use and set our render flip
+								if (flipType >= 0x80)
+								{
+									renderFlags.xFlip = true;
+									renderFlags.yFlip = true;
+									thisAngle = (~thisAngle) + 0x8F;
+								}
+								else
+								{
+									renderFlags.xFlip = true; //nice
+									renderFlags.yFlip = true; //nice
+									thisAngle = (~thisAngle) + 0x8F; //nice
+								}
+								
+								//Set our mapping frame
+								//mappingFrame = (thisAngle / 0x16) + MAPPINGFRAME_FLIP1; //No mapping frame enum or FLIP1
+								animFrameDuration = 0;
+							}
+							break;
+						}
+						default:
+						{
+							uint8_t thisAngle = flipAngle;
+							
+							//Clear our render flip
+							renderFlags.xFlip = status.xFlip;
+							renderFlags.yFlip = false;
+							
+							//Set our mapping frame
+							//mappingFrame = ((thisAngle + 0xB) / 0x16) + MAPPINGFRAME_FLIP1; //No mapping frame enum or FLIP1
+							animFrameDuration = 0;
+							break;
+						}
+					}
+				}
 			}
 		}
-		else
+		else //Rolling animation (usually)
 		{
+			//Copy our flip
+			renderFlags.xFlip = status.xFlip;
+			renderFlags.yFlip = false;
+			
+			//Wait for next frame
 			if (--animFrameDuration >= 0)
 				return;
 			
-			//Roll animation
-			if (animation[0] == 0xFE)
-			{
-				//Do our rolling animation (ROLL2 is a faster roll animation)
-				if (abs(inertia) >= 0x600)
-					animation = myAnimationList[PLAYERANIMATION_ROLL2];
-				else
-					animation = myAnimationList[PLAYERANIMATION_ROLL];
-				
-				//Set our animation speed
-				uint16_t speed = -abs(inertia) + 0x400;
-				if (speed >= 0x8000)
-					speed = 0;
-				animFrameDuration = speed / 0x100;
-				
-				//Copy our flip
-				renderFlags.xFlip = status.xFlip;
-				renderFlags.yFlip = status.reverseGravity;
-			}
-			else //Push animation
-			{
-				if (--animFrameDuration >= 0)
-					return;
-				
-				//Set our animation speed
-				animFrameDuration = -abs(inertia) + 0x800 >= 0x8000 ? 0 : (-abs(inertia) + 0x800) / 0x40;
-				animation = myAnimationList[PLAYERANIMATION_PUSH];
-				renderFlags.xFlip = status.xFlip;
-				renderFlags.yFlip = status.reverseGravity;
-			}
+			//Get our speed factor
+			uint16_t speedFactor = abs(inertia);
 			
+			//Set our roll animation and duration
+			if (speedFactor < 0x600)
+				animation = aniList[PLAYERANIMATION_ROLL];
+			else
+				animation = aniList[PLAYERANIMATION_ROLL2];
+			
+			speedFactor = -speedFactor + 0x400;
+			if (speedFactor >= 0x8000)
+				speedFactor = 0;
+			animFrameDuration = speedFactor / 0x100;
+			
+			//Advance frame
 			AdvanceFrame(animation);
+			return;
 		}
 	}
 }
@@ -2189,7 +2413,27 @@ void PLAYER::Update()
 					RecordPos();
 					//bsr.w	Sonic_Water
 					
-					Animate();
+					//Copy our angles to tilt
+					nextTilt = primaryAngle;
+					tilt = secondaryAngle;
+					
+					//Animation
+					if (status.windTunnel && anim != PLAYERANIMATION_WALK)
+						prevAnim = anim;
+					
+					if (!objectControl.disableAnimation)
+					{
+						//Run animation code
+						Animate();
+						
+						//Flip vertically if gravity is reversed
+						if (status.reverseGravity)
+							renderFlags.yFlip ^= 1;
+					}
+					
+					//Interact with objects
+					//if (objectControl.disableObjectInteract || objectControl.disableObjectInteract2)
+					//	TouchResponse();
 					break;
 					
 				case PLAYERROUTINE_HURT:

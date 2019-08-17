@@ -39,6 +39,7 @@ SOURCES = \
 	Object \
 	Camera \
 	Objects/PathSwitcher \
+	Objects/Goalpost \
 
 #What to compile
 OBJECTS = $(addprefix obj/$(FILENAME)/, $(addsuffix .o, $(SOURCES)))

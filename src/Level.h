@@ -36,6 +36,9 @@ struct LEVELTABLE
 	
 	//Start location
 	uint16_t startX, startY;
+	
+	//Start boundaries
+	uint16_t leftBoundary, rightBoundary, topBoundary, bottomBoundary;
 };
 
 struct CHUNKMAPPINGTILE
@@ -102,6 +105,10 @@ class LEVEL
 		uint16_t rightBoundary;
 		uint16_t topBoundary;
 		uint16_t bottomBoundary;
+		
+		uint16_t leftBoundary2;
+		uint16_t rightBoundary2;
+		uint16_t topBoundary2;
 		uint16_t bottomBoundary2;
 		
 		//Players and objects

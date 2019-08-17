@@ -10,7 +10,7 @@
 
 OBJECTFUNCTION objFuncSonic1[] = {
 	NULL, NULL, NULL, &ObjPathSwitcher, NULL, NULL, NULL, NULL,
-	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+	NULL, NULL, NULL, NULL, NULL, &ObjGoalpost, NULL, NULL,
 	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
 	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
 	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
@@ -81,11 +81,11 @@ OBJECTFUNCTION objFuncSonic2[] = {
 //Our level table
 LEVELTABLE gLevelTable[] = {
 	//Green Hill Zone Act 1
-	{LEVELFORMAT_CHUNK128_SONIC2, "data/Level/GHZ/ghz1.lay", "data/Level/GHZ/ghz.chk", "data/Level/GHZ/ghz.nor", "data/Level/GHZ/ghz.alt", "data/Level/sonic1.can", "data/Level/sonic1.car", "data/Level/sonic1.ang", "data/Level/GHZ/ghz1.obj", objFuncSonic1, NULL, 0x50, 0x3B0},
+	{LEVELFORMAT_CHUNK128_SONIC2, "data/Level/GHZ/ghz1.lay", "data/Level/GHZ/ghz.chk", "data/Level/GHZ/ghz.nor", "data/Level/GHZ/ghz.alt", "data/Level/sonic1.can", "data/Level/sonic1.car", "data/Level/sonic1.ang", "data/Level/GHZ/ghz1.obj", objFuncSonic1, NULL, 0x0050, 0x03B0, 0x0000, 0x25FF + (SCREEN_WIDTH - 320) / 2, 0x0000, 0x03E0},
 	//Spring Yard Zone Act 1
-	{LEVELFORMAT_CHUNK128_SONIC2, "data/Level/SYZ/syz1.lay", "data/Level/SYZ/syz.chk", "data/Level/SYZ/syz.nor", "data/Level/SYZ/syz.alt", "data/Level/sonic1.can", "data/Level/sonic1.car", "data/Level/sonic1.ang", "data/Level/SYZ/syz1.obj", objFuncSonic1, NULL, 0x30, 0x3BD},
+	{LEVELFORMAT_CHUNK128_SONIC2, "data/Level/SYZ/syz1.lay", "data/Level/SYZ/syz.chk", "data/Level/SYZ/syz.nor", "data/Level/SYZ/syz.alt", "data/Level/sonic1.can", "data/Level/sonic1.car", "data/Level/sonic1.ang", "data/Level/SYZ/syz1.obj", objFuncSonic1, NULL, 0x0030, 0x03BD, 0x0000, 0x0000, 0x0000, 0x0000},
 	//Emerald Hill Zone Act 1
-	{LEVELFORMAT_CHUNK128_SONIC2, "data/Level/EHZ/ehz1.lay", "data/Level/EHZ/ehz.chk", "data/Level/EHZ/ehz.nor", "data/Level/EHZ/ehz.alt", "data/Level/sonic2.can", "data/Level/sonic2.car", "data/Level/sonic2.ang", "data/Level/EHZ/ehz1.obj", objFuncSonic2, NULL, 0x60, 0x28F},
+	{LEVELFORMAT_CHUNK128_SONIC2, "data/Level/EHZ/ehz1.lay", "data/Level/EHZ/ehz.chk", "data/Level/EHZ/ehz.nor", "data/Level/EHZ/ehz.alt", "data/Level/sonic2.can", "data/Level/sonic2.car", "data/Level/sonic2.ang", "data/Level/EHZ/ehz1.obj", objFuncSonic2, NULL, 0x0060, 0x028F, 0x0000, 0x0000, 0x0000, 0x0000},
 };
 
 //Level boundaries
@@ -457,23 +457,15 @@ LEVEL::LEVEL(int id)
 	free(texData);
 	
 	//Set level boundaries
-	leftBoundary = 0;
-	topBoundary = 0;
+	leftBoundary = tableEntry->leftBoundary;
+	topBoundary = tableEntry->topBoundary;
+	rightBoundary = tableEntry->rightBoundary;
+	bottomBoundary = tableEntry->bottomBoundary;
 	
-	switch (format)
-	{
-		case LEVELFORMAT_CHUNK128_SONIC2:
-		case LEVELFORMAT_CHUNK128:
-			rightBoundary = layout.width * 128;
-			bottomBoundary = layout.height * 128;
-			bottomBoundary2 = bottomBoundary;
-			break;
-		default:
-			rightBoundary = 0x7FFF;
-			bottomBoundary = 0x7FFF;
-			bottomBoundary2 = bottomBoundary;
-			break;
-	}
+	leftBoundary2 = leftBoundary;
+	topBoundary2 = topBoundary;
+	rightBoundary2 = rightBoundary;
+	bottomBoundary2 = bottomBoundary;
 	
 	//Create our players
 	PLAYER *follow = NULL;
@@ -603,10 +595,6 @@ LEVEL::LEVEL(int id)
 		return;
 	}
 	
-	//Handle dynamic events
-	DynamicEvents();
-	bottomBoundary2 = bottomBoundary;
-	
 	LOG(("Success!\n"));
 }
 
@@ -695,6 +683,14 @@ void LEVEL::DynamicEvents()
 		//Move
 		bottomBoundary2 += move;
 	}
+	
+	//Set boundaries to target
+	int16_t xPos = player[0]->x.pos - (SCREEN_WIDTH / 2);
+	int16_t yPos = player[0]->y.pos;
+	
+	//Cap to left
+	if (xPos < 0)
+		xPos = 0;
 }
 
 void LEVEL::Update()

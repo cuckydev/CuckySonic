@@ -65,12 +65,12 @@ void CAMERA::Track(void *level, PLAYER *trackPlayer)
 		y -= (tDiff > vScroll ? vScroll : tDiff);
 	
 	//Keep inside of level boundaries
-	if (x < ((LEVEL*)level)->leftBoundary)
-		x = ((LEVEL*)level)->leftBoundary;
-	if (y < ((LEVEL*)level)->topBoundary)
-		y = ((LEVEL*)level)->topBoundary;
-	if (x > ((LEVEL*)level)->rightBoundary - SCREEN_WIDTH)
-		x = ((LEVEL*)level)->rightBoundary - SCREEN_WIDTH;
+	if (x < ((LEVEL*)level)->leftBoundary2)
+		x = ((LEVEL*)level)->leftBoundary2;
+	if (y < ((LEVEL*)level)->topBoundary2)
+		y = ((LEVEL*)level)->topBoundary2;
+	if (x > ((LEVEL*)level)->rightBoundary2 - SCREEN_WIDTH)
+		x = ((LEVEL*)level)->rightBoundary2 - SCREEN_WIDTH;
 	if (y > ((LEVEL*)level)->bottomBoundary2 - SCREEN_HEIGHT)
 		y = ((LEVEL*)level)->bottomBoundary2 - SCREEN_HEIGHT;
 }

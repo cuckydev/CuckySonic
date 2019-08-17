@@ -9,7 +9,7 @@ const uint16_t switchRadius[] = {0x20, 0x40, 0x80, 0x100};
 
 void ObjPathSwitcher(OBJECT *object)
 {
-	enum scratch
+	enum SCRATCH
 	{
 		SCRATCH_RADIUS = 0,	// 2 bytes
 		SCRATCH_PLAYER_ACROSS_0 = 2, // PLAYERS / 8 bytes

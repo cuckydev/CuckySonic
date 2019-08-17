@@ -161,7 +161,7 @@ class PLAYER
 		
 		uint16_t animFrame;
 		PLAYERANIMATION anim;
-		PLAYERANIMATION nextAnim;
+		PLAYERANIMATION prevAnim;
 		int16_t animFrameDuration;
 		
 		//Our status
@@ -188,6 +188,12 @@ class PLAYER
 			bool hasShield : 1;		//Do we have a shield
 			bool isInvincible : 1;	//Do we have invincibility
 			bool hasSpeedShoes : 1;	//Do we have speed shoes
+			
+			//Shield effects
+			bool shieldReflect : 1;		//Reflects projectile
+			bool immuneFire : 1;		//Immune to fire
+			bool immuneElectric : 1;	//Immune to electric
+			bool immuneWater : 1;		//Immune to water
 		} item;
 		
 		SHIELD shield;				//Our shield type
@@ -214,9 +220,11 @@ class PLAYER
 		//Object control
 		struct
 		{
-			bool disableOurMovement : 1;	//Disables our movement functions
-			bool disableWallCollision : 1;	//Disables collision with walls
-			bool disableObjectInteract : 1;	//Disables generic interaction with objects (we'll still otherwise collide with objects that have separate detection, such as bubbles, springs, and other solid objects, though)
+			bool disableOurMovement : 1;		//Disables our movement functions
+			bool disableAnimation : 1;			//Disables animation
+			bool disableWallCollision : 1;		//Disables collision with walls
+			bool disableObjectInteract : 1;		//Disables generic interaction with objects (we'll still otherwise collide with objects that have separate detection, such as bubbles, springs, and other solid objects, though)
+			bool disableObjectInteract2 : 1;	//Disables generic interaction with objects (idk what this does specifically yet)
 		} objectControl;
 		
 		//Spindash
@@ -224,6 +232,7 @@ class PLAYER
 		uint16_t spindashCounter;	//Our counter for spindashing
 		
 		//Flipping (hit a spring that causes the player to spin about, or running off of that curved ramp in Angel Island Zone)
+		uint8_t flipType;
 		uint8_t flipAngle;
 		bool flipTurned;
 		uint8_t flipsRemaining;
@@ -344,7 +353,9 @@ class PLAYER
 		void LevelBoundSide(uint16_t bound);
 		void LevelBound();
 		
+		void FrameCommand(const uint8_t* animation);
 		void AdvanceFrame(const uint8_t* animation);
+		void FlipAngle();
 		void Animate();
 		
 		void Update();
