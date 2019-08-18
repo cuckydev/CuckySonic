@@ -4,7 +4,7 @@
 #include "../Log.h"
 #include "../MathUtil.h"
 
-#define SPIRAL_OFFSET_FIX //Fixes the radius offset to scale properly
+//#define SPIRAL_OFFSET_FIX //Fixes the radius offset to scale properly
 
 static const uint8_t FlipAngleTable[] = {
 	0x00,0x00,
