@@ -85,7 +85,7 @@ LEVELTABLE gLevelTable[] = {
 	//Spring Yard Zone Act 1
 	{LEVELFORMAT_CHUNK128_SONIC2, "data/Level/SYZ/syz1.lay", "data/Level/SYZ/syz.chk", "data/Level/SYZ/syz.nor", "data/Level/SYZ/syz.alt", "data/Level/sonic1.can", "data/Level/sonic1.car", "data/Level/sonic1.ang", "data/Level/SYZ/syz1.obj", objFuncSonic1, NULL, 0x0030, 0x03BD, 0x0000, 0x0000, 0x0000, 0x0000},
 	//Emerald Hill Zone Act 1
-	{LEVELFORMAT_CHUNK128_SONIC2, "data/Level/EHZ/ehz1.lay", "data/Level/EHZ/ehz.chk", "data/Level/EHZ/ehz.nor", "data/Level/EHZ/ehz.alt", "data/Level/sonic2.can", "data/Level/sonic2.car", "data/Level/sonic2.ang", "data/Level/EHZ/ehz1.obj", objFuncSonic2, NULL, 0x0060, 0x028F, 0x0000, 0x29A0 + (SCREEN_WIDTH - 320) / 2, 0x0000, 0x0420},
+	{LEVELFORMAT_CHUNK128_SONIC2, "data/Level/EHZ/ehz1.lay", "data/Level/EHZ/ehz.chk", "data/Level/EHZ/ehz.nor", "data/Level/EHZ/ehz.alt", "data/Level/sonic2.can", "data/Level/sonic2.car", "data/Level/sonic2.ang", "data/Level/EHZ/ehz1.obj", objFuncSonic2, NULL, 0x0060, 0x028F, 0x0000, 0x29A0 + (SCREEN_WIDTH - 320) / 2, 0x0000, 0x0320},
 };
 
 //Level boundaries
