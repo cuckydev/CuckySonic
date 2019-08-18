@@ -730,9 +730,6 @@ void PLAYER::DoLevelCollision()
 				else
 					y.pos -= distance2;
 				
-				//Land on floor
-				ResetOnFloor();
-				
 				//Get our inertia from our global speeds
 				if ((angle + 0x20) & 0x40)
 				{
@@ -755,6 +752,9 @@ void PLAYER::DoLevelCollision()
 					yVel = 0;
 					inertia = xVel;
 				}
+				
+				//Land on floor
+				ResetOnFloor();
 			}
 			break;
 		}
@@ -1033,10 +1033,41 @@ void PLAYER::ResetOnFloor3()
 	//Jump ability
 	if (jumpAbility != 0)
 	{
-		//Handle jump abilities on landing (bubble shield bouncing)
-		if (characterType == 0 && super == false)
+		//Handle jump abilities on landing
+		if ((characterType == CHARACTERTYPE_SONIC) && super == false)
 		{
-			//TODO: Bubble shield and what-not
+			//Bubble shield bounce
+			if (item.hasShield && shield == SHIELD_BUBBLE)
+			{
+				//Get the force of our bounce
+				int16_t bounceForce = 0x780;
+				if (status.underwater)
+					bounceForce = 0x400;
+				
+				//Bounce us up from the ground
+				int16_t sin, cos;
+				GetSine(angle - 0x40, &sin, &cos);
+				xVel += (cos * bounceForce) / 0x100;
+				yVel += (sin * bounceForce) / 0x100;
+				
+				//Put us back into the air state
+				status.inAir = true;
+				status.pushing = false;
+				status.jumping = true;
+				anim = PLAYERANIMATION_ROLL;
+				status.inBall = true;
+				
+				//Return to the ball hitbox
+				xRadius = rollXRadius;
+				yRadius = rollYRadius;
+				if (status.reverseGravity)
+					y.pos += (defaultYRadius - yRadius);
+				else
+					y.pos -= (defaultYRadius - yRadius);
+				
+				//Play the sound
+				//PlaySound(SOUNDID_BUBBLE_BOUNCE);
+			}
 		}
 		
 		//Enable jump ability
@@ -1164,10 +1195,12 @@ void PLAYER::JumpAbilities()
 	if (jumpAbility == 0 && (controlPress.a || controlPress.b || controlPress.c))
 	{
 		//Perform our ability
-		//status.rollJumping = false; //Also commented out because this would be awkward without any abilities
+		if (item.hasShield && shield != SHIELD_BLUE) //If can use an ability
+		{
+			status.rollJumping = false; //Clear the rolljump flag
+		}
 		
-		//No ability code yet
-		
+		//Disable our ability flag
 		jumpAbility = 1;
 	}
 }
@@ -1495,7 +1528,7 @@ void PLAYER::MoveLeft()
 	{
 		//Decelerate
 		newInertia -= deceleration;
-		if (newInertia < 0)
+		if (newInertia >= -deceleration && newInertia < 0)
 			newInertia = -0x80;
 		inertia = newInertia;
 		
@@ -1544,7 +1577,7 @@ void PLAYER::MoveRight()
 	{
 		//Decelerate
 		newInertia += deceleration;
-		if (newInertia >= 0)
+		if (newInertia >= 0 && newInertia < deceleration)
 			newInertia = 0x80;
 		inertia = newInertia;
 		
@@ -2593,7 +2626,6 @@ void PLAYER::DebugControl()
 	}
 	
 	//Handle pressed buttons
-	
 	if (gController[controller].press.b)
 	{
 		//Exit debug mode

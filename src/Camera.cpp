@@ -56,7 +56,7 @@ void CAMERA::Track(void *level, PLAYER *trackPlayer)
 	{
 		tDiff = ((SCREEN_HEIGHT / 2) - 16) - (trackY - y);
 		bDiff = (trackY - y) - ((SCREEN_HEIGHT / 2) - 16);
-		vScroll = abs(trackPlayer->yVel) > 0x600 ? 16 : 6;
+		vScroll = abs(trackPlayer->inertia) >= 0x800 ? 16 : 6;
 	}
 	
 	if (bDiff > 0)
