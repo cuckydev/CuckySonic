@@ -2,5 +2,6 @@
 /obj
 -Wall
 
-Exclude the  build directory
-build/*
+Exclude the build executable
+build/*.exe
+build/*.zip
