@@ -4,3 +4,5 @@
 
 #define GAME_ORGANIZATION	"CuckyDev"
 #define GAME_TITLE			"CuckySonic"
+
+#define PLAYERS 1

@@ -37,7 +37,7 @@ void ObjGoalpost(OBJECT *object)
 			object->renderFlags.alignPlane = true;
 			object->widthPixels = 0x18;
 			object->priority = 4;
-		//Fallthrough
+//Fallthrough
 		case 1: //Check for contact
 			//If near the goalpost, we're touching it
 			if (gLevel->player[0]->x.pos >= object->x.pos && gLevel->player[0]->x.pos < (object->x.pos + 0x20))

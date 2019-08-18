@@ -4,8 +4,7 @@
 #include "Player.h"
 #include "Object.h"
 #include "Camera.h"
-
-#define PLAYERS 1
+#include "GameConstants.h"
 
 enum LEVELFORMAT
 {

@@ -207,8 +207,6 @@ class PLAYER
 		uint8_t angle;		//Angle
 		uint8_t moveLock;	//Player cannot move if this is non-zero (decrements every frame)
 		
-		//OBJECT *interact;	//Object we're touching
-		
 		//These two are used for collision, usually represent the player's two ground point angles
 		uint8_t primaryAngle;
 		uint8_t secondaryAngle;
@@ -227,6 +225,8 @@ class PLAYER
 			bool disableObjectInteract2 : 1;	//Disables generic interaction with objects (idk what this does specifically yet)
 		} objectControl;
 		
+		void *interact;	//Object we're touching
+		
 		//Spindash
 		bool spindashing;			//Set if we're spindashing
 		uint16_t spindashCounter;	//Our counter for spindashing
@@ -234,7 +234,6 @@ class PLAYER
 		//Flipping (hit a spring that causes the player to spin about, or running off of that curved ramp in Angel Island Zone)
 		uint8_t flipType;
 		uint8_t flipAngle;
-		bool flipTurned;
 		uint8_t flipsRemaining;
 		uint8_t flipSpeed;
 		
@@ -364,4 +363,6 @@ class PLAYER
 		void RestoreStateDebug();
 		void DebugControl();
 		void DebugMode();
+		
+		void RideObject(void *ride, bool *standingBit);
 };

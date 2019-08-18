@@ -42,8 +42,7 @@ void ObjPathSwitcher(OBJECT *object)
 						object->scratchU8[SCRATCH_PLAYER_ACROSS_0 + (i / 8)] |= INDEX_TO_BIT(i);
 				}
 			}
-			
-		//Fallthrough
+//Fallthrough
 		case 1:
 			if (object->subtype & 0x04)
 			{

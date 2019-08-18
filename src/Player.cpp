@@ -8,9 +8,12 @@
 #include "Error.h"
 #include "Level.h"
 #include "Game.h"
+#include "Object.h"
 #include "GameConstants.h"
 
 //animation data
+#define MAPPINGFRAME_FLIP1 0x5E
+
 static const uint8_t animationWalk[] =			{0xFF,0x08,0x09,0x0A,0x0B,0x06,0x07,0xFF};
 static const uint8_t animationRun[] =			{0xFF,0x1E,0x1F,0x20,0x21,0xFF,0xFF,0xFF};
 static const uint8_t animationRoll[] =			{0xFE,0x2E,0x2F,0x30,0x31,0x32,0xFF,0xFF};
@@ -1023,12 +1026,22 @@ void PLAYER::ResetOnFloor3()
 	
 	//Clear flipping
 	flipAngle = 0;
-	flipTurned = 0;
+	flipType = 0;
 	flipsRemaining = 0;
+	scrollDelay = 0;
 	
 	//Jump ability
-	jumpAbility = 0;
-	//TODO: Bubble shield and what-not
+	if (jumpAbility != 0)
+	{
+		//Handle jump abilities on landing (bubble shield bouncing)
+		if (characterType == 0 && super == false)
+		{
+			//TODO: Bubble shield and what-not
+		}
+		
+		//Enable jump ability
+		jumpAbility = 0;
+	}
 }
 
 //Record our position in the records
@@ -1267,28 +1280,24 @@ void PLAYER::JumpAngle()
 	
 	if (nextFlipAngle != 0)
 	{
-		if (inertia >= 0 || flipTurned)
+		if (inertia >= 0 || flipType >= 0x80)
 		{
-			if (nextFlipAngle >= 0x100 - flipSpeed && flipsRemaining-- == 0)
+			nextFlipAngle += flipSpeed;
+			
+			if (nextFlipAngle < flipSpeed && --flipsRemaining <= 0) //If flipped
 			{
 				flipsRemaining = 0;
 				nextFlipAngle = 0;
-			}
-			else
-			{
-				nextFlipAngle += flipSpeed;
 			}
 		}
 		else
 		{
-			if (nextFlipAngle < flipSpeed && flipsRemaining-- == 0)
+			nextFlipAngle -= flipSpeed;
+			
+			if (nextFlipAngle < flipSpeed && --flipsRemaining <= 0) //If flipped
 			{
 				flipsRemaining = 0;
 				nextFlipAngle = 0;
-			}
-			else
-			{
-				nextFlipAngle -= flipSpeed;
 			}
 		}
 		
@@ -1885,7 +1894,7 @@ void PLAYER::AdvanceFrame(const uint8_t* animation)
 	animFrame++;
 }
 
-const uint8_t flipTypeMapping[] = {0}; //, MAPPINGFRAME_FLIP1 + 12, MAPPINGFRAME_FLIP1 + 24, MAPPINGFRAME_FLIP1 + 24};
+const uint8_t flipTypeMapping[] = {0, MAPPINGFRAME_FLIP1 + 12, MAPPINGFRAME_FLIP1 + 24, MAPPINGFRAME_FLIP1 + 24};
 
 void PLAYER::Animate()
 {
@@ -2051,7 +2060,7 @@ void PLAYER::Animate()
 							thisAngle += 0xB;
 						}
 						
-						//mappingFrame = (thisAngle / 0x16) + MAPPINGFRAME_FLIP1; //No mapping frame enum or FLIP1
+						mappingFrame = (thisAngle / 0x16) + MAPPINGFRAME_FLIP1;
 						animFrameDuration = 0;
 					}
 					else
@@ -2074,7 +2083,7 @@ void PLAYER::Animate()
 							thisAngle += 0x8F;
 						}
 						
-						//mappingFrame = (thisAngle / 0x16) + MAPPINGFRAME_FLIP1; //No mapping frame enum or FLIP1
+						mappingFrame = (thisAngle / 0x16) + MAPPINGFRAME_FLIP1;
 						animFrameDuration = 0;
 					}
 				}
@@ -2179,7 +2188,7 @@ void PLAYER::Animate()
 									thisAngle += 0xB; //nice
 								
 								//Set our mapping frame
-								//mappingFrame = (thisAngle / 0x16) + MAPPINGFRAME_FLIP1; //No mapping frame enum or FLIP1
+								mappingFrame = (thisAngle / 0x16) + MAPPINGFRAME_FLIP1;
 								animFrameDuration = 0;
 							}
 							else
@@ -2199,7 +2208,7 @@ void PLAYER::Animate()
 								}
 								
 								//Set our mapping frame
-								//mappingFrame = (thisAngle / 0x16) + MAPPINGFRAME_FLIP1; //No mapping frame enum or FLIP1
+								mappingFrame = (thisAngle / 0x16) + MAPPINGFRAME_FLIP1;
 								animFrameDuration = 0;
 							}
 							break;
@@ -2213,7 +2222,7 @@ void PLAYER::Animate()
 							renderFlags.yFlip = false;
 							
 							//Set our mapping frame
-							//mappingFrame = ((thisAngle + 0xB) / 0x16) + MAPPINGFRAME_FLIP1; //No mapping frame enum or FLIP1
+							mappingFrame = ((thisAngle + 0xB) / 0x16) + MAPPINGFRAME_FLIP1;
 							animFrameDuration = 0;
 							break;
 						}
@@ -2619,4 +2628,26 @@ void PLAYER::DebugMode()
 			DebugControl();
 			break;
 	}
+}
+
+//Object interaction functions
+void PLAYER::RideObject(void *ride, bool *standingBit)
+{
+	//If already standing on an object, clear that object's standing bit
+	if (status.shouldNotFall)
+		*((bool*)interact + (size_t)standingBit) = false; //Clear the object we're standing on's standing bit
+	
+	//Set to stand on this object
+	interact = ride;
+	angle = 0;
+	yVel = 0;
+	xVel = inertia;
+	
+	//Land on object if in mid-air
+	if (status.inAir)
+		ResetOnFloor2();
+	
+	status.shouldNotFall = true;
+	status.inAir = false;
+	*((bool*)ride + (size_t)standingBit) = true;
 }

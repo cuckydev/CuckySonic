@@ -3,6 +3,7 @@
 #include "Render.h"
 #include "Mappings.h"
 #include "LevelCollision.h"
+#include "GameConstants.h"
 
 class OBJECT
 {
@@ -105,6 +106,13 @@ class OBJECT
 			bool xFlip : 1;				//Set if facing left
 			bool yFlip : 1;				//In the air
 		} status;
+		
+		//Player contact status
+		struct
+		{
+			bool standing;
+			bool pushing;
+		} playerContact[PLAYERS];
 		
 		uint8_t routine;			//Routine
 		uint8_t routineSecondary;	//Routine Secondary
