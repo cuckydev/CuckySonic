@@ -2,6 +2,9 @@
 #include "../Level.h"
 #include "../Game.h"
 #include "../Log.h"
+#include "../MathUtil.h"
+
+#define SPIRAL_OFFSET_FIX //Fixes the radius offset to scale properly
 
 static const uint8_t FlipAngleTable[] = {
 	0x00,0x00,
@@ -144,7 +147,7 @@ void ObjSpiral(OBJECT *object) //Also MTZ cylinder
 						
 						//Check if we're near the bottom and not already on an object controlling us
 						int16_t yOff = player->y.pos - object->y.pos - 0x10;
-						if (yOff >= 0x30 || player->objectControl.disableOurMovement)
+						if (yOff < 0 || yOff >= 0x30 || player->objectControl.disableOurMovement)
 							return;
 						
 						//Set the player to run on the spiral
@@ -165,7 +168,15 @@ void ObjSpiral(OBJECT *object) //Also MTZ cylinder
 							{
 								//Set our Y-position
 								int8_t cosine = CosineTable[xOff];
-								player->y.pos = (object->y.pos + cosine) - (player->yRadius - 19);
+								
+								#ifndef SPIRAL_OFFSET_FIX
+									int16_t yOff = player->yRadius - 19;
+								#else
+									int16_t yOff = ((player->yRadius - 19) * cosine) / 32;
+								#endif
+								
+								int16_t lastYPos = player->y.pos;
+								player->y.pos = (object->y.pos + cosine) - yOff;
 								
 								//Set our flip angle
 								player->flipAngle = FlipAngleTable[(xOff / 8) & 0x3F];

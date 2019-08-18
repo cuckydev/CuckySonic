@@ -1528,7 +1528,7 @@ void PLAYER::MoveLeft()
 	{
 		//Decelerate
 		newInertia -= deceleration;
-		if (newInertia >= -deceleration && newInertia < 0)
+		if (newInertia >= 0 && newInertia < deceleration)
 			newInertia = -0x80;
 		inertia = newInertia;
 		
