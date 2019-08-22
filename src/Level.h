@@ -163,6 +163,12 @@ class LEVEL
 		//Object texture cache
 		TEXTURE *objTextureCache;
 		
+		//State
+		bool titleCard;
+		bool fading;
+		bool isFadingIn;
+		bool specialFade;
+		
 	public:
 		LEVEL(int id);
 		~LEVEL();
@@ -173,6 +179,9 @@ class LEVEL
 		bool LoadObjects(LEVELTABLE *tableEntry);
 		bool LoadArt(LEVELTABLE *tableEntry);
 		void UnloadAll();
+		
+		void SetFade(bool fadeIn, bool isSpecial);
+		bool UpdateFade();
 		
 		void DynamicEvents();
 		

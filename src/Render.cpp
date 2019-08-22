@@ -463,56 +463,7 @@ bool SOFTWAREBUFFER::RenderToScreen(PALCOLOUR *backgroundColour)
 			SBRTSD(SET_BUFFER_PIXEL3);
 			break;
 		case 4:
-			//SBRTSD(SET_BUFFER_PIXEL4);
-			if (backgroundColour != NULL)	\
-	{	\
-		for (int px = 0; px < width * height; px++)	\
-			SET_BUFFER_PIXEL4(writeBuffer, bpp, px, backgroundColour->colour);	\
-	}	\
-		\
-	for (int i = 0; i < RENDERLAYERS; i++)	\
-	{	\
-		for (RENDERQUEUE *entry = queue[i]; entry != queueEntry[i]; entry++)	\
-		{	\
-			switch (entry->type)	\
-			{	\
-				case RENDERQUEUE_TEXTURE:	\
-					fpx = entry->texture.srcX + entry->texture.srcY * entry->texture.texture->width;	\
-					dpx = entry->dest.x + entry->dest.y * width;	\
-						\
-					for (int fy = entry->texture.srcY; fy < entry->texture.srcY + entry->dest.h; fy++)	\
-					{	\
-						for (int fx = entry->texture.srcX; fx < entry->texture.srcX + entry->dest.w; fx++)	\
-						{	\
-							const uint8_t index = entry->texture.srcBuffer[fpx++];	\
-							if (index)	\
-								SET_BUFFER_PIXEL4(writeBuffer, bpp, dpx, entry->texture.palette->colour[index].colour);	\
-							dpx++;	\
-						}	\
-						fpx += entry->texture.texture->width - entry->dest.w;	\
-						dpx += width - entry->dest.w;	\
-					}	\
-					break;	\
-				case RENDERQUEUE_SOLID:	\
-					dpx = entry->dest.x + entry->dest.y * width;	\
-						\
-					for (int fy = entry->dest.y; fy < entry->dest.y + entry->dest.h; fy++)	\
-					{	\
-						for (int fx = entry->dest.x; fx < entry->dest.x + entry->dest.w; fx++)	\
-						{	\
-							SET_BUFFER_PIXEL4(writeBuffer, bpp, dpx, entry->solid.colour->colour);	\
-							dpx++;	\
-						}	\
-						dpx += width - entry->dest.w;	\
-					}	\
-					break;	\
-				default:	\
-					break;	\
-			}	\
-		}	\
-			\
-		queueEntry[i] = queue[i];	\
-	}
+			SBRTSD(SET_BUFFER_PIXEL4);
 			break;
 		default:
 			break;

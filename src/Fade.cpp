@@ -240,10 +240,7 @@ bool PaletteFadeInFromBlack(PALETTE *palette)
 {
 	bool finished = true;
 	for (int i = 0; i < 0x100; i++)
-	{
-		if (FadeInFromBlack(&palette->colour[i]) == false)
-			finished = false;
-	}
+		finished = FadeInFromBlack(&palette->colour[i]) ? finished : false;
 	return finished;
 }
 
@@ -251,10 +248,7 @@ bool PaletteFadeOutToBlack(PALETTE *palette)
 {
 	bool finished = true;
 	for (int i = 0; i < 0x100; i++)
-	{
-		if (FadeOutToBlack(&palette->colour[i]) == false)
-			finished = false;
-	}
+		finished = FadeOutToBlack(&palette->colour[i]) ? finished : false;
 	return finished;
 }
 
@@ -262,10 +256,7 @@ bool PaletteFadeInFromWhite(PALETTE *palette)
 {
 	bool finished = true;
 	for (int i = 0; i < 0x100; i++)
-	{
-		if (FadeInFromWhite(&palette->colour[i]) == false)
-			finished = false;
-	}
+		finished = FadeInFromWhite(&palette->colour[i]) ? finished : false;
 	return finished;
 }
 
@@ -273,10 +264,7 @@ bool PaletteFadeOutToWhite(PALETTE *palette)
 {
 	bool finished = true;
 	for (int i = 0; i < 0x100; i++)
-	{
-		if (FadeOutToWhite(&palette->colour[i]) == false)
-			finished = false;
-	}
+		finished = FadeOutToWhite(&palette->colour[i]) ? finished : false;
 	return finished;
 }
 

@@ -16,6 +16,10 @@ bool GM_Game(bool *noError)
 	if (gLevel->fail != NULL)
 		return (*noError = false);
 	
+	//Initialize level fade
+	gLevel->Update();
+	gLevel->SetFade(true, false);
+	
 	//Our loop
 	bool noExit = true;
 	
@@ -26,7 +30,11 @@ bool GM_Game(bool *noError)
 			break;
 		
 		//Update level
-		gLevel->Update();
+		if (!gLevel->fading)
+			gLevel->Update();
+		else
+			gLevel->fading = !gLevel->UpdateFade();
+		
 		gLevel->Draw();
 		
 		//Render our software buffer to the screen (using the first colour of our splash texture, should be white)

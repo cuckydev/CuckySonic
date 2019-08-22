@@ -3,6 +3,7 @@
 #include "Level.h"
 #include "LevelSpecific.h"
 #include "Game.h"
+#include "Fade.h"
 #include "Path.h"
 #include "Log.h"
 #include "Error.h"
@@ -523,6 +524,9 @@ LEVEL::LEVEL(int id)
 		return;
 	}
 	
+	//Initialize state
+	titleCard = false; //true;
+	
 	LOG(("Success!\n"));
 }
 
@@ -544,6 +548,77 @@ LEVEL::~LEVEL()
 	LOG(("Success!\n"));
 }
 
+//Fading functions
+void LEVEL::SetFade(bool fadeIn, bool isSpecial)
+{
+	//Set our fading state
+	fading = true;
+	isFadingIn = fadeIn;
+	specialFade = isSpecial;
+	
+	//Set our palettes accordingly
+	if (fadeIn)
+	{
+		if (isSpecial)
+		{
+			FillPaletteWhite(tileTexture->loadedPalette);
+			FillPaletteWhite(backgroundTexture->loadedPalette);
+			for (TEXTURE *texture = objTextureCache; texture != NULL; texture = texture->next)
+				FillPaletteWhite(texture->loadedPalette);
+		}
+		else
+		{
+			FillPaletteBlack(tileTexture->loadedPalette);
+			FillPaletteBlack(backgroundTexture->loadedPalette);
+			for (TEXTURE *texture = objTextureCache; texture != NULL; texture = texture->next)
+				FillPaletteBlack(texture->loadedPalette);
+		}
+	}
+}
+
+bool LEVEL::UpdateFade()
+{
+	bool finished = true;
+	
+	if (isFadingIn)
+	{
+		if (specialFade)
+		{
+			finished = PaletteFadeInFromWhite(tileTexture->loadedPalette) ? finished : false;
+			finished = PaletteFadeInFromWhite(backgroundTexture->loadedPalette) ? finished : false;
+			for (TEXTURE *texture = objTextureCache; texture != NULL; texture = texture->next)
+				finished = PaletteFadeInFromWhite(texture->loadedPalette) ? finished : false;
+		}
+		else
+		{
+			finished = PaletteFadeInFromBlack(tileTexture->loadedPalette) ? finished : false;
+			finished = PaletteFadeInFromBlack(backgroundTexture->loadedPalette) ? finished : false;
+			for (TEXTURE *texture = objTextureCache; texture != NULL; texture = texture->next)
+				finished = PaletteFadeInFromBlack(texture->loadedPalette) ? finished : false;
+		}
+	}
+	else
+	{
+		if (specialFade)
+		{
+			finished = PaletteFadeOutToWhite(tileTexture->loadedPalette) ? finished : false;
+			finished = PaletteFadeOutToWhite(backgroundTexture->loadedPalette) ? finished : false;
+			for (TEXTURE *texture = objTextureCache; texture != NULL; texture = texture->next)
+				finished = PaletteFadeOutToWhite(texture->loadedPalette) ? finished : false;
+		}
+		else
+		{
+			finished = PaletteFadeOutToBlack(tileTexture->loadedPalette) ? finished : false;
+			finished = PaletteFadeOutToBlack(backgroundTexture->loadedPalette) ? finished : false;
+			for (TEXTURE *texture = objTextureCache; texture != NULL; texture = texture->next)
+				finished = PaletteFadeOutToBlack(texture->loadedPalette) ? finished : false;
+		}
+	}
+	
+	return finished;
+}
+
+//Dynamic events
 void LEVEL::DynamicEvents()
 {
 	//Get our bottom boundary
