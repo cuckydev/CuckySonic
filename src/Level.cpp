@@ -807,7 +807,7 @@ void LEVEL::Draw()
 				//Get tile
 				TILE *tile = &layout.foreground[ty * layout.width + tx];
 				
-				if (tile->tile >= tiles)
+				if (tile->tile >= tiles || tile->tile >= tileTexture->height / 16)
 					continue;
 				
 				//Draw tile

@@ -3,6 +3,7 @@
 #include "Error.h"
 #include "Log.h"
 #include "Event.h"
+#include "Input.h"
 #include "Render.h"
 #include "Fade.h"
 #include "Level.h"
@@ -17,6 +18,7 @@ bool GM_Game(bool *noError)
 		return (*noError = false);
 	
 	//Initialize level fade
+	ClearControllerInput();
 	gLevel->Update();
 	gLevel->SetFade(true, false);
 	

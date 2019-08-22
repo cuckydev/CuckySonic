@@ -124,7 +124,7 @@ void ObjSpiral(OBJECT *object) //Also MTZ cylinder
 						
 						//Check if we're near the bottom and not already on an object controlling us
 						int16_t yOff = player->y.pos - object->y.pos - 0x10;
-						if (yOff >= 0x30 || player->objectControl.disableOurMovement)
+						if (yOff < 0 || yOff >= 0x30 || player->objectControl.disableOurMovement)
 							continue;
 						
 						//Set the player to run on the spiral

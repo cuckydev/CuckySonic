@@ -2569,6 +2569,10 @@ void PLAYER::Update()
 			mappingFrame %= mappings->size;
 			break;
 	}
+	
+	//Restart if start + a
+	if (gController[controller].press.start && gController[controller].held.a)
+		gLevel->SetFade(false, false);
 }
 
 //Draw our player
