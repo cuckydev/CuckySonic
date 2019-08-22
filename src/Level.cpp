@@ -464,11 +464,32 @@ bool LEVEL::LoadArt(LEVELTABLE *tableEntry)
 //Unload data function
 void LEVEL::UnloadAll()
 {
+	//Free memory
 	free(layout.foreground);
 	free(chunkMapping);
 	free(tileMapping);
+	free(collisionTile);
+	
+	//Unload textures
 	if (tileTexture != NULL)
 		delete tileTexture;
+	if (backgroundTexture != NULL)
+		delete backgroundTexture;
+	
+	//Unload players, objects, and camera
+	for (int i = 0; i < PLAYERS; i++)
+		if (player[i] != NULL)
+			delete player[i];
+	
+	for (OBJECT *object = objectList; object != NULL;)
+	{
+		OBJECT *next = object->next;
+		delete object;
+		object = next;
+	}
+	
+	if (camera != NULL)
+		delete camera;
 }
 
 //Level class

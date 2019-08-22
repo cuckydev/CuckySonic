@@ -11,7 +11,15 @@
 #include "Object.h"
 #include "GameConstants.h"
 
-//animation data
+//Bug-fixes
+//#define FIX_SPINDASH_ANIM     //Usually when spindashing, if you manage to exit the spindash animation, you'll stay out of it, this fixes that
+#define FIX_HORIZONTAL_WRAP   //In the originals, for some reason, the LevelBound uses unsigned checks, meaning if you go off to the left, you'll be sent to the right boundary 
+
+//Game differences
+//#define SONIC1_SLOPE_ANGLE    //In Sonic 2+, the floor's angle will be replaced with the player's cardinal floor angle if there's a 45+ degree difference
+//#define SONIC1_WALK_ANIMATION //For some reason, in Sonic 2+, the animation code was messed up, making the first frame of the walk animation last only one frame
+
+//Animation data
 #define MAPPINGFRAME_FLIP1 0x5E
 
 static const uint8_t animationWalk[] =			{0xFF,0x08,0x09,0x0A,0x0B,0x06,0x07,0xFF};
@@ -221,7 +229,7 @@ PLAYER::PLAYER(const char *specPath, PLAYER *myFollow, int myController)
 
 PLAYER::~PLAYER()
 {
-	if (texture)
+	if (texture && texture->list == NULL)
 		delete texture;
 	if (mappings)
 		delete mappings;
@@ -433,14 +441,20 @@ int16_t PLAYER::Angle(int16_t distance, int16_t distance2)
 		outDistance = distance;
 	}
 
-	//Invert angle 2 if the difference is negative
-	uint8_t angle2 = thisAngle - angle;
-	if (angle2 >= 0x80)
-		angle2 = -angle2;
-	
-	//If the angle's least significant bit is set (a tile that has different angles for each side), or the angle difference is greater than 0x20, use the angle of the face's side
-	if (thisAngle & 1 || angle2 >= 0x20)
-		thisAngle = (angle + 0x20) & 0xC0;
+	#ifdef SONIC1_SLOPE_ANGLE
+		//If the angle's least significant bit is set (a tile that has different angles for each side), use our cardinal floor angle
+		if (thisAngle & 1)
+			thisAngle = (angle + 0x20) & 0xC0;
+	#else
+		//Get our angle difference
+		uint8_t angleDiff = thisAngle - angle;
+		if (angleDiff >= 0x80)
+			angleDiff = -angleDiff;
+		
+		//If the angle's least significant bit is set (a tile that has different angles for each side), or the angle difference is greater than 45 degrees, use our cardinal floor angle
+		if (thisAngle & 1 || angleDiff >= 0x20)
+			thisAngle = (angle + 0x20) & 0xC0;
+	#endif
 
 	angle = thisAngle;
 	return outDistance;
@@ -1022,8 +1036,6 @@ void PLAYER::ResetOnFloor3()
 	status.rollJumping = false;
 	status.jumping = false;
 	
-	//Chain_Bonus_counter = 0;
-	
 	//Clear flipping
 	flipAngle = 0;
 	flipType = 0;
@@ -1163,10 +1175,15 @@ bool PLAYER::Spindash()
 			
 			//The original makes sure the spindash counter is 0 if it underflows (which seems to be impossible, to my knowledge)
 			if (nextCounter <= spindashCounter)
-				spindashCounter -= spindashCounter / 0x20;
+				spindashCounter = nextCounter;
 			else
 				spindashCounter = 0;
 		}
+		
+		#ifdef FIX_SPINDASH_ANIM
+			//Ensure we're doing the spindash animation
+			anim = PLAYERANIMATION_SPINDASH;
+		#endif
 		
 		//Rev our spindash
 		if (controlPress.a || controlPress.b || controlPress.c)
@@ -1856,7 +1873,7 @@ void PLAYER::KillCharacter()
 }
 
 //Level boundary function
-void PLAYER::LevelBoundSide(uint16_t bound)
+void PLAYER::LevelBoundSide(int32_t bound)
 {
 	//Set our position to the boundary
 	x.pos = bound;
@@ -1870,9 +1887,15 @@ void PLAYER::LevelBoundSide(uint16_t bound)
 void PLAYER::LevelBound()
 {
 	//Get our next position and boundaries
-	uint16_t nextPos = (xPosLong + (xVel * 0x100)) / 0x10000;
-	uint16_t leftBound = gLevel->leftBoundary2 + 0x10;
-	uint16_t rightBound = gLevel->rightBoundary2 + 0x40 - 0x18;
+	#ifdef FIX_HORIZONTAL_WRAP
+		#define lbType int32_t
+	#else
+		#define lbType uint16_t
+	#endif
+	
+	lbType nextPos = (xPosLong + (xVel * 0x100)) / 0x10000;
+	lbType leftBound = gLevel->leftBoundary2 + 0x10;
+	lbType rightBound = gLevel->rightBoundary2 + 0x40 - 0x18;
 	
 	//Clip us into the boundaries
 	if (nextPos < leftBound)
@@ -1970,6 +1993,11 @@ void PLAYER::Animate()
 		{
 			if (flipType == 0 && flipAngle == 0) //Not flipping
 			{
+				#ifdef SONIC1_WALK_ANIMATION
+					if (--animFrameDuration >= 0)
+						return;
+				#endif
+				
 				//Get the 45 degree increment to rotate our sprites at
 				uint8_t rotAngle = angle;
 				if (rotAngle > 0 && rotAngle < 0x80) //This was added in Sonic 2 to make floor rotation more consistent
@@ -2025,9 +2053,7 @@ void PLAYER::Animate()
 						
 						mappingFrame = animation[1 + animFrame] + angleIncrement;
 
-						//Wait for the next frame
-						if (--animFrameDuration < 0)
-						{
+						#ifdef SONIC1_WALK_ANIMATION
 							//Set our frame duration
 							speedFactor = -speedFactor + 0x800;
 							if (speedFactor >= 0x8000)
@@ -2036,7 +2062,20 @@ void PLAYER::Animate()
 							
 							//Increment frame
 							animFrame++;
-						}
+						#else
+							//Wait for the next frame
+							if (--animFrameDuration < 0)
+							{
+								//Set our frame duration
+								speedFactor = -speedFactor + 0x800;
+								if (speedFactor >= 0x8000)
+									speedFactor = 0;
+								animFrameDuration = speedFactor / 0x100;
+								
+								//Increment frame
+								animFrame++;
+							}
+						#endif
 						return;
 					}
 					else
@@ -2047,9 +2086,11 @@ void PLAYER::Animate()
 				}
 				else
 				{
-					//Wait for next frame
-					if (--animFrameDuration >= 0)
-						return;
+					#ifndef SONIC1_WALK_ANIMATION
+						//Wait for next frame
+						if (--animFrameDuration >= 0)
+							return;
+					#endif
 
 					//Set frame duration
 					uint16_t speedFactor = -abs(inertia) + 0x800;
@@ -2264,7 +2305,7 @@ void PLAYER::Animate()
 				}
 			}
 		}
-		else //Rolling animation (usually)
+		else //Rolling animation
 		{
 			//Copy our flip
 			renderFlags.xFlip = status.xFlip;
@@ -2342,7 +2383,6 @@ void PLAYER::Update()
 					else
 					{
 						//The original uses the two bits for a jump table, but we can't do that because it'd be horrible
-						
 						//Standing / walking on ground
 						if (status.inBall == false && status.inAir == false)
 						{
@@ -2509,6 +2549,8 @@ void PLAYER::Update()
 					break;
 					
 				case PLAYERROUTINE_RESET_LEVEL:
+					if (--restartCountdown == 0)
+						gLevel->SetFade(false, false);
 					break;
 			}
 			break;

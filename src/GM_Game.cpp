@@ -30,16 +30,38 @@ bool GM_Game(bool *noError)
 			break;
 		
 		//Update level
+		bool breakThisState = false;
+		
 		if (!gLevel->fading)
+		{
 			gLevel->Update();
+		}
 		else
-			gLevel->fading = !gLevel->UpdateFade();
+		{
+			if (gLevel->isFadingIn)
+			{
+				gLevel->fading = !gLevel->UpdateFade();
+			}
+			else
+			{
+				//Fade out and enter next game state
+				if (gLevel->UpdateFade())
+				{
+					gGameMode = gLevel->specialFade ? GAMEMODE_SPECIALSTAGE : (gGameMode == GAMEMODE_DEMO ? GAMEMODE_SPLASH : GAMEMODE_GAME);
+					breakThisState = true;
+				}
+			}
+		}
 		
 		gLevel->Draw();
 		
 		//Render our software buffer to the screen (using the first colour of our splash texture, should be white)
 		if (!(*noError = gSoftwareBuffer->RenderToScreen(&gLevel->backgroundTexture->loadedPalette->colour[0])))
 			return false;
+		
+		//Go to next state if set to break this state
+		if (breakThisState)
+			break;
 	}
 	
 	//Unload level

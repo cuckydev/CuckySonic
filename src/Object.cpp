@@ -41,7 +41,7 @@ OBJECT::OBJECT(OBJECT **linkedList, void (*objectFunction)(OBJECT *object))
 OBJECT::~OBJECT()
 {
 	//Unload texture and mappings
-	if (texture)
+	if (texture && texture->list == NULL)
 		delete texture;
 	if (mappings)
 		delete mappings;

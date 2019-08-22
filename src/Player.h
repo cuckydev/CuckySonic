@@ -350,7 +350,7 @@ class PLAYER
 		
 		void KillCharacter();
 		
-		void LevelBoundSide(uint16_t bound);
+		void LevelBoundSide(int32_t bound);
 		void LevelBound();
 		
 		void FrameCommand(const uint8_t* animation);
