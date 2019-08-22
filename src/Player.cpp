@@ -129,7 +129,7 @@ PLAYER::PLAYER(const char *specPath, PLAYER *myFollow, int myController)
 	GET_APPEND_PATH(texPath, specPath, ".bmp");
 	GET_APPEND_PATH(mapPath, specPath, ".map");
 	
-	texture = new TEXTURE(texPath);
+	texture = gLevel->GetObjectTexture(texPath);
 	if (texture->fail != NULL)
 	{
 		Error(fail = texture->fail);
@@ -879,7 +879,7 @@ void PLAYER::DoLevelCollision()
 			if (distance < 0)
 			{
 				//Clip out of ceiling
-				if (status.reverseGravity)
+				if (!status.reverseGravity)
 					y.pos -= distance;
 				else
 					y.pos += distance;
@@ -1528,7 +1528,7 @@ void PLAYER::MoveLeft()
 	{
 		//Decelerate
 		newInertia -= deceleration;
-		if (newInertia >= 0 && newInertia < deceleration)
+		if (newInertia < 0)
 			newInertia = -0x80;
 		inertia = newInertia;
 		
@@ -1577,7 +1577,7 @@ void PLAYER::MoveRight()
 	{
 		//Decelerate
 		newInertia += deceleration;
-		if (newInertia >= 0 && newInertia < deceleration)
+		if (newInertia >= 0)
 			newInertia = 0x80;
 		inertia = newInertia;
 		
@@ -1850,6 +1850,7 @@ void PLAYER::KillCharacter()
 		
 		//Do animation and sound
 		anim = PLAYERANIMATION_DEATH;
+		highPriority = true;
 		PlaySound(SOUNDID_DEATH);
 	}
 }
@@ -2550,7 +2551,7 @@ void PLAYER::Draw()
 		
 		int alignX = renderFlags.alignPlane ? gLevel->camera->x : 0;
 		int alignY = renderFlags.alignPlane ? gLevel->camera->y : 0;
-		texture->Draw(texture->loadedPalette, mapRect, x.pos - origX - alignX, y.pos - origY - alignY, renderFlags.xFlip, renderFlags.yFlip);
+		texture->Draw((highPriority ? LEVEL_RENDERLAYER_OBJECT_HIGH_0 : LEVEL_RENDERLAYER_OBJECT_0) + priority, texture->loadedPalette, mapRect, x.pos - origX - alignX, y.pos - origY - alignY, renderFlags.xFlip, renderFlags.yFlip);
 	}
 	else
 	{

@@ -3,11 +3,11 @@
 #include "Level.h"
 #include "GameConstants.h"
 
-CAMERA::CAMERA(void *level, PLAYER *trackPlayer)
+CAMERA::CAMERA(PLAYER *trackPlayer)
 {
 	x = trackPlayer->x.pos - (SCREEN_WIDTH / 2);
 	y = trackPlayer->y.pos - (SCREEN_HEIGHT / 2);
-	Track(level, trackPlayer);
+	Track(trackPlayer);
 	return;
 }
 
@@ -17,7 +17,7 @@ CAMERA::~CAMERA()
 	return;
 }
 
-void CAMERA::Track(void *level, PLAYER *trackPlayer)
+void CAMERA::Track(PLAYER *trackPlayer)
 {
 	//Don't move if locked
 	if (trackPlayer->cameraLock)
@@ -65,12 +65,12 @@ void CAMERA::Track(void *level, PLAYER *trackPlayer)
 		y -= (tDiff > vScroll ? vScroll : tDiff);
 	
 	//Keep inside of level boundaries
-	if (x < ((LEVEL*)level)->leftBoundary2)
-		x = ((LEVEL*)level)->leftBoundary2;
-	if (y < ((LEVEL*)level)->topBoundary2)
-		y = ((LEVEL*)level)->topBoundary2;
-	if (x > ((LEVEL*)level)->rightBoundary2 - SCREEN_WIDTH)
-		x = ((LEVEL*)level)->rightBoundary2 - SCREEN_WIDTH;
-	if (y > ((LEVEL*)level)->bottomBoundary2 - SCREEN_HEIGHT)
-		y = ((LEVEL*)level)->bottomBoundary2 - SCREEN_HEIGHT;
+	if (x < gLevel->leftBoundary2)
+		x = gLevel->leftBoundary2;
+	if (y < gLevel->topBoundary2)
+		y = gLevel->topBoundary2;
+	if (x > gLevel->rightBoundary2 - SCREEN_WIDTH)
+		x = gLevel->rightBoundary2 - SCREEN_WIDTH;
+	if (y > gLevel->bottomBoundary2 - SCREEN_HEIGHT)
+		y = gLevel->bottomBoundary2 - SCREEN_HEIGHT;
 }

@@ -89,6 +89,7 @@ class OBJECT
 		uint8_t yRadius;
 		
 		//Sprite properties
+		bool highPriority;		//Drawn above the foreground
 		uint8_t priority;		//Priority of sprite when drawing
 		uint8_t widthPixels;	//Width of sprite in pixels
 		
@@ -97,7 +98,7 @@ class OBJECT
 		
 		uint16_t animFrame;
 		int anim;
-		int nextAnim;
+		int prevAnim;
 		int16_t animFrameDuration;
 		
 		//Our status
@@ -121,6 +122,9 @@ class OBJECT
 		uint8_t angle;	//Angle
 		void *parent;	//Our parent object or player
 		
+		//Children linked list
+		OBJECT *children;
+		
 		//Our collision layers
 		COLLISIONLAYER topSolidLayer;
 		COLLISIONLAYER lrbSolidLayer;
@@ -143,6 +147,8 @@ class OBJECT
 	public:
 		OBJECT(OBJECT **linkedList, void (*objectFunction)(OBJECT *object));
 		~OBJECT();
+		
+		void Animate(const uint8_t **animationList);
 		
 		void Update();
 		void Draw();

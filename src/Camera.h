@@ -9,7 +9,7 @@ class CAMERA
 		int16_t y;
 		
 	public:
-		CAMERA(void *level, PLAYER *trackPlayer);
+		CAMERA(PLAYER *trackPlayer);
 		~CAMERA();
-		void Track(void *level, PLAYER *trackPlayer);
+		void Track(PLAYER *trackPlayer);
 };

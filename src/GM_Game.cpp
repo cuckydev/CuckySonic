@@ -11,9 +11,6 @@ LEVEL *gLevel;
 
 bool GM_Game(bool *noError)
 {
-	PALCOLOUR blank;
-	SetPaletteColour(&blank, 0xFF, 0x00, 0xFF);
-	
 	//Load Level (EHZ1)
 	gLevel = new LEVEL(2);
 	if (gLevel->fail != NULL)
@@ -33,7 +30,7 @@ bool GM_Game(bool *noError)
 		gLevel->Draw();
 		
 		//Render our software buffer to the screen (using the first colour of our splash texture, should be white)
-		if (!(*noError = gSoftwareBuffer->RenderToScreen(&blank)))
+		if (!(*noError = gSoftwareBuffer->RenderToScreen(&gLevel->backgroundTexture->loadedPalette->colour[0])))
 			return false;
 	}
 	

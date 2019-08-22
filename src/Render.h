@@ -40,6 +40,12 @@ void RegenPaletteColour(PALCOLOUR *palColour);
 class TEXTURE
 {
 	public:
+		//Status
+		const char *fail;
+		
+		//Source file (if applicable)
+		const char *source;
+		
 		//Texture data
 		uint8_t *texture;
 		uint8_t *textureXFlip;
@@ -51,19 +57,21 @@ class TEXTURE
 		//Loaded palette
 		PALETTE *loadedPalette;
 		
-		//Status
-		const char *fail;
+		//For linked lists (if applicable)
+		TEXTURE **list;
+		TEXTURE *next;
 		
 	public:
-		TEXTURE(const char *path);
-		TEXTURE(uint8_t *data, int dWidth, int dHeight);
+		TEXTURE(TEXTURE **linkedList, const char *path);
+		TEXTURE(TEXTURE **linkedList, uint8_t *data, int dWidth, int dHeight);
 		~TEXTURE();
 		
-		void Draw(PALETTE *palette, SDL_Rect *src, int x, int y, bool xFlip, bool yFlip);
+		void Draw(int layer, PALETTE *palette, SDL_Rect *src, int x, int y, bool xFlip, bool yFlip);
 };
 	
 //Render queue structure
 #define RENDERQUEUE_LENGTH 0x1000
+#define RENDERLAYERS 0x100
 
 enum RENDERQUEUE_TYPE
 {
@@ -102,8 +110,8 @@ class SOFTWAREBUFFER
 		SDL_PixelFormat *format;
 		
 		//Render queue
-		RENDERQUEUE queue[RENDERQUEUE_LENGTH];
-		RENDERQUEUE *queueEntry;
+		RENDERQUEUE queue[RENDERLAYERS][RENDERQUEUE_LENGTH];
+		RENDERQUEUE *queueEntry[RENDERLAYERS];
 		
 		//Dimensions
 		int width;
@@ -121,8 +129,8 @@ class SOFTWAREBUFFER
 		
 		inline uint32_t RGB(uint8_t r, uint8_t g, uint8_t b);
 		
-		void DrawPoint(int x, int y, PALCOLOUR *colour);
-		void DrawQuad(SDL_Rect *quad, PALCOLOUR *colour);
+		void DrawPoint(int layer, int x, int y, PALCOLOUR *colour);
+		void DrawQuad(int layer, SDL_Rect *quad, PALCOLOUR *colour);
 		
 		bool RenderToScreen(PALCOLOUR *backgroundColour);
 };

@@ -105,7 +105,7 @@ void ObjSpiral(OBJECT *object) //Also MTZ cylinder
 				if (*standBit == false) //Not already on the spiral
 				{
 					if (player->status.inAir) //Don't run on corkscrew if in mid-air
-						return;
+						continue;
 					
 					if (!player->status.shouldNotFall) //If not standing on an object
 					{
@@ -114,18 +114,18 @@ void ObjSpiral(OBJECT *object) //Also MTZ cylinder
 						if (player->xVel >= 0) //Moving in from the left
 						{
 							if (xOff < -0xD0 || xOff > -0xC0)
-								return;
+								continue;
 						}
 						else //Moving in from the right
 						{
 							if (xOff < 0xC0 || xOff > 0xD0)
-								return;
+								continue;
 						}
 						
 						//Check if we're near the bottom and not already on an object controlling us
 						int16_t yOff = player->y.pos - object->y.pos - 0x10;
 						if (yOff >= 0x30 || player->objectControl.disableOurMovement)
-							return;
+							continue;
 						
 						//Set the player to run on the spiral
 						player->RideObject(object, standBit - (size_t)object);
@@ -137,23 +137,22 @@ void ObjSpiral(OBJECT *object) //Also MTZ cylinder
 						if (player->xVel >= 0) //Moving in from the left
 						{
 							if (xOff < -0xC0 || xOff > -0xB0)
-								return;
+								continue;
 						}
 						else //Moving in from the right
 						{
 							if (xOff < 0xB0 || xOff > 0xC0)
-								return;
+								continue;
 						}
 						
 						//Check if we're near the bottom and not already on an object controlling us
 						int16_t yOff = player->y.pos - object->y.pos - 0x10;
 						if (yOff < 0 || yOff >= 0x30 || player->objectControl.disableOurMovement)
-							return;
+							continue;
 						
 						//Set the player to run on the spiral
 						player->RideObject(object, standBit - (size_t)object);
 					}
-					return;
 				}
 				else
 				{
@@ -181,7 +180,8 @@ void ObjSpiral(OBJECT *object) //Also MTZ cylinder
 								//Set our flip angle
 								player->flipAngle = FlipAngleTable[(xOff / 8) & 0x3F];
 							}
-							return;
+							
+							continue;
 						}
 					}
 					

@@ -153,6 +153,7 @@ class PLAYER
 		uint8_t rollYRadius;
 		
 		//Sprite properties
+		bool highPriority;		//Drawn above the foreground
 		uint8_t priority;		//Priority of sprite when drawing
 		uint8_t widthPixels;	//Width of sprite in pixels
 		

@@ -29,7 +29,8 @@ void ObjPathSwitcher(OBJECT *object)
 				//Are players already across the switcher?
 				for (int i = 0; i < PLAYERS; i++)
 				{
-					if (object->y.pos < gLevel->player[i]->y.pos)
+					PLAYER *player = gLevel->player[i];
+					if (object->y.pos < player->y.pos)
 						object->scratchU8[SCRATCH_PLAYER_ACROSS_0 + (i / 8)] |= INDEX_TO_BIT(i);
 				}
 			}
@@ -38,7 +39,8 @@ void ObjPathSwitcher(OBJECT *object)
 				//Are players already across the switcher?
 				for (int i = 0; i < PLAYERS; i++)
 				{
-					if (object->x.pos < gLevel->player[i]->x.pos)
+					PLAYER *player = gLevel->player[i];
+					if (object->x.pos < player->x.pos)
 						object->scratchU8[SCRATCH_PLAYER_ACROSS_0 + (i / 8)] |= INDEX_TO_BIT(i);
 				}
 			}
@@ -49,8 +51,10 @@ void ObjPathSwitcher(OBJECT *object)
 				//Vertical path switcher
 				for (int i = 0; i < PLAYERS; i++)
 				{
+					PLAYER *player = gLevel->player[i];
+					
 					//Skip over if debug is being used
-					if (gLevel->player[i]->debug)
+					if (player->debug)
 						continue;
 					
 					//Get the flag to use
@@ -59,7 +63,7 @@ void ObjPathSwitcher(OBJECT *object)
 					if ((*flag & INDEX_TO_BIT(i)) == 0)
 					{
 						//Check if we're crossing
-						if (object->y.pos <= gLevel->player[i]->y.pos)
+						if (object->y.pos <= player->y.pos)
 						{
 							//Set the crossed flag
 							*flag |= INDEX_TO_BIT(i);
@@ -68,23 +72,25 @@ void ObjPathSwitcher(OBJECT *object)
 							const int16_t left = object->x.pos - object->scratchU16[SCRATCH_RADIUS];
 							const int16_t right = object->x.pos + object->scratchU16[SCRATCH_RADIUS];
 							
-							if (gLevel->player[i]->x.pos >= left && gLevel->player[i]->x.pos < right)
+							if (player->x.pos >= left && player->x.pos < right)
 							{
-								if ((object->subtype & 0x80) == 0 || gLevel->player[i]->status.inAir == false)
+								if ((object->subtype & 0x80) == 0 || player->status.inAir == false)
 								{
 									if (!object->renderFlags.xFlip)
 									{
 										if (object->subtype & 0x08)
 										{
-											gLevel->player[i]->topSolidLayer = COLLISIONLAYER_ALTERNATE_TOP;
-											gLevel->player[i]->lrbSolidLayer = COLLISIONLAYER_ALTERNATE_LRB;
+											player->topSolidLayer = COLLISIONLAYER_ALTERNATE_TOP;
+											player->lrbSolidLayer = COLLISIONLAYER_ALTERNATE_LRB;
 										}
 										else
 										{
-											gLevel->player[i]->topSolidLayer = COLLISIONLAYER_NORMAL_TOP;
-											gLevel->player[i]->lrbSolidLayer = COLLISIONLAYER_NORMAL_LRB;
+											player->topSolidLayer = COLLISIONLAYER_NORMAL_TOP;
+											player->lrbSolidLayer = COLLISIONLAYER_NORMAL_LRB;
 										}
 									}
+									
+									player->highPriority = (object->subtype & 0x20) != 0;
 								}
 							}
 						}
@@ -92,7 +98,7 @@ void ObjPathSwitcher(OBJECT *object)
 					else
 					{
 						//Check if we're crossing back over
-						if (object->y.pos > gLevel->player[i]->y.pos)
+						if (object->y.pos > player->y.pos)
 						{
 							//Clear the crossed flag
 							*flag &= ~INDEX_TO_BIT(i);
@@ -101,23 +107,25 @@ void ObjPathSwitcher(OBJECT *object)
 							const int16_t left = object->x.pos - object->scratchU16[SCRATCH_RADIUS];
 							const int16_t right = object->x.pos + object->scratchU16[SCRATCH_RADIUS];
 							
-							if (gLevel->player[i]->x.pos >= left && gLevel->player[i]->x.pos < right)
+							if (player->x.pos >= left && player->x.pos < right)
 							{
-								if ((object->subtype & 0x80) == 0 || gLevel->player[i]->status.inAir == false)
+								if ((object->subtype & 0x80) == 0 || player->status.inAir == false)
 								{
 									if (!object->renderFlags.xFlip)
 									{
 										if (object->subtype & 0x10)
 										{
-											gLevel->player[i]->topSolidLayer = COLLISIONLAYER_ALTERNATE_TOP;
-											gLevel->player[i]->lrbSolidLayer = COLLISIONLAYER_ALTERNATE_LRB;
+											player->topSolidLayer = COLLISIONLAYER_ALTERNATE_TOP;
+											player->lrbSolidLayer = COLLISIONLAYER_ALTERNATE_LRB;
 										}
 										else
 										{
-											gLevel->player[i]->topSolidLayer = COLLISIONLAYER_NORMAL_TOP;
-											gLevel->player[i]->lrbSolidLayer = COLLISIONLAYER_NORMAL_LRB;
+											player->topSolidLayer = COLLISIONLAYER_NORMAL_TOP;
+											player->lrbSolidLayer = COLLISIONLAYER_NORMAL_LRB;
 										}
 									}
+									
+									player->highPriority = (object->subtype & 0x40) != 0;
 								}
 							}
 						}
@@ -129,8 +137,10 @@ void ObjPathSwitcher(OBJECT *object)
 				//Horizontal path switcher
 				for (int i = 0; i < PLAYERS; i++)
 				{
+					PLAYER *player = gLevel->player[i];
+					
 					//Skip over if debug is being used
-					if (gLevel->player[i]->debug)
+					if (player->debug)
 						continue;
 					
 					//Get the flag to use
@@ -139,7 +149,7 @@ void ObjPathSwitcher(OBJECT *object)
 					if ((*flag & INDEX_TO_BIT(i)) == 0)
 					{
 						//Check if we're crossing
-						if (object->x.pos <= gLevel->player[i]->x.pos)
+						if (object->x.pos <= player->x.pos)
 						{
 							//Set the crossed flag
 							*flag |= INDEX_TO_BIT(i);
@@ -148,23 +158,25 @@ void ObjPathSwitcher(OBJECT *object)
 							const int16_t top = object->y.pos - object->scratchU16[SCRATCH_RADIUS];
 							const int16_t bottom = object->y.pos + object->scratchU16[SCRATCH_RADIUS];
 							
-							if (gLevel->player[i]->y.pos >= top && gLevel->player[i]->y.pos < bottom)
+							if (player->y.pos >= top && player->y.pos < bottom)
 							{
-								if ((object->subtype & 0x80) == 0 || gLevel->player[i]->status.inAir == false)
+								if ((object->subtype & 0x80) == 0 || player->status.inAir == false)
 								{
 									if (!object->renderFlags.xFlip)
 									{
 										if (object->subtype & 0x08)
 										{
-											gLevel->player[i]->topSolidLayer = COLLISIONLAYER_ALTERNATE_TOP;
-											gLevel->player[i]->lrbSolidLayer = COLLISIONLAYER_ALTERNATE_LRB;
+											player->topSolidLayer = COLLISIONLAYER_ALTERNATE_TOP;
+											player->lrbSolidLayer = COLLISIONLAYER_ALTERNATE_LRB;
 										}
 										else
 										{
-											gLevel->player[i]->topSolidLayer = COLLISIONLAYER_NORMAL_TOP;
-											gLevel->player[i]->lrbSolidLayer = COLLISIONLAYER_NORMAL_LRB;
+											player->topSolidLayer = COLLISIONLAYER_NORMAL_TOP;
+											player->lrbSolidLayer = COLLISIONLAYER_NORMAL_LRB;
 										}
 									}
+									
+									player->highPriority = (object->subtype & 0x20) != 0;
 								}
 							}
 						}
@@ -172,7 +184,7 @@ void ObjPathSwitcher(OBJECT *object)
 					else
 					{
 						//Check if we're crossing back over
-						if (object->x.pos > gLevel->player[i]->x.pos)
+						if (object->x.pos > player->x.pos)
 						{
 							//Clear the crossed flag
 							*flag &= ~INDEX_TO_BIT(i);
@@ -181,23 +193,25 @@ void ObjPathSwitcher(OBJECT *object)
 							const int16_t top = object->y.pos - object->scratchU16[SCRATCH_RADIUS];
 							const int16_t bottom = object->y.pos + object->scratchU16[SCRATCH_RADIUS];
 							
-							if (gLevel->player[i]->y.pos >= top && gLevel->player[i]->y.pos < bottom)
+							if (player->y.pos >= top && player->y.pos < bottom)
 							{
-								if ((object->subtype & 0x80) == 0 || gLevel->player[i]->status.inAir == false)
+								if ((object->subtype & 0x80) == 0 || player->status.inAir == false)
 								{
 									if (!object->renderFlags.xFlip)
 									{
 										if (object->subtype & 0x10)
 										{
-											gLevel->player[i]->topSolidLayer = COLLISIONLAYER_ALTERNATE_TOP;
-											gLevel->player[i]->lrbSolidLayer = COLLISIONLAYER_ALTERNATE_LRB;
+											player->topSolidLayer = COLLISIONLAYER_ALTERNATE_TOP;
+											player->lrbSolidLayer = COLLISIONLAYER_ALTERNATE_LRB;
 										}
 										else
 										{
-											gLevel->player[i]->topSolidLayer = COLLISIONLAYER_NORMAL_TOP;
-											gLevel->player[i]->lrbSolidLayer = COLLISIONLAYER_NORMAL_LRB;
+											player->topSolidLayer = COLLISIONLAYER_NORMAL_TOP;
+											player->lrbSolidLayer = COLLISIONLAYER_NORMAL_LRB;
 										}
 									}
+									
+									player->highPriority = (object->subtype & 0x40) != 0;
 								}
 							}
 						}

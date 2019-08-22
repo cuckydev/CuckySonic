@@ -4,32 +4,28 @@
 #include "Game.h"
 #include "Log.h"
 
-CHUNKMAPPINGTILE *FindTile(int16_t x, int16_t y)
+//Get the layout tile at the given x,y coordinate
+TILE *FindTile(int16_t x, int16_t y)
 {
-	switch (gLevel->format)
-	{
-		case LEVELFORMAT_CHUNK128:
-		case LEVELFORMAT_CHUNK128_SONIC2:
-			if (x < 0 || x >= gLevel->layout.width * 128 || y < 0 || y >= gLevel->layout.height * 128)
-				return NULL;
-			return &gLevel->chunkMapping[gLevel->layout.foreground[(y / 128) * gLevel->layout.width + (x / 128)]].tile[((y % 128) / 16) * (128 / 16) + ((x % 128) / 16)];
-		default:
-			return NULL;
-	}
+	if (x < 0 || x >= gLevel->layout.width * 16 || y < 0 || y >= gLevel->layout.height * 16)
+		return NULL;
+	return &gLevel->layout.foreground[(y / 16) * gLevel->layout.width + (x / 16)];
 }
 
 #define TILE_ON_LAYER(alt, lrb, tile) (!(alt ? ((!lrb && !tile->altTop) || (lrb && !tile->altLRB)) : ((!lrb && !tile->norTop) || (lrb && !tile->norLRB))))
 
-//Floor collision function, returns Y-difference from position given and the floor level
+//Floor collision function, returns Y-difference from position given and the floor or ceiling level (non-flipped checks down for floors, flipped checks up for ceilings)
 int16_t FindFloor2(int16_t x, int16_t y, COLLISIONLAYER layer, bool flipped, uint8_t *angle)
 {
 	//Get our chunk tile
-	CHUNKMAPPINGTILE *tile = FindTile(x, y);
+	TILE *tile = FindTile(x, y);
 	
 	//Flip our y-position if flipped
 	if (tile != NULL && tile->tile != 0 && TILE_ON_LAYER(LAYER_IS_ALT(layer), LAYER_IS_LRB(layer), tile))
 	{
-		COLLISIONTILE *collisionTile = &gLevel->collisionTile[(LAYER_IS_ALT(layer) ? gLevel->alternateMap : gLevel->normalMap)[tile->tile]];
+		TILEMAPPING *tileMap = &gLevel->tileMapping[tile->tile];
+		COLLISIONTILE *collisionTile = &gLevel->collisionTile[LAYER_IS_ALT(layer) ? (tileMap->alternateColTile) : (tileMap->normalColTile)];
+		
 		if (collisionTile != gLevel->collisionTile)
 		{
 			//Get our angle
@@ -80,11 +76,13 @@ int16_t FindFloor(int16_t x, int16_t y, COLLISIONLAYER layer, bool flipped, uint
 		y ^= 0xF;
 	
 	//Get our chunk tile
-	CHUNKMAPPINGTILE *tile = FindTile(x, y);
+	TILE *tile = FindTile(x, y);
 	
 	if (tile != NULL && tile->tile != 0 && TILE_ON_LAYER(LAYER_IS_ALT(layer), LAYER_IS_LRB(layer), tile))
 	{
-		COLLISIONTILE *collisionTile = &gLevel->collisionTile[(LAYER_IS_ALT(layer) ? gLevel->alternateMap : gLevel->normalMap)[tile->tile]];
+		TILEMAPPING *tileMap = &gLevel->tileMapping[tile->tile];
+		COLLISIONTILE *collisionTile = &gLevel->collisionTile[LAYER_IS_ALT(layer) ? (tileMap->alternateColTile) : (tileMap->normalColTile)];
+		
 		if (collisionTile != gLevel->collisionTile)
 		{
 			//Get our angle
@@ -130,15 +128,17 @@ int16_t FindFloor(int16_t x, int16_t y, COLLISIONLAYER layer, bool flipped, uint
 	return FindFloor2(x, y + (flipped ? -0x10 : 0x10), layer, flipped, angle) + 0x10;
 }
 
-//Wall collision function, returns X-difference from position given and the wall's surface
+//Wall collision function, returns X-difference from position given and the wall's surface (non-flipped checks right, flipped checks left)
 int16_t FindWall2(int16_t x, int16_t y, COLLISIONLAYER layer, bool flipped, uint8_t *angle)
 {
 	//Get our chunk tile
-	CHUNKMAPPINGTILE *tile = FindTile(x, y);
+	TILE *tile = FindTile(x, y);
 	
 	if (tile != NULL && tile->tile != 0 && TILE_ON_LAYER(LAYER_IS_ALT(layer), LAYER_IS_LRB(layer), tile))
 	{
-		COLLISIONTILE *collisionTile = &gLevel->collisionTile[(LAYER_IS_ALT(layer) ? gLevel->alternateMap : gLevel->normalMap)[tile->tile]];
+		TILEMAPPING *tileMap = &gLevel->tileMapping[tile->tile];
+		COLLISIONTILE *collisionTile = &gLevel->collisionTile[LAYER_IS_ALT(layer) ? (tileMap->alternateColTile) : (tileMap->normalColTile)];
+		
 		if (collisionTile != gLevel->collisionTile)
 		{
 			//Get our angle
@@ -189,11 +189,13 @@ int16_t FindWall(int16_t x, int16_t y, COLLISIONLAYER layer, bool flipped, uint8
 		x ^= 0xF;
 	
 	//Get our chunk tile
-	CHUNKMAPPINGTILE *tile = FindTile(x, y);
+	TILE *tile = FindTile(x, y);
 	
 	if (tile != NULL && tile->tile != 0 && TILE_ON_LAYER(LAYER_IS_ALT(layer), LAYER_IS_LRB(layer), tile))
 	{
-		COLLISIONTILE *collisionTile = &gLevel->collisionTile[(LAYER_IS_ALT(layer) ? gLevel->alternateMap : gLevel->normalMap)[tile->tile]];
+		TILEMAPPING *tileMap = &gLevel->tileMapping[tile->tile];
+		COLLISIONTILE *collisionTile = &gLevel->collisionTile[LAYER_IS_ALT(layer) ? (tileMap->alternateColTile) : (tileMap->normalColTile)];
+		
 		if (collisionTile != gLevel->collisionTile)
 		{
 			//Get our angle

@@ -38,9 +38,11 @@ SOURCES = \
 	Player \
 	Object \
 	Camera \
+	LevelSpecific/EHZ \
 	Objects/PathSwitcher \
 	Objects/Goalpost \
 	Objects/Spiral \
+	Objects/Bridge \
 
 #What to compile
 OBJECTS = $(addprefix obj/$(FILENAME)/, $(addsuffix .o, $(SOURCES)))

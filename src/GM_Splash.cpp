@@ -15,7 +15,7 @@
 bool GM_Splash(bool *noError)
 {
 	//Load our splash image
-	TEXTURE *splashTexture = new TEXTURE("data/Splash.bmp");
+	TEXTURE *splashTexture = new TEXTURE(NULL, "data/Splash.bmp");
 	if (splashTexture->fail != NULL)
 		return (*noError = false);
 	
@@ -71,7 +71,7 @@ bool GM_Splash(bool *noError)
 				xOff = -xOff;
 			
 			//Draw this line
-			splashTexture->Draw(splashTexture->loadedPalette, &src, (SCREEN_WIDTH - splashTexture->width) / 2 + xOff, (SCREEN_HEIGHT - splashTexture->height) / 2 + line, false, false);
+			splashTexture->Draw(0, splashTexture->loadedPalette, &src, (SCREEN_WIDTH - splashTexture->width) / 2 + xOff, (SCREEN_HEIGHT - splashTexture->height) / 2 + line, false, false);
 			src.y++;
 		}
 		

@@ -4,11 +4,11 @@
 #include "../Log.h"
 
 static const uint8_t animationEggman[] =	{0x0F,0x00,0xFF};
-static const uint8_t animationSpin1[] =	{0x0F,0x00,0x01,0x02,0x03,0xFF};
-static const uint8_t animationSpin2[] =	{0x0F,0x04,0x01,0x02,0x03,0xFF};
-static const uint8_t animationSonic[] =	{0x0F,0x04,0xFF};
+static const uint8_t animationSpin1[] =		{0x01,0x00,0x01,0x02,0x03,0xFF};
+static const uint8_t animationSpin2[] =		{0x01,0x04,0x01,0x02,0x03,0xFF};
+static const uint8_t animationSonic[] =		{0x0F,0x04,0xFF};
 
-static const uint8_t* animationList[] = {
+static const uint8_t *animationList[] = {
 	animationEggman,
 	animationSpin1,
 	animationSpin2,
@@ -20,7 +20,7 @@ void ObjGoalpost(OBJECT *object)
 	enum SCRATCH
 	{
 		SCRATCH_SPIN_TIME = 0, // 2 bytes
-		SCRATCH_SPARKLE_TIME = 0, // 2 bytes
+		SCRATCH_SPARKLE_TIME = 1, // 2 bytes
 	};
 	
 	switch (object->routine)
@@ -30,13 +30,13 @@ void ObjGoalpost(OBJECT *object)
 			object->routine++;
 			
 			//Load graphics
-			object->texture = new TEXTURE("data/Object/Goalpost.bmp");
+			object->texture = gLevel->GetObjectTexture("data/Object/Goalpost.bmp");
 			object->mappings = new MAPPINGS("data/Object/Goalpost.map");
 			
 			//Initialize other properties
 			object->renderFlags.alignPlane = true;
 			object->widthPixels = 0x18;
-			object->priority = 4;
+			object->priority = 0;
 //Fallthrough
 		case 1: //Check for contact
 			//If near the goalpost, we're touching it
@@ -50,7 +50,15 @@ void ObjGoalpost(OBJECT *object)
 			}
 			break;
 		case 2: //Touched and spinning
-			object->routine++;
+			//Handle our spin timer
+			if (--object->scratchS8[SCRATCH_SPIN_TIME] < 0)
+			{
+				object->scratchS8[SCRATCH_SPIN_TIME] = 60;
+				
+				//Increment spin cycle, and if reached end...
+				if (++object->anim >= 3)
+					object->routine++;
+			}
 			break;
 		case 3: //Make players run to the right of the screen
 			for (int i = 0; i < PLAYERS; i++)
@@ -74,4 +82,7 @@ void ObjGoalpost(OBJECT *object)
 		case 4: //End of level
 			break;
 	}
+	
+	//Animate sprite
+	object->Animate(animationList);
 }

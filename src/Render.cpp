@@ -17,13 +17,14 @@ unsigned int vsyncMultiple = 0;
 const long double framerateMilliseconds = (1000.0 / FRAMERATE);
 
 //Texture class
-TEXTURE::TEXTURE(const char *path)
+TEXTURE::TEXTURE(TEXTURE **linkedList, const char *path)
 {
 	LOG(("Loading texture from %s... ", path));
-	
-	fail = NULL;
+	memset(this, 0, sizeof(TEXTURE));
 	
 	//Load bitmap
+	source = path;
+	
 	GET_GLOBAL_PATH(filepath, path);
 	
 	SDL_Surface *bitmap = SDL_LoadBMP(filepath);
@@ -94,15 +95,21 @@ TEXTURE::TEXTURE(const char *path)
 	//Free bitmap surface
 	SDL_FreeSurface(bitmap);
 	
+	//Attach to linked list if given
+	if (linkedList != NULL)
+	{
+		list = linkedList;
+		next = *linkedList;
+		*linkedList = this;
+	}
+	
 	LOG(("Success!\n"));
 }
 
-TEXTURE::TEXTURE(uint8_t *data, int dWidth, int dHeight)
+TEXTURE::TEXTURE(TEXTURE **linkedList, uint8_t *data, int dWidth, int dHeight)
 {
 	LOG(("Loading texture from memory location %p dimensions %dx%d... ", (void*)data, dWidth, dHeight));
-	
-	fail = NULL;
-	loadedPalette = NULL;
+	memset(this, 0, sizeof(TEXTURE));
 	
 	//Allocate texture data
 	texture = (uint8_t*)malloc(dWidth * dHeight);
@@ -136,6 +143,14 @@ TEXTURE::TEXTURE(uint8_t *data, int dWidth, int dHeight)
 	width = dWidth;
 	height = dHeight;
 	
+	//Attach to linked list if given
+	if (linkedList != NULL)
+	{
+		list = linkedList;
+		next = *linkedList;
+		*linkedList = this;
+	}
+	
 	LOG(("Success!\n"));
 }
 
@@ -149,9 +164,22 @@ TEXTURE::~TEXTURE()
 	
 	if (loadedPalette)
 		delete loadedPalette;
+	
+	//Remove from linked list if given
+	if (list != NULL)
+	{
+		for (TEXTURE **texture = list; *texture != NULL; texture = &(*texture)->next)
+		{
+			if (*texture == this)
+			{
+				*texture = next;
+				break;
+			}
+		}
+	}
 }
 
-void TEXTURE::Draw(PALETTE *palette, SDL_Rect *src, int x, int y, bool xFlip, bool yFlip)
+void TEXTURE::Draw(int layer, PALETTE *palette, SDL_Rect *src, int x, int y, bool xFlip, bool yFlip)
 {
 	//Check if this is in view bounds (if not, just return, no point in clogging the queue with stuff that will not be rendered)
 	if (x <= -src->w || x >= gSoftwareBuffer->width)
@@ -160,10 +188,10 @@ void TEXTURE::Draw(PALETTE *palette, SDL_Rect *src, int x, int y, bool xFlip, bo
 		return;
 	
 	//Set the member of the render queue
-	gSoftwareBuffer->queueEntry->type = RENDERQUEUE_TEXTURE;
-	gSoftwareBuffer->queueEntry->dest = {x, y, src->w, src->h};
-	gSoftwareBuffer->queueEntry->texture.srcX = src->x;
-	gSoftwareBuffer->queueEntry->texture.srcY = src->y;
+	gSoftwareBuffer->queueEntry[layer]->type = RENDERQUEUE_TEXTURE;
+	gSoftwareBuffer->queueEntry[layer]->dest = {x, y, src->w, src->h};
+	gSoftwareBuffer->queueEntry[layer]->texture.srcX = src->x;
+	gSoftwareBuffer->queueEntry[layer]->texture.srcY = src->y;
 	
 	//Clip top & left
 	int clipL = 0, clipT = 0;
@@ -171,65 +199,65 @@ void TEXTURE::Draw(PALETTE *palette, SDL_Rect *src, int x, int y, bool xFlip, bo
 	if (x < 0)
 	{
 		clipL = -x;
-		gSoftwareBuffer->queueEntry->dest.x += clipL;
-		gSoftwareBuffer->queueEntry->dest.w -= clipL;
-		gSoftwareBuffer->queueEntry->texture.srcX += clipL;
+		gSoftwareBuffer->queueEntry[layer]->dest.x += clipL;
+		gSoftwareBuffer->queueEntry[layer]->dest.w -= clipL;
+		gSoftwareBuffer->queueEntry[layer]->texture.srcX += clipL;
 	}
 	
 	if (y < 0)
 	{
 		clipT = -y;
-		gSoftwareBuffer->queueEntry->dest.y += clipT;
-		gSoftwareBuffer->queueEntry->dest.h -= clipT;
-		gSoftwareBuffer->queueEntry->texture.srcY += clipT;
+		gSoftwareBuffer->queueEntry[layer]->dest.y += clipT;
+		gSoftwareBuffer->queueEntry[layer]->dest.h -= clipT;
+		gSoftwareBuffer->queueEntry[layer]->texture.srcY += clipT;
 	}
 	
 	//Clip right and bottom
 	int clipR = 0, clipB = 0;
 	
-	if (gSoftwareBuffer->queueEntry->dest.x > (gSoftwareBuffer->width - gSoftwareBuffer->queueEntry->dest.w))
+	if (gSoftwareBuffer->queueEntry[layer]->dest.x > (gSoftwareBuffer->width - gSoftwareBuffer->queueEntry[layer]->dest.w))
 	{
-		clipR = gSoftwareBuffer->queueEntry->dest.x - (gSoftwareBuffer->width - gSoftwareBuffer->queueEntry->dest.w);
-		gSoftwareBuffer->queueEntry->dest.w -= clipR;
+		clipR = gSoftwareBuffer->queueEntry[layer]->dest.x - (gSoftwareBuffer->width - gSoftwareBuffer->queueEntry[layer]->dest.w);
+		gSoftwareBuffer->queueEntry[layer]->dest.w -= clipR;
 	}
 	
-	if (gSoftwareBuffer->queueEntry->dest.y > (gSoftwareBuffer->height - gSoftwareBuffer->queueEntry->dest.h))
+	if (gSoftwareBuffer->queueEntry[layer]->dest.y > (gSoftwareBuffer->height - gSoftwareBuffer->queueEntry[layer]->dest.h))
 	{
-		clipB = gSoftwareBuffer->queueEntry->dest.y - (gSoftwareBuffer->height - gSoftwareBuffer->queueEntry->dest.h);
-		gSoftwareBuffer->queueEntry->dest.h -= clipB;
+		clipB = gSoftwareBuffer->queueEntry[layer]->dest.y - (gSoftwareBuffer->height - gSoftwareBuffer->queueEntry[layer]->dest.h);
+		gSoftwareBuffer->queueEntry[layer]->dest.h -= clipB;
 	}
 	
 	//Set palette and texture references
-	gSoftwareBuffer->queueEntry->texture.palette = palette;
-	gSoftwareBuffer->queueEntry->texture.texture = this;
+	gSoftwareBuffer->queueEntry[layer]->texture.palette = palette;
+	gSoftwareBuffer->queueEntry[layer]->texture.texture = this;
 	
 	//Flipping
 	if (xFlip || yFlip)
 	{
 		if (xFlip && yFlip)
 		{
-			gSoftwareBuffer->queueEntry->texture.srcBuffer = textureXYFlip;
-			gSoftwareBuffer->queueEntry->texture.srcX = width - (gSoftwareBuffer->queueEntry->texture.srcX + gSoftwareBuffer->queueEntry->dest.w) - (clipR - clipL);
-			gSoftwareBuffer->queueEntry->texture.srcY = height - (gSoftwareBuffer->queueEntry->texture.srcY + gSoftwareBuffer->queueEntry->dest.h) - (clipB - clipT);
+			gSoftwareBuffer->queueEntry[layer]->texture.srcBuffer = textureXYFlip;
+			gSoftwareBuffer->queueEntry[layer]->texture.srcX = width - (gSoftwareBuffer->queueEntry[layer]->texture.srcX + gSoftwareBuffer->queueEntry[layer]->dest.w) - (clipR - clipL);
+			gSoftwareBuffer->queueEntry[layer]->texture.srcY = height - (gSoftwareBuffer->queueEntry[layer]->texture.srcY + gSoftwareBuffer->queueEntry[layer]->dest.h) - (clipB - clipT);
 		}
 		else if (xFlip)
 		{
-			gSoftwareBuffer->queueEntry->texture.srcBuffer = textureXFlip;
-			gSoftwareBuffer->queueEntry->texture.srcX = width - (gSoftwareBuffer->queueEntry->texture.srcX + gSoftwareBuffer->queueEntry->dest.w) - (clipR - clipL);
+			gSoftwareBuffer->queueEntry[layer]->texture.srcBuffer = textureXFlip;
+			gSoftwareBuffer->queueEntry[layer]->texture.srcX = width - (gSoftwareBuffer->queueEntry[layer]->texture.srcX + gSoftwareBuffer->queueEntry[layer]->dest.w) - (clipR - clipL);
 		}
 		else if (yFlip)
 		{
-			gSoftwareBuffer->queueEntry->texture.srcBuffer = textureYFlip;
-			gSoftwareBuffer->queueEntry->texture.srcY = height - (gSoftwareBuffer->queueEntry->texture.srcY + gSoftwareBuffer->queueEntry->dest.h) - (clipB - clipT);
+			gSoftwareBuffer->queueEntry[layer]->texture.srcBuffer = textureYFlip;
+			gSoftwareBuffer->queueEntry[layer]->texture.srcY = height - (gSoftwareBuffer->queueEntry[layer]->texture.srcY + gSoftwareBuffer->queueEntry[layer]->dest.h) - (clipB - clipT);
 		}
 	}
 	else
 	{
-		gSoftwareBuffer->queueEntry->texture.srcBuffer = texture;
+		gSoftwareBuffer->queueEntry[layer]->texture.srcBuffer = texture;
 	}
 	
 	//Push forward in queue
-	gSoftwareBuffer->queueEntry++;
+	gSoftwareBuffer->queueEntry[layer]++;
 }
 
 //Palette functions
@@ -277,7 +305,8 @@ SOFTWAREBUFFER::SOFTWAREBUFFER(uint32_t bufFormat, int bufWidth, int bufHeight)
 	height = bufHeight;
 	
 	//Set our render queue position
-	queueEntry = queue;
+	for (int i = 0; i < RENDERLAYERS; i++)
+		queueEntry[i] = queue[i];
 	
 	//Allocate our framebuffer stuff
 	if ((texture = SDL_CreateTexture(gRenderer, format->format, SDL_TEXTUREACCESS_STREAMING, width, height)) == NULL)
@@ -301,7 +330,7 @@ inline uint32_t SOFTWAREBUFFER::RGB(uint8_t r, uint8_t g, uint8_t b)
 }
 
 //Drawing functions (no-class)
-void SOFTWAREBUFFER::DrawPoint(int x, int y, PALCOLOUR *colour)
+void SOFTWAREBUFFER::DrawPoint(int layer, int x, int y, PALCOLOUR *colour)
 {
 	//Check if this is in view bounds (if not, just return, no point in clogging the queue with stuff that will not be rendered)
 	if (x < 0 || x >= width)
@@ -310,17 +339,17 @@ void SOFTWAREBUFFER::DrawPoint(int x, int y, PALCOLOUR *colour)
 		return;
 	
 	//Set the member of the render queue
-	queueEntry->type = RENDERQUEUE_SOLID;
-	queueEntry->dest = {x, y, 1, 1};
+	queueEntry[layer]->type = RENDERQUEUE_SOLID;
+	queueEntry[layer]->dest = {x, y, 1, 1};
 	
 	//Set colour reference
-	queueEntry->solid.colour = colour;
+	queueEntry[layer]->solid.colour = colour;
 	
 	//Push forward in queue
-	queueEntry++;
+	queueEntry[layer]++;
 }
 
-void SOFTWAREBUFFER::DrawQuad(SDL_Rect *quad, PALCOLOUR *colour)
+void SOFTWAREBUFFER::DrawQuad(int layer, SDL_Rect *quad, PALCOLOUR *colour)
 {
 	//Check if this is in view bounds (if not, just return, no point in clogging the queue with stuff that will not be rendered)
 	if (quad->x <= -quad->w || quad->x >= width)
@@ -329,33 +358,33 @@ void SOFTWAREBUFFER::DrawQuad(SDL_Rect *quad, PALCOLOUR *colour)
 		return;
 	
 	//Set the member of the render queue
-	queueEntry->type = RENDERQUEUE_SOLID;
-	queueEntry->dest = *quad;
+	queueEntry[layer]->type = RENDERQUEUE_SOLID;
+	queueEntry[layer]->dest = *quad;
 	
 	//Clip top & left
 	if (quad->x < 0)
 	{
-		queueEntry->dest.x -= quad->x;
-		queueEntry->dest.w += quad->x;
+		queueEntry[layer]->dest.x -= quad->x;
+		queueEntry[layer]->dest.w += quad->x;
 	}
 	
 	if (quad->y < 0)
 	{
-		queueEntry->dest.y -= quad->y;
-		queueEntry->dest.h += quad->y;
+		queueEntry[layer]->dest.y -= quad->y;
+		queueEntry[layer]->dest.h += quad->y;
 	}
 	
 	//Clip right and bottom
-	if (queueEntry->dest.x > (width - queueEntry->dest.w))
-		queueEntry->dest.w -= queueEntry->dest.x - (width - queueEntry->dest.w);
-	if (queueEntry->dest.y > (height - queueEntry->dest.h))
-		queueEntry->dest.h -= queueEntry->dest.y - (height - queueEntry->dest.h);
+	if (queueEntry[layer]->dest.x > (width - queueEntry[layer]->dest.w))
+		queueEntry[layer]->dest.w -= queueEntry[layer]->dest.x - (width - queueEntry[layer]->dest.w);
+	if (queueEntry[layer]->dest.y > (height - queueEntry[layer]->dest.h))
+		queueEntry[layer]->dest.h -= queueEntry[layer]->dest.y - (height - queueEntry[layer]->dest.h);
 	
 	//Set colour reference
-	queueEntry->solid.colour = colour;
+	queueEntry[layer]->solid.colour = colour;
 	
 	//Push forward in queue
-	queueEntry++;
+	queueEntry[layer]++;
 }
 
 //Render the software buffer to the screen
@@ -366,43 +395,48 @@ void SOFTWAREBUFFER::DrawQuad(SDL_Rect *quad, PALCOLOUR *colour)
 			macro(writeBuffer, bpp, px, backgroundColour->colour);	\
 	}	\
 		\
-	for (RENDERQUEUE *entry = queue; entry != queueEntry; entry++)	\
+	for (int i = 0; i < RENDERLAYERS; i++)	\
 	{	\
-		switch (entry->type)	\
+		for (RENDERQUEUE *entry = queue[i]; entry != queueEntry[i]; entry++)	\
 		{	\
-			case RENDERQUEUE_TEXTURE:	\
-				fpx = entry->texture.srcX + entry->texture.srcY * entry->texture.texture->width;	\
-				dpx = entry->dest.x + entry->dest.y * width;	\
-					\
-				for (int fy = entry->texture.srcY; fy < entry->texture.srcY + entry->dest.h; fy++)	\
-				{	\
-					for (int fx = entry->texture.srcX; fx < entry->texture.srcX + entry->dest.w; fx++)	\
+			switch (entry->type)	\
+			{	\
+				case RENDERQUEUE_TEXTURE:	\
+					fpx = entry->texture.srcX + entry->texture.srcY * entry->texture.texture->width;	\
+					dpx = entry->dest.x + entry->dest.y * width;	\
+						\
+					for (int fy = entry->texture.srcY; fy < entry->texture.srcY + entry->dest.h; fy++)	\
 					{	\
-						const uint8_t index = entry->texture.srcBuffer[fpx++];	\
-						if (index)	\
-							macro(writeBuffer, bpp, dpx, entry->texture.palette->colour[index].colour);	\
-						dpx++;	\
+						for (int fx = entry->texture.srcX; fx < entry->texture.srcX + entry->dest.w; fx++)	\
+						{	\
+							const uint8_t index = entry->texture.srcBuffer[fpx++];	\
+							if (index)	\
+								macro(writeBuffer, bpp, dpx, entry->texture.palette->colour[index].colour);	\
+							dpx++;	\
+						}	\
+						fpx += entry->texture.texture->width - entry->dest.w;	\
+						dpx += width - entry->dest.w;	\
 					}	\
-					fpx += entry->texture.texture->width - entry->dest.w;	\
-					dpx += width - entry->dest.w;	\
-				}	\
-				break;	\
-			case RENDERQUEUE_SOLID:	\
-				dpx = entry->dest.x + entry->dest.y * width;	\
-					\
-				for (int fy = entry->dest.y; fy < entry->dest.y + entry->dest.h; fy++)	\
-				{	\
-					for (int fx = entry->dest.x; fx < entry->dest.x + entry->dest.w; fx++)	\
+					break;	\
+				case RENDERQUEUE_SOLID:	\
+					dpx = entry->dest.x + entry->dest.y * width;	\
+						\
+					for (int fy = entry->dest.y; fy < entry->dest.y + entry->dest.h; fy++)	\
 					{	\
-						macro(writeBuffer, bpp, dpx, entry->solid.colour->colour);	\
-						dpx++;	\
+						for (int fx = entry->dest.x; fx < entry->dest.x + entry->dest.w; fx++)	\
+						{	\
+							macro(writeBuffer, bpp, dpx, entry->solid.colour->colour);	\
+							dpx++;	\
+						}	\
+						dpx += width - entry->dest.w;	\
 					}	\
-					dpx += width - entry->dest.w;	\
-				}	\
-				break;	\
-			default:	\
-				break;	\
+					break;	\
+				default:	\
+					break;	\
+			}	\
 		}	\
+			\
+		queueEntry[i] = queue[i];	\
 	}
 
 bool SOFTWAREBUFFER::RenderToScreen(PALCOLOUR *backgroundColour)
@@ -429,14 +463,60 @@ bool SOFTWAREBUFFER::RenderToScreen(PALCOLOUR *backgroundColour)
 			SBRTSD(SET_BUFFER_PIXEL3);
 			break;
 		case 4:
-			SBRTSD(SET_BUFFER_PIXEL4);
+			//SBRTSD(SET_BUFFER_PIXEL4);
+			if (backgroundColour != NULL)	\
+	{	\
+		for (int px = 0; px < width * height; px++)	\
+			SET_BUFFER_PIXEL4(writeBuffer, bpp, px, backgroundColour->colour);	\
+	}	\
+		\
+	for (int i = 0; i < RENDERLAYERS; i++)	\
+	{	\
+		for (RENDERQUEUE *entry = queue[i]; entry != queueEntry[i]; entry++)	\
+		{	\
+			switch (entry->type)	\
+			{	\
+				case RENDERQUEUE_TEXTURE:	\
+					fpx = entry->texture.srcX + entry->texture.srcY * entry->texture.texture->width;	\
+					dpx = entry->dest.x + entry->dest.y * width;	\
+						\
+					for (int fy = entry->texture.srcY; fy < entry->texture.srcY + entry->dest.h; fy++)	\
+					{	\
+						for (int fx = entry->texture.srcX; fx < entry->texture.srcX + entry->dest.w; fx++)	\
+						{	\
+							const uint8_t index = entry->texture.srcBuffer[fpx++];	\
+							if (index)	\
+								SET_BUFFER_PIXEL4(writeBuffer, bpp, dpx, entry->texture.palette->colour[index].colour);	\
+							dpx++;	\
+						}	\
+						fpx += entry->texture.texture->width - entry->dest.w;	\
+						dpx += width - entry->dest.w;	\
+					}	\
+					break;	\
+				case RENDERQUEUE_SOLID:	\
+					dpx = entry->dest.x + entry->dest.y * width;	\
+						\
+					for (int fy = entry->dest.y; fy < entry->dest.y + entry->dest.h; fy++)	\
+					{	\
+						for (int fx = entry->dest.x; fx < entry->dest.x + entry->dest.w; fx++)	\
+						{	\
+							SET_BUFFER_PIXEL4(writeBuffer, bpp, dpx, entry->solid.colour->colour);	\
+							dpx++;	\
+						}	\
+						dpx += width - entry->dest.w;	\
+					}	\
+					break;	\
+				default:	\
+					break;	\
+			}	\
+		}	\
+			\
+		queueEntry[i] = queue[i];	\
+	}
 			break;
 		default:
 			break;
 	}
-	
-	//Reset our render queue
-	queueEntry = queue;
 	
 	//Unlock
 	SDL_UnlockTexture(texture);
