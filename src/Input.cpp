@@ -17,7 +17,7 @@ bool InitializeInput()
 	LOG(("Initializing input... "));
 	
 	//Initialize controllers
-	ClearControllerInput();
+	memset(gController, 0, sizeof(gController));
 	
 	//TODO: attempt to load input bindings save
 	
@@ -62,14 +62,14 @@ void HandleInputEvent(SDL_Event *event)
 		case SDL_KEYUP:
 			for (int i = 0; i < CONTROLLERS; i++)
 			{
-				DO_BUTTON_EVENT(gController[i].held.start,	gController[i].binds.start.key,	(event->type == SDL_KEYDOWN));
-				DO_BUTTON_EVENT(gController[i].held.a,		gController[i].binds.a.key,		(event->type == SDL_KEYDOWN));
-				DO_BUTTON_EVENT(gController[i].held.b,		gController[i].binds.b.key,		(event->type == SDL_KEYDOWN));
-				DO_BUTTON_EVENT(gController[i].held.c,		gController[i].binds.c.key,		(event->type == SDL_KEYDOWN));
-				DO_BUTTON_EVENT(gController[i].held.right,	gController[i].binds.right.key,	(event->type == SDL_KEYDOWN));
-				DO_BUTTON_EVENT(gController[i].held.left,	gController[i].binds.left.key,	(event->type == SDL_KEYDOWN));
-				DO_BUTTON_EVENT(gController[i].held.down,	gController[i].binds.down.key,	(event->type == SDL_KEYDOWN));
-				DO_BUTTON_EVENT(gController[i].held.up,		gController[i].binds.up.key,	(event->type == SDL_KEYDOWN));
+				DO_BUTTON_EVENT(gController[i].nextHeld.start,	gController[i].binds.start.key,	(event->type == SDL_KEYDOWN));
+				DO_BUTTON_EVENT(gController[i].nextHeld.a,		gController[i].binds.a.key,		(event->type == SDL_KEYDOWN));
+				DO_BUTTON_EVENT(gController[i].nextHeld.b,		gController[i].binds.b.key,		(event->type == SDL_KEYDOWN));
+				DO_BUTTON_EVENT(gController[i].nextHeld.c,		gController[i].binds.c.key,		(event->type == SDL_KEYDOWN));
+				DO_BUTTON_EVENT(gController[i].nextHeld.right,	gController[i].binds.right.key,	(event->type == SDL_KEYDOWN));
+				DO_BUTTON_EVENT(gController[i].nextHeld.left,	gController[i].binds.left.key,	(event->type == SDL_KEYDOWN));
+				DO_BUTTON_EVENT(gController[i].nextHeld.down,	gController[i].binds.down.key,	(event->type == SDL_KEYDOWN));
+				DO_BUTTON_EVENT(gController[i].nextHeld.up,		gController[i].binds.up.key,	(event->type == SDL_KEYDOWN));
 			}
 			break;
 	}
@@ -82,6 +82,9 @@ void UpdateInput()
 {
 	for (int i = 0; i < CONTROLLERS; i++)
 	{
+		//Update our held
+		gController[i].held = gController[i].nextHeld;
+		
 		//Set pressed keys
 		DO_PRESS_CHECK(gController[i].press.start,	gController[i].held.start,	gController[i].lastHeld.start);
 		DO_PRESS_CHECK(gController[i].press.a,		gController[i].held.a,		gController[i].lastHeld.a);

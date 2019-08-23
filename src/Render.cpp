@@ -435,7 +435,6 @@ void SOFTWAREBUFFER::DrawQuad(int layer, SDL_Rect *quad, PALCOLOUR *colour)
 					break;	\
 			}	\
 		}	\
-			\
 		queueEntry[i] = queue[i];	\
 	}
 

@@ -9,7 +9,7 @@ struct CONTROLMASK
 	bool start : 1;
 	bool a : 1;
 	bool b : 1;
-	bool c : 1; //For some reason C and B are swapped from what you'd expect for the original hardware
+	bool c : 1;
 	bool right : 1;
 	bool left : 1;
 	bool down : 1;
@@ -38,6 +38,8 @@ struct CONTROLLER
 {
 	//Current control masks
 	CONTROLMASK held;
+	CONTROLMASK nextHeld;
+	
 	CONTROLMASK lastHeld;
 	CONTROLMASK press;
 	
