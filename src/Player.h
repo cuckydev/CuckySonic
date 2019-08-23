@@ -8,6 +8,7 @@
 
 #define PLAYER_RECORD_LENGTH 0x40
 
+//Routines
 enum PLAYERROUTINE
 {
 	PLAYERROUTINE_CONTROL,
@@ -16,6 +17,16 @@ enum PLAYERROUTINE
 	PLAYERROUTINE_RESET_LEVEL,
 };
 
+enum CPUROUTINE
+{
+	CPUROUTINE_INIT,
+	CPUROUTINE_SPAWNING,
+	CPUROUTINE_FLYING,
+	CPUROUTINE_NORMAL,
+	CPUROUTINE_PANIC,
+};
+
+//Types
 enum SHIELD
 {
 	SHIELD_BLUE,
@@ -31,6 +42,7 @@ enum CHARACTERTYPE
 	CHARACTERTYPE_KNUCKLES,
 };
 
+//Player animation
 enum PLAYERANIMATION
 {
 	PLAYERANIMATION_WALK,
@@ -268,6 +280,12 @@ class PLAYER
 		void *follow; //We can't use the PLAYER type here since we're still defining it
 		int controller;
 		
+		//CPU
+		CPUROUTINE cpuRoutine;
+		int cpuOverride;
+		unsigned int cpuTimer;
+		bool cpuJumping;
+		
 		//Controls
 		CONTROLMASK controlHeld;
 		CONTROLMASK controlPress;
@@ -292,8 +310,12 @@ class PLAYER
 		
 		int recordPos;
 		
+		//For linked list
+		PLAYER **list;
+		PLAYER *next;
+		
 	public:
-		PLAYER(const char *specPath, PLAYER *myFollow, int myController);
+		PLAYER(PLAYER **linkedList, const char *specPath, PLAYER *myFollow, int myController);
 		~PLAYER();
 		
 		uint8_t AngleIn(uint8_t angleSide, int16_t *distance, int16_t *distance2);
@@ -357,6 +379,9 @@ class PLAYER
 		void AdvanceFrame(const uint8_t* animation);
 		void FlipAngle();
 		void Animate();
+		
+		void CPUFilterAction(CONTROLMASK *nextHeld, CONTROLMASK *nextPress, int16_t leadX, int16_t leadY, bool incP1);
+		void CPUControl();
 		
 		void Update();
 		void Draw();

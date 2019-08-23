@@ -23,17 +23,13 @@ OBJECT::OBJECT(OBJECT **linkedList, void (*objectFunction)(OBJECT *object))
 		}
 		
 		//Attach us to the linked list
-		OBJECT *object = *linkedList;
-		
-		while (1)
+		for (OBJECT *object = *linkedList; 1; object = object->next)
 		{
 			if (object->next == NULL)
 			{
 				object->next = this;
 				break;
 			}
-			
-			object = object->next;
 		}
 	}
 }
@@ -159,7 +155,7 @@ void OBJECT::Draw()
 			
 			int alignX = renderFlags.alignPlane ? gLevel->camera->x : 0;
 			int alignY = renderFlags.alignPlane ? gLevel->camera->y : 0;
-			texture->Draw((highPriority ? LEVEL_RENDERLAYER_OBJECT_HIGH_0 : LEVEL_RENDERLAYER_OBJECT_0) + priority, texture->loadedPalette, mapRect, x.pos - origX - alignX, y.pos - origY - alignY, renderFlags.xFlip, renderFlags.yFlip);
+			texture->Draw((highPriority ? LEVEL_RENDERLAYER_OBJECT_HIGH_0 : LEVEL_RENDERLAYER_OBJECT_0) + ((OBJECT_LAYERS - 1) - priority), texture->loadedPalette, mapRect, x.pos - origX - alignX, y.pos - origY - alignY, renderFlags.xFlip, renderFlags.yFlip);
 		}
 	}
 	else

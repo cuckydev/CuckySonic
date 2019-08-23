@@ -1,4 +1,5 @@
 #include "../Level.h"
+#include "../Game.h"
 
 static const uint8_t ehzWaterfallCycle[4][4][3] = {
 	{{0x66, 0x88, 0xAA}, {0x66, 0x88, 0xEE}, {0x88, 0xAA, 0xEE}, {0xAA, 0xCC, 0xEE}},
@@ -34,9 +35,9 @@ static const uint8_t ehzScrollRipple[] =
 	1, 2
 };
 
-void EHZ_BackgroundScroll(int16_t *array, int16_t cameraX, int16_t cameraY)
+void EHZ_BackgroundScroll(uint16_t *array, int16_t *cameraX, int16_t *cameraY)
 {
-	int16_t *arrValue = array;
+	uint16_t *arrValue = array;
 	int line = 0;
 	
 	//Bit of sky at the top
@@ -49,7 +50,7 @@ void EHZ_BackgroundScroll(int16_t *array, int16_t cameraX, int16_t cameraY)
 	//Clouds + small island
 	for (int i = 0; i < 58; i++)
 	{
-		*arrValue++ = cameraX / 0x40;
+		*arrValue++ = *cameraX / 0x40;
 		line++;
 	}
 	
@@ -61,7 +62,7 @@ void EHZ_BackgroundScroll(int16_t *array, int16_t cameraX, int16_t cameraY)
 	
 	for (int i = 0; i < 21; i++)
 	{
-		*arrValue++ = (cameraX / 0x40) + ehzScrollRipple[(horWaterRipple & 0x1F) + i];
+		*arrValue++ = (*cameraX / 0x40) + ehzScrollRipple[(horWaterRipple & 0x1F) + i];
 		line++;
 	}
 	
@@ -75,22 +76,22 @@ void EHZ_BackgroundScroll(int16_t *array, int16_t cameraX, int16_t cameraY)
 	//Upper mountains
 	for (int i = 0; i < 16; i++)
 	{
-		*arrValue++ = cameraX / 0x10;
+		*arrValue++ = *cameraX / 0x10;
 		line++;
 	}
 	
 	//Lower mountains
 	for (int i = 0; i < 16; i++)
 	{
-		*arrValue++ = (cameraX * 0x18) / 0x100;
+		*arrValue++ = (*cameraX * 0x18) / 0x100;
 		line++;
 	}
 	
 	//Field
-	uint32_t delta = (((cameraX / 2 - cameraX / 8) * 0x100) / 0x30) * 0x100;
-	uint32_t accumulate = (cameraX / 8) * 0x10000;
+	uint32_t delta = ((((*cameraX) / 2 - *cameraX / 8) * 0x100) / 0x30) * 0x100;
+	uint32_t accumulate = (*cameraX) / 8 * 0x10000;
 	
-	for (int i = line; i < SCREEN_HEIGHT;)
+	for (int i = line; i < gLevel->backgroundTexture->height;)
 	{
 		int mult = (i >= 196) ? 3 : (i >= 160 ? 2 : 1);
 		for (int v = 0; v < mult; v++)
@@ -98,4 +99,8 @@ void EHZ_BackgroundScroll(int16_t *array, int16_t cameraX, int16_t cameraY)
 		accumulate += delta * mult;
 		i += mult;
 	}
+	
+	//Clear camera offset
+	*cameraX = 0;
+	*cameraY = 0;
 }

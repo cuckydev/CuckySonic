@@ -13,7 +13,7 @@
 
 //Bug-fixes
 //#define FIX_SPINDASH_ANIM     //Usually when spindashing, if you manage to exit the spindash animation, you'll stay out of it, this fixes that
-#define FIX_HORIZONTAL_WRAP   //In the originals, for some reason, the LevelBound uses unsigned checks, meaning if you go off to the left, you'll be sent to the right boundary 
+//#define FIX_HORIZONTAL_WRAP   //In the originals, for some reason, the LevelBound uses unsigned checks, meaning if you go off to the left, you'll be sent to the right boundary 
 
 //Game differences
 //#define SONIC1_SLOPE_ANGLE    //In Sonic 2+, the floor's angle will be replaced with the player's cardinal floor angle if there's a 45+ degree difference
@@ -125,7 +125,7 @@ static const uint8_t* animationListSuper[] = {
 	animationFloat4,
 };
 
-PLAYER::PLAYER(const char *specPath, PLAYER *myFollow, int myController)
+PLAYER::PLAYER(PLAYER **linkedList, const char *specPath, PLAYER *myFollow, int myController)
 {
 	LOG(("Creating a player with spec %s and controlled by controller %d...\n", specPath, myController));
 	memset(this, 0, sizeof(PLAYER));
@@ -224,6 +224,29 @@ PLAYER::PLAYER(const char *specPath, PLAYER *myFollow, int myController)
 	
 	recordPos = 0;
 	
+	//Attach to linked list (if applicable)
+	if (linkedList != NULL)
+	{
+		list = linkedList;
+		
+		//If linked list is unset, set us as the first 
+		if (*linkedList == NULL)
+		{
+			*linkedList = this;
+			return;
+		}
+		
+		//Attach us to the linked list
+		for (PLAYER *player = *linkedList;; player = player->next)
+		{
+			if (player->next == NULL)
+			{
+				player->next = this;
+				break;
+			}
+		}
+	}
+	
 	LOG(("Success!\n"));
 }
 
@@ -233,6 +256,19 @@ PLAYER::~PLAYER()
 		delete texture;
 	if (mappings)
 		delete mappings;
+	
+	//Detach from linked list
+	if (list != NULL)
+	{
+		for (PLAYER **player = list; *player != NULL; player = &(*player)->next)
+		{
+			if (*player == this)
+			{
+				*player = next;
+				break;
+			}
+		}
+	}
 }
 
 //Generic collision functions
@@ -1868,7 +1904,7 @@ void PLAYER::KillCharacter()
 		//Do animation and sound
 		anim = PLAYERANIMATION_DEATH;
 		highPriority = true;
-		PlaySound(SOUNDID_DEATH);
+		PlaySound(SOUNDID_HURT);
 	}
 }
 
@@ -2336,6 +2372,262 @@ void PLAYER::Animate()
 	}
 }
 
+//CPU
+void PLAYER::CPUFilterAction(CONTROLMASK *nextHeld, CONTROLMASK *nextPress, int16_t leadX, int16_t leadY, bool incP1)
+{
+	if (incP1)
+	{
+		//Handle jumping
+		if (cpuJumping)
+		{
+			nextHeld->a = true;
+			nextHeld->b = true;
+			nextHeld->c = true;
+			nextPress->a = true;
+			nextPress->b = true;
+			nextPress->c = true;
+			
+			if (!status.inAir)
+				cpuJumping = false;
+			else
+				return;
+		}
+		
+		//If there's a great X-difference attached to a stupid timer thing
+		unsigned int timer = (cpuTimer & 0xFF);
+		if (timer != 0 && abs(leadX - x.pos) >= 0x40)
+			return;
+		
+		//Y difference check
+		int16_t yDiff = leadY - y.pos;
+		if (yDiff >= 0 || yDiff > -0x20)
+			return;
+	}
+	
+	//Check timer and if we're ducking
+	unsigned int timer = cpuTimer & 0x3F;
+	if (timer != 0 || anim == PLAYERANIMATION_DUCK)
+		return;
+	
+	//Jump
+	nextHeld->a = true;
+	nextHeld->b = true;
+	nextHeld->c = true;
+	nextPress->a = true;
+	nextPress->b = true;
+	nextPress->c = true;
+	cpuJumping = true;
+}
+
+void PLAYER::CPUControl()
+{
+	//Give the player control if any buttons are pressed
+	if (controlHeld.a || controlHeld.b || controlHeld.c || controlHeld.start || controlHeld.left || controlHeld.right || controlHeld.down || controlHeld.up)
+		cpuOverride = 600; //10 seconds before control is restored to the CPU
+	
+	switch (cpuRoutine)
+	{
+		case CPUROUTINE_INIT:
+			//Set our intended routine
+			cpuRoutine = CPUROUTINE_NORMAL;
+			
+			//Clear object control
+			memset(&objectControl, 0, sizeof(objectControl));
+			
+			//Reset speed and animation
+			anim = PLAYERANIMATION_WALK;
+			xVel = 0;
+			yVel = 0;
+			inertia = 0;
+			
+			//Clear status
+			memset(&status, 0, sizeof(STATUS));
+			break;
+		case CPUROUTINE_NORMAL:
+			//If the lead is dead, fly down to them
+			PLAYER *lead;
+			for (lead = (PLAYER*)follow; lead->follow != NULL; lead = (PLAYER*)lead->follow);
+			
+			if (lead->routine == PLAYERROUTINE_DEATH)
+			{
+				//Fly down to the player's corpse
+				cpuRoutine = CPUROUTINE_FLYING;
+				spindashing = false;
+				spindashCounter = 0;
+				
+				objectControl.disableOurMovement = true;
+				objectControl.disableObjectInteract = true;
+				
+				//Clear status
+				memset(&status, 0, sizeof(STATUS));
+				status.inAir = true;
+				return;
+			}
+			
+			//If not under human or object control
+			if (cpuOverride == 0 && objectControl.disableOurMovement == false)
+			{
+				//Panic if locked from a slope and stopped
+				if (moveLock > 0 && inertia == 0)
+					cpuRoutine = CPUROUTINE_PANIC;
+				
+				//Copy our leads controls from approximately 16 frames ago
+				int index = (unsigned)(((PLAYER*)follow)->recordPos - 0x11) % PLAYER_RECORD_LENGTH;
+				
+				int leadX = ((PLAYER*)follow)->posRecord[index].x;
+				int leadY = ((PLAYER*)follow)->posRecord[index].y;
+				CONTROLMASK leadHeld = ((PLAYER*)follow)->statRecord[index].controlHeld;
+				CONTROLMASK leadPress = ((PLAYER*)follow)->statRecord[index].controlPress;
+				STATUS leadStatus = ((PLAYER*)follow)->statRecord[index].status;
+				
+				//Move towards the lead
+				if (!status.pushing)
+				{
+					CONTROLMASK nextHeld = leadHeld;
+					CONTROLMASK nextPress = leadPress;
+					
+					//If the lead isn't pushing
+					if (!leadStatus.pushing)
+					{
+						int16_t xDiff = leadX - x.pos;
+							
+						//If not lined up with the lead, move towards them
+						if (xDiff < 0)
+						{
+							//Move left towards the lead
+							if (xDiff <= -0x10)
+							{
+								nextHeld.left = true;
+								nextPress.left = true;
+								nextHeld.right = false;
+								nextPress.right = false;
+							}
+							
+							//Move left 1 pixel if moving and not facing left
+							if (inertia != 0 && status.xFlip == false)
+								x.pos--;
+						}
+						else if (xDiff > 0)
+						{
+							//Move right towards the lead
+							if (xDiff >= 0x10)
+							{
+								nextHeld.left = false;
+								nextPress.left = false;
+								nextHeld.right = true;
+								nextPress.right = true;
+							}
+							
+							//Move left 1 pixel if moving and not facing left
+							if (inertia != 0 && status.xFlip == true)
+								x.pos++;
+						}
+						else
+						{
+							//Standing still
+							status.xFlip = leadStatus.xFlip;
+						}
+						
+						//Get our held buttons and actions
+						CPUFilterAction(&nextHeld, &nextPress, leadX, leadY, true);
+						
+						//Copy held and press
+						controlHeld = nextHeld;
+						controlPress = nextPress;
+						break;
+					}
+					
+					//Get our held buttons and actions
+					CPUFilterAction(&nextHeld, &nextPress, leadX, leadY, false);
+					
+					//Copy held and press
+					controlHeld = nextHeld;
+					controlPress = nextPress;
+					break;
+				}
+			}
+			else
+			{
+				if (cpuOverride > 0)
+					cpuOverride--;
+			}
+			break;
+		case CPUROUTINE_PANIC:
+			if (cpuOverride == 0 && moveLock == 0)
+			{
+				if (spindashing == false)
+				{
+					//Prepare to spindash
+					if (inertia == 0)
+					{
+						//Face towards our lead
+						status.xFlip = (((PLAYER*)follow)->x.pos < x.pos);
+						
+						//Force our input to down
+						controlHeld = {false, false, false, false, false, false, false, false};
+						controlPress = {false, false, false, false, false, false, false, false};
+						controlHeld.down = true;
+						controlPress.down = true;
+						
+						//If taking too long, quit
+						if (cpuTimer & 0x7F == 0)
+						{
+							controlHeld = {false, false, false, false, false, false, false, false};
+							controlPress = {false, false, false, false, false, false, false, false};
+							cpuRoutine = CPUROUTINE_NORMAL;
+							return;
+						}
+						
+						//Initiate our spindash if ducking
+						if (anim == PLAYERANIMATION_DUCK)
+						{
+							controlHeld = {false, false, false, false, false, false, false, false};
+							controlHeld.down = true;
+							controlHeld.a = true;
+							controlHeld.b = true;
+							controlHeld.c = true;
+							controlPress = {false, false, false, false, false, false, false, false};
+							controlPress.down = true;
+							controlPress.a = true;
+							controlPress.b = true;
+							controlPress.c = true;
+						}
+					}
+				}
+				else
+				{
+					//Force our input to down
+					controlHeld = {false, false, false, false, false, false, false, false};
+					controlPress = {false, false, false, false, false, false, false, false};
+					controlHeld.down = true;
+					controlPress.down = true;
+					
+					//Release spindash at some point
+					if ((cpuTimer & 0x7F) == 0)
+					{
+						controlHeld = {false, false, false, false, false, false, false, false};
+						controlPress = {false, false, false, false, false, false, false, false};
+						cpuRoutine = CPUROUTINE_NORMAL;
+					}
+					//Every 20 frames rev our spindash
+					else if ((cpuTimer & 0x1F) == 0)
+					{
+						controlHeld.a = true;
+						controlHeld.b = true;
+						controlHeld.c = true;
+						controlPress.a = true;
+						controlPress.b = true;
+						controlPress.c = true;
+					}
+				}
+			}
+			break;
+	}
+	
+	//Increment CPU timer
+	cpuTimer++;
+}
+
 //Update
 void PLAYER::Update()
 {
@@ -2369,10 +2661,26 @@ void PLAYER::Update()
 					}
 					
 					//Copy the given controller's inputs if not locked
-					if (!controlLock)
+					if (follow == NULL)
 					{
-						controlHeld = gController[controller].held;
-						controlPress = gController[controller].press;
+						//If the lead, just directly copy our controller inputs
+						if (!controlLock)
+						{
+							controlHeld = gController[controller].held;
+							controlPress = gController[controller].press;
+						}
+					}
+					else
+					{
+						//Copy our controller inputs
+						if (!controlLock)
+						{
+							controlHeld = gController[controller].held;
+							controlPress = gController[controller].press;
+						}
+						
+						//Use our CPU to update our input
+						CPUControl();
 					}
 					
 					if (objectControl.disableOurMovement)
@@ -2597,7 +2905,7 @@ void PLAYER::Draw()
 		
 		int alignX = renderFlags.alignPlane ? gLevel->camera->x : 0;
 		int alignY = renderFlags.alignPlane ? gLevel->camera->y : 0;
-		texture->Draw((highPriority ? LEVEL_RENDERLAYER_OBJECT_HIGH_0 : LEVEL_RENDERLAYER_OBJECT_0) + priority, texture->loadedPalette, mapRect, x.pos - origX - alignX, y.pos - origY - alignY, renderFlags.xFlip, renderFlags.yFlip);
+		texture->Draw((highPriority ? LEVEL_RENDERLAYER_OBJECT_HIGH_0 : LEVEL_RENDERLAYER_OBJECT_0) + ((OBJECT_LAYERS - 1) - priority), texture->loadedPalette, mapRect, x.pos - origX - alignX, y.pos - origY - alignY, renderFlags.xFlip, renderFlags.yFlip);
 	}
 	else
 	{

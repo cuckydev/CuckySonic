@@ -397,7 +397,7 @@ void SOFTWAREBUFFER::DrawQuad(int layer, SDL_Rect *quad, PALCOLOUR *colour)
 		\
 	for (int i = 0; i < RENDERLAYERS; i++)	\
 	{	\
-		for (RENDERQUEUE *entry = queue[i]; entry != queueEntry[i]; entry++)	\
+		for (RENDERQUEUE *entry = queueEntry[i] - 1; entry >= queue[i]; entry--)	\
 		{	\
 			switch (entry->type)	\
 			{	\

@@ -12,6 +12,8 @@ bool GM_Title(bool *noError)
 	bool noExit = true;
 	
 	//Continue to game
+	gGameLoadLevel = 0;
+	gGameLoadCharacter = 0;
 	gGameMode = GAMEMODE_GAME;
 	return noExit;
 }

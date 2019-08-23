@@ -36,11 +36,11 @@ void ObjGoalpost(OBJECT *object)
 			//Initialize other properties
 			object->renderFlags.alignPlane = true;
 			object->widthPixels = 0x18;
-			object->priority = 0;
+			object->priority = 4;
 //Fallthrough
 		case 1: //Check for contact
-			//If near the goalpost, we're touching it
-			if (gLevel->player[0]->x.pos >= object->x.pos && gLevel->player[0]->x.pos < (object->x.pos + 0x20))
+			//If the main player is near us, start spinning
+			if (gLevel->playerList->x.pos >= object->x.pos && gLevel->playerList->x.pos < (object->x.pos + 0x20))
 			{
 				//Lock the camera
 				gLevel->leftBoundary2 = gLevel->rightBoundary2 - SCREEN_WIDTH;
@@ -61,21 +61,21 @@ void ObjGoalpost(OBJECT *object)
 			}
 			break;
 		case 3: //Make players run to the right of the screen
-			for (int i = 0; i < PLAYERS; i++)
+			for (PLAYER *player = gLevel->playerList; player != NULL; player = player->next)
 			{
 				//Skip if debug is enabled
-				if (gLevel->player[i]->debug)
+				if (player->debug)
 					continue;
 				
 				//Lock controls
-				if (gLevel->player[i]->status.inAir == false)
+				if (player->status.inAir == false)
 				{
-					gLevel->player[i]->controlLock = true;
-					gLevel->player[i]->controlHeld = {false, false, false, false, true, false, false, false};
+					player->controlLock = true;
+					player->controlHeld = {false, false, false, false, true, false, false, false};
 				}
 				
-				//If near the right of the screen, increment routine
-				if (i == 0 && gLevel->player[i]->x.pos >= gLevel->rightBoundary2)
+				//If the main player, and near the right of the screen, increment routine
+				if (player == gLevel->playerList && player->x.pos >= gLevel->rightBoundary2)
 					object->routine++;
 			}
 			break;

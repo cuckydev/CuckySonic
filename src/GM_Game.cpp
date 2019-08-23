@@ -10,10 +10,27 @@
 
 LEVEL *gLevel;
 
+int gGameLoadLevel;
+int gGameLoadCharacter;
+
+const char *p0[] = {"data/Sonic/Sonic"};
+const char *p1[] = {"data/Sonic/Sonic", "data/Tails/Tails"};
+const char *p2[] = {"data/Knuckles/Knuckles"};
+
+struct
+{
+	int players;
+	const char **playerPaths;
+} characters[] = {
+	{1, p0}, //0 - Sonic Only
+	{2, p1}, //1 - Sonic and Tails
+	{1, p2}, //2 - Knuckles
+};
+
 bool GM_Game(bool *noError)
 {
-	//Load Level (EHZ1)
-	gLevel = new LEVEL(2);
+	//Load level with characters given
+	gLevel = new LEVEL(gGameLoadLevel, characters[gGameLoadCharacter].players, characters[gGameLoadCharacter].playerPaths);
 	if (gLevel->fail != NULL)
 		return (*noError = false);
 	

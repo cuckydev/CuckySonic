@@ -18,4 +18,7 @@ extern bool gDebugEnabled;
 extern GAMEMODE gGameMode;
 extern LEVEL *gLevel;
 
+extern int gGameLoadLevel;
+extern int gGameLoadCharacter;
+
 bool EnterGameLoop();

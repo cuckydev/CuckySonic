@@ -97,10 +97,11 @@ void ObjSpiral(OBJECT *object) //Also MTZ cylinder
 	switch (object->routine)
 	{
 		case 1: //EHZ Spiral
-			for (int i = 0; i < PLAYERS; i++)
+		{
+			int i = 0;
+			for (PLAYER *player = gLevel->playerList; player != NULL; player = player->next)
 			{
-				PLAYER *player = gLevel->player[i];
-				bool *standBit = &object->playerContact[i].standing;
+				bool *standBit = &object->playerContact[i++].standing;
 				
 				if (*standBit == false) //Not already on the spiral
 				{
@@ -193,7 +194,11 @@ void ObjSpiral(OBJECT *object) //Also MTZ cylinder
 				}
 			}
 			break;
+		}
 		case 2: //MTZ Cylinder
+		{
+			//None
 			break;
+		}
 	}
 }

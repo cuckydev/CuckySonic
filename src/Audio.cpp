@@ -22,12 +22,28 @@ SOUNDDEFINITION soundDefinition[SOUNDID_MAX] = {
 	{SOUNDCHANNEL_PSG0, "data/Audio/Sound/Jump.wav", SOUNDID_NULL},
 	{SOUNDCHANNEL_FM3,  "data/Audio/Sound/Roll.wav", SOUNDID_NULL},
 	{SOUNDCHANNEL_PSG1, "data/Audio/Sound/Skid.wav", SOUNDID_NULL},
-	{SOUNDCHANNEL_FM4,  "data/Audio/Sound/SpindashRev.wav", SOUNDID_NULL},
+	
+	{SOUNDCHANNEL_NULL, NULL, SOUNDID_NULL}, //SOUNDID_SPINDASH_REV
+	{SOUNDCHANNEL_FM4,  "data/Audio/Sound/SpindashRev0.wav", SOUNDID_NULL},
+	{SOUNDCHANNEL_FM4,  "data/Audio/Sound/SpindashRev1.wav", SOUNDID_NULL},
+	{SOUNDCHANNEL_FM4,  "data/Audio/Sound/SpindashRev2.wav", SOUNDID_NULL},
+	{SOUNDCHANNEL_FM4,  "data/Audio/Sound/SpindashRev3.wav", SOUNDID_NULL},
+	{SOUNDCHANNEL_FM4,  "data/Audio/Sound/SpindashRev4.wav", SOUNDID_NULL},
+	{SOUNDCHANNEL_FM4,  "data/Audio/Sound/SpindashRev5.wav", SOUNDID_NULL},
+	{SOUNDCHANNEL_FM4,  "data/Audio/Sound/SpindashRev6.wav", SOUNDID_NULL},
+	{SOUNDCHANNEL_FM4,  "data/Audio/Sound/SpindashRev7.wav", SOUNDID_NULL},
+	{SOUNDCHANNEL_FM4,  "data/Audio/Sound/SpindashRev8.wav", SOUNDID_NULL},
+	{SOUNDCHANNEL_FM4,  "data/Audio/Sound/SpindashRev9.wav", SOUNDID_NULL},
+	{SOUNDCHANNEL_FM4,  "data/Audio/Sound/SpindashRev10.wav", SOUNDID_NULL},
 	{SOUNDCHANNEL_FM4,  "data/Audio/Sound/SpindashRelease.wav", SOUNDID_NULL},
-	{SOUNDCHANNEL_FM4,	"data/Audio/Sound/Death.wav", SOUNDID_NULL},
+	
+	{SOUNDCHANNEL_FM4,	"data/Audio/Sound/Hurt.wav", SOUNDID_NULL},
+	{SOUNDCHANNEL_FM4,	"data/Audio/Sound/SpikeHurt.wav", SOUNDID_NULL},
+	
 	{SOUNDCHANNEL_NULL,	"data/Audio/Sound/Ring.wav", SOUNDID_NULL},
 	{SOUNDCHANNEL_FM4,	NULL, SOUNDID_RING}, //SOUNDID_RING_LEFT
 	{SOUNDCHANNEL_FM3,	NULL, SOUNDID_RING}, //SOUNDID_RING_RIGHT
+	
 	{SOUNDCHANNEL_DAC,	"data/Audio/Sound/SplashJingle.wav", SOUNDID_NULL},
 };
 
@@ -305,12 +321,14 @@ void PlaySound(SOUNDID id)
 			spindashPitch = 0;
 		}
 		
-		//Set spindash pitch
-		soundEffects[playId]->SetFrequency(soundEffects[playId]->baseFrequency * std::pow(2.0, (double)spindashPitch / 12.0));
-		
 		//Increment pitch
-		if (spindashPitch++ >= 12)
-			spindashPitch = 12;
+		if (++spindashPitch > 11)
+			spindashPitch = 11;
+		
+		//Set sound id
+		playId = playId = (SOUNDID)((unsigned int)SOUNDID_SPINDASH_REV + spindashPitch);
+		
+		//Update timer
 		spindashTimer = SDL_GetTicks() + 1000;
 	}
 	else

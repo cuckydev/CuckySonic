@@ -156,7 +156,7 @@ class LEVEL
 		uint16_t bottomBoundary2;
 		
 		//Players and objects
-		PLAYER *player[PLAYERS];
+		PLAYER *playerList;
 		OBJECT *objectList;
 		CAMERA *camera;
 		
@@ -170,7 +170,7 @@ class LEVEL
 		bool specialFade;
 		
 	public:
-		LEVEL(int id);
+		LEVEL(int id, int players, const char **playerPaths);
 		~LEVEL();
 		
 		bool LoadMappings(LEVELTABLE *tableEntry);
@@ -189,7 +189,7 @@ class LEVEL
 		TEXTURE *GetObjectTexture(uint8_t *data, int dWidth, int dHeight); //just in case
 		
 		void PaletteUpdate();
-		void GetBackgroundScroll(int16_t *array, int16_t cameraX, int16_t cameraY);
+		void GetBackgroundScroll(uint16_t *array, int16_t *cameraX, int16_t *cameraY);
 		
 		void Update();
 		void Draw();

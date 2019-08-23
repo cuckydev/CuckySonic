@@ -477,9 +477,12 @@ void LEVEL::UnloadAll()
 		delete backgroundTexture;
 	
 	//Unload players, objects, and camera
-	for (int i = 0; i < PLAYERS; i++)
-		if (player[i] != NULL)
-			delete player[i];
+	for (PLAYER *player = playerList; player != NULL;)
+	{
+		PLAYER *next = player->next;
+		delete player;
+		player = next;
+	}
 	
 	for (OBJECT *object = objectList; object != NULL;)
 	{
@@ -493,7 +496,7 @@ void LEVEL::UnloadAll()
 }
 
 //Level class
-LEVEL::LEVEL(int id)
+LEVEL::LEVEL(int id, int players, const char **playerPaths)
 {
 	LOG(("Loading level ID %d...\n", id));
 	memset(this, 0, sizeof(LEVEL));
@@ -518,26 +521,26 @@ LEVEL::LEVEL(int id)
 	//Create our players
 	PLAYER *follow = NULL;
 	
-	for (int i = 0; i < PLAYERS; i++)
+	for (int i = 0; i < players; i++)
 	{
-		player[i] = new PLAYER("data/Sonic/sonic", follow, 0);
+		//Create our player
+		PLAYER *newPlayer = new PLAYER(&playerList, playerPaths[i], follow, i);
 		
-		if (player[i]->fail)
+		if (newPlayer->fail)
 		{
-			Error(fail = player[i]->fail);
+			Error(fail = newPlayer->fail);
 			UnloadAll();
-			for (int v = 0; v < i; v++)
-				delete player[v];
 			return;
 		}
 		
-		player[i]->x.pos = tableEntry->startX - (i * 18);
-		player[i]->y.pos = tableEntry->startY;
-		follow = player[i];
+		//Set position and set the next player to follow us
+		newPlayer->x.pos = tableEntry->startX - (i * 18);
+		newPlayer->y.pos = tableEntry->startY;
+		follow = newPlayer;
 	}
 	
 	//Create our camera
-	camera = new CAMERA(player[0]);
+	camera = new CAMERA(playerList);
 	if (camera == NULL)
 	{
 		Error(fail = "Failed to create our camera");
@@ -676,7 +679,7 @@ void LEVEL::DynamicEvents()
 	else if (bottomBoundary > bottomBoundary2)
 	{
 		//Move faster if in mid-air
-		if ((camera->y + 8 + SCREEN_HEIGHT) >= bottomBoundary2 && player[0]->status.inAir)
+		if ((camera->y + 8 + SCREEN_HEIGHT) >= bottomBoundary2 && playerList->status.inAir)
 			move *= 4;
 		
 		//Move
@@ -684,8 +687,8 @@ void LEVEL::DynamicEvents()
 	}
 	
 	//Set boundaries to target
-	int16_t xPos = player[0]->x.pos - (SCREEN_WIDTH / 2);
-	int16_t yPos = player[0]->y.pos;
+	int16_t xPos = playerList->x.pos - (SCREEN_WIDTH / 2);
+	int16_t yPos = playerList->y.pos;
 	
 	//Cap to left
 	if (xPos < 0)
@@ -724,16 +727,22 @@ void LEVEL::PaletteUpdate()
 	
 	switch (levelId)
 	{
+		case 0: //Green Hill Zone
+			GHZ_PaletteCycle(this);
+			break;
 		case 2: //Emerald Hill Zone
 			EHZ_PaletteCycle(this);
 			break;
 	}
 }
 
-void LEVEL::GetBackgroundScroll(int16_t *array, int16_t cameraX, int16_t cameraY)
+void LEVEL::GetBackgroundScroll(uint16_t *array, int16_t *cameraX, int16_t *cameraY)
 {
 	switch (levelId)
 	{
+		case 0: //Green Hill Zone
+			GHZ_BackgroundScroll(array, cameraX, cameraY);
+			break;
 		case 2: //Emerald Hill Zone
 			EHZ_BackgroundScroll(array, cameraX, cameraY);
 			break;
@@ -744,11 +753,8 @@ void LEVEL::GetBackgroundScroll(int16_t *array, int16_t cameraX, int16_t cameraY
 void LEVEL::Update()
 {
 	//Update players
-	for (int i = PLAYERS - 1; i >= 0; i--)
-	{
-		if (player[i] != NULL)
-			player[i]->Update();
-	}
+	for (PLAYER *player = playerList; player != NULL; player = player->next)
+		player->Update();
 	
 	//Update objects
 	for (OBJECT *object = objectList; object != NULL; object = object->next)
@@ -756,10 +762,10 @@ void LEVEL::Update()
 	
 	//Update camera
 	if (camera != NULL)
-		camera->Track(player[0]);
+		camera->Track(playerList);
 	
 	//Update level dynamic events
-	if (player[0] != NULL)
+	if (playerList != NULL)
 		DynamicEvents();
 	
 	//Update level palette
@@ -772,16 +778,19 @@ void LEVEL::Draw()
 	if (backgroundTexture != NULL && camera != NULL)
 	{
 		//Get our background scroll
-		int16_t backgroundScroll[SCREEN_HEIGHT];
-		GetBackgroundScroll(backgroundScroll, camera->x, camera->y);
+		uint16_t backgroundScroll[backgroundTexture->height];
+		int16_t backX = camera->x;
+		int16_t backY = camera->y;
+		
+		GetBackgroundScroll(backgroundScroll, &backX, &backY);
 		
 		//Draw each scanline
-		for (int i = 0; i < SCREEN_HEIGHT; i++)
+		for (int i = 0; i < backgroundTexture->height; i++)
 		{
 			for (int x = -(backgroundScroll[i] % backgroundTexture->width); x < SCREEN_WIDTH; x += backgroundTexture->width)
 			{
 				SDL_Rect backSrc = {0, i, backgroundTexture->width, 1};
-				backgroundTexture->Draw(LEVEL_RENDERLAYER_BACKGROUND, backgroundTexture->loadedPalette, &backSrc, x, i, false, false);
+				backgroundTexture->Draw(LEVEL_RENDERLAYER_BACKGROUND, backgroundTexture->loadedPalette, &backSrc, x, -backY + i, false, false);
 			}
 		}
 	}
@@ -819,14 +828,11 @@ void LEVEL::Draw()
 		}
 	}
 	
+	//Draw players (we draw backwards, we want the leader to be drawn first)
+	for (PLAYER *player = playerList; player != NULL; player = player->next)
+		player->Draw();
+	
 	//Draw objects
 	for (OBJECT *object = objectList; object != NULL; object = object->next)
 		object->Draw();
-	
-	//Draw players (we draw backwards, we want the leader to be drawn first)
-	for (int i = PLAYERS - 1; i >= 0; i--)
-	{
-		if (player[i] != NULL)
-			player[i]->Draw();
-	}
 }

@@ -5,14 +5,11 @@
 
 const uint16_t switchRadius[] = {0x20, 0x40, 0x80, 0x100};
 
-#define INDEX_TO_BIT(i)	(1 << (i & 0x7))
-
 void ObjPathSwitcher(OBJECT *object)
 {
 	enum SCRATCH
 	{
 		SCRATCH_RADIUS = 0,	// 2 bytes
-		SCRATCH_PLAYER_ACROSS_0 = 2, // PLAYERS / 8 bytes
 	};
 	
 	switch (object->routine)
@@ -27,21 +24,23 @@ void ObjPathSwitcher(OBJECT *object)
 			if (object->subtype & 0x04)
 			{
 				//Are players already across the switcher?
-				for (int i = 0; i < PLAYERS; i++)
+				int i = 0;
+				for (PLAYER *player = gLevel->playerList; player != NULL; player = player->next)
 				{
-					PLAYER *player = gLevel->player[i];
 					if (object->y.pos < player->y.pos)
-						object->scratchU8[SCRATCH_PLAYER_ACROSS_0 + (i / 8)] |= INDEX_TO_BIT(i);
+						object->playerContact[i].extraBit = true;
+					i++;
 				}
 			}
 			else
 			{
 				//Are players already across the switcher?
-				for (int i = 0; i < PLAYERS; i++)
+				int i = 0;
+				for (PLAYER *player = gLevel->playerList; player != NULL; player = player->next)
 				{
-					PLAYER *player = gLevel->player[i];
 					if (object->x.pos < player->x.pos)
-						object->scratchU8[SCRATCH_PLAYER_ACROSS_0 + (i / 8)] |= INDEX_TO_BIT(i);
+						object->playerContact[i].extraBit = true;
+					i++;
 				}
 			}
 //Fallthrough
@@ -49,24 +48,16 @@ void ObjPathSwitcher(OBJECT *object)
 			if (object->subtype & 0x04)
 			{
 				//Vertical path switcher
-				for (int i = 0; i < PLAYERS; i++)
+				int i = 0;
+				for (PLAYER *player = gLevel->playerList; player != NULL; player = player->next)
 				{
-					PLAYER *player = gLevel->player[i];
-					
-					//Skip over if debug is being used
-					if (player->debug)
-						continue;
-					
-					//Get the flag to use
-					uint8_t *flag = &object->scratchU8[SCRATCH_PLAYER_ACROSS_0 + (i / 8)];
-					
-					if ((*flag & INDEX_TO_BIT(i)) == 0)
+					if (object->playerContact[i].extraBit == false)
 					{
 						//Check if we're crossing
 						if (object->y.pos <= player->y.pos)
 						{
 							//Set the crossed flag
-							*flag |= INDEX_TO_BIT(i);
+							object->playerContact[i].extraBit = true;
 							
 							//Get the bounds for our actual switching
 							const int16_t left = object->x.pos - object->scratchU16[SCRATCH_RADIUS];
@@ -101,7 +92,7 @@ void ObjPathSwitcher(OBJECT *object)
 						if (object->y.pos > player->y.pos)
 						{
 							//Clear the crossed flag
-							*flag &= ~INDEX_TO_BIT(i);
+							object->playerContact[i].extraBit = false;
 							
 							//Get the bounds for our actual switching
 							const int16_t left = object->x.pos - object->scratchU16[SCRATCH_RADIUS];
@@ -130,29 +121,23 @@ void ObjPathSwitcher(OBJECT *object)
 							}
 						}
 					}
+					
+					i++;
 				}
 			}
 			else
 			{
 				//Horizontal path switcher
-				for (int i = 0; i < PLAYERS; i++)
+				int i = 0;
+				for (PLAYER *player = gLevel->playerList; player != NULL; player = player->next)
 				{
-					PLAYER *player = gLevel->player[i];
-					
-					//Skip over if debug is being used
-					if (player->debug)
-						continue;
-					
-					//Get the flag to use
-					uint8_t *flag = &object->scratchU8[SCRATCH_PLAYER_ACROSS_0 + (i / 8)];
-					
-					if ((*flag & INDEX_TO_BIT(i)) == 0)
+					if (object->playerContact[i].extraBit == false)
 					{
 						//Check if we're crossing
 						if (object->x.pos <= player->x.pos)
 						{
 							//Set the crossed flag
-							*flag |= INDEX_TO_BIT(i);
+							object->playerContact[i].extraBit = true;
 							
 							//Get the bounds for our actual switching
 							const int16_t top = object->y.pos - object->scratchU16[SCRATCH_RADIUS];
@@ -187,7 +172,7 @@ void ObjPathSwitcher(OBJECT *object)
 						if (object->x.pos > player->x.pos)
 						{
 							//Clear the crossed flag
-							*flag &= ~INDEX_TO_BIT(i);
+							object->playerContact[i].extraBit = false;
 							
 							//Get the bounds for our actual switching
 							const int16_t top = object->y.pos - object->scratchU16[SCRATCH_RADIUS];
@@ -216,6 +201,8 @@ void ObjPathSwitcher(OBJECT *object)
 							}
 						}
 					}
+					
+					i++;
 				}
 			}
 			break;

@@ -5,6 +5,8 @@
 #include "LevelCollision.h"
 #include "GameConstants.h"
 
+#define OBJECT_PLAYER_REFERENCES 0x100
+
 class OBJECT
 {
 	public:
@@ -113,7 +115,8 @@ class OBJECT
 		{
 			bool standing;
 			bool pushing;
-		} playerContact[PLAYERS];
+			bool extraBit;
+		} playerContact[OBJECT_PLAYER_REFERENCES];
 		
 		uint8_t routine;			//Routine
 		uint8_t routineSecondary;	//Routine Secondary

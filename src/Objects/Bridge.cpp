@@ -12,7 +12,7 @@ void ObjBridgeLogSegment(OBJECT *object)
 		object->routine++;
 		object->renderFlags.alignPlane = true;
 		object->widthPixels = 0x40;
-		object->priority = 0;
+		object->priority = 3;
 		
 		//Load graphics
 		object->texture = gLevel->GetObjectTexture("data/Object/LogBridge.bmp");

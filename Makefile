@@ -38,6 +38,7 @@ SOURCES = \
 	Player \
 	Object \
 	Camera \
+	LevelSpecific/GHZ \
 	LevelSpecific/EHZ \
 	Objects/PathSwitcher \
 	Objects/Goalpost \
