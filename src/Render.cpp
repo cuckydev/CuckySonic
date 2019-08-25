@@ -179,7 +179,7 @@ TEXTURE::~TEXTURE()
 	}
 }
 
-void TEXTURE::Draw(int layer, PALETTE *palette, SDL_Rect *src, int x, int y, bool xFlip, bool yFlip)
+void TEXTURE::Draw(int layer, PALETTE *palette, const SDL_Rect *src, int x, int y, bool xFlip, bool yFlip)
 {
 	//Check if this is in view bounds (if not, just return, no point in clogging the queue with stuff that will not be rendered)
 	if (x <= -src->w || x >= gSoftwareBuffer->width)

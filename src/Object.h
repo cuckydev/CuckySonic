@@ -108,6 +108,7 @@ class OBJECT
 		{
 			bool xFlip : 1;				//Set if facing left
 			bool yFlip : 1;				//In the air
+			bool noBalance : 1;			//Set to make sure players don't balance on us
 		} status;
 		
 		//Player contact status

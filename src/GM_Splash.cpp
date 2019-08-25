@@ -19,12 +19,15 @@ bool GM_Splash(bool *noError)
 	if (splashTexture->fail != NULL)
 		return (*noError = false);
 	
-	//Make our palette white
+	//Make our palette white for fade-in
 	FillPaletteWhite(splashTexture->loadedPalette);
 	
 	//Our loop
 	bool noExit = true;
+	
+	bool fadedIn = false;
 	int frame = 0;
+	int debugTextX = 0;
 	
 	while (noExit && *noError)
 	{
@@ -33,34 +36,63 @@ bool GM_Splash(bool *noError)
 			break;
 		
 		//Fade in/out
-		if (frame < (FADE_TIME * 4) && (frame % 4) == 0)
+		if (frame < SPLASH_TIME - FADE_TIME)
 		{
-			if (PaletteFadeInFromWhite(splashTexture->loadedPalette))
-				PlaySound(SOUNDID_SPLASHJINGLE);
+			//Fade in
+			if (!fadedIn)
+			{
+				//Fade in from white (initial fade-in)
+				if (PaletteFadeInFromWhite(splashTexture->loadedPalette))
+					fadedIn = true;
+			}
+			else
+			{
+				//Fade in from black (returning after)
+				PaletteFadeInFromBlack(splashTexture->loadedPalette);
+			}
+			
+			//Skip screen if ABC is pressed
+			if ((gController[0].press.a || gController[0].press.b || gController[0].press.c) && frame > SPLASH_WARP && frame > FADE_TIME)
+				frame = SPLASH_TIME - FADE_TIME; //Skip splash screen if ABC is pressed
 		}
-		else if (frame >= SPLASH_TIME - FADE_TIME)
+		else if (PaletteFadeOutToBlack(splashTexture->loadedPalette))
 		{
-			PaletteFadeOutToBlack(splashTexture->loadedPalette);
+			//Stop the jingle when transitioning to title
+			StopSound(SOUNDID_SPLASHJINGLE);
+		}
+		
+		//Debug cheat
+		if (gController[0].held.a && gController[0].held.b && gController[0].held.c && gController[0].press.start && gDebugEnabled == false)
+		{
+			if (frame > SPLASH_WARP && fadedIn)
+				frame = SPLASH_WARP; //Fade back in and restart timer
+			PlaySound(SOUNDID_RING);
+			gDebugEnabled = true;
 		}
 		else
 		{
-			if (gController[0].held.a || gController[0].held.b || gController[0].held.c)
-			{
-				frame = SPLASH_TIME - FADE_TIME; //Skip splash screen if ABC is pressed
-				StopSound(SOUNDID_SPLASHJINGLE);
-			}
+			//Play "Cucky" jingle if splash texture has finally finished the effect
+			if (frame == SPLASH_WARP)
+				PlaySound(SOUNDID_SPLASHJINGLE);
 		}
 		
-		if (gController[0].held.a && gController[0].held.b && gController[0].held.c && gController[0].press.start && gDebugEnabled == false)
+		//Render our "debug enabled text"
+		if (gDebugEnabled == true)
 		{
-			PlaySound(SOUNDID_RING);
-			gDebugEnabled = true;
+			//Scroll in
+			const int goalX = splashTexture->width;
+			if ((debugTextX += 16) >= goalX)
+				debugTextX = goalX;
+			
+			//Draw
+			SDL_Rect src = {0, splashTexture->height - 16, splashTexture->width, 16};
+			splashTexture->Draw(0, splashTexture->loadedPalette, &src, debugTextX - splashTexture->width, SCREEN_HEIGHT - 16, false, false);
 		}
 		
 		//Render our splash texture
 		SDL_Rect src = {0, 0, splashTexture->width, 1};
 		
-		for (int line = 0; line < splashTexture->height; line++)
+		for (int line = 0; line < (splashTexture->height - 16); line++)
 		{
 			//Get our draw offset
 			int16_t sin;
@@ -71,7 +103,7 @@ bool GM_Splash(bool *noError)
 				xOff = -xOff;
 			
 			//Draw this line
-			splashTexture->Draw(0, splashTexture->loadedPalette, &src, (SCREEN_WIDTH - splashTexture->width) / 2 + xOff, (SCREEN_HEIGHT - splashTexture->height) / 2 + line, false, false);
+			splashTexture->Draw(0, splashTexture->loadedPalette, &src, (SCREEN_WIDTH - splashTexture->width) / 2 + xOff, (SCREEN_HEIGHT - (splashTexture->height - 16)) / 2 + line, false, false);
 			src.y++;
 		}
 		

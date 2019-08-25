@@ -66,7 +66,7 @@ class TEXTURE
 		TEXTURE(TEXTURE **linkedList, uint8_t *data, int dWidth, int dHeight);
 		~TEXTURE();
 		
-		void Draw(int layer, PALETTE *palette, SDL_Rect *src, int x, int y, bool xFlip, bool yFlip);
+		void Draw(int layer, PALETTE *palette, const SDL_Rect *src, int x, int y, bool xFlip, bool yFlip);
 };
 	
 //Render queue structure

@@ -72,6 +72,7 @@ void ObjGoalpost(OBJECT *object)
 				{
 					player->controlLock = true;
 					player->controlHeld = {false, false, false, false, true, false, false, false};
+					player->controlPress = {false, false, false, false, true, false, false, false};
 				}
 				
 				//If the main player, and near the right of the screen, increment routine

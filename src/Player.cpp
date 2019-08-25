@@ -325,6 +325,19 @@ void PLAYER::CheckCeiling(COLLISIONLAYER layer, int16_t *distance, int16_t *dist
 		*outAngle = retAngle;
 }
 
+//Check floor distance
+int16_t PLAYER::ChkFloorEdge(COLLISIONLAYER layer, int16_t xPos, int16_t yPos, uint8_t *outAngle)
+{
+	//Clear primary angle
+	primaryAngle = 0;
+	
+	//Get floor distance and angle
+	int16_t distance = FindFloor(xPos, yPos + (status.reverseGravity ? -yRadius : yRadius), layer, status.reverseGravity, &primaryAngle);
+	if (outAngle != NULL)
+		*outAngle = (primaryAngle & 1) ? 0 : primaryAngle;
+	return distance;
+}
+
 //Get distance functions
 uint8_t PLAYER::AngleSide(uint8_t angleSide)
 {
@@ -1664,14 +1677,57 @@ void PLAYER::Move()
 				status.pushing = false;
 				anim = PLAYERANIMATION_IDLE;
 				
-				//Look up and down
-				if (controlHeld.up)
+				//Balancing
+				if (status.shouldNotFall)
 				{
-					anim = PLAYERANIMATION_LOOKUP;
+					OBJECT *object = (OBJECT*)interact;
+					
+					//Balancing on an object
+					if (object != NULL && !object->status.noBalance)
+					{
+						//Get our area we stand on
+						int width = (object->widthPixels * 2) - 4;
+						int xDiff = (object->widthPixels + x.pos) - object->x.pos;
+						
+						if (xDiff < 4)
+						{
+							status.xFlip = true;
+							anim = PLAYERANIMATION_BALANCE;
+						}
+						else if (xDiff >= width)
+						{
+							status.xFlip = false;
+							anim = PLAYERANIMATION_BALANCE;
+						}
+					}
 				}
-				else if (controlHeld.down)
+				else
 				{
-					anim = PLAYERANIMATION_DUCK; //This is done in Roll too
+					//If Sonic's middle bottom point is 12 pixels away from the floor, start balancing
+					int16_t floorDistance = ChkFloorEdge(topSolidLayer, x.pos, y.pos, NULL);
+					
+					if (floorDistance >= 12)
+					{
+						if (nextTilt != 3) //If there's no floor to the left of us
+						{
+							status.xFlip = true;
+							anim = PLAYERANIMATION_BALANCE;
+						}
+						else
+						{
+							status.xFlip = false;
+							anim = PLAYERANIMATION_BALANCE;
+						}
+					}
+				}
+				
+				//Look up and down
+				if (anim == PLAYERANIMATION_IDLE)
+				{
+					if (controlHeld.up)
+						anim = PLAYERANIMATION_LOOKUP;
+					else if (controlHeld.down)
+						anim = PLAYERANIMATION_DUCK; //This is done in Roll too
 				}
 			}
 		}
