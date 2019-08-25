@@ -16,19 +16,19 @@
 //#define FIX_HORIZONTAL_WRAP   //In the originals, for some reason, the LevelBound uses unsigned checks, meaning if you go off to the left, you'll be sent to the right boundary 
 
 //Game differences (Uncomment all for an experience like that of Sonic 1, and comment all for the experience of Sonic 3 and Knuckles)
-#define SONIC1_SLOPE_ANGLE      //In Sonic 2+, the floor's angle will be replaced with the player's cardinal floor angle if there's a 45+ degree difference
-#define SONIC1_WALK_ANIMATION   //For some reason, in Sonic 2+, the animation code was messed up, making the first frame of the walk animation last only one frame
-#define SONIC1_SLOPE_ROTATION   //In Sonic 2+, a few lines were added to the animation code to make the floor rotation more consistent
-#define SONIC12_SLOPE_RESIST    //In Sonic 3, they made it so you're always affected by slope gravity unless you're on a shallow floor
-#define SONIC123_SLOPE_REPEL    //In Sonic and Knuckles, the code to make it so you fall off of walls and ceilings when going too slow was completely redone
-#define SONIC1_GROUND_CAP       //In Sonic 1, your speed on the ground is capped to your top speed when above it, even if you're already above it
-#define SONIC12_AIR_CAP         //In Sonic 1 and 2, your speed in the air is capped to your top speed when above it, even if you're already above it
-#define SONIC123_ROLL_DUCK      //In Sonic and Knuckles, they added a greater margin of speed for ducking and rolling, so you can duck while moving
-#define SONIC12_ROLLJUMP_LAND   //In Sonic 3, they fixed the roll jump landing bug, where you'd land 5 pixels above the ground after jumping from a roll
-#define SONIC1_NO_SPINDASH      //The spindash, it needs no introduction
-#define SONIC12_NO_JUMP_ABILITY //Jump abilities from Sonic 3, such as the insta-shield and elemental shields
-#define SONIC1_DEATH_BOUNDARY   //In Sonic 2, the death boundary code was fixed so that it doesn't use the camera's boundary but the level boundary, so that you don't die while the camera boundary is scrolling
-#define SONIC12_DEATH_RESPAWN   //In Sonic 3, it was changed so that death respawns you once you go off-screen, not when you leave the level boundaries, since this was a very buggy check
+//#define SONIC1_SLOPE_ANGLE      //In Sonic 2+, the floor's angle will be replaced with the player's cardinal floor angle if there's a 45+ degree difference
+//#define SONIC1_WALK_ANIMATION   //For some reason, in Sonic 2+, the animation code was messed up, making the first frame of the walk animation last only one frame
+//#define SONIC1_SLOPE_ROTATION   //In Sonic 2+, a few lines were added to the animation code to make the floor rotation more consistent
+//#define SONIC12_SLOPE_RESIST    //In Sonic 3, they made it so you're always affected by slope gravity unless you're on a shallow floor
+//#define SONIC123_SLOPE_REPEL    //In Sonic and Knuckles, the code to make it so you fall off of walls and ceilings when going too slow was completely redone
+//#define SONIC1_GROUND_CAP       //In Sonic 1, your speed on the ground is capped to your top speed when above it, even if you're already above it
+//#define SONIC12_AIR_CAP         //In Sonic 1 and 2, your speed in the air is capped to your top speed when above it, even if you're already above it
+//#define SONIC123_ROLL_DUCK      //In Sonic and Knuckles, they added a greater margin of speed for ducking and rolling, so you can duck while moving
+//#define SONIC12_ROLLJUMP_LAND   //In Sonic 3, they fixed the roll jump landing bug, where you'd land 5 pixels above the ground after jumping from a roll
+//#define SONIC1_NO_SPINDASH      //The spindash, it needs no introduction
+//#define SONIC12_NO_JUMP_ABILITY //Jump abilities from Sonic 3, such as the insta-shield and elemental shields
+//#define SONIC1_DEATH_BOUNDARY   //In Sonic 2, the death boundary code was fixed so that it doesn't use the camera's boundary but the level boundary, so that you don't die while the camera boundary is scrolling
+//#define SONIC12_DEATH_RESPAWN   //In Sonic 3, it was changed so that death respawns you once you go off-screen, not when you leave the level boundaries, since this was a very buggy check
 
 //Animation data
 #define MAPPINGFRAME_FLIP1 0x5E
