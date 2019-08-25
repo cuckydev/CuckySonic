@@ -15,9 +15,20 @@
 //#define FIX_SPINDASH_ANIM     //Usually when spindashing, if you manage to exit the spindash animation, you'll stay out of it, this fixes that
 //#define FIX_HORIZONTAL_WRAP   //In the originals, for some reason, the LevelBound uses unsigned checks, meaning if you go off to the left, you'll be sent to the right boundary 
 
-//Game differences
-//#define SONIC1_SLOPE_ANGLE    //In Sonic 2+, the floor's angle will be replaced with the player's cardinal floor angle if there's a 45+ degree difference
-//#define SONIC1_WALK_ANIMATION //For some reason, in Sonic 2+, the animation code was messed up, making the first frame of the walk animation last only one frame
+//Game differences (Uncomment all for an experience like that of Sonic 1, and comment all for the experience of Sonic 3 and Knuckles)
+//#define SONIC1_SLOPE_ANGLE      //In Sonic 2+, the floor's angle will be replaced with the player's cardinal floor angle if there's a 45+ degree difference
+//#define SONIC1_WALK_ANIMATION   //For some reason, in Sonic 2+, the animation code was messed up, making the first frame of the walk animation last only one frame
+//#define SONIC1_SLOPE_ROTATION   //In Sonic 2+, a few lines were added to the animation code to make the floor rotation more consistent
+//#define SONIC12_SLOPE_RESIST    //In Sonic 3, they made it so you're always affected by slope gravity unless you're on a shallow floor
+//#define SONIC123_SLOPE_REPEL    //In Sonic and Knuckles, the code to make it so you fall off of walls and ceilings when going too slow was completely redone
+//#define SONIC1_GROUND_CAP       //In Sonic 1, your speed on the ground is capped to your top speed when above it, even if you're already above it
+//#define SONIC12_AIR_CAP         //In Sonic 1 and 2, your speed in the air is capped to your top speed when above it, even if you're already above it
+//#define SONIC123_ROLL_DUCK      //In Sonic and Knuckles, they added a greater margin of speed for ducking and rolling, so you can duck while moving
+//#define SONIC12_ROLLJUMP_LAND   //In Sonic 3, they fixed the roll jump landing bug, where you'd land 5 pixels above the ground after jumping from a roll
+//#define SONIC1_NO_SPINDASH      //The spindash, it needs no introduction
+//#define SONIC12_NO_JUMP_ABILITY //Jump abilities from Sonic 3, such as the insta-shield and elemental shields
+//#define SONIC1_DEATH_BOUNDARY   //In Sonic 2, the death boundary code was fixed so that it doesn't use the camera's boundary but the level boundary, so that you don't die while the camera boundary is scrolling
+//#define SONIC12_DEATH_RESPAWN   //In Sonic 3, it was changed so that death respawns you once you go off-screen, not when you leave the level boundaries, since this was a very buggy check
 
 //Animation data
 #define MAPPINGFRAME_FLIP1 0x5E
@@ -1067,7 +1078,12 @@ void PLAYER::ResetOnFloor2()
 		anim = PLAYERANIMATION_WALK; //again
 		
 		//Shift up to ground level
-		uint8_t difference = yRadius - oldYRadius;
+		#ifndef SONIC12_ROLLJUMP_LAND
+			uint8_t difference = yRadius - oldYRadius;
+		#else
+			uint8_t difference = 5;
+		#endif
+		
 		if (status.reverseGravity)
 			y.pos += difference;
 		else
@@ -1091,49 +1107,51 @@ void PLAYER::ResetOnFloor3()
 	flipsRemaining = 0;
 	scrollDelay = 0;
 	
-	//Jump ability
-	if (jumpAbility != 0)
-	{
-		//Handle jump abilities on landing
-		if ((characterType == CHARACTERTYPE_SONIC) && super == false)
+	#ifndef SONIC12_NO_JUMP_ABILITY
+		//Jump ability
+		if (jumpAbility != 0)
 		{
-			//Bubble shield bounce
-			if (item.hasShield && shield == SHIELD_BUBBLE)
+			//Handle jump abilities on landing
+			if ((characterType == CHARACTERTYPE_SONIC) && super == false)
 			{
-				//Get the force of our bounce
-				int16_t bounceForce = 0x780;
-				if (status.underwater)
-					bounceForce = 0x400;
-				
-				//Bounce us up from the ground
-				int16_t sin, cos;
-				GetSine(angle - 0x40, &sin, &cos);
-				xVel += (cos * bounceForce) / 0x100;
-				yVel += (sin * bounceForce) / 0x100;
-				
-				//Put us back into the air state
-				status.inAir = true;
-				status.pushing = false;
-				status.jumping = true;
-				anim = PLAYERANIMATION_ROLL;
-				status.inBall = true;
-				
-				//Return to the ball hitbox
-				xRadius = rollXRadius;
-				yRadius = rollYRadius;
-				if (status.reverseGravity)
-					y.pos += (defaultYRadius - yRadius);
-				else
-					y.pos -= (defaultYRadius - yRadius);
-				
-				//Play the sound
-				//PlaySound(SOUNDID_BUBBLE_BOUNCE);
+				//Bubble shield bounce
+				if (item.hasShield && shield == SHIELD_BUBBLE)
+				{
+					//Get the force of our bounce
+					int16_t bounceForce = 0x780;
+					if (status.underwater)
+						bounceForce = 0x400;
+					
+					//Bounce us up from the ground
+					int16_t sin, cos;
+					GetSine(angle - 0x40, &sin, &cos);
+					xVel += (cos * bounceForce) / 0x100;
+					yVel += (sin * bounceForce) / 0x100;
+					
+					//Put us back into the air state
+					status.inAir = true;
+					status.pushing = false;
+					status.jumping = true;
+					anim = PLAYERANIMATION_ROLL;
+					status.inBall = true;
+					
+					//Return to the ball hitbox
+					xRadius = rollXRadius;
+					yRadius = rollYRadius;
+					if (status.reverseGravity)
+						y.pos += (defaultYRadius - yRadius);
+					else
+						y.pos -= (defaultYRadius - yRadius);
+					
+					//Play the sound
+					//PlaySound(SOUNDID_BUBBLE_BOUNCE);
+				}
 			}
+			
+			//Enable jump ability
+			jumpAbility = 0;
 		}
-		
-		//Enable jump ability
-		jumpAbility = 0;
-	}
+	#endif
 }
 
 //Record our position in the records
@@ -1154,105 +1172,109 @@ const uint16_t spindashSpeedSuper[9] =	{0xB00, 0xB80, 0xC00, 0xC80, 0xD00, 0xD80
 		
 bool PLAYER::Spindash()
 {
-	if (spindashing == false)
-	{
-		//We must be ducking in order to spindash
-		if (anim != PLAYERANIMATION_DUCK)
-			return true;
-		
-		//Initiate spindash
-		if (controlPress.a || controlPress.b || controlPress.c)
+	#ifdef SONIC1_NO_SPINDASH
+		return true;
+	#else
+		if (spindashing == false)
 		{
-			//Play animation and sound
-			anim = PLAYERANIMATION_SPINDASH;
-			PlaySound(SOUNDID_SPINDASH_REV);
+			//We must be ducking in order to spindash
+			if (anim != PLAYERANIMATION_DUCK)
+				return true;
 			
-			//Set spindash variables
-			spindashing = true;
-			spindashCounter = 0;
-			
-			//Make our spindash dust visible
-			//spindashDust.anim = 1; //The original uses the dust object for splashing too, we're not doing that
-		}
-		else
-		{
-			return true;
-		}
-	}
-	//Release spindash
-	else if (!controlHeld.down)
-	{
-		//Begin rolling
-		xRadius = rollXRadius;
-		yRadius = rollYRadius;
-		anim = PLAYERANIMATION_ROLL;
-		
-		//Offset our position to line up with the ground
-		if (status.reverseGravity)
-			y.pos -= 5;
-		else
-			y.pos += 5;
-		
-		//Release spindash
-		spindashing = false;
-		
-		//Set our speed
-		if (super)
-			inertia = spindashSpeedSuper[spindashCounter / 0x100];
-		else
-			inertia = spindashSpeed[spindashCounter / 0x100];
-		
-		//Lock the camera behind us
-		scrollDelay = (0x2000 - (inertia - 0x800) * 2) % (PLAYER_RECORD_LENGTH << 8);
-		
-		//Revert if facing left
-		if (status.xFlip)
-			inertia = -inertia;
-		
-		//Actually go into the roll routine
-		status.inBall = true;
-		//spindashDust.anim = 0;
-		PlaySound(SOUNDID_SPINDASH_RELEASE);
-	}
-	//Charging spindash
-	else
-	{
-		//Reduce our spindash counter
-		if (spindashCounter != 0)
-		{
-			uint16_t nextCounter = (spindashCounter - spindashCounter / 0x20);
-			
-			//The original makes sure the spindash counter is 0 if it underflows (which seems to be impossible, to my knowledge)
-			if (nextCounter <= spindashCounter)
-				spindashCounter = nextCounter;
-			else
+			//Initiate spindash
+			if (controlPress.a || controlPress.b || controlPress.c)
+			{
+				//Play animation and sound
+				anim = PLAYERANIMATION_SPINDASH;
+				PlaySound(SOUNDID_SPINDASH_REV);
+				
+				//Set spindash variables
+				spindashing = true;
 				spindashCounter = 0;
+				
+				//Make our spindash dust visible
+				//spindashDust.anim = 1; //The original uses the dust object for splashing too, we're not doing that
+			}
+			else
+			{
+				return true;
+			}
 		}
-		
-		#ifdef FIX_SPINDASH_ANIM
-			//Ensure we're doing the spindash animation
-			anim = PLAYERANIMATION_SPINDASH;
-		#endif
-		
-		//Rev our spindash
-		if (controlPress.a || controlPress.b || controlPress.c)
+		//Release spindash
+		else if (!controlHeld.down)
 		{
-			//Restart the spindash animation and play the rev sound
-			anim = PLAYERANIMATION_SPINDASH;
-			prevAnim = PLAYERANIMATION_WALK;
-			PlaySound(SOUNDID_SPINDASH_REV);
+			//Begin rolling
+			xRadius = rollXRadius;
+			yRadius = rollYRadius;
+			anim = PLAYERANIMATION_ROLL;
 			
-			//Increase our spindash counter
-			spindashCounter += 0x200;
-			if (spindashCounter >= 0x800)
-				spindashCounter = 0x800;
+			//Offset our position to line up with the ground
+			if (status.reverseGravity)
+				y.pos -= 5;
+			else
+				y.pos += 5;
+			
+			//Release spindash
+			spindashing = false;
+			
+			//Set our speed
+			if (super)
+				inertia = spindashSpeedSuper[spindashCounter / 0x100];
+			else
+				inertia = spindashSpeed[spindashCounter / 0x100];
+			
+			//Lock the camera behind us
+			scrollDelay = (0x2000 - (inertia - 0x800) * 2) % (PLAYER_RECORD_LENGTH << 8);
+			
+			//Revert if facing left
+			if (status.xFlip)
+				inertia = -inertia;
+			
+			//Actually go into the roll routine
+			status.inBall = true;
+			//spindashDust.anim = 0;
+			PlaySound(SOUNDID_SPINDASH_RELEASE);
 		}
-	}
-	
-	//Collide with the level (S3K has code to crush you against the foreground layer from the background here)
-	LevelBound();
-	AnglePos();
-	return false;
+		//Charging spindash
+		else
+		{
+			//Reduce our spindash counter
+			if (spindashCounter != 0)
+			{
+				uint16_t nextCounter = (spindashCounter - spindashCounter / 0x20);
+				
+				//The original makes sure the spindash counter is 0 if it underflows (which seems to be impossible, to my knowledge)
+				if (nextCounter <= spindashCounter)
+					spindashCounter = nextCounter;
+				else
+					spindashCounter = 0;
+			}
+			
+			#ifdef FIX_SPINDASH_ANIM
+				//Ensure we're doing the spindash animation
+				anim = PLAYERANIMATION_SPINDASH;
+			#endif
+			
+			//Rev our spindash
+			if (controlPress.a || controlPress.b || controlPress.c)
+			{
+				//Restart the spindash animation and play the rev sound
+				anim = PLAYERANIMATION_SPINDASH;
+				prevAnim = PLAYERANIMATION_WALK;
+				PlaySound(SOUNDID_SPINDASH_REV);
+				
+				//Increase our spindash counter
+				spindashCounter += 0x200;
+				if (spindashCounter >= 0x800)
+					spindashCounter = 0x800;
+			}
+		}
+		
+		//Collide with the level (S3K has code to crush you against the foreground layer from the background here)
+		LevelBound();
+		AnglePos();
+		return false;
+	#endif
 }
 
 //Jump ability functions
@@ -1279,10 +1301,15 @@ void PLAYER::JumpHeight()
 		//Slow us down if ABC is released when jumping
 		int16_t minVelocity = status.underwater ? -0x200 : -0x400;
 		
-		if (minVelocity <= yVel)
-			JumpAbilities();
-		else if (!controlHeld.a && !controlHeld.b && !controlHeld.c)
-			yVel = minVelocity;
+		#ifndef SONIC12_NO_JUMP_ABILITY
+			if (minVelocity <= yVel)
+				JumpAbilities();
+			else if (!controlHeld.a && !controlHeld.b && !controlHeld.c)
+				yVel = minVelocity;
+		#else
+			if (minVelocity > yVel && !controlHeld.a && !controlHeld.b && !controlHeld.c)
+				yVel = minVelocity;
+		#endif
 	}
 	else
 	{
@@ -1307,12 +1334,17 @@ void PLAYER::ChgJumpDir()
 			newVelocity -= acceleration * 2;
 			
 			//Don't accelerate past the top speed
-			if (newVelocity <= -top)
-			{
-				newVelocity += acceleration * 2;
-				if (newVelocity >= -top)
+			#ifndef SONIC12_AIR_CAP
+				if (newVelocity <= -top)
+				{
+					newVelocity += acceleration * 2;
+					if (newVelocity >= -top)
+						newVelocity = -top;
+				}
+			#else
+				if (newVelocity <= -top)
 					newVelocity = -top;
-			}
+			#endif
 		}
 		
 		//Move right if right is held
@@ -1323,12 +1355,17 @@ void PLAYER::ChgJumpDir()
 			newVelocity += acceleration * 2;
 			
 			//Don't accelerate past the top speed
-			if (newVelocity >= top)
-			{
-				newVelocity -= acceleration * 2;
-				if (newVelocity <= top)
+			#ifndef SONIC12_AIR_CAP
+				if (newVelocity >= top)
+				{
+					newVelocity -= acceleration * 2;
+					if (newVelocity <= top)
+						newVelocity = top;
+				}
+			#else
+				if (newVelocity >= top)
 					newVelocity = top;
-			}
+			#endif
 		}
 		
 		//Copy our new velocity to our velocity
@@ -1498,11 +1535,14 @@ void PLAYER::SlopeResist()
 			else if (sin != 0)
 				inertia += sin;
 		}
+		#ifndef SONIC12_SLOPE_RESIST
 		else
 		{
+			
 			if (abs(sin) >= 0xD)
 				inertia += sin;
 		}
+		#endif
 	}
 }
 
@@ -1537,20 +1577,30 @@ void PLAYER::SlopeRepel()
 	{
 		if (moveLock == 0)
 		{
-			//Are we on a steep enough slope and going too slow?
-			if (((angle + 0x18) & 0xFF) >= 0x30 && abs(inertia) < 0x280)
-			{
-				//Lock our controls for 30 frames (half a second)
-				moveLock = 30;
-				
-				//Slide down the slope, or fall off if very steep
-				if (((angle + 0x30) & 0xFF) >= 0x60)
+			#ifndef SONIC123_SLOPE_REPEL
+				//Are we on a steep enough slope and going too slow?
+				if (((angle + 0x18) & 0xFF) >= 0x30 && abs(inertia) < 0x280)
+				{
+					//Lock our controls for 30 frames (half a second)
+					moveLock = 30;
+					
+					//Slide down the slope, or fall off if very steep
+					if (((angle + 0x30) & 0xFF) >= 0x60)
+						status.inAir = true;
+					else if (((angle + 0x30) & 0xFF) >= 0x30)
+						inertia += 0x80;
+					else
+						inertia -= 0x80;
+				}
+			#else
+				//Are we on a steep enough slope and going too slow?
+				if (((angle + 0x20) & 0xC0) && abs(inertia) < 0x280)
+				{
+					inertia = 0;
 					status.inAir = true;
-				else if (((angle + 0x30) & 0xFF) >= 0x30)
-					inertia += 0x80;
-				else
-					inertia -= 0x80;
-			}
+					moveLock = 30;
+				}
+			#endif
 		}
 		else
 		{
@@ -1579,12 +1629,17 @@ void PLAYER::MoveLeft()
 		newInertia -= acceleration;
 		
 		//Don't accelerate past the top speed
-		if (newInertia <= -top)
-		{
-			newInertia += acceleration;
-			if (newInertia >= -top)
+		#ifndef SONIC1_GROUND_CAP
+			if (newInertia <= -top)
+			{
+				newInertia += acceleration;
+				if (newInertia >= -top)
+					newInertia = -top;
+			}
+		#else
+			if (newInertia <= -top)
 				newInertia = -top;
-		}
+		#endif
 		
 		//Set inertia and do walk animation
 		inertia = newInertia;
@@ -1628,12 +1683,17 @@ void PLAYER::MoveRight()
 		newInertia += acceleration;
 		
 		//Don't accelerate past the top speed
-		if (newInertia >= top)
-		{
-			newInertia -= acceleration;
-			if (newInertia <= top)
+		#ifndef SONIC1_GROUND_CAP
+			if (newInertia >= top)
+			{
+				newInertia -= acceleration;
+				if (newInertia <= top)
+					newInertia = top;
+			}
+		#else
+			if (newInertia >= top)
 				newInertia = top;
-		}
+		#endif
 		
 		//Set inertia and do walk animation
 		inertia = newInertia;
@@ -1794,20 +1854,25 @@ void PLAYER::ChkRoll()
 
 void PLAYER::Roll()
 {
-	if (!controlHeld.left && !controlHeld.right)
+	if (!status.isSliding && !controlHeld.left && !controlHeld.right && !status.inBall)
 	{
-		if (controlHeld.down)
-		{
-			if (abs(inertia) >= 0x100)
+		#ifndef SONIC123_ROLL_DUCK
+			if (controlHeld.down)
+			{
+				if (abs(inertia) >= 0x100)
+					PLAYER::ChkRoll();
+				else
+					anim = PLAYERANIMATION_DUCK;
+			}
+			else if (anim == PLAYERANIMATION_DUCK)
+			{
+				//Revert to walk animation if was ducking
+				anim = PLAYERANIMATION_WALK;
+			}
+		#else
+			if (controlHeld.down && abs(inertia) >= 0x80)
 				PLAYER::ChkRoll();
-			else
-				anim = PLAYERANIMATION_DUCK;
-		}
-		else if (anim == PLAYERANIMATION_DUCK)
-		{
-			//Revert to walk animation if was ducking
-			anim = PLAYERANIMATION_WALK;
-		}
+		#endif
 	}
 }
 
@@ -1874,7 +1939,11 @@ void PLAYER::RollSpeed()
 		}
 		
 		//Stop if slowed down
+		#ifndef SONIC123_ROLL_DUCK
 		if (abs(inertia) < 0x80)
+		#else
+		if (inertia == 0)
+		#endif
 		{
 			if (!status.pinballMode)
 			{
@@ -1923,16 +1992,21 @@ void PLAYER::DeadCheckRespawn()
 	spindashing = false;
 	
 	//Check if we're off-screen
-	if (status.reverseGravity)
-	{
-		if (y.pos > cameraY - 0x10)
+	#ifndef SONIC12_DEATH_RESPAWN
+		if (status.reverseGravity)
+		{
+			if (y.pos > cameraY - 0x10)
+				return;
+		}
+		else
+		{
+			if (y.pos < cameraY + (SCREEN_HEIGHT + 0x20))
+				return;
+		}
+	#else
+		if (y.pos < gLevel->bottomBoundary2 + 0x20)
 			return;
-	}
-	else
-	{
-		if (y.pos < cameraY + (SCREEN_HEIGHT + 0x20))
-			return;
-	}
+	#endif
 	
 	//Enter respawn state
 	routine = PLAYERROUTINE_RESET_LEVEL;
@@ -1996,7 +2070,11 @@ void PLAYER::LevelBound()
 		LevelBoundSide(rightBound);
 	
 	//Die if reached bottom boundary
+	#ifndef SONIC1_DEATH_BOUNDARY
 	if (status.reverseGravity ? (y.pos <= gLevel->topBoundary) : (y.pos >= gLevel->bottomBoundary))
+	#else
+	if (status.reverseGravity ? (y.pos <= gLevel->topBoundary2) : (y.pos >= gLevel->bottomBoundary2))
+	#endif
 	{
 		x.pos = nextPos;
 		x.sub = 0;
@@ -2092,8 +2170,11 @@ void PLAYER::Animate()
 				
 				//Get the 45 degree increment to rotate our sprites at
 				uint8_t rotAngle = angle;
-				if (rotAngle > 0 && rotAngle < 0x80) //This was added in Sonic 2 to make floor rotation more consistent
-					rotAngle--;
+				
+				#ifndef SONIC1_SLOPE_ROTATION
+					if (rotAngle > 0 && rotAngle < 0x80)
+						rotAngle--;
+				#endif
 				
 				if (!status.xFlip) //Invert angle if not flipped horizontally
 					rotAngle = ~rotAngle;
