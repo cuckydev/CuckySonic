@@ -15,8 +15,13 @@ void ObjBridgeLogSegment(OBJECT *object)
 		object->priority = 3;
 		
 		//Load graphics
-		object->texture = gLevel->GetObjectTexture("data/Object/LogBridge.bmp");
-		object->mappings = new MAPPINGS("data/Object/LogBridge.map");
+		switch (gLevel->levelId)
+		{
+			case 1: //Emerald Hill Zone
+				object->texture = gLevel->GetObjectTexture("data/Object/EHZBridge.bmp");
+				break;
+		}
+		object->mappings = new MAPPINGS("data/Object/Bridge.map");
 	}
 }
 

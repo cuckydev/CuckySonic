@@ -54,7 +54,7 @@ const struct
 	{{390, 0, 40, 48}, {16, 41}},
 };
 
-const int sonicHandAnim[14] = {0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 1, 1, 1, 1};
+const int sonicHandAnim[14] = {0, 0, 0, 0, 0, 0, 1, 1, 1, 2, 2, 2, 1, 1};
 
 //Text render function
 void DrawText(TEXTURE *tex, const char *text, int x, int y)
@@ -85,7 +85,9 @@ bool GM_Title(bool *noError)
 	const int bannerY = emblemY + titleBannerJoin;
 	
 	//Title state
-	int titleYShift = 0;
+	int titleYShift = SCREEN_HEIGHT * 0x100;
+	int titleYSpeed = -std::sqrt(2 * 0x80 * (SCREEN_HEIGHT + 32) * 0x100);
+	int titleYGoal = 0;
 	int frame = 0;
 	
 	//Sonic's animation and position
@@ -180,9 +182,21 @@ bool GM_Title(bool *noError)
 			}
 		}
 		
+		//Move title screen at beginning
+		if (titleYShift >= titleYGoal && titleYSpeed >= 0)
+		{
+			titleYSpeed /= -2;
+			titleYShift = titleYGoal;
+		}
+		else
+		{
+			titleYSpeed += 0x80;
+			titleYShift += titleYSpeed;
+		}
+		
 		//Render title screen banner and emblem
-		titleTexture->Draw(TITLELAYER_EMBLEM, titleTexture->loadedPalette, &titleEmblem, emblemX, emblemY + titleYShift, false, false);
-		titleTexture->Draw(TITLELAYER_BANNER, titleTexture->loadedPalette, &titleBanner, bannerX, bannerY + titleYShift, false, false);
+		titleTexture->Draw(TITLELAYER_EMBLEM, titleTexture->loadedPalette, &titleEmblem, emblemX, emblemY + titleYShift / 0x100, false, false);
+		titleTexture->Draw(TITLELAYER_BANNER, titleTexture->loadedPalette, &titleBanner, bannerX, bannerY + titleYShift / 0x100, false, false);
 		
 		if (sonicTime-- <= 0)
 		{
@@ -221,7 +235,7 @@ bool GM_Title(bool *noError)
 			{
 				if (bottomY > clipY)
 					bodyRect.h -= (bottomY - clipY);
-				titleTexture->Draw(TITLELAYER_SONIC, titleTexture->loadedPalette, &bodyRect, midX - 40, topY + titleYShift, false, false);
+				titleTexture->Draw(TITLELAYER_SONIC, titleTexture->loadedPalette, &bodyRect, midX - 40, topY + titleYShift / 0x100, false, false);
 			}
 			
 			//If animation is complete
@@ -229,14 +243,14 @@ bool GM_Title(bool *noError)
 			{
 				//Draw Sonic's hand
 				int frame = sonicHandAnim[sonicHandFrame];
-				titleTexture->Draw(TITLELAYER_SONIC_HAND, titleTexture->loadedPalette, &titleSonicHand[frame].framerect, midX + 20 - titleSonicHand[frame].jointPos.x, topY + 72 - titleSonicHand[frame].jointPos.y + titleYShift, false, false);
+				titleTexture->Draw(TITLELAYER_SONIC_HAND, titleTexture->loadedPalette, &titleSonicHand[frame].framerect, midX + 20 - titleSonicHand[frame].jointPos.x, topY + 72 - titleSonicHand[frame].jointPos.y + titleYShift / 0x100, false, false);
 				
 				//Update frame
 				if (sonicHandFrame + 1 < 14)
 					sonicHandFrame++;
 				
 				//Scroll background
-				backgroundX += 8;
+				backgroundX += sonicHandFrame / 2 + 1;
 			}
 		}
 		

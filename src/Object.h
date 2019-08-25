@@ -89,6 +89,7 @@ class OBJECT
 		//Collision box size
 		uint8_t xRadius;
 		uint8_t yRadius;
+		uint8_t collisionType;
 		
 		//Sprite properties
 		bool highPriority;		//Drawn above the foreground
@@ -129,10 +130,6 @@ class OBJECT
 		//Children linked list
 		OBJECT *children;
 		
-		//Our collision layers
-		COLLISIONLAYER topSolidLayer;
-		COLLISIONLAYER lrbSolidLayer;
-		
 		//Scratch memory
 		union
 		{
@@ -144,6 +141,9 @@ class OBJECT
 			int32_t scratchS32[0x4];
 		};
 		
+		//Deletion flag
+		bool deleteFlag;
+		
 		OBJECT *next;
 		OBJECT **list;
 		void (*function)(OBJECT *object);
@@ -152,7 +152,11 @@ class OBJECT
 		OBJECT(OBJECT **linkedList, void (*objectFunction)(OBJECT *object));
 		~OBJECT();
 		
+		void Move();
+		void MoveAndFall();
+		
 		void Animate(const uint8_t **animationList);
+		int16_t CheckFloorEdge(COLLISIONLAYER layer, int16_t xPos, int16_t yPos, uint8_t *outAngle);
 		
 		void Update();
 		void Draw();

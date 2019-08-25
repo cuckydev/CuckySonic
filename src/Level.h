@@ -191,7 +191,7 @@ class LEVEL
 		void PaletteUpdate();
 		void GetBackgroundScroll(uint16_t *array, int16_t *cameraX, int16_t *cameraY);
 		
-		void Update();
+		bool Update();
 		void Draw();
 };
 

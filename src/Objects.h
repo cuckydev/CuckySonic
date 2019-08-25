@@ -5,4 +5,4 @@ void ObjPathSwitcher(OBJECT *object);
 void ObjSpiral(OBJECT *object);
 void ObjGoalpost(OBJECT *object);
 void ObjBridge(OBJECT *object);
-void ObjBridgeLogSegment(OBJECT *object);
+void ObjMotobug(OBJECT *object);

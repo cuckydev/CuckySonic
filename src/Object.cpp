@@ -1,6 +1,7 @@
 #include "Object.h"
 #include "Game.h"
 #include "Log.h"
+#include "LevelCollision.h"
 #include "Error.h"
 
 OBJECT::OBJECT(OBJECT **linkedList, void (*objectFunction)(OBJECT *object))
@@ -64,6 +65,20 @@ OBJECT::~OBJECT()
 	}
 }
 
+//Movement and gravity
+void OBJECT::Move()
+{
+	xPosLong += xVel * 0x100;
+	yPosLong += yVel * 0x100;
+}
+
+void OBJECT::MoveAndFall()
+{
+	xPosLong += xVel * 0x100;
+	yPosLong += yVel * 0x100;
+	yVel += 0x38;
+}
+
 //Shared animate function
 void OBJECT::Animate(const uint8_t **animationList)
 {
@@ -121,6 +136,15 @@ void OBJECT::Animate(const uint8_t **animationList)
 	renderFlags.xFlip = status.xFlip;
 	renderFlags.yFlip = status.yFlip;
 	animFrame++;
+}
+
+//Collision functions
+int16_t OBJECT::CheckFloorEdge(COLLISIONLAYER layer, int16_t xPos, int16_t yPos, uint8_t *outAngle)
+{
+	int16_t distance = FindFloor(xPos, yPos + yRadius, layer, false, outAngle);
+	if (outAngle != NULL)
+		*outAngle = ((*outAngle) & 1) ? 0 : (*outAngle);
+	return distance;
 }
 
 //Update and drawing objects

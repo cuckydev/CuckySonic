@@ -53,7 +53,12 @@ bool GM_Game(bool *noError)
 		
 		if (!gLevel->fading)
 		{
-			gLevel->Update();
+			if (!(*noError = gLevel->Update()))
+			{
+				//Unload level
+				delete gLevel;
+				return false;
+			}
 		}
 		else
 		{
@@ -76,7 +81,11 @@ bool GM_Game(bool *noError)
 		
 		//Render our software buffer to the screen (using the first colour of our splash texture, should be white)
 		if (!(*noError = gSoftwareBuffer->RenderToScreen(&gLevel->backgroundTexture->loadedPalette->colour[0])))
+		{
+			//Unload level
+			delete gLevel;
 			return false;
+		}
 		
 		//Go to next state if set to break this state
 		if (breakThisState)

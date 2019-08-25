@@ -44,6 +44,7 @@ SOURCES = \
 	Objects/Goalpost \
 	Objects/Spiral \
 	Objects/Bridge \
+	Objects/Motobug \
 
 #What to compile
 OBJECTS = $(addprefix obj/$(FILENAME)/, $(addsuffix .o, $(SOURCES)))

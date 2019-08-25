@@ -20,23 +20,7 @@ OBJECTFUNCTION objFuncSonic1[] = {
 	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
 	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
 	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+	&ObjMotobug, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
 	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
 	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
 	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
@@ -63,30 +47,12 @@ OBJECTFUNCTION objFuncSonic2[] = {
 	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
 	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
 	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
 };
 
 //Our level table
 LEVELTABLE gLevelTable[] = {
 	//Green Hill Zone Act 1
 	{LEVELFORMAT_CHUNK128_SONIC2, ARTFORMAT_BMP, "data/Level/GHZ/ghz1", "data/Level/GHZ/ghz", "data/Level/sonic1", "data/Level/GHZ/ghz", objFuncSonic1, 0x0050, 0x03B0, 0x0000, 0x25FF + (SCREEN_WIDTH - 320) / 2, 0x0000, 0x03E0},
-	//Spring Yard Zone Act 1
-	{LEVELFORMAT_CHUNK128_SONIC2, ARTFORMAT_BMP, "data/Level/SYZ/syz1", "data/Level/SYZ/syz", "data/Level/sonic1", "data/Level/SYZ/syz", objFuncSonic1, 0x0030, 0x03BD, 0x0000, 0x0000, 0x0000, 0x0000},
 	//Emerald Hill Zone Act 1
 	{LEVELFORMAT_CHUNK128_SONIC2, ARTFORMAT_BMP, "data/Level/EHZ/ehz1", "data/Level/EHZ/ehz", "data/Level/sonic2", "data/Level/EHZ/ehz", objFuncSonic2, 0x0060, 0x028F, 0x0000, 0x2AE0 + (SCREEN_WIDTH - 320) / 2, 0x0000, 0x0400},
 };
@@ -404,7 +370,7 @@ bool LEVEL::LoadObjects(LEVELTABLE *tableEntry)
 		uint8_t id = SDL_ReadU8(objectFile);
 		uint8_t subtype = SDL_ReadU8(objectFile);
 		
-		OBJECT *newObject = new OBJECT(&objectList, tableEntry->objectFunctionList[id]);
+		OBJECT *newObject = new OBJECT(&objectList, tableEntry->objectFunctionList[id & 0x7F]);
 		if (newObject == NULL)
 		{
 			Error(fail = "Failed to create object");
@@ -730,7 +696,7 @@ void LEVEL::PaletteUpdate()
 		case 0: //Green Hill Zone
 			GHZ_PaletteCycle(this);
 			break;
-		case 2: //Emerald Hill Zone
+		case 1: //Emerald Hill Zone
 			EHZ_PaletteCycle(this);
 			break;
 	}
@@ -743,22 +709,46 @@ void LEVEL::GetBackgroundScroll(uint16_t *array, int16_t *cameraX, int16_t *came
 		case 0: //Green Hill Zone
 			GHZ_BackgroundScroll(array, cameraX, cameraY);
 			break;
-		case 2: //Emerald Hill Zone
+		case 1: //Emerald Hill Zone
 			EHZ_BackgroundScroll(array, cameraX, cameraY);
 			break;
 	}
 }
 
 //Level update and draw
-void LEVEL::Update()
+bool LEVEL::Update()
 {
 	//Update players
 	for (PLAYER *player = playerList; player != NULL; player = player->next)
 		player->Update();
 	
 	//Update objects
-	for (OBJECT *object = objectList; object != NULL; object = object->next)
+	OBJECT *object = objectList;
+	
+	while (object != NULL)
+	{
+		//Remember our next object
+		OBJECT *next = object->next;
+		
+		//Update
 		object->Update();
+		if (object->texture != NULL && object->texture->fail != NULL)
+			return Error(object->texture->fail);
+		if (object->mappings != NULL && object->mappings->fail != NULL)
+			return Error(object->mappings->fail);
+		
+		//Check for deletion
+		if (object->deleteFlag)
+		{
+			for (PLAYER *player = playerList; player != NULL; player = player->next)
+				if (player->interact == object)
+					player->interact = NULL;
+			delete object;
+		}
+		
+		//Advance to next object
+		object = next;
+	}
 	
 	//Update camera
 	if (camera != NULL)
@@ -770,6 +760,7 @@ void LEVEL::Update()
 	
 	//Update level palette
 	PaletteUpdate();
+	return true;
 }
 
 void LEVEL::Draw()

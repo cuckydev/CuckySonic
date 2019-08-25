@@ -39,8 +39,8 @@ MAPPINGS::MAPPINGS(const char *path)
 		rect[i].y = SDL_ReadBE16(fp);
 		rect[i].w = SDL_ReadBE16(fp);
 		rect[i].h = SDL_ReadBE16(fp);
-		origin[i].x = SDL_ReadBE16(fp);
-		origin[i].y = SDL_ReadBE16(fp);
+		origin[i].x = (int16_t)SDL_ReadBE16(fp);
+		origin[i].y = (int16_t)SDL_ReadBE16(fp);
 	}
 	
 	//Close file
