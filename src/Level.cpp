@@ -53,7 +53,7 @@ OBJECTFUNCTION objFuncSonic2[] = {
 //Our level table
 LEVELTABLE gLevelTable[] = {
 	{"Green Hill Zone", "Act 1", LEVELFORMAT_CHUNK128_SONIC2, ARTFORMAT_BMP, "data/Level/GHZ/ghz1", "data/Level/GHZ/ghz", "data/Level/sonic1", "data/Level/GHZ/ghz", MUSICID_GHZ, objFuncSonic1, 0x0050, 0x03B0, 0x0000, 0x25FF + (SCREEN_WIDTH - 320) / 2, 0x0000, 0x03E0},
-	{"Emerald Hill Zone", "Act 2", LEVELFORMAT_CHUNK128_SONIC2, ARTFORMAT_BMP, "data/Level/EHZ/ehz1", "data/Level/EHZ/ehz", "data/Level/sonic2", "data/Level/EHZ/ehz", MUSICID_EHZ, objFuncSonic2, 0x0060, 0x028F, 0x0000, 0x2AE0 + (SCREEN_WIDTH - 320) / 2, 0x0000, 0x0400},
+	{"Emerald Hill Zone", "Act 1", LEVELFORMAT_CHUNK128_SONIC2, ARTFORMAT_BMP, "data/Level/EHZ/ehz1", "data/Level/EHZ/ehz", "data/Level/sonic2", "data/Level/EHZ/ehz", MUSICID_EHZ, objFuncSonic2, 0x0060, 0x028F, 0x0000, 0x2AE0 + (SCREEN_WIDTH - 320) / 2, 0x0000, 0x0400},
 };
 
 //Loading functions
