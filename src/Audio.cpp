@@ -12,7 +12,11 @@ SDL_AudioDeviceID audioDevice;
 
 //Music
 MUSICDEFINITION musicDefinition[MUSICID_MAX] = {
-	{"data/Audio/Music/GHZ.ogg", 635160},
+	{NULL, 0, 0}, //MUSICID_NULL
+	{"data/Audio/Music/Title.ogg", 0, 0},
+	{"data/Audio/Music/Menu.ogg", 1390138, 1390138},
+	{"data/Audio/Music/GHZ.ogg", 1693960, 2328494},
+	{"data/Audio/Music/EHZ.ogg", 1828071, 1981583},
 };
 
 //Sound effects
@@ -281,6 +285,44 @@ void SOUND::Mix(float *stream, int samples)
 	}
 }
 
+//Music functions
+void PlayMusic(MUSICID music)
+{
+	//Wait for audio device to be finished and lock it
+	SDL_LockAudioDevice(audioDevice);
+	
+	//Resume audio device
+	SDL_UnlockAudioDevice(audioDevice);
+}
+
+int PauseMusic()
+{
+	//Wait for audio device to be finished and lock it
+	SDL_LockAudioDevice(audioDevice);
+	
+	//Resume audio device
+	SDL_UnlockAudioDevice(audioDevice);
+	return 0;
+}
+
+void ResumeMusic(int position)
+{
+	//Wait for audio device to be finished and lock it
+	SDL_LockAudioDevice(audioDevice);
+	
+	//Resume audio device
+	SDL_UnlockAudioDevice(audioDevice);
+}
+
+void UnloadMusic()
+{
+	//Wait for audio device to be finished and lock it
+	SDL_LockAudioDevice(audioDevice);
+	
+	//Resume audio device
+	SDL_UnlockAudioDevice(audioDevice);
+}
+
 //Callback function
 void AudioCallback(void *userdata, uint8_t *stream, int length)
 {
@@ -288,10 +330,10 @@ void AudioCallback(void *userdata, uint8_t *stream, int length)
 	(void)userdata;
 	
 	//Get our buffer to render to
-	float *buffer = (float*)stream;
 	int samples = length / (2 * sizeof(float));
 	
 	//Clear the buffer (NOTE: I would memset the buffer to 0, but that'll break on FPUs that don't use the IEEE-754 standard)
+	float *buffer = (float*)stream;
 	for (int i = 0; i < samples * 2; i++)
 		*buffer++ = 0.0f;
 	
@@ -407,12 +449,12 @@ bool InitializeAudio()
 	if (!audioDevice)
 		return Error(SDL_GetError());
 	
-	//Allow our audio device to play audio
-	SDL_PauseAudioDevice(audioDevice, 0);
-	
 	//Load all of our sound effects
 	if (!LoadAllSoundEffects())
 		return false;
+	
+	//Allow our audio device to play audio
+	SDL_PauseAudioDevice(audioDevice, 0);
 	
 	LOG(("Success!\n"));
 	return true;
@@ -422,9 +464,6 @@ void QuitAudio()
 {
 	LOG(("Ending audio... "));
 	
-	//Close our audio device
-	SDL_CloseAudioDevice(audioDevice);
-	
 	//Unload all of our sounds
 	for (SOUND *sound = sounds; sound != NULL;)
 	{
@@ -432,6 +471,9 @@ void QuitAudio()
 		delete sound;
 		sound = next;
 	}
+	
+	//Close our audio device
+	SDL_CloseAudioDevice(audioDevice);
 	
 	LOG(("Success!\n"));
 	return;

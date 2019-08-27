@@ -36,7 +36,7 @@ bool GM_Game(bool *noError)
 	
 	//Initialize level fade
 	ClearControllerInput();
-	gLevel->Update();
+	gLevel->Update(false);
 	gLevel->SetFade(true, false);
 	
 	//Our loop
@@ -51,16 +51,15 @@ bool GM_Game(bool *noError)
 		//Update level
 		bool breakThisState = false;
 		
-		if (!gLevel->fading)
+		if (!(*noError = gLevel->Update(true)))
 		{
-			if (!(*noError = gLevel->Update()))
-			{
-				//Unload level
-				delete gLevel;
-				return false;
-			}
+			//Unload level
+			delete gLevel;
+			return false;
 		}
-		else
+		
+		//Handle level fading
+		if (gLevel->fading)
 		{
 			if (gLevel->isFadingIn)
 			{

@@ -147,16 +147,81 @@ int16_t OBJECT::CheckFloorEdge(COLLISIONLAYER layer, int16_t xPos, int16_t yPos,
 	return distance;
 }
 
+//Object collision functions
+void OBJECT::PlatformObject(int16_t width, int16_t height, int16_t xPos)
+{
+	int i = 0;
+	for (PLAYER *player = gLevel->playerList; player != NULL; player = player->next)
+	{
+		//If the player is already standing on us
+		if (playerContact[i].standing == true)
+		{
+			//Check if we're still on the platform
+			if (!player->status.inAir)
+			{
+				int16_t xDiff = player->x.pos - xPos + width;
+				if (xDiff >= 0 && xDiff < width * 2)
+				{
+					player->MoveOnPlatform((void*)this, width, height, xPos);
+					i++;
+					continue;
+				}
+			}
+		
+			//We left the platform
+			player->status.shouldNotFall = false;
+			player->status.inAir = true;
+			playerContact[i].standing = false;
+		}
+		else
+		{
+			PlatformObject2(player, i, width, height, xPos);
+		}
+		
+		//Increment index
+		i++;
+	}
+}
+
+void OBJECT::PlatformObject2(PLAYER *player, int i, int16_t width, int16_t height, int16_t xPos)
+{
+	//Check if we're in a state where we can enter onto the platform
+	int16_t xDiff = (player->x.pos - x.pos) + width;
+	if (player->yVel < 0 || xDiff < 0 || xDiff >= width * 2)
+		return;
+	
+	//Land (or walk onto I guess) on platform
+	int16_t playerBottom = (player->y.pos + player->yRadius) + 4;
+	int16_t yThing = (y.pos - height) - playerBottom;
+	
+	if (yThing > 0 || yThing < -16 || player->objectControl.disableObjectInteract || player->routine == PLAYERROUTINE_DEATH)
+		return;
+	
+	player->y.pos += yThing + 3;
+	player->RideObject((void*)this, (&playerContact[i].standing - (size_t)this));
+}
+
 //Update and drawing objects
-void OBJECT::Update()
+bool OBJECT::Update()
 {
 	//Run our object code
 	if (function != NULL)
 		function(this);
 	
+	//If there was an error RETURN TREUE NOOOOO
+	if (texture != NULL && texture->fail != NULL)
+		return Error(texture->fail);
+	if (mappings != NULL && mappings->fail != NULL)
+		return Error(mappings->fail);
+	
 	//Update children's code
 	for (OBJECT *object = children; object != NULL; object = object->next)
-		object->Update();
+	{
+		if (object->Update())
+			return true;
+	}
+	
+	return false;
 }
 
 void OBJECT::Draw()

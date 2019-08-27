@@ -6,6 +6,7 @@
 #include "Fade.h"
 #include "Path.h"
 #include "Log.h"
+#include "Audio.h"
 #include "Error.h"
 
 //Object function lists
@@ -14,7 +15,7 @@
 OBJECTFUNCTION objFuncSonic1[] = {
 	NULL, NULL, NULL, &ObjPathSwitcher, NULL, NULL, NULL, NULL,
 	NULL, NULL, NULL, NULL, NULL, &ObjGoalpost, NULL, NULL,
-	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+	NULL, &ObjBridge, NULL, NULL, NULL, NULL, NULL, NULL,
 	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
 	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
 	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
@@ -51,10 +52,8 @@ OBJECTFUNCTION objFuncSonic2[] = {
 
 //Our level table
 LEVELTABLE gLevelTable[] = {
-	//Green Hill Zone Act 1
-	{LEVELFORMAT_CHUNK128_SONIC2, ARTFORMAT_BMP, "data/Level/GHZ/ghz1", "data/Level/GHZ/ghz", "data/Level/sonic1", "data/Level/GHZ/ghz", objFuncSonic1, 0x0050, 0x03B0, 0x0000, 0x25FF + (SCREEN_WIDTH - 320) / 2, 0x0000, 0x03E0},
-	//Emerald Hill Zone Act 1
-	{LEVELFORMAT_CHUNK128_SONIC2, ARTFORMAT_BMP, "data/Level/EHZ/ehz1", "data/Level/EHZ/ehz", "data/Level/sonic2", "data/Level/EHZ/ehz", objFuncSonic2, 0x0060, 0x028F, 0x0000, 0x2AE0 + (SCREEN_WIDTH - 320) / 2, 0x0000, 0x0400},
+	{"Green Hill Zone", 1, LEVELFORMAT_CHUNK128_SONIC2, ARTFORMAT_BMP, "data/Level/GHZ/ghz1", "data/Level/GHZ/ghz", "data/Level/sonic1", "data/Level/GHZ/ghz", MUSICID_GHZ, objFuncSonic1, 0x0050, 0x03B0, 0x0000, 0x25FF + (SCREEN_WIDTH - 320) / 2, 0x0000, 0x03E0},
+	{"Emerald Hill Zone", 1, LEVELFORMAT_CHUNK128_SONIC2, ARTFORMAT_BMP, "data/Level/EHZ/ehz1", "data/Level/EHZ/ehz", "data/Level/sonic2", "data/Level/EHZ/ehz", MUSICID_EHZ, objFuncSonic2, 0x0060, 0x028F, 0x0000, 0x2AE0 + (SCREEN_WIDTH - 320) / 2, 0x0000, 0x0400},
 };
 
 //Loading functions
@@ -459,6 +458,8 @@ void LEVEL::UnloadAll()
 	
 	if (camera != NULL)
 		delete camera;
+	if (titleCard != NULL)
+		delete titleCard;
 }
 
 //Level class
@@ -514,8 +515,19 @@ LEVEL::LEVEL(int id, int players, const char **playerPaths)
 		return;
 	}
 	
-	//Initialize state
-	titleCard = false; //true;
+	//Title-card
+	titleCard = new TITLECARD(tableEntry->zoneName, tableEntry->actNumber);
+	if (titleCard == NULL || titleCard->fail)
+	{
+		Error(fail = titleCard->fail);
+		UnloadAll();
+		return;
+	}
+	
+	inTitleCard = true;
+	
+	//Play music
+	PlayMusic(tableEntry->music);
 	
 	LOG(("Success!\n"));
 }
@@ -716,8 +728,20 @@ void LEVEL::GetBackgroundScroll(uint16_t *array, int16_t *cameraX, int16_t *came
 }
 
 //Level update and draw
-bool LEVEL::Update()
+bool LEVEL::Update(bool checkTitleCard)
 {
+	//Update title card
+	if (checkTitleCard)
+	{
+		titleCard->UpdateAndDraw();
+		if (inTitleCard)
+			return true;
+	}
+	
+	//Quit if fading
+	if (fading)
+		return true;
+	
 	//Update players
 	for (PLAYER *player = playerList; player != NULL; player = player->next)
 		player->Update();
@@ -731,11 +755,8 @@ bool LEVEL::Update()
 		OBJECT *next = object->next;
 		
 		//Update
-		object->Update();
-		if (object->texture != NULL && object->texture->fail != NULL)
-			return Error(object->texture->fail);
-		if (object->mappings != NULL && object->mappings->fail != NULL)
-			return Error(object->mappings->fail);
+		if (object->Update())
+			return false;
 		
 		//Check for deletion
 		if (object->deleteFlag)

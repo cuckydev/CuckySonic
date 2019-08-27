@@ -88,8 +88,8 @@ void EHZ_BackgroundScroll(uint16_t *array, int16_t *cameraX, int16_t *cameraY)
 	}
 	
 	//Field
-	uint32_t delta = ((((*cameraX) / 2 - *cameraX / 8) * 0x100) / 0x30) * 0x100;
-	uint32_t accumulate = (*cameraX) / 8 * 0x10000;
+	uint32_t delta = (((((*cameraX) / 2) - ((*cameraX) / 8)) * 0x100) / 0x30) * 0x100;
+	uint32_t accumulate = ((*cameraX) / 8) * 0x10000;
 	
 	for (int i = line; i < gLevel->backgroundTexture->height;)
 	{

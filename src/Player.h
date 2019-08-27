@@ -393,4 +393,5 @@ class PLAYER
 		void DebugMode();
 		
 		void RideObject(void *ride, bool *standingBit);
+		void MoveOnPlatform(void *platform, int16_t width, int16_t height, int16_t xPos);
 };

@@ -14,8 +14,8 @@ ifeq ($(CONSOLE), 1)
 endif
 
 #CXX flags and libraries
-CXXFLAGS += `pkg-config --cflags sdl2` -MMD -MP -MF -Wall -Wextra -pedantic -Wformat-overflow=0 -static
-LIBS += `pkg-config --libs sdl2 --static`
+CXXFLAGS += `pkg-config --cflags sdl2` -MMD -MP -MF -Wall -Wextra -pedantic -Wformat-overflow=0
+LIBS += `pkg-config --libs sdl2 --static` -static
 
 #Sources to compile
 SOURCES = \
@@ -38,6 +38,7 @@ SOURCES = \
 	Player \
 	Object \
 	Camera \
+	TitleCard \
 	LevelSpecific/GHZ \
 	LevelSpecific/EHZ \
 	Objects/PathSwitcher \

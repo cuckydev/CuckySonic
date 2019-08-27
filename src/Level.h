@@ -4,7 +4,9 @@
 #include "Player.h"
 #include "Object.h"
 #include "Camera.h"
+#include "TitleCard.h"
 #include "GameConstants.h"
+#include "Audio.h"
 
 #define PALETTE_CYCLES 8
 
@@ -21,6 +23,7 @@ enum LEVEL_RENDERLAYER
 	LEVEL_RENDERLAYER_FOREGROUND_HIGH = LEVEL_RENDERLAYER_OBJECT_0 + OBJECT_LAYERS,
 	LEVEL_RENDERLAYER_OBJECT_HIGH_0,
 	LEVEL_RENDERLAYER_HUD = LEVEL_RENDERLAYER_OBJECT_HIGH_0 + OBJECT_LAYERS,
+	LEVEL_RENDERLAYER_TITLECARD,
 };
 
 //Level formats
@@ -39,6 +42,10 @@ enum ARTFORMAT
 //Individual level definition table
 struct LEVELTABLE
 {
+	//Zone name and act number
+	const char *zoneName;
+	int actNumber;
+	
 	//Level data format
 	LEVELFORMAT format;
 	ARTFORMAT artFormat;
@@ -48,6 +55,9 @@ struct LEVELTABLE
 	const char *chunkTileReferencePath;	//For the chunk and tile definitions
 	const char *collisionReferencePath;	//For the collision data itself (height maps and angle maps)
 	const char *artReferencePath;		//For the level's art
+	
+	//Music
+	MUSICID music;
 	
 	//Object function list
 	OBJECTFUNCTION *objectFunctionList;
@@ -160,11 +170,14 @@ class LEVEL
 		OBJECT *objectList;
 		CAMERA *camera;
 		
+		//Title card
+		TITLECARD *titleCard;
+		
 		//Object texture cache
 		TEXTURE *objTextureCache;
 		
 		//State
-		bool titleCard;
+		bool inTitleCard;
 		bool fading;
 		bool isFadingIn;
 		bool specialFade;
@@ -191,7 +204,7 @@ class LEVEL
 		void PaletteUpdate();
 		void GetBackgroundScroll(uint16_t *array, int16_t *cameraX, int16_t *cameraY);
 		
-		bool Update();
+		bool Update(bool checkTitleCard);
 		void Draw();
 };
 

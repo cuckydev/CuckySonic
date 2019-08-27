@@ -117,6 +117,9 @@ bool GM_Title(bool *noError)
 	FillPaletteBlack(titleTexture->loadedPalette);
 	FillPaletteBlack(backgroundTexture->loadedPalette);
 	
+	//Play title song
+	PlayMusic(MUSICID_TITLE);
+	
 	//Our loop
 	bool noExit = true;
 	
@@ -267,6 +270,10 @@ bool GM_Title(bool *noError)
 		
 		//Increment frame
 		frame++;
+		
+		//Switch to menu music after a few seconds
+		if (frame == (17 * 60))
+			PlayMusic(MUSICID_MENU);
 	}
 	
 	//Unload our textures

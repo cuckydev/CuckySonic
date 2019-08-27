@@ -7,7 +7,11 @@
 //Music ids
 enum MUSICID
 {
+	MUSICID_NULL,
+	MUSICID_TITLE,
+	MUSICID_MENU,
 	MUSICID_GHZ,
+	MUSICID_EHZ,
 	MUSICID_MAX,
 };
 
@@ -64,7 +68,8 @@ enum SOUNDCHANNEL
 struct MUSICDEFINITION
 {
 	const char *path;
-	size_t loopSample;	//Frames for the loop point, in-case the song has an intro, this can be 0
+	int loopLength;	//How many samples the looping part lasts
+	int loopEnd; //When the looping part ends
 };
 
 struct SOUNDDEFINITION
@@ -116,6 +121,13 @@ class SOUND
 //Audio functions
 void PlaySound(SOUNDID id);
 void StopSound(SOUNDID id);
+
+extern MUSICID gCurrentMusic;
+
+void PlayMusic(MUSICID music);
+int PauseMusic();
+void ResumeMusic(int position);
+void UnloadMusic();
 
 bool InitializeAudio();
 void QuitAudio();

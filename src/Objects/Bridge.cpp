@@ -17,6 +17,9 @@ void ObjBridgeLogSegment(OBJECT *object)
 		//Load graphics
 		switch (gLevel->levelId)
 		{
+			case 0: //Green Hill Zone
+				object->texture = gLevel->GetObjectTexture("data/Object/GHZBridge.bmp");
+				break;
 			case 1: //Emerald Hill Zone
 				object->texture = gLevel->GetObjectTexture("data/Object/EHZBridge.bmp");
 				break;
@@ -30,6 +33,7 @@ void ObjBridge(OBJECT *object)
 	enum SCRATCH
 	{
 		SCRATCH_ORIGINY = 0,	// 2 bytes
+		SCRATCH_FORCE = 0,		// 2 bytes
 	};
 	
 	switch (object->routine)
@@ -64,12 +68,17 @@ void ObjBridge(OBJECT *object)
 //Fallthrough
 		case 1:
 		{
+			//Get our depression
+			int subtype = object->subtype;
+			int16_t depress[0x100];
 			
-			break;
-		}
-		case 2:
-		{
+			int depressPlayers = 0;
+			int depressPosition = 0;
+			int depressForce = 0;
 			
+			int i = 0;
+			for (OBJECT *child = object->children; child != NULL; child = child->next)
+				child->y.pos = object->scratchU16[SCRATCH_ORIGINY] + depress[i++];
 			break;
 		}
 	}

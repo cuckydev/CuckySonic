@@ -4,6 +4,7 @@
 #include "Mappings.h"
 #include "LevelCollision.h"
 #include "GameConstants.h"
+#include "Player.h"
 
 #define OBJECT_PLAYER_REFERENCES 0x100
 
@@ -158,6 +159,9 @@ class OBJECT
 		void Animate(const uint8_t **animationList);
 		int16_t CheckFloorEdge(COLLISIONLAYER layer, int16_t xPos, int16_t yPos, uint8_t *outAngle);
 		
-		void Update();
+		void PlatformObject(int16_t width, int16_t height, int16_t xPos);
+		void PlatformObject2(PLAYER *player, int i, int16_t width, int16_t height, int16_t xPos);
+		
+		bool Update();
 		void Draw();
 };

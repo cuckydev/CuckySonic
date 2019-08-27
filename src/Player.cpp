@@ -3165,7 +3165,7 @@ void PLAYER::RideObject(void *ride, bool *standingBit)
 	interact = ride;
 	angle = 0;
 	yVel = 0;
-	xVel = inertia;
+	inertia = xVel;
 	
 	//Land on object if in mid-air
 	if (status.inAir)
@@ -3174,4 +3174,18 @@ void PLAYER::RideObject(void *ride, bool *standingBit)
 	status.shouldNotFall = true;
 	status.inAir = false;
 	*((bool*)ride + (size_t)standingBit) = true;
+}
+
+void PLAYER::MoveOnPlatform(void *platform, int16_t width, int16_t height, int16_t xPos)
+{
+	OBJECT *platformObject = (OBJECT*)platform;
+	int top = platformObject->y.pos - height;
+	
+	//Check if we're in an intangible state
+	if (objectControl.disableObjectInteract || routine == PLAYERROUTINE_DEATH || debug != 0)
+		return;
+	
+	//Move onto the top of the platform
+	y.pos = top - yRadius;
+	x.pos -= (platformObject->x.pos - xPos);
 }
