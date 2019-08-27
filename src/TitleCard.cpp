@@ -7,7 +7,7 @@
 PALCOLOUR titleCardBackground;
 
 //Class
-TITLECARD::TITLECARD(const char *zoneName, int actNumber)
+TITLECARD::TITLECARD(const char *levelName, const char *levelSubtitle)
 {
 	memset(this, 0, sizeof(TITLECARD));
 	
@@ -27,8 +27,8 @@ TITLECARD::TITLECARD(const char *zoneName, int actNumber)
 	}
 	
 	//Set zone and act
-	name = zoneName;
-	act = actNumber;
+	name = levelName;
+	subtitle = levelSubtitle;
 	
 	SetPaletteColour(&titleCardBackground, 0, 0, 0);
 }
@@ -69,36 +69,35 @@ void TITLECARD::UpdateAndDraw()
 		gLevel->inTitleCard = false;
 	
 	//Get the position of the main zone strip
-	int zonePosition = 0;
+	int namePosition = 0;
 	
 	if (frame < TRANSITION_TIME)
-		zonePosition = (TRANSITION_TIME - frame) * -TRANSITION_SPEED;
+		namePosition = (TRANSITION_TIME - frame) * -TRANSITION_SPEED;
 	if (frame >= END_TIME - TRANSITION_TIME)
-		zonePosition = (frame - END_TIME + TRANSITION_TIME) * TRANSITION_SPEED;
+		namePosition = (frame - END_TIME + TRANSITION_TIME) * TRANSITION_SPEED;
 	
 	//Get the position of the act number strip
-	int actPosition = 0;
+	int subtitlePosition = 0;
 	
 	if (frame < TRANSITION_TIME)
-		actPosition = (TRANSITION_TIME * TRANSITION_SPEED) - (frame * TRANSITION_SPEED);
+		subtitlePosition = (TRANSITION_TIME * TRANSITION_SPEED) - (frame * TRANSITION_SPEED);
 	if (frame >= END_TIME - TRANSITION_TIME)
-		actPosition = (frame - END_TIME + TRANSITION_TIME) * -TRANSITION_SPEED;
+		subtitlePosition = (frame - END_TIME + TRANSITION_TIME) * -TRANSITION_SPEED;
 	
-	//Draw text
-	DrawText(name, zonePosition + (SCREEN_WIDTH / 2 - 110), SCREEN_HEIGHT / 2 - 12);
+	//Draw level name
+	DrawText(name, namePosition + (SCREEN_WIDTH / 2 - 110), SCREEN_HEIGHT / 2 - 12);
 	
-	char actText[0x10];
-	sprintf(actText, "act %d", act);
-	DrawText(actText, actPosition + (SCREEN_WIDTH / 2 + 32), SCREEN_HEIGHT / 2 + 12);
+	//Draw level subtitle
+	DrawText(subtitle, subtitlePosition + (SCREEN_WIDTH / 2 + 32), SCREEN_HEIGHT / 2 + 12);
 	
 	//Draw the strip behind the main zone name thing, and the "CUCKYSONIC" label
 	SDL_Rect labelSrc = {0, 0, 64, 8};
-	texture->Draw(LEVEL_RENDERLAYER_TITLECARD, texture->loadedPalette, &labelSrc, zonePosition, SCREEN_HEIGHT / 2 - 12 + 4, false, false);
+	texture->Draw(LEVEL_RENDERLAYER_TITLECARD, texture->loadedPalette, &labelSrc, namePosition, SCREEN_HEIGHT / 2 - 12 + 4, false, false);
 	
 	for (int x = 0; x < SCREEN_WIDTH; x += 16)
 	{
 		SDL_Rect stripSrc = {0, 8, 16, 16};
-		texture->Draw(LEVEL_RENDERLAYER_TITLECARD, texture->loadedPalette, &stripSrc, x + zonePosition, SCREEN_HEIGHT / 2 - 12, false, false);
+		texture->Draw(LEVEL_RENDERLAYER_TITLECARD, texture->loadedPalette, &stripSrc, x + namePosition, SCREEN_HEIGHT / 2 - 12, false, false);
 	}
 	
 	//Draw background (show the player first)

@@ -43,8 +43,8 @@ enum ARTFORMAT
 struct LEVELTABLE
 {
 	//Zone name and act number
-	const char *zoneName;
-	int actNumber;
+	const char *name;
+	const char *subtitle;
 	
 	//Level data format
 	LEVELFORMAT format;

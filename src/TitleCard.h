@@ -13,12 +13,12 @@ class TITLECARD
 		
 		//Current zone and frame
 		const char *name;
-		int act;
+		const char  *subtitle;
 		
 		int frame;
 		
 	public:
-		TITLECARD(const char *zoneName, int actNumber);
+		TITLECARD(const char *levelName, const char *levelSubtitle);
 		~TITLECARD();
 		
 		void DrawText(const char *text, int x, int y);
