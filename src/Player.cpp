@@ -136,6 +136,67 @@ static const uint8_t* animationListSuper[] = {
 	animationFloat4,
 };
 
+//Spindash dust
+static const uint8_t animationSpindashDustNull[] =	{0x1F,0x00,0xFF};
+static const uint8_t animationSpindashDust[] =		{0x01,0x0A,0x0B,0x0C,0x0D,0x0E,0x0F,0x10,0xFF};
+
+static const uint8_t* animationListSpindashDust[] = {
+	animationSpindashDustNull,
+	animationSpindashDust,
+};
+
+void ObjSpindashDust(OBJECT *object)
+{
+	switch (object->routine)
+	{
+		case 0:
+			//Initialize render properties
+			object->texture = gLevel->GetObjectTexture("data/Object/SpindashDust.bmp");
+			object->mappings = new MAPPINGS("data/Object/SpindashDust.map");
+			
+			object->priority = 1;
+			object->widthPixels = 16;
+			object->renderFlags.alignPlane = true;
+			
+			//Increment routine
+			object->routine = 1;
+//Fallthrough
+		case 1:
+			//If we're active
+			if (object->anim == 1)
+			{
+				//Are we to be deleted?
+				if (((PLAYER*)object->parent)->routine != PLAYERROUTINE_CONTROL || ((PLAYER*)object->parent)->spindashing == false)
+				{
+					object->anim = 0;
+					break;
+				}
+				
+				//Copy the player's position
+				object->status.xFlip = ((PLAYER*)object->parent)->status.xFlip;
+				object->status.yFlip = ((PLAYER*)object->parent)->status.reverseGravity;
+				object->highPriority = ((PLAYER*)object->parent)->highPriority;
+				
+				object->x.pos = ((PLAYER*)object->parent)->x.pos;
+				object->y.pos = ((PLAYER*)object->parent)->y.pos;
+				
+				if (((PLAYER*)object->parent)->status.inAir)
+				{
+					if (((PLAYER*)object->parent)->status.reverseGravity)
+						object->y.pos += 4;
+					else
+						object->y.pos -= 4;
+				}
+			}
+			break;
+	}
+	
+	//Draw and animate
+	object->Animate(animationListSpindashDust);
+	object->Draw();
+}
+
+//Player class
 PLAYER::PLAYER(PLAYER **linkedList, const char *specPath, PLAYER *myFollow, int myController)
 {
 	LOG(("Creating a player with spec %s and controlled by controller %d...\n", specPath, myController));
@@ -158,7 +219,6 @@ PLAYER::PLAYER(PLAYER **linkedList, const char *specPath, PLAYER *myFollow, int 
 	mappings = new MAPPINGS(mapPath);
 	if (mappings->fail != NULL)
 	{
-		delete texture; //Free texture before erroring
 		Error(fail = mappings->fail);
 		return;
 	}
@@ -195,14 +255,7 @@ PLAYER::PLAYER(PLAYER **linkedList, const char *specPath, PLAYER *myFollow, int 
 	widthPixels = 0x18;
 	
 	//Render flags
-	renderFlags.xFlip = false;
-	renderFlags.yFlip = false;
 	renderFlags.alignPlane = true;
-	renderFlags.alignBackground = false;
-	renderFlags.assumePixelHeight = false;
-	renderFlags.bit5 = false;
-	renderFlags.bit6 = false;
-	renderFlags.onScreen = false;
 	
 	//Initialize our speeds
 	top = 0x0600;
@@ -224,6 +277,10 @@ PLAYER::PLAYER(PLAYER **linkedList, const char *specPath, PLAYER *myFollow, int 
 	
 	//Set the controller to use
 	controller = myController;
+	
+	//Load our objects
+	spindashDust = new OBJECT(&gLevel->objectList, ObjSpindashDust);
+	((OBJECT*)spindashDust)->parent = this;
 	
 	//Initialize our record arrays
 	for (int i = 0; i < PLAYER_RECORD_LENGTH; i++)
@@ -1193,7 +1250,7 @@ bool PLAYER::Spindash()
 				spindashCounter = 0;
 				
 				//Make our spindash dust visible
-				//spindashDust.anim = 1; //The original uses the dust object for splashing too, we're not doing that
+				((OBJECT*)spindashDust)->anim = 1;
 			}
 			else
 			{
@@ -1232,7 +1289,7 @@ bool PLAYER::Spindash()
 			
 			//Actually go into the roll routine
 			status.inBall = true;
-			//spindashDust.anim = 0;
+			((OBJECT*)spindashDust)->anim = 0;
 			PlaySound(SOUNDID_SPINDASH_RELEASE);
 		}
 		//Charging spindash
@@ -3034,7 +3091,6 @@ void PLAYER::Update()
 void PLAYER::Display()
 {
 	//Handle invulnerability
-	
 	Draw();
 }
 

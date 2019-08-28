@@ -310,6 +310,9 @@ class PLAYER
 		
 		int recordPos;
 		
+		//Objects that belong to us
+		void *spindashDust;
+		
 		//For linked list
 		PLAYER **list;
 		PLAYER *next;
