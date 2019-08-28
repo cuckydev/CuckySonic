@@ -8,7 +8,7 @@ void GHZ_PaletteCycle(LEVEL *lvl)
 
 const uint32_t ghzCloudScroll[] = {0x10000, 0xC000, 0x8000};
 
-void GHZ_BackgroundScroll(uint16_t *array, int16_t *cameraX, int16_t *cameraY)
+void GHZ_BackgroundScroll(bool updateScroll, uint16_t *array, int16_t *cameraX, int16_t *cameraY)
 {
 	uint16_t *arrValue = array;
 	int line = 0;
@@ -19,9 +19,13 @@ void GHZ_BackgroundScroll(uint16_t *array, int16_t *cameraX, int16_t *cameraY)
 	
 	//Scroll clouds
 	static uint16_t cloudScroll[3] = {0, 0, 0};
-	(cloudScroll[0] += 0x10) %= (gLevel->backgroundTexture->width * 0x10);
-	(cloudScroll[1] += 0x0C) %= (gLevel->backgroundTexture->width * 0x10);
-	(cloudScroll[2] += 0x08) %= (gLevel->backgroundTexture->width * 0x10);
+	
+	if (updateScroll)
+	{
+		(cloudScroll[0] += 0x10) %= (gLevel->backgroundTexture->width * 0x10);
+		(cloudScroll[1] += 0x0C) %= (gLevel->backgroundTexture->width * 0x10);
+		(cloudScroll[2] += 0x08) %= (gLevel->backgroundTexture->width * 0x10);
+	}
 	
 	//Cloud layers
 	for (int i = 0; i < 0x20; i++)

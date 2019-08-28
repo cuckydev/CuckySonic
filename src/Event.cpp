@@ -6,7 +6,7 @@ bool HandleEvents()
 	bool noExit = true;
 	bool focusYield = false;
 	
-	while (SDL_PollEvent(NULL) || focusYield)
+	while (SDL_PollEvent(NULL) || (focusYield && noExit))
 	{
 		//Wait for next event (instantaneous if focus gained, just polling then stopping when done)
 		SDL_Event event;

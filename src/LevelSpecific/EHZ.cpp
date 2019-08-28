@@ -35,7 +35,7 @@ static const uint8_t ehzScrollRipple[] =
 	1, 2
 };
 
-void EHZ_BackgroundScroll(uint16_t *array, int16_t *cameraX, int16_t *cameraY)
+void EHZ_BackgroundScroll(bool updateScroll, uint16_t *array, int16_t *cameraX, int16_t *cameraY)
 {
 	uint16_t *arrValue = array;
 	int line = 0;
@@ -57,8 +57,12 @@ void EHZ_BackgroundScroll(uint16_t *array, int16_t *cameraX, int16_t *cameraY)
 	//Water at the horizon (change ripple every 8 frames)
 	static int horWaterTimer = 4;
 	static uint16_t horWaterRipple = 0;
-	if ((horWaterTimer++ & 0x7) == 0)
-		--horWaterRipple;
+	
+	if (updateScroll)
+	{
+		if ((horWaterTimer++ & 0x7) == 0)
+			--horWaterRipple;
+	}
 	
 	for (int i = 0; i < 21; i++)
 	{

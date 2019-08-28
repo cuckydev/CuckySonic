@@ -12,16 +12,16 @@
 #include "GameConstants.h"
 
 //Bug-fixes
-//#define FIX_SPINDASH_ANIM     //Usually when spindashing, if you manage to exit the spindash animation, you'll stay out of it
-//#define FIX_SPINDASH_JUMP     //When you jump the frame after you spindash, you'll jump straight upwards
-//#define FIX_HORIZONTAL_WRAP   //In the originals, for some reason, the LevelBound uses unsigned checks, meaning if you go off to the left, you'll be sent to the right boundary 
+#define FIX_SPINDASH_ANIM     //Usually when spindashing, if you manage to exit the spindash animation, you'll stay out of it
+#define FIX_SPINDASH_JUMP     //When you jump the frame after you spindash, you'll jump straight upwards
+#define FIX_HORIZONTAL_WRAP   //In the originals, for some reason, the LevelBound uses unsigned checks, meaning if you go off to the left, you'll be sent to the right boundary 
 
 //Game differences (Uncomment all for an experience like that of Sonic 1, and comment all for the experience of Sonic 3 and Knuckles)
 //#define SONIC1_SLOPE_ANGLE      //In Sonic 2+, the floor's angle will be replaced with the player's cardinal floor angle if there's a 45+ degree difference
 //#define SONIC1_WALK_ANIMATION   //For some reason, in Sonic 2+, the animation code was messed up, making the first frame of the walk animation last only one frame
 //#define SONIC1_SLOPE_ROTATION   //In Sonic 2+, a few lines were added to the animation code to make the floor rotation more consistent
 //#define SONIC12_SLOPE_RESIST    //In Sonic 3, they made it so you're always affected by slope gravity unless you're on a shallow floor
-//#define SONIC123_SLOPE_REPEL    //In Sonic and Knuckles, the code to make it so you fall off of walls and ceilings when going too slow was completely redone
+//#define SONIC12_SLOPE_REPEL     //In Sonic 3, the code to make it so you fall off of walls and ceilings when going too slow was completely redone
 //#define SONIC1_GROUND_CAP       //In Sonic 1, your speed on the ground is capped to your top speed when above it, even if you're already above it
 //#define SONIC12_AIR_CAP         //In Sonic 1 and 2, your speed in the air is capped to your top speed when above it, even if you're already above it
 //#define SONIC123_ROLL_DUCK      //In Sonic and Knuckles, they added a greater margin of speed for ducking and rolling, so you can duck while moving
@@ -181,12 +181,14 @@ void ObjSpindashDust(OBJECT *object)
 				object->x.pos = ((PLAYER*)object->parent)->x.pos;
 				object->y.pos = ((PLAYER*)object->parent)->y.pos;
 				
-				if (((PLAYER*)object->parent)->status.inAir)
+				//Offset if our height is non-default
+				int heightDifference = 0x13 - ((PLAYER*)object->parent)->defaultYRadius;
+				if (heightDifference)
 				{
 					if (((PLAYER*)object->parent)->status.reverseGravity)
-						object->y.pos += 4;
+						object->y.pos += heightDifference;
 					else
-						object->y.pos -= 4;
+						object->y.pos -= heightDifference;
 				}
 			}
 			break;
@@ -1117,7 +1119,15 @@ void PLAYER::ResetOnFloor()
 	else
 	{
 		//Exit ball form
-		anim = PLAYERANIMATION_WALK;
+		#ifdef FIX_SPINDASH_ANIM
+			if (!spindashing)
+				anim = PLAYERANIMATION_WALK;
+			else
+				anim = PLAYERANIMATION_SPINDASH;
+		#else
+			anim = PLAYERANIMATION_WALK;
+		#endif
+		
 		ResetOnFloor2();
 	}
 }
@@ -1591,7 +1601,7 @@ void PLAYER::SlopeResist()
 		//Get our slope gravity
 		int16_t sin;
 		GetSine(angle, &sin, NULL);
-		sin = sin * 2 / 16;
+		sin = (sin * 0x20) >> 8;
 		
 		#ifndef SONIC12_SLOPE_RESIST
 			//Apply our slope gravity (if our inertia is non-zero, always apply, if it is 0, apply if the force is at least 0xD units per frame)
@@ -1653,7 +1663,7 @@ void PLAYER::SlopeRepel()
 	{
 		if (moveLock == 0)
 		{
-			#ifndef SONIC123_SLOPE_REPEL
+			#ifndef SONIC12_SLOPE_REPEL
 				//Are we on a steep enough slope and going too slow?
 				if (((angle + 0x18) & 0xFF) >= 0x30 && abs(inertia) < 0x280)
 				{
@@ -1936,7 +1946,7 @@ void PLAYER::Roll()
 			if (controlHeld.down)
 			{
 				if (abs(inertia) >= 0x100)
-					PLAYER::ChkRoll();
+					ChkRoll();
 				else
 					anim = PLAYERANIMATION_DUCK;
 			}
@@ -1947,7 +1957,7 @@ void PLAYER::Roll()
 			}
 		#else
 			if (controlHeld.down && abs(inertia) >= 0x80)
-				PLAYER::ChkRoll();
+				ChkRoll();
 		#endif
 	}
 }
@@ -2106,6 +2116,10 @@ void PLAYER::KillCharacter()
 		xVel = 0;
 		yVel = -0x700;
 		inertia = 0;
+		
+		//If the lead player, quit level's update
+		if (follow == NULL)
+			gLevel->updateStage = false;
 		
 		//Do animation and sound
 		anim = PLAYERANIMATION_DEATH;
@@ -3238,8 +3252,12 @@ void PLAYER::DebugMode()
 	switch (debug >> 8)
 	{
 		case 0:
-			debug += 0x100;
+			//Resume game state
 			cameraLock = false;
+			gLevel->updateStage = true;
+			
+			//Initialize debug and routine
+			debug += 0x100;
 			debugAccel = 12;
 			debugSpeed = 1;
 		//Fallthrough

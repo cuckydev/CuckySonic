@@ -138,7 +138,7 @@ class LEVEL
 		int frameCounter; //Frames the level has been loaded
 		
 		bool updateTime; //If the timer should update (at the end of the level)
-		bool updateObjects; //If non-player objects should update (dead)
+		bool updateStage; //If objects and other stuff should update (player not dead)
 		
 		//Art
 		ARTFORMAT artFormat;
@@ -208,7 +208,7 @@ class LEVEL
 		TEXTURE *GetObjectTexture(uint8_t *data, int dWidth, int dHeight); //just in case
 		
 		void PaletteUpdate();
-		void GetBackgroundScroll(uint16_t *array, int16_t *cameraX, int16_t *cameraY);
+		void GetBackgroundScroll(bool updateScroll, uint16_t *array, int16_t *cameraX, int16_t *cameraY);
 		
 		bool Update(bool checkTitleCard);
 		void Draw();

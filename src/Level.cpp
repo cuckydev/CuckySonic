@@ -528,7 +528,7 @@ LEVEL::LEVEL(int id, int players, const char **playerPaths)
 	
 	//Initialize state
 	updateTime = true;
-	updateObjects = true;
+	updateStage = true;
 	
 	//Play music
 	PlayMusic(tableEntry->music);
@@ -718,15 +718,15 @@ void LEVEL::PaletteUpdate()
 	}
 }
 
-void LEVEL::GetBackgroundScroll(uint16_t *array, int16_t *cameraX, int16_t *cameraY)
+void LEVEL::GetBackgroundScroll(bool updateScroll, uint16_t *array, int16_t *cameraX, int16_t *cameraY)
 {
 	switch (levelId)
 	{
 		case 0: //Green Hill Zone
-			GHZ_BackgroundScroll(array, cameraX, cameraY);
+			GHZ_BackgroundScroll(updateScroll, array, cameraX, cameraY);
 			break;
 		case 1: //Emerald Hill Zone
-			EHZ_BackgroundScroll(array, cameraX, cameraY);
+			EHZ_BackgroundScroll(updateScroll, array, cameraX, cameraY);
 			break;
 	}
 }
@@ -759,7 +759,7 @@ bool LEVEL::Update(bool checkTitleCard)
 		OBJECT *next = object->next;
 		
 		//Update
-		if (updateObjects)
+		if (updateStage)
 		{
 			if (object->Update())
 				return false;
@@ -801,7 +801,7 @@ void LEVEL::Draw()
 		int16_t backX = camera->x;
 		int16_t backY = camera->y;
 		
-		GetBackgroundScroll(backgroundScroll, &backX, &backY);
+		GetBackgroundScroll(updateStage, backgroundScroll, &backX, &backY);
 		
 		//Draw each scanline
 		for (int i = 0; i < backgroundTexture->height; i++)
