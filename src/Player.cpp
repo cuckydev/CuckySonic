@@ -12,7 +12,8 @@
 #include "GameConstants.h"
 
 //Bug-fixes
-//#define FIX_SPINDASH_ANIM     //Usually when spindashing, if you manage to exit the spindash animation, you'll stay out of it, this fixes that
+//#define FIX_SPINDASH_ANIM     //Usually when spindashing, if you manage to exit the spindash animation, you'll stay out of it
+//#define FIX_SPINDASH_JUMP     //When you jump the frame after you spindash, you'll jump straight upwards
 //#define FIX_HORIZONTAL_WRAP   //In the originals, for some reason, the LevelBound uses unsigned checks, meaning if you go off to the left, you'll be sent to the right boundary 
 
 //Game differences (Uncomment all for an experience like that of Sonic 1, and comment all for the experience of Sonic 3 and Knuckles)
@@ -1291,6 +1292,14 @@ bool PLAYER::Spindash()
 			status.inBall = true;
 			((OBJECT*)spindashDust)->anim = 0;
 			PlaySound(SOUNDID_SPINDASH_RELEASE);
+			
+			#ifdef FIX_SPINDASH_JUMP
+				//Convert our inertia into global speeds
+				int16_t sin, cos;
+				GetSine(angle, &sin, &cos);
+				xVel = (cos * inertia) / 0x100;
+				yVel = (sin * inertia) / 0x100;
+			#endif
 		}
 		//Charging spindash
 		else
@@ -1582,23 +1591,33 @@ void PLAYER::SlopeResist()
 		//Get our slope gravity
 		int16_t sin;
 		GetSine(angle, &sin, NULL);
-		sin = (sin * 0x20) / 0x100;
+		sin = sin * 2 / 16;
 		
-		//Apply our slope gravity (if our inertia is non-zero, always apply, if it is 0, apply if the force is at least 0xD units per frame)
-		if (inertia != 0)
-		{
-			if (inertia < 0)
-				inertia += sin;
-			else if (sin != 0)
-				inertia += sin;
-		}
 		#ifndef SONIC12_SLOPE_RESIST
-		else
-		{
-			
-			if (abs(sin) >= 0xD)
+			//Apply our slope gravity (if our inertia is non-zero, always apply, if it is 0, apply if the force is at least 0xD units per frame)
+			if (inertia != 0)
+			{
+				if (inertia < 0)
+					inertia += sin;
+				else if (sin != 0)
+					inertia += sin;
+			}
+			else
+			{
+				
+				if (abs(sin) >= 0xD)
+					inertia += sin;
+			}
+		#else
+			if (inertia > 0)
+			{
+				if (sin != 0)
+					inertia += sin;
+			}
+			else if (inertia < 0)
+			{
 				inertia += sin;
-		}
+			}
 		#endif
 	}
 }
