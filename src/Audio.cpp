@@ -81,6 +81,8 @@ SOUND::SOUND(const char *path)
 	}
 	
 	//Build our audio CVT
+	int f = SDL_GetTicks();
+	
 	SDL_AudioCVT wavCVT;
 	if (SDL_BuildAudioCVT(&wavCVT, wavSpec.format, wavSpec.channels, wavSpec.freq, AUDIO_F32, 2, wavSpec.freq) < 0)
 	{
@@ -107,6 +109,8 @@ SOUND::SOUND(const char *path)
 
 	//Convert our data, finally
 	SDL_ConvertAudio(&wavCVT);
+	
+	LOG(("time %d ", SDL_GetTicks() - f));
 	
 	//Use the data given
 	buffer = (float*)wavCVT.buf;

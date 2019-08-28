@@ -64,11 +64,11 @@ void TITLECARD::UpdateAndDraw()
 	//Quit if finished
 	if (frame >= END_TIME)
 		return;
-	
 	if (frame == subT)
 		gLevel->inTitleCard = false;
 	
-	//Get the position of the main zone strip
+	//Get the position of the level's name strip
+	int dy = (gLevel->playerList->y.pos + (gLevel->playerList->yRadius - gLevel->playerList->defaultYRadius)) - gLevel->camera->y - 48;
 	int namePosition = 0;
 	
 	if (frame < TRANSITION_TIME)
@@ -76,7 +76,7 @@ void TITLECARD::UpdateAndDraw()
 	if (frame >= END_TIME - TRANSITION_TIME)
 		namePosition = (frame - END_TIME + TRANSITION_TIME) * TRANSITION_SPEED;
 	
-	//Get the position of the act number strip
+	//Get the position of the level's subtitle strip
 	int subtitlePosition = 0;
 	
 	if (frame < TRANSITION_TIME)
@@ -85,22 +85,22 @@ void TITLECARD::UpdateAndDraw()
 		subtitlePosition = (frame - END_TIME + TRANSITION_TIME) * -TRANSITION_SPEED;
 	
 	//Draw level name
-	DrawText(name, namePosition + (SCREEN_WIDTH / 2 - 110), SCREEN_HEIGHT / 2 - 12);
+	DrawText(name, namePosition + (SCREEN_WIDTH / 2 - 110), dy - 12);
 	
 	//Draw level subtitle
-	DrawText(subtitle, subtitlePosition + (SCREEN_WIDTH / 2 + 32), SCREEN_HEIGHT / 2 + 12);
+	DrawText(subtitle, subtitlePosition + (SCREEN_WIDTH / 2 + 32), dy + 12);
 	
-	//Draw the strip behind the main zone name thing, and the "CUCKYSONIC" label
+	//Draw the strip behind the name text, and the "CUCKYSONIC" label
 	SDL_Rect labelSrc = {0, 0, 64, 8};
-	texture->Draw(LEVEL_RENDERLAYER_TITLECARD, texture->loadedPalette, &labelSrc, namePosition, SCREEN_HEIGHT / 2 - 12 + 4, false, false);
+	texture->Draw(LEVEL_RENDERLAYER_TITLECARD, texture->loadedPalette, &labelSrc, namePosition, dy - 12 + 4, false, false);
 	
 	for (int x = 0; x < SCREEN_WIDTH; x += 16)
 	{
 		SDL_Rect stripSrc = {0, 8, 16, 16};
-		texture->Draw(LEVEL_RENDERLAYER_TITLECARD, texture->loadedPalette, &stripSrc, x + namePosition, SCREEN_HEIGHT / 2 - 12, false, false);
+		texture->Draw(LEVEL_RENDERLAYER_TITLECARD, texture->loadedPalette, &stripSrc, x + namePosition, dy - 12, false, false);
 	}
 	
-	//Draw background (show the player first)
+	//Draw background (zoom out to show the player, then zoom completely out about a second later)
 	int gap = 0;
 	if (frame >= finT)
 		gap = 32 + (frame - finT) * TRANSITION_SPEED;
@@ -108,7 +108,7 @@ void TITLECARD::UpdateAndDraw()
 		gap = min((frame - subT) * TRANSITION_SPEED / 2, 32);
 	
 	int16_t xg = gLevel->playerList->x.pos - gLevel->camera->x;
-	int16_t yg = gLevel->playerList->y.pos - gLevel->camera->y;
+	int16_t yg = (gLevel->playerList->y.pos + (gLevel->playerList->yRadius - gLevel->playerList->defaultYRadius)) - gLevel->camera->y;
 	
 	SDL_Rect left = {0, 0, xg - gap, SCREEN_HEIGHT};
 	SDL_Rect top = {0, 0, SCREEN_WIDTH, yg - gap};
@@ -119,6 +119,13 @@ void TITLECARD::UpdateAndDraw()
 	gSoftwareBuffer->DrawQuad(LEVEL_RENDERLAYER_TITLECARD, &right, &titleCardBackground);
 	gSoftwareBuffer->DrawQuad(LEVEL_RENDERLAYER_TITLECARD, &top, &titleCardBackground);
 	gSoftwareBuffer->DrawQuad(LEVEL_RENDERLAYER_TITLECARD, &bottom, &titleCardBackground);
+	
+	//Draw corners
+	SDL_Rect cornerSrc = {16, 8, 32, 32};
+	texture->Draw(LEVEL_RENDERLAYER_TITLECARD, texture->loadedPalette, &cornerSrc, xg - gap, yg - gap, false, false);
+	texture->Draw(LEVEL_RENDERLAYER_TITLECARD, texture->loadedPalette, &cornerSrc, xg + gap - 32, yg - gap, true, false);
+	texture->Draw(LEVEL_RENDERLAYER_TITLECARD, texture->loadedPalette, &cornerSrc, xg - gap, yg + gap - 32, false, true);
+	texture->Draw(LEVEL_RENDERLAYER_TITLECARD, texture->loadedPalette, &cornerSrc, xg + gap - 32, yg + gap - 32, true, true);
 	
 	//Increment frame
 	frame++;

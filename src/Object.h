@@ -30,7 +30,7 @@ class OBJECT
 			bool onScreen : 1;
 		} renderFlags;
 		
-		bool doRender;
+		bool isDrawing;
 		
 		//Our texture and mappings
 		TEXTURE *texture;
@@ -164,4 +164,6 @@ class OBJECT
 		
 		bool Update();
 		void Draw();
+		void DrawToScreen();
+		void DrawRecursive();
 };

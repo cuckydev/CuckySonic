@@ -4,7 +4,7 @@
 #include "../Log.h"
 #include "../MathUtil.h"
 
-void ObjBridgeLogSegment(OBJECT *object)
+void ObjBridgeSegment(OBJECT *object)
 {
 	if (object->routine == 0)
 	{
@@ -24,8 +24,12 @@ void ObjBridgeLogSegment(OBJECT *object)
 				object->texture = gLevel->GetObjectTexture("data/Object/EHZBridge.bmp");
 				break;
 		}
+		
 		object->mappings = new MAPPINGS("data/Object/Bridge.map");
 	}
+	
+	//Draw this segment
+	object->Draw();
 }
 
 void ObjBridge(OBJECT *object)
@@ -59,7 +63,7 @@ void ObjBridge(OBJECT *object)
 			//Create our log segments
 			for (int i = 0; i < subtype; i++)
 			{
-				OBJECT *newSegment = new OBJECT(&object->children, &ObjBridgeLogSegment);
+				OBJECT *newSegment = new OBJECT(&object->children, &ObjBridgeSegment);
 				newSegment->parent = (void*)object;
 				newSegment->x.pos = bridgeLeft + 16 * i;
 				newSegment->y.pos = object->scratchU16[SCRATCH_ORIGINY];

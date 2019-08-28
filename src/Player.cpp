@@ -2768,6 +2768,10 @@ void PLAYER::CPUControl()
 //Update
 void PLAYER::Update()
 {
+	//Clear drawing flag
+	isDrawing = false;
+	
+	//Update (check if we're using debug, first)
 	switch (debug & 0xFF)
 	{
 		case 0:
@@ -2935,8 +2939,8 @@ void PLAYER::Update()
 						}
 					}
 					
-					//TODO: Level wrapping
-					//bsr.s	Sonic_Display
+					//Draw, record position, and handle super and water
+					Display();
 					//bsr.w	SonicKnux_SuperHyper
 					RecordPos();
 					//bsr.w	Sonic_Water
@@ -2965,6 +2969,7 @@ void PLAYER::Update()
 					break;
 					
 				case PLAYERROUTINE_HURT:
+					Draw();
 					break;
 					
 				case PLAYERROUTINE_DEATH:
@@ -2989,8 +2994,9 @@ void PLAYER::Update()
 						yPosLong += yVel * 0x100;
 					yVel += 0x38;
 					
-					//Record Pos
+					//Record pos and draw
 					RecordPos();
+					Draw();
 					break;
 					
 				case PLAYERROUTINE_RESET_LEVEL:
@@ -3002,6 +3008,7 @@ void PLAYER::Update()
 		
 		case 1: //Object placement mode
 			DebugMode();
+			Draw();
 			break;
 			
 		case 2: //Mapping test mode
@@ -3012,6 +3019,9 @@ void PLAYER::Update()
 			//Cycle through our mappings
 			mappingFrame++;
 			mappingFrame %= mappings->size;
+			
+			//Draw
+			Draw();
 			break;
 	}
 	
@@ -3021,32 +3031,42 @@ void PLAYER::Update()
 }
 
 //Draw our player
+void PLAYER::Display()
+{
+	//Handle invulnerability
+	
+	Draw();
+}
+
 void PLAYER::Draw()
 {
-	if (doRender)
+	//Set drawing flag
+	isDrawing = true;
+}
+
+void PLAYER::DrawToScreen()
+{
+	//Draw us
+	if (isDrawing)
 	{
 		//Don't draw if we don't have textures or mappings
-		if (texture == NULL || mappings == NULL)
-			return;
-		
-		//Draw our sprite
-		SDL_Rect *mapRect = &mappings->rect[mappingFrame];
-		SDL_Point *mapOrig = &mappings->origin[mappingFrame];
-		
-		int origX = mapOrig->x;
-		int origY = mapOrig->y;
-		if (renderFlags.xFlip)
-			origX = mapRect->w - origX;
-		if (renderFlags.yFlip)
-			origY = mapRect->h - origY;
-		
-		int alignX = renderFlags.alignPlane ? gLevel->camera->x : 0;
-		int alignY = renderFlags.alignPlane ? gLevel->camera->y : 0;
-		texture->Draw((highPriority ? LEVEL_RENDERLAYER_OBJECT_HIGH_0 : LEVEL_RENDERLAYER_OBJECT_0) + ((OBJECT_LAYERS - 1) - priority), texture->loadedPalette, mapRect, x.pos - origX - alignX, y.pos - origY - alignY, renderFlags.xFlip, renderFlags.yFlip);
-	}
-	else
-	{
-		doRender = true;
+		if (texture != NULL && mappings != NULL)
+		{
+			//Draw our sprite
+			SDL_Rect *mapRect = &mappings->rect[mappingFrame];
+			SDL_Point *mapOrig = &mappings->origin[mappingFrame];
+			
+			int origX = mapOrig->x;
+			int origY = mapOrig->y;
+			if (renderFlags.xFlip)
+				origX = mapRect->w - origX;
+			if (renderFlags.yFlip)
+				origY = mapRect->h - origY;
+			
+			int alignX = renderFlags.alignPlane ? gLevel->camera->x : 0;
+			int alignY = renderFlags.alignPlane ? gLevel->camera->y : 0;
+			texture->Draw((highPriority ? LEVEL_RENDERLAYER_OBJECT_HIGH_0 : LEVEL_RENDERLAYER_OBJECT_0) + ((OBJECT_LAYERS - 1) - priority), texture->loadedPalette, mapRect, x.pos - origX - alignX, y.pos - origY - alignY, renderFlags.xFlip, renderFlags.yFlip);
+		}
 	}
 }
 

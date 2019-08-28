@@ -134,6 +134,12 @@ class LEVEL
 		//Level ID
 		int levelId;
 		
+		//Game update stuff
+		int frameCounter; //Frames the level has been loaded
+		
+		bool updateTime; //If the timer should update (at the end of the level)
+		bool updateObjects; //If non-player objects should update (dead)
+		
 		//Art
 		ARTFORMAT artFormat;
 		TEXTURE *tileTexture;

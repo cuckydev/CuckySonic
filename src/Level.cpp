@@ -526,6 +526,10 @@ LEVEL::LEVEL(int id, int players, const char **playerPaths)
 	
 	inTitleCard = true;
 	
+	//Initialize state
+	updateTime = true;
+	updateObjects = true;
+	
 	//Play music
 	PlayMusic(tableEntry->music);
 	
@@ -755,8 +759,11 @@ bool LEVEL::Update(bool checkTitleCard)
 		OBJECT *next = object->next;
 		
 		//Update
-		if (object->Update())
-			return false;
+		if (updateObjects)
+		{
+			if (object->Update())
+				return false;
+		}
 		
 		//Check for deletion
 		if (object->deleteFlag)
@@ -840,11 +847,10 @@ void LEVEL::Draw()
 		}
 	}
 	
-	//Draw players (we draw backwards, we want the leader to be drawn first)
+	//Draw players and objects
 	for (PLAYER *player = playerList; player != NULL; player = player->next)
-		player->Draw();
+		player->DrawToScreen();
 	
-	//Draw objects
 	for (OBJECT *object = objectList; object != NULL; object = object->next)
-		object->Draw();
+		object->DrawRecursive();
 }

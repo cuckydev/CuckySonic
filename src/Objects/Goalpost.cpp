@@ -88,6 +88,7 @@ void ObjGoalpost(OBJECT *object)
 			break;
 	}
 	
-	//Animate sprite
+	//Animate and draw sprite
 	object->Animate(animationList);
+	object->Draw();
 }

@@ -44,9 +44,14 @@ void ObjMotobug(OBJECT *object)
 		//Fallthrough
 		case 1: //Waiting to spawn
 		{
-			//Detect the floor (if not inside the ground, fall)
+			//Fall down to the ground
 			object->MoveAndFall();
 			
+			//If moving upwards (overflow) we're probably bugged, so delete us
+			if (object->yVel < 0)
+				object->deleteFlag = true;
+			
+			//Check for the floor
 			int16_t distance = object->CheckFloorEdge(COLLISIONLAYER_NORMAL_TOP, object->x.pos, object->y.pos, NULL);
 			if (distance >= 0)
 				break;
@@ -62,7 +67,7 @@ void ObjMotobug(OBJECT *object)
 		{
 			switch (object->routineSecondary)
 			{
-				case 0: //@move (nice wrong name)
+				case 0:
 				{
 					if (--object->scratchS8[SCRATCH_TIME] < 0)
 					{
@@ -78,7 +83,7 @@ void ObjMotobug(OBJECT *object)
 					}
 					break;
 				}
-				case 1: //@findfloor (nice half wrong name)
+				case 1:
 				{
 					//Move and check if we're going over an edge
 					object->Move();
@@ -102,7 +107,9 @@ void ObjMotobug(OBJECT *object)
 				}
 			}
 			
+			//Animate and draw
 			object->Animate(animationList);
+			object->Draw();
 			break;
 		}
 	}

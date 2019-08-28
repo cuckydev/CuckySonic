@@ -98,7 +98,7 @@ class PLAYER
 			bool onScreen : 1;
 		} renderFlags;
 		
-		bool doRender;
+		bool isDrawing;
 		
 		//Our texture and mappings
 		TEXTURE *texture;
@@ -386,7 +386,10 @@ class PLAYER
 		void CPUControl();
 		
 		void Update();
+		
+		void Display();
 		void Draw();
+		void DrawToScreen();
 		
 		void RestoreStateDebug();
 		void DebugControl();

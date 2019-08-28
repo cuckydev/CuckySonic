@@ -204,6 +204,9 @@ void OBJECT::PlatformObject2(PLAYER *player, int i, int16_t width, int16_t heigh
 //Update and drawing objects
 bool OBJECT::Update()
 {
+	//Clear drawing flag
+	isDrawing = false;
+	
 	//Run our object code
 	if (function != NULL)
 		function(this);
@@ -226,33 +229,36 @@ bool OBJECT::Update()
 
 void OBJECT::Draw()
 {
-	if (doRender)
+	//Set drawing flag
+	isDrawing = true;
+}
+
+void OBJECT::DrawToScreen()
+{
+	//Don't draw if we don't have textures or mappings
+	if (texture != NULL && mappings != NULL)
 	{
-		//Don't draw if we don't have textures or mappings
-		if (texture != NULL && mappings != NULL)
-		{
-			//Draw our sprite
-			SDL_Rect *mapRect = &mappings->rect[mappingFrame];
-			SDL_Point *mapOrig = &mappings->origin[mappingFrame];
-			
-			int origX = mapOrig->x;
-			int origY = mapOrig->y;
-			if (renderFlags.xFlip)
-				origX = mapRect->w - origX;
-			if (renderFlags.yFlip)
-				origY = mapRect->h - origY;
-			
-			int alignX = renderFlags.alignPlane ? gLevel->camera->x : 0;
-			int alignY = renderFlags.alignPlane ? gLevel->camera->y : 0;
-			texture->Draw((highPriority ? LEVEL_RENDERLAYER_OBJECT_HIGH_0 : LEVEL_RENDERLAYER_OBJECT_0) + ((OBJECT_LAYERS - 1) - priority), texture->loadedPalette, mapRect, x.pos - origX - alignX, y.pos - origY - alignY, renderFlags.xFlip, renderFlags.yFlip);
-		}
+		//Draw our sprite
+		SDL_Rect *mapRect = &mappings->rect[mappingFrame];
+		SDL_Point *mapOrig = &mappings->origin[mappingFrame];
+		
+		int origX = mapOrig->x;
+		int origY = mapOrig->y;
+		if (renderFlags.xFlip)
+			origX = mapRect->w - origX;
+		if (renderFlags.yFlip)
+			origY = mapRect->h - origY;
+		
+		int alignX = renderFlags.alignPlane ? gLevel->camera->x : 0;
+		int alignY = renderFlags.alignPlane ? gLevel->camera->y : 0;
+		texture->Draw((highPriority ? LEVEL_RENDERLAYER_OBJECT_HIGH_0 : LEVEL_RENDERLAYER_OBJECT_0) + ((OBJECT_LAYERS - 1) - priority), texture->loadedPalette, mapRect, x.pos - origX - alignX, y.pos - origY - alignY, renderFlags.xFlip, renderFlags.yFlip);
 	}
-	else
-	{
-		doRender = true;
-	}
-	
-	//Draw children
+}
+
+void OBJECT::DrawRecursive()
+{
+	if (isDrawing)
+		DrawToScreen();
 	for (OBJECT *object = children; object != NULL; object = object->next)
-		object->Draw();
+		object->DrawRecursive();
 }
