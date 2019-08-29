@@ -51,6 +51,11 @@ SOURCES = \
 OBJECTS = $(addprefix obj/$(FILENAME)/, $(addsuffix .o, $(SOURCES)))
 DEPENDENCIES = $(addprefix obj/$(FILENAME)/, $(addsuffix .o.d, $(SOURCES)))
 
+#If compiling a windows build, add the Windows icon object into our executable
+ifeq ($(WINDOWS), 1)
+	OBJECTS += obj/$(FILENAME)/WindowsIcon.o
+endif
+
 #Compilation code
 all: build/$(FILENAME)
 
@@ -67,6 +72,11 @@ obj/$(FILENAME)/%.o: src/%.cpp
 	@echo Compiled!
 	
 include $(wildcards $(DEPENDENCIES))
+
+#Compile the Windows icon file into an object
+obj/$(FILENAME)/WindowsIcon.o: res/icon.rc res/icon.ico
+	@mkdir -p $(@D)
+	@windres $< $@
 
 #Remove all our compiled objects
 clean:
