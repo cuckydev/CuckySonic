@@ -3,7 +3,7 @@ ifeq ($(RELEASE), 1)
 	CXXFLAGS = -O3 -s -flto
 	FILENAME_DEF = release
 else
-	CXXFLAGS = -O0 -g -DDEBUG
+	CXXFLAGS = -O0 -ggdb3 -DDEBUG
 	FILENAME_DEF = debug
 endif
 

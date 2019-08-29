@@ -40,7 +40,7 @@ OBJECT::~OBJECT()
 	//Unload texture and mappings
 	if (texture && texture->list == NULL)
 		delete texture;
-	if (mappings)
+	if (mappings && mappings->list == NULL)
 		delete mappings;
 	
 	//Detach from linked list
