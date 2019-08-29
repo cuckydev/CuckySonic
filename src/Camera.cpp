@@ -1,10 +1,25 @@
 #include "Camera.h"
 #include "Game.h"
 #include "Level.h"
+#include "MathUtil.h"
 #include "Log.h"
 
-//#define CAMERA_CENTERED
+//Bug-fixes
+//#define FIX_CAMERA_YSHIFT    //This makes the camera shifting for when rolling less bad
+
+//Optional differences
 //#define CAMERA_CD_PAN
+
+//Constants
+#define CAMERA_GROUND_YMARGIN_BOTTOM 0
+#define CAMERA_GROUND_YMARGIN_OFFSET 16
+
+#define CAMERA_AIR_YMARGIN_BOTTOM 64
+#define CAMERA_AIR_YMARGIN_OFFSET 48
+
+#define CAMERA_XMARGIN_RIGHT 16
+#define CAMERA_XMARGIN_OFFSET 16
+
 #define LOOK_PANTIME 120
 
 #define approach(var, to, am)	if (var < to)	\
@@ -54,30 +69,35 @@ void CAMERA::Track(PLAYER *trackPlayer)
 	}
 	
 	//Camera panning
-	#if defined(CAMERA_CD_PAN)
+	#ifdef CAMERA_CD_PAN
 		int16_t speed = trackPlayer->inertia;
 		
 		if (!trackPlayer->scrollDelay) //Don't increase if scroll is delayed
 		{
 			if (abs(speed) >= 0x600 || trackPlayer->spindashing)
-			{
-				//Pan towards our moving direction
-				approach(xPan, ((trackPlayer->spindashing ? trackPlayer->status.xFlip : speed < 0) ? -64 : 64), 2);
-			}
+				approach(xPan, ((trackPlayer->spindashing ? trackPlayer->status.xFlip : speed < 0) ? -64 : 64), 2); //Pan towards our moving direction
 			else
-			{
-				//Unpan
-				approach(xPan, 0, 2);
-			}
+				approach(xPan, 0, 2); //Unpan
 		}
 		
 		//Pan our track position
 		trackX += xPan;
 	#endif
 	
-	//Shift downwards when rolling
-	if (trackPlayer->status.inBall)
-		trackY -= (trackPlayer->defaultYRadius - trackPlayer->rollYRadius);
+	#ifndef FIX_CAMERA_YSHIFT
+		//Shift downwards when rolling
+		if (trackPlayer->status.inBall)
+			trackY -= (trackPlayer->defaultYRadius - trackPlayer->rollYRadius);
+	#else
+		//Shift downwards when rolling
+		uint8_t difference = trackPlayer->defaultYRadius - trackPlayer->yRadius;
+	
+		int16_t sin, cos;
+		GetSine(trackPlayer->angle - 0x40, &sin, &cos);
+		
+		trackX += cos * difference / 0x100;
+		trackY += sin * difference / 0x100;
+	#endif
 	
 	//Handle looking up and down
 	if (trackPlayer->anim == PLAYERANIMATION_LOOKUP || trackPlayer->anim == PLAYERANIMATION_DUCK)
@@ -104,13 +124,8 @@ void CAMERA::Track(PLAYER *trackPlayer)
 	trackY += lookPan;
 	
 	//Scroll horizontally to our tracked position
-	#ifdef CAMERA_CENTERED
-		int rDiff = (trackX - x) - (SCREEN_WIDTH / 2);
-		int lDiff = (SCREEN_WIDTH / 2) - (trackX - x);
-	#else
-		int rDiff = (trackX - x) - (SCREEN_WIDTH / 2);
-		int lDiff = ((SCREEN_WIDTH / 2) - 16) - (trackX - x);
-	#endif
+	int rDiff = (trackX - x) - (SCREEN_WIDTH / 2 + CAMERA_XMARGIN_RIGHT - CAMERA_XMARGIN_OFFSET);
+	int lDiff = (SCREEN_WIDTH / 2 - CAMERA_XMARGIN_OFFSET) - (trackX - x);
 	
 	if (rDiff > 0)
 		x += (rDiff > 16 ? 16 : rDiff);
@@ -122,14 +137,14 @@ void CAMERA::Track(PLAYER *trackPlayer)
 	
 	if (trackPlayer->status.inAir)
 	{
-		tDiff = ((SCREEN_HEIGHT / 2) - 48) - (trackY - y);
-		bDiff = (trackY - y) - ((SCREEN_HEIGHT / 2) + 16);
+		tDiff = (SCREEN_HEIGHT / 2 - CAMERA_AIR_YMARGIN_OFFSET) - (trackY - y);
+		bDiff = (trackY - y) - (SCREEN_HEIGHT / 2 + CAMERA_AIR_YMARGIN_BOTTOM - CAMERA_AIR_YMARGIN_OFFSET);
 		vScroll = 16;
 	}
 	else
 	{
-		tDiff = ((SCREEN_HEIGHT / 2) - 16) - (trackY - y);
-		bDiff = (trackY - y) - ((SCREEN_HEIGHT / 2) - 16);
+		tDiff = (SCREEN_HEIGHT / 2 - CAMERA_GROUND_YMARGIN_OFFSET) - (trackY - y);
+		bDiff = (trackY - y) - (SCREEN_HEIGHT / 2 + CAMERA_GROUND_YMARGIN_BOTTOM - CAMERA_GROUND_YMARGIN_OFFSET);
 		vScroll = abs(trackPlayer->inertia) >= 0x800 ? 16 : 6;
 	}
 	

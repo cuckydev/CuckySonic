@@ -26,30 +26,38 @@ void ObjGoalpost(OBJECT *object)
 	switch (object->routine)
 	{
 		case 0:
+		{
 			//Advance routine
 			object->routine++;
 			
 			//Load graphics
 			object->texture = gLevel->GetObjectTexture("data/Object/Goalpost.bmp");
-			object->mappings = new MAPPINGS("data/Object/Goalpost.map");
+			object->mappings = gLevel->GetObjectMappings("data/Object/Goalpost.map");
 			
 			//Initialize other properties
 			object->renderFlags.alignPlane = true;
 			object->widthPixels = 0x18;
 			object->priority = 4;
+		}
 //Fallthrough
 		case 1: //Check for contact
+		{
+			//If near the end of the level, lock screen
+			int16_t boundary = gLevel->rightBoundary2 - SCREEN_WIDTH - 0x100;
+			if (gLevel->camera->x >= boundary)
+				gLevel->leftBoundary2 = boundary;
+			
 			//If the main player is near us, start spinning
 			if (gLevel->playerList->x.pos >= object->x.pos && gLevel->playerList->x.pos < (object->x.pos + 0x20))
 			{
-				//Lock the camera
+				//Lock the camera and increment routine
 				gLevel->leftBoundary2 = gLevel->rightBoundary2 - SCREEN_WIDTH;
-				
-				//Increment routine
 				object->routine++;
 			}
 			break;
+		}
 		case 2: //Touched and spinning
+		{
 			//Handle our spin timer
 			if (--object->scratchS8[SCRATCH_SPIN_TIME] < 0)
 			{
@@ -60,7 +68,9 @@ void ObjGoalpost(OBJECT *object)
 					object->routine++;
 			}
 			break;
+		}
 		case 3: //Make players run to the right of the screen
+		{
 			for (PLAYER *player = gLevel->playerList; player != NULL; player = player->next)
 			{
 				//Skip if debug is enabled
@@ -80,12 +90,15 @@ void ObjGoalpost(OBJECT *object)
 					object->routine++;
 			}
 			break;
+		}
 		case 4: //End of level
+		{
 			//TEMP: Load next level
 			gLevel->SetFade(false, false);
 			gGameLoadLevel++;
 			gGameLoadLevel %= 2;
 			break;
+		}
 	}
 	
 	//Animate and draw sprite

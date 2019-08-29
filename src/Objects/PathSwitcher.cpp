@@ -45,6 +45,13 @@ void ObjPathSwitcher(OBJECT *object)
 			
 			for (PLAYER *player = gLevel->playerList; player != NULL; player = player->next)
 			{
+				//Don't check if in debug mode
+				if (player->debug)
+				{
+					i++;
+					continue;
+				}
+				
 				//Get which side we're on
 				bool newSide = object->playerContact[i].extraBit;
 				if (object->subtype & MASK_VERTICAL)

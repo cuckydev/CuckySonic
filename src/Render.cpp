@@ -64,7 +64,7 @@ TEXTURE::TEXTURE(TEXTURE **linkedList, const char *path)
 	textureYFlip = (uint8_t*)malloc(bitmap->w * bitmap->h);
 	textureXYFlip = (uint8_t*)malloc(bitmap->w * bitmap->h);
 	
-	if (!(texture && textureXFlip && textureYFlip && textureXYFlip))
+	if (!(texture != NULL && textureXFlip != NULL && textureYFlip != NULL && textureXYFlip != NULL))
 	{
 		SDL_FreeSurface(bitmap);
 		
@@ -117,7 +117,7 @@ TEXTURE::TEXTURE(TEXTURE **linkedList, uint8_t *data, int dWidth, int dHeight)
 	textureYFlip = (uint8_t*)malloc(dWidth * dHeight);
 	textureXYFlip = (uint8_t*)malloc(dWidth * dHeight);
 	
-	if (!(texture && textureXFlip && textureYFlip && textureXYFlip))
+	if (!(texture != NULL && textureXFlip != NULL && textureYFlip != NULL && textureXYFlip != NULL))
 	{
 		free(texture); //This frees any buffers that successfully allocated
 		free(textureXFlip);
@@ -164,19 +164,6 @@ TEXTURE::~TEXTURE()
 	
 	if (loadedPalette)
 		delete loadedPalette;
-	
-	//Remove from linked list if given
-	if (list != NULL)
-	{
-		for (TEXTURE **texture = list; *texture != NULL; texture = &(*texture)->next)
-		{
-			if (*texture == this)
-			{
-				*texture = next;
-				break;
-			}
-		}
-	}
 }
 
 void TEXTURE::Draw(int layer, PALETTE *palette, const SDL_Rect *src, int x, int y, bool xFlip, bool yFlip)

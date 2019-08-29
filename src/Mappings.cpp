@@ -1,14 +1,18 @@
 #include "SDL_rwops.h"
 #include "Mappings.h"
 #include "Path.h"
+#include "Log.h"
 
-MAPPINGS::MAPPINGS(const char *path)
+MAPPINGS::MAPPINGS(MAPPINGS **linkedList, const char *path)
 {
-	fail = NULL;
+	LOG(("Loading mappings from %s... ", path));
+	
+	memset(this, 0, sizeof(MAPPINGS));
 	
 	//Open the file given
-	GET_GLOBAL_PATH(filepath, path);
+	source = path;
 	
+	GET_GLOBAL_PATH(filepath, path);
 	SDL_RWops *fp = SDL_RWFromFile(filepath, "rb");
 	if (fp == NULL)
 	{
@@ -24,10 +28,8 @@ MAPPINGS::MAPPINGS(const char *path)
 	if (rect == NULL || origin == NULL)
 	{
 		SDL_RWclose(fp);
-		
-		free(rect); //Free in the case that one successfully allocated
+		free(rect);
 		free(origin);
-		
 		fail = "Failed to allocate rect and origin arrays";
 		return;
 	}
@@ -43,8 +45,17 @@ MAPPINGS::MAPPINGS(const char *path)
 		origin[i].y = (int16_t)SDL_ReadBE16(fp);
 	}
 	
-	//Close file
 	SDL_RWclose(fp);
+	
+	//Attach to linked list if given
+	if (linkedList != NULL)
+	{
+		list = linkedList;
+		next = *linkedList;
+		*linkedList = this;
+	}
+	
+	LOG(("Success!\n"));
 }
 
 MAPPINGS::~MAPPINGS()

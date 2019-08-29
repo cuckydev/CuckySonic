@@ -25,7 +25,7 @@ void ObjBridgeSegment(OBJECT *object)
 				break;
 		}
 		
-		object->mappings = new MAPPINGS("data/Object/Bridge.map");
+		object->mappings = gLevel->GetObjectMappings("data/Object/Bridge.map");
 	}
 	
 	//Draw this segment

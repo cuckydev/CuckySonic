@@ -12,9 +12,18 @@
 #include "GameConstants.h"
 
 //Bug-fixes
-#define FIX_SPINDASH_ANIM     //Usually when spindashing, if you manage to exit the spindash animation, you'll stay out of it
-#define FIX_SPINDASH_JUMP     //When you jump the frame after you spindash, you'll jump straight upwards
-#define FIX_HORIZONTAL_WRAP   //In the originals, for some reason, the LevelBound uses unsigned checks, meaning if you go off to the left, you'll be sent to the right boundary 
+//#define FIX_SPINDASH_ANIM     //Usually when spindashing, if you manage to exit the spindash animation, you'll stay out of it
+//#define FIX_SPINDASH_JUMP     //When you jump the frame after you spindash, you'll jump straight upwards
+//#define FIX_HORIZONTAL_WRAP   //In the originals, for some reason, the LevelBound uses unsigned checks, meaning if you go off to the left, you'll be sent to the right boundary
+//#define FIX_DUCK_CONDITION    //In Sonic and Knuckles, the conditions for ducking are so loose, you can duck (and spindash) in unexpected situations.
+//#define FIX_ROLL_YSHIFT       //In the originals, when you roll, you're always shifted up / down globally, this can cause weird behaviour such as falling off of ceilings
+
+//Bug-fix macros
+#define YSHIFT_ON_FLOOR(shift)	\
+	int16_t sin2, cos2;	\
+	GetSine(angle - 0x40, &sin2, &cos2);	\
+	xPosLong -= cos2 * shift * 0x100;	\
+	yPosLong -= sin2 * shift * (status.reverseGravity ? -0x100 : 0x100);	\
 
 //Game differences (Uncomment all for an experience like that of Sonic 1, and comment all for the experience of Sonic 3 and Knuckles)
 //#define SONIC1_SLOPE_ANGLE      //In Sonic 2+, the floor's angle will be replaced with the player's cardinal floor angle if there's a 45+ degree difference
@@ -153,7 +162,7 @@ void ObjSpindashDust(OBJECT *object)
 		case 0:
 			//Initialize render properties
 			object->texture = gLevel->GetObjectTexture("data/Object/SpindashDust.bmp");
-			object->mappings = new MAPPINGS("data/Object/SpindashDust.map");
+			object->mappings = gLevel->GetObjectMappings("data/Object/SpindashDust.map");
 			
 			object->priority = 1;
 			object->widthPixels = 16;
@@ -219,7 +228,7 @@ PLAYER::PLAYER(PLAYER **linkedList, const char *specPath, PLAYER *myFollow, int 
 		return;
 	}
 	
-	mappings = new MAPPINGS(mapPath);
+	mappings = gLevel->GetObjectMappings(mapPath);
 	if (mappings->fail != NULL)
 	{
 		Error(fail = mappings->fail);
@@ -234,8 +243,6 @@ PLAYER::PLAYER(PLAYER **linkedList, const char *specPath, PLAYER *myFollow, int 
 	
 	if (playerSpec == NULL)
 	{
-		delete texture; //Free texture and mappings before erroring
-		delete mappings;
 		Error(fail = SDL_GetError());
 		return;
 	}
@@ -1152,10 +1159,14 @@ void PLAYER::ResetOnFloor2()
 			uint8_t difference = 5;
 		#endif
 		
-		if (status.reverseGravity)
-			y.pos += difference;
-		else
-			y.pos -= difference;
+		#ifndef FIX_ROLL_YSHIFT
+			if (status.reverseGravity)
+				y.pos += difference;
+			else
+				y.pos -= difference;
+		#else
+			YSHIFT_ON_FLOOR(-difference);
+		#endif
 	}
 
 	ResetOnFloor3();
@@ -1206,10 +1217,15 @@ void PLAYER::ResetOnFloor3()
 					//Return to the ball hitbox
 					xRadius = rollXRadius;
 					yRadius = rollYRadius;
-					if (status.reverseGravity)
-						y.pos += (defaultYRadius - yRadius);
-					else
-						y.pos -= (defaultYRadius - yRadius);
+					
+					#ifndef FIX_ROLL_YSHIFT
+						if (status.reverseGravity)
+							y.pos += (defaultYRadius - yRadius);
+						else
+							y.pos -= (defaultYRadius - yRadius);
+					#else
+						YSHIFT_ON_FLOOR(-(defaultYRadius - yRadius));
+					#endif
 					
 					//Play the sound
 					//PlaySound(SOUNDID_BUBBLE_BOUNCE);
@@ -1277,10 +1293,14 @@ bool PLAYER::Spindash()
 			anim = PLAYERANIMATION_ROLL;
 			
 			//Offset our position to line up with the ground
-			if (status.reverseGravity)
-				y.pos -= 5;
-			else
-				y.pos += 5;
+			#ifndef FIX_ROLL_YSHIFT
+				if (status.reverseGravity)
+					y.pos -= 5;
+				else
+					y.pos += 5;
+			#else
+				YSHIFT_ON_FLOOR(5);
+			#endif
 			
 			//Release spindash
 			spindashing = false;
@@ -1576,10 +1596,14 @@ bool PLAYER::Jump()
 				status.inBall = true;
 				
 				//Shift us down to the ground
-				if (status.reverseGravity)
-					y.pos += (yRadius - defaultYRadius);
-				else
-					y.pos -= (yRadius - defaultYRadius);
+				#ifndef FIX_ROLL_YSHIFT
+					if (status.reverseGravity)
+						y.pos += (yRadius - defaultYRadius);
+					else
+						y.pos -= (yRadius - defaultYRadius);
+				#else
+					YSHIFT_ON_FLOOR(-(yRadius - defaultYRadius));
+				#endif
 			}
 			else
 			{
@@ -1920,10 +1944,14 @@ void PLAYER::ChkRoll()
 		anim = PLAYERANIMATION_ROLL;
 		
 		//This is supposed to keep us on the ground, but when we're on a ceiling, it does... not that
-		if (status.reverseGravity)
-			y.pos -= 5;
-		else
-			y.pos += 5;
+		#ifndef FIX_ROLL_YSHIFT
+			if (status.reverseGravity)
+				y.pos -= 5;
+			else
+				y.pos += 5;
+		#else
+			YSHIFT_ON_FLOOR(5);
+		#endif
 		
 		//Play the sound
 		PlaySound(SOUNDID_ROLL);
@@ -1944,7 +1972,16 @@ void PLAYER::Roll()
 				if (abs(inertia) >= 0x100)
 					ChkRoll();
 				else
-					anim = PLAYERANIMATION_DUCK;
+				{
+					#ifndef FIX_DUCK_CONDITION
+						anim = PLAYERANIMATION_DUCK;
+					#else
+						if (((angle + 0x20) & 0xC0) == 0)
+							anim = PLAYERANIMATION_DUCK;
+						else
+							anim = PLAYERANIMATION_WALK;
+					#endif
+				}
 			}
 			else if (anim == PLAYERANIMATION_DUCK)
 			{
@@ -2034,7 +2071,15 @@ void PLAYER::RollSpeed()
 				xRadius = defaultXRadius;
 				yRadius = defaultYRadius;
 				anim = PLAYERANIMATION_IDLE;
-				y.pos -= 5;
+				
+				#ifndef FIX_ROLL_YSHIFT
+					if (status.reverseGravity)
+						y.pos += 5;
+					else
+						y.pos -= 5;
+				#else
+					YSHIFT_ON_FLOOR(-5);
+				#endif
 			}
 			else
 			{

@@ -28,7 +28,7 @@ void ObjMotobug(OBJECT *object)
 		{
 			//Load graphics
 			object->texture = gLevel->GetObjectTexture("data/Object/Sonic1Badnik.bmp");
-			object->mappings = new MAPPINGS("data/Object/Motobug.map");
+			object->mappings = gLevel->GetObjectMappings("data/Object/Motobug.map");
 			
 			//Initialize other properties
 			object->routine++;

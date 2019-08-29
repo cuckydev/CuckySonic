@@ -181,6 +181,7 @@ class LEVEL
 		
 		//Object texture cache
 		TEXTURE *objTextureCache;
+		MAPPINGS *objMappingsCache;
 		
 		//State
 		bool inTitleCard;
@@ -206,6 +207,8 @@ class LEVEL
 		
 		TEXTURE *GetObjectTexture(const char *path);
 		TEXTURE *GetObjectTexture(uint8_t *data, int dWidth, int dHeight); //just in case
+		
+		MAPPINGS *GetObjectMappings(const char *path);
 		
 		void PaletteUpdate();
 		void GetBackgroundScroll(bool updateScroll, uint16_t *array, int16_t *cameraX, int16_t *cameraY);

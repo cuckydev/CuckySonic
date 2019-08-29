@@ -460,6 +460,21 @@ void LEVEL::UnloadAll()
 		delete camera;
 	if (titleCard != NULL)
 		delete titleCard;
+	
+	//Unload object textures and mappings
+	for (TEXTURE *texture = objTextureCache; texture != NULL;)
+	{
+		TEXTURE *next = texture->next;
+		delete texture;
+		texture = next;
+	}
+	
+	for (MAPPINGS *mappings = objMappingsCache; mappings != NULL;)
+	{
+		MAPPINGS *next = mappings->next;
+		delete mappings;
+		mappings = next;
+	}
 }
 
 //Level class
@@ -542,14 +557,6 @@ LEVEL::~LEVEL()
 	
 	//Unload data
 	UnloadAll();
-	
-	//Unload all cached object textures
-	for (TEXTURE *texture = objTextureCache; texture != NULL;)
-	{
-		TEXTURE *next = texture->next;
-		delete texture;
-		texture = next;
-	}
 	
 	LOG(("Success!\n"));
 }
@@ -698,6 +705,18 @@ TEXTURE* LEVEL::GetObjectTexture(uint8_t *data, int dWidth, int dHeight)
 	}
 	
 	return new TEXTURE(&objTextureCache, data, dWidth, dHeight);
+}
+
+//Mappings cache
+MAPPINGS* LEVEL::GetObjectMappings(const char *path)
+{
+	for (MAPPINGS *mappings = objMappingsCache; mappings != NULL; mappings = mappings->next)
+	{
+		if (mappings->source == path)
+			return mappings;
+	}
+	
+	return new MAPPINGS(&objMappingsCache, path);
 }
 
 //Palette update and background scroll

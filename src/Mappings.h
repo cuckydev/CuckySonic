@@ -4,13 +4,22 @@
 class MAPPINGS
 {
 	public:
+		//Failure
+		const char *fail;
+		
+		//Source path
+		const char *source;
+		
+		//Mappings
 		int size;
 		SDL_Rect *rect;
 		SDL_Point *origin;
 		
-		const char *fail;
+		//Linked list
+		MAPPINGS **list;
+		MAPPINGS *next;
 		
 	public:
-		MAPPINGS(const char *path);
+		MAPPINGS(MAPPINGS **linkedList, const char *path);
 		~MAPPINGS();
 };
