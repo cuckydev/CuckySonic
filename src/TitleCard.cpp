@@ -30,6 +30,14 @@ TITLECARD::TITLECARD(const char *levelName, const char *levelSubtitle)
 	name = levelName;
 	subtitle = levelSubtitle;
 	
+	//Get position to draw at
+	drawY = (gLevel->playerList->y.pos + (gLevel->playerList->yRadius - gLevel->playerList->defaultYRadius)) - gLevel->camera->y;
+	
+	if (drawY < SCREEN_HEIGHT / 2)
+		drawY += 48;
+	else
+		drawY -= 48;
+	
 	SetPaletteColour(&titleCardBackground, 0, 0, 0);
 }
 
@@ -68,7 +76,6 @@ void TITLECARD::UpdateAndDraw()
 		gLevel->inTitleCard = false;
 	
 	//Get the position of the level's name strip
-	int dy = (gLevel->playerList->y.pos + (gLevel->playerList->yRadius - gLevel->playerList->defaultYRadius)) - gLevel->camera->y - 48;
 	int namePosition = 0;
 	
 	if (frame < TRANSITION_TIME)
@@ -85,19 +92,19 @@ void TITLECARD::UpdateAndDraw()
 		subtitlePosition = (frame - END_TIME + TRANSITION_TIME) * -TRANSITION_SPEED;
 	
 	//Draw level name
-	DrawText(name, namePosition + (SCREEN_WIDTH / 2 - 110), dy - 12);
+	DrawText(name, namePosition + (SCREEN_WIDTH / 2 - 110), drawY - 12);
 	
 	//Draw level subtitle
-	DrawText(subtitle, subtitlePosition + (SCREEN_WIDTH / 2 + 32), dy + 12);
+	DrawText(subtitle, subtitlePosition + (SCREEN_WIDTH / 2 + 32), drawY + 12);
 	
 	//Draw the strip behind the name text, and the "CUCKYSONIC" label
 	SDL_Rect labelSrc = {0, 0, 64, 8};
-	texture->Draw(LEVEL_RENDERLAYER_TITLECARD, texture->loadedPalette, &labelSrc, namePosition, dy - 12 + 4, false, false);
+	texture->Draw(LEVEL_RENDERLAYER_TITLECARD, texture->loadedPalette, &labelSrc, namePosition, drawY - 12 + 4, false, false);
 	
 	for (int x = 0; x < SCREEN_WIDTH; x += 16)
 	{
 		SDL_Rect stripSrc = {0, 8, 16, 16};
-		texture->Draw(LEVEL_RENDERLAYER_TITLECARD, texture->loadedPalette, &stripSrc, x + namePosition, dy - 12, false, false);
+		texture->Draw(LEVEL_RENDERLAYER_TITLECARD, texture->loadedPalette, &stripSrc, x + namePosition, drawY - 12, false, false);
 	}
 	
 	//Draw background (zoom out to show the player, then zoom completely out about a second later)

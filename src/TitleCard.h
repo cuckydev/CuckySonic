@@ -15,6 +15,7 @@ class TITLECARD
 		const char *name;
 		const char  *subtitle;
 		
+		int drawY;
 		int frame;
 		
 	public:

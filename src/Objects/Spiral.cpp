@@ -164,7 +164,7 @@ void ObjSpiral(OBJECT *object) //Also MTZ cylinder
 						if (xOff >= 0 && xOff < 0x1A0) //If still on the spiral
 						{
 							//Move across the spiral
-							if (player->status.shouldNotFall) //If still running on the spiral (this is probably a buggy ass check)
+							if (player->status.shouldNotFall) //If still running on the spiral
 							{
 								//Set our Y-position
 								int8_t cosine = CosineTable[xOff];
@@ -175,7 +175,6 @@ void ObjSpiral(OBJECT *object) //Also MTZ cylinder
 									int16_t yOff = ((player->yRadius - 19) * cosine) / 32;
 								#endif
 								
-								int16_t lastYPos = player->y.pos;
 								player->y.pos = (object->y.pos + cosine) - yOff;
 								
 								//Set our flip angle

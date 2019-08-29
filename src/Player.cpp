@@ -1451,7 +1451,7 @@ void PLAYER::ChgJumpDir()
 	//Air drag
 	if (yVel >= -0x400 && yVel < 0)
 	{
-		int16_t drag = xVel / 0x20;
+		int16_t drag = xVel >> 5;
 		
 		if (drag > 0)
 		{
@@ -1850,18 +1850,16 @@ void PLAYER::Move()
 				else
 				{
 					//If Sonic's middle bottom point is 12 pixels away from the floor, start balancing
-					int16_t floorDistance = ChkFloorEdge(topSolidLayer, x.pos, y.pos, NULL);
-					
-					if (floorDistance >= 12)
+					if (ChkFloorEdge(topSolidLayer, x.pos, y.pos, NULL) >= 12)
 					{
-						if (nextTilt != 3) //If there's no floor to the left of us
+						if (nextTilt == 3) //If there's no floor to the left of us
 						{
-							status.xFlip = true;
+							status.xFlip = false;
 							anim = PLAYERANIMATION_BALANCE;
 						}
 						else
 						{
-							status.xFlip = false;
+							status.xFlip = true;
 							anim = PLAYERANIMATION_BALANCE;
 						}
 					}
@@ -1877,8 +1875,6 @@ void PLAYER::Move()
 				}
 			}
 		}
-		
-		//TODO: camera scrolling down to sonic
 		
 		//Friction
 		uint16_t friction = acceleration;
@@ -1995,7 +1991,7 @@ void PLAYER::RollRight()
 void PLAYER::RollSpeed()
 {
 	//Get our friction (super has separate friction) and deceleration when pulling back
-	uint16_t friction = acceleration / 2;
+	uint16_t friction = acceleration >> 1;
 	if (super)
 		friction = 6;
 	
@@ -3123,8 +3119,22 @@ void PLAYER::Update()
 //Draw our player
 void PLAYER::Display()
 {
-	//Handle invulnerability
-	Draw();
+	//Handle invulnerability (decrement the invulnerability time and don't draw us every 4 frames)
+	if (invulnerabilityTime == 0 || (--invulnerabilityTime & 0x4) != 0)
+		Draw();
+	
+	//Handle invincibility (every 8 frames)
+	if (item.isInvincible && invincibilityTime != 0 && (gLevel->frameCounter & 0x7) == 0)
+	{
+		//If our invincibility is running out
+		if (--invincibilityTime == 0)
+		{
+			//Resume music
+			//if (gLevel->boss == 0 && airRemaining >= 12)
+			//	PlayMusic(gLevel->musicId);
+			item.isInvincible = false;
+		}
+	}
 }
 
 void PLAYER::Draw()

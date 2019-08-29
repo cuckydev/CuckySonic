@@ -739,43 +739,49 @@ bool LEVEL::Update(bool checkTitleCard)
 	{
 		titleCard->UpdateAndDraw();
 		if (inTitleCard)
+		{
+			frameCounter++;
 			return true;
+		}
 	}
 	
 	//Quit if fading
 	if (fading)
+	{
+		frameCounter++;
 		return true;
+	}
 	
 	//Update players
 	for (PLAYER *player = playerList; player != NULL; player = player->next)
 		player->Update();
 	
-	//Update objects
-	OBJECT *object = objectList;
-	
-	while (object != NULL)
+	if (updateStage)
 	{
-		//Remember our next object
-		OBJECT *next = object->next;
+		//Update objects
+		OBJECT *object = objectList;
 		
-		//Update
-		if (updateStage)
+		while (object != NULL)
 		{
+			//Remember our next object
+			OBJECT *next = object->next;
+			
+			//Update
 			if (object->Update())
 				return false;
+			
+			//Check for deletion
+			if (object->deleteFlag)
+			{
+				for (PLAYER *player = playerList; player != NULL; player = player->next)
+					if (player->interact == object)
+						player->interact = NULL;
+				delete object;
+			}
+			
+			//Advance to next object
+			object = next;
 		}
-		
-		//Check for deletion
-		if (object->deleteFlag)
-		{
-			for (PLAYER *player = playerList; player != NULL; player = player->next)
-				if (player->interact == object)
-					player->interact = NULL;
-			delete object;
-		}
-		
-		//Advance to next object
-		object = next;
 	}
 	
 	//Update camera
@@ -787,7 +793,10 @@ bool LEVEL::Update(bool checkTitleCard)
 		DynamicEvents();
 	
 	//Update level palette
-	PaletteUpdate();
+	if (updateStage)
+		PaletteUpdate();
+	
+	frameCounter++;
 	return true;
 }
 

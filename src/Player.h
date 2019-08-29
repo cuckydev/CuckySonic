@@ -212,6 +212,7 @@ class PLAYER
 		SHIELD shield;				//Our shield type
 		uint8_t jumpAbility;		//Our jump ability (can we use shield ability, insta-shield, dropdash, etc.)
 		
+		uint16_t invulnerabilityTime;
 		uint16_t invincibilityTime;
 		uint16_t speedShoesTime;
 		
