@@ -532,25 +532,31 @@ void PlayMusic(MUSICID music)
 int PauseMusic()
 {
 	//Pause and return current position
-	return currentMusic->Pause();
+	if (currentMusic != NULL)
+		return currentMusic->Pause();
+	return -1;
 }
 
 void ResumeMusic(int position)
 {
 	//Resume at given position
-	currentMusic->Play(position);
+	if (currentMusic != NULL)
+		currentMusic->Play(position);
 }
 
 void SetMusicVolume(float volume)
 {
 	//Set the volume
-	currentMusic->SetVolume(volume);
+	if (currentMusic != NULL)
+		currentMusic->SetVolume(volume);
 }
 
 float GetMusicVolume()
 {
 	//Get and return the volume
-	return currentMusic->GetVolume();
+	if (currentMusic != NULL)
+		return currentMusic->GetVolume();
+	return 1.0f;
 }
 
 //Callback function

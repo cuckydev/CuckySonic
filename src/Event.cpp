@@ -1,10 +1,13 @@
 #include "SDL_events.h"
 #include "Input.h"
+#include "Audio.h"
 
 bool HandleEvents()
 {
 	bool noExit = true;
 	bool focusYield = false;
+	
+	int musicPoint = -1;
 	
 	while (SDL_PollEvent(NULL) || (focusYield && noExit))
 	{
@@ -21,12 +24,21 @@ bool HandleEvents()
 			case SDL_WINDOWEVENT:
 				switch (event.window.event)
 				{
-					case SDL_WINDOWEVENT_FOCUS_GAINED: //Window focused, unyield
+					case SDL_WINDOWEVENT_FOCUS_GAINED: //Window focused
+						//Unyield game
 						focusYield = false;
+						
+						//Resume music
+						if (musicPoint >= 0)
+							ResumeMusic(musicPoint);
 						break;
-					case SDL_WINDOWEVENT_FOCUS_LOST: //Window unfocused, yield until refocused
+					case SDL_WINDOWEVENT_FOCUS_LOST: //Window unfocused
+						//Yield game until refocused
 						focusYield = true;
+						
+						//Clear controller input and pause music
 						ClearControllerInput();
+						musicPoint = PauseMusic();
 						break;
 					default:
 						break;

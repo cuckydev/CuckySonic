@@ -142,6 +142,7 @@ bool GM_Title(bool *noError)
 			bool res1 = PaletteFadeOutToBlack(titleTexture->loadedPalette);
 			bool res2 = PaletteFadeOutToBlack(backgroundTexture->loadedPalette);
 			breakThisState = res1 && res2;
+			SetMusicVolume(max(GetMusicVolume() - (1.0f / 24.0f), 0.0f));
 		}
 		
 		//Draw background
@@ -272,7 +273,7 @@ bool GM_Title(bool *noError)
 		frame++;
 		
 		//Switch to menu music after a few seconds
-		if (frame == (17 * 60))
+		if (selected == false && frame == (17 * 60))
 			PlayMusic(MUSICID_MENU);
 	}
 	
