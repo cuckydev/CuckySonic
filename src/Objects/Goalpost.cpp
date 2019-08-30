@@ -88,7 +88,7 @@ void ObjGoalpost(OBJECT *object)
 				}
 				
 				//If the main player, and near the right of the screen, increment routine
-				if (player == gLevel->playerList && player->x.pos >= gLevel->rightBoundary2)
+				if (player == gLevel->playerList && player->x.pos >= gLevel->rightBoundaryTarget)
 					object->routine++;
 			}
 			break;
