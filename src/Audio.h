@@ -130,15 +130,25 @@ class MUSIC
 		
 		//stb_vorbis decoder
 		stb_vorbis *file;
+		int channels;
+		
+		//Song data
+		MUSICDEFINITION *definition;
+		bool playing;
+		double internalPosition;
+		
+		float volume;
 	
 	public:
-		MUSIC(const char *path);
+		MUSIC(MUSICDEFINITION *ourDefinition);
 		~MUSIC();
 		
-		void Play();
+		void Play(int position);
 		int Pause();
-		void Resume(int position);
+		void SetVolume(float setVolume);
+		float GetVolume();
 		
+		void Loop();
 		void Mix(float *stream, int samples);
 };
 
@@ -146,6 +156,8 @@ class MUSIC
 void PlayMusic(MUSICID music);
 int PauseMusic();
 void ResumeMusic(int position);
+void SetMusicVolume(float volume);
+float GetMusicVolume();
 
 //Sound functions
 void PlaySound(SOUNDID id);

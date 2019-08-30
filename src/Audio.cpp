@@ -296,13 +296,19 @@ void SOUND::Mix(float *stream, int samples)
 #endif
 
 //Constructor and destructor
-MUSIC::MUSIC(const char *path)
+MUSIC::MUSIC(MUSICDEFINITION *ourDefinition)
 {
-	LOG(("Loading music file from %s... ", path));
+	//Wait for audio device to be finished and lock it
+	SDL_LockAudioDevice(audioDevice);
+	
+	memset(this, 0, sizeof(MUSIC));
+	definition = ourDefinition;
+	
+	LOG(("Loading music file from %s... ", definition->path));
 	
 	#ifdef WINDOWS
 		//Open file (Windows only UTF-16 wchar bullshit)
-		GET_GLOBAL_PATH(musicPath, path);
+		GET_GLOBAL_PATH(musicPath, definition->path);
 		
 		//Convert to UTF-16
 		wchar_t wcharBuffer[0x200];
@@ -312,7 +318,7 @@ MUSIC::MUSIC(const char *path)
 		FILE *fp = _wfopen(wcharBuffer, L"rb");
 	#else
 		//Open file
-		GET_GLOBAL_PATH(musicPath, path);
+		GET_GLOBAL_PATH(musicPath, definition->path);
 		FILE *fp = fopen(musicPath, "rb");
 	#endif
 	
@@ -320,6 +326,9 @@ MUSIC::MUSIC(const char *path)
 	if (fp == NULL)
 	{
 		Error(fail = "Failed to open the given file");
+		
+		//Resume audio device
+		SDL_UnlockAudioDevice(audioDevice);
 		return;
 	}
 	
@@ -332,37 +341,172 @@ MUSIC::MUSIC(const char *path)
 		char error[0x40];
 		sprintf(error, "Error: %d", error);
 		Warn(error);
+		
+		//Resume audio device
+		SDL_UnlockAudioDevice(audioDevice);
 		return;
 	}
+	
+	//Get information from file
+	stb_vorbis_info info = stb_vorbis_get_info(file);
+	channels = info.channels;
+	
+	//Initialize other properties
+	volume = 1.0f;
+	
+	//Resume audio device
+	SDL_UnlockAudioDevice(audioDevice);
 	
 	LOG(("Success!\n"));
 }
 
 MUSIC::~MUSIC()
 {
-	//Close our loaded file
-	stb_vorbis_close(file);
-}
-
-void MUSIC::Mix(float *stream, int samples)
-{
+	//Wait for audio device to be finished and lock it
+	SDL_LockAudioDevice(audioDevice);
 	
+	//Close our loaded file
+	if (file != NULL)
+		stb_vorbis_close(file);
+	
+	//Resume audio device
+	SDL_UnlockAudioDevice(audioDevice);
 }
 
 //Playback functions
-void MUSIC::Play()
+void MUSIC::Play(int position)
 {
+	//Wait for audio device to be finished and lock it
+	SDL_LockAudioDevice(audioDevice);
 	
+	//Play at the given position
+	internalPosition = (double)position;
+	playing = true;
+	
+	//Seek within the given file
+	if (stb_vorbis_seek_frame(file, position) < 0)
+	{
+		Warn("Failed to play the music at given position");
+		playing = false;
+		
+		//Resume audio device
+		SDL_UnlockAudioDevice(audioDevice);
+		return;
+	}
+	
+	//Resume audio device
+	SDL_UnlockAudioDevice(audioDevice);
 }
 
 int MUSIC::Pause()
 {
-	return 0;
+	//Wait for audio device to be finished and lock it
+	SDL_LockAudioDevice(audioDevice);
+	
+	//Pause and get the position we're at
+	int position = (int)internalPosition;
+	playing = false;
+	
+	//Resume audio device
+	SDL_UnlockAudioDevice(audioDevice);
+	return position;
 }
 
-void MUSIC::Resume(int position)
+void MUSIC::SetVolume(float setVolume)
 {
+	//Wait for audio device to be finished and lock it
+	SDL_LockAudioDevice(audioDevice);
 	
+	//Set volume
+	volume = setVolume;
+	
+	//Resume audio device
+	SDL_UnlockAudioDevice(audioDevice);
+}
+
+float MUSIC::GetVolume()
+{
+	//Wait for audio device to be finished and lock it
+	SDL_LockAudioDevice(audioDevice);
+	
+	//Set volume
+	float getVolume = volume;
+	
+	//Resume audio device
+	SDL_UnlockAudioDevice(audioDevice);
+	return getVolume;
+}
+
+//Mixer functions
+void MUSIC::Loop()
+{
+	//Seek backwards definition->loopLength frames
+	if (stb_vorbis_seek_frame(file, (int)(internalPosition -= (double)definition->loopLength)) < 0)
+	{
+		Warn("Failed to play the music at given position");
+		playing = false;
+		return;
+	}
+}
+
+void MUSIC::Mix(float *stream, int samples)
+{
+	//Only mix if playing
+	if (!playing)
+		return;
+	
+	//Read the given amount of samples
+	float buffer[AUDIO_SAMPLES * 2];
+	float *bufferCopy = &(*buffer);
+	
+	int samplesRead = 0;
+	
+	while (samplesRead < samples)
+	{
+		//Read data
+		int thisRead = stb_vorbis_get_samples_float_interleaved(file, channels, buffer, (samples - samplesRead) * channels);
+		
+		//Move through file and buffer
+		bufferCopy += thisRead;
+		samplesRead += thisRead;
+		internalPosition += (double)thisRead;
+		
+		if (thisRead == 0)
+		{
+			if (definition->loopLength <= 0)
+			{
+				//Doesn't loop
+				playing = false;
+				break;
+			}
+			else
+			{
+				//Loop back
+				Loop();
+			}
+		}
+		else if (definition->loopLength > 0 && internalPosition >= definition->loopEnd)
+		{
+			//Loop back
+			Loop();
+		}
+	}
+	
+	//Fill the rest of the data with 0.0
+	while (samplesRead++ < samples)
+	{
+		*bufferCopy++ = 0.0;
+		*bufferCopy++ = 0.0;
+	}
+	
+	//Copy the buffer into our stream
+	bufferCopy = &(*buffer);
+	
+	for (int i = 0; i < samples; i++)
+	{
+		*stream++ = (*bufferCopy++) * volume;
+		*stream++ = (*bufferCopy++) * volume;
+	}
 }
 
 //Music functions
@@ -370,19 +514,26 @@ MUSIC *currentMusic;
 
 void PlayMusic(MUSICID music)
 {
-	//Wait for audio device to be finished and lock it
-	SDL_LockAudioDevice(audioDevice);
-	
 	//Unload current song
 	if (currentMusic)
-		delete currentMusic;
+	{
+		//Wait for audio device to be finished and lock it
+		SDL_LockAudioDevice(audioDevice);
+		
+		MUSIC *rememberMusic = currentMusic;
+		currentMusic = NULL;
+		
+		//Resume audio device then delete original music
+		SDL_UnlockAudioDevice(audioDevice);
+		delete rememberMusic;
+	}
 	
 	//Load new song (if not null)
 	if (music != MUSICID_NULL)
-		currentMusic = new MUSIC(musicDefinition[music].path);
-	
-	//Resume audio device
-	SDL_UnlockAudioDevice(audioDevice);
+	{
+		currentMusic = new MUSIC(&musicDefinition[music]);
+		currentMusic->Play(0);
+	}
 }
 
 int PauseMusic()
@@ -394,7 +545,19 @@ int PauseMusic()
 void ResumeMusic(int position)
 {
 	//Resume at given position
-	currentMusic->Resume(position);
+	currentMusic->Play(position);
+}
+
+void SetMusicVolume(float volume)
+{
+	//Set the volume
+	currentMusic->SetVolume(volume);
+}
+
+float GetMusicVolume()
+{
+	//Get and return the volume
+	return currentMusic->GetVolume();
 }
 
 //Callback function
@@ -406,10 +569,18 @@ void AudioCallback(void *userdata, uint8_t *stream, int length)
 	//Get our buffer to render to
 	int samples = length / (2 * sizeof(float));
 	
-	//Clear the buffer (NOTE: I would memset the buffer to 0, but that'll break on FPUs that don't use the IEEE-754 standard)
-	float *buffer = (float*)stream;
-	for (int i = 0; i < samples * 2; i++)
-		*buffer++ = 0.0f;
+	if (currentMusic != NULL)
+	{
+		//Mix the music into the buffer, we don't need to clear the buffer here because the music sets the buffer, rather than add onto it
+		currentMusic->Mix((float*)stream, samples);
+	}
+	else
+	{
+		//Clear the buffer (NOTE: I would memset the buffer to 0, but that'll break on FPUs that don't use the IEEE-754 standard)
+		float *buffer = (float*)stream;
+		for (int i = 0; i < samples * 2; i++)
+			*buffer++ = 0.0f;
+	}
 	
 	//Mix our sound effects into the buffer
 	for (SOUND *sound = sounds; sound != NULL; sound = sound->next)
@@ -547,7 +718,7 @@ void QuitAudio()
 	}
 	
 	//Unload current song
-	if (currentMusic)
+	if (currentMusic != NULL)
 		delete currentMusic;
 	
 	//Close our audio device

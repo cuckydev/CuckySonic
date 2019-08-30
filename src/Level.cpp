@@ -7,6 +7,7 @@
 #include "Path.h"
 #include "Log.h"
 #include "Audio.h"
+#include "MathUtil.h"
 #include "Error.h"
 
 //Object function lists
@@ -663,6 +664,7 @@ bool LEVEL::UpdateFade()
 	
 	if (isFadingIn)
 	{
+		//Fade out all of our known palettes
 		if (specialFade)
 		{
 			finished = PaletteFadeInFromWhite(tileTexture->loadedPalette) ? finished : false;
@@ -680,6 +682,7 @@ bool LEVEL::UpdateFade()
 	}
 	else
 	{
+		//Fade out all of our known palettes
 		if (specialFade)
 		{
 			finished = PaletteFadeOutToWhite(tileTexture->loadedPalette) ? finished : false;
@@ -694,6 +697,9 @@ bool LEVEL::UpdateFade()
 			for (TEXTURE *texture = objTextureCache; texture != NULL; texture = texture->next)
 				finished = PaletteFadeOutToBlack(texture->loadedPalette) ? finished : false;
 		}
+		
+		//Fade the music out
+		SetMusicVolume(max(GetMusicVolume() - (1.0f / 32.0f), 0.0f));
 	}
 	
 	return finished;

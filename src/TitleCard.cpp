@@ -72,7 +72,7 @@ void TITLECARD::UpdateAndDraw()
 	//Quit if finished
 	if (frame >= END_TIME)
 		return;
-	if (frame == subT)
+	if (frame == finT)
 		gLevel->inTitleCard = false;
 	
 	//Get the position of the level's name strip
