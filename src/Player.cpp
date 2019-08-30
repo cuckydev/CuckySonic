@@ -3253,14 +3253,14 @@ void PLAYER::DebugControl()
 		if (selectedControl.up)
 		{
 			yPosLong -= calcSpeed;
-			if (yPosLong < gLevel->topBoundary * 0x10000)
-				yPosLong = gLevel->topBoundary * 0x10000;
+			if (yPosLong < gLevel->topBoundaryTarget * 0x10000)
+				yPosLong = gLevel->topBoundaryTarget * 0x10000;
 		}
 		else if (selectedControl.down)
 		{
 			yPosLong += calcSpeed;
-			if (yPosLong > gLevel->bottomBoundary * 0x10000)
-				yPosLong = gLevel->bottomBoundary * 0x10000;
+			if (yPosLong > gLevel->bottomBoundaryTarget * 0x10000)
+				yPosLong = gLevel->bottomBoundaryTarget * 0x10000;
 		}
 		
 		if (selectedControl.left)
@@ -3287,16 +3287,8 @@ void PLAYER::DebugControl()
 	{
 		//Exit debug mode
 		debug = 0;
-		/*
-		move	#$2700,sr
-		jsr	(HUD_DrawInitial).l
-		move.b	#1,(Update_HUD_score).w
-		move.b	#-$80,(Update_HUD_ring_count).w
-		move	#$2300,sr
-		lea	(Player_1).w,a1
-		move.l	($FFFFFFCA).w,$C(a1)
-		move.w	($FFFFFFCE).w,$A(a1)
-		*/
+		gLevel->updateStage = true;
+		gLevel->updateTime = true;
 		RestoreStateDebug();
 		xRadius = defaultXRadius;
 		yRadius = defaultYRadius;
@@ -3308,9 +3300,8 @@ void PLAYER::DebugMode()
 	switch (debug >> 8)
 	{
 		case 0:
-			//Resume game state
+			//Unlock camera
 			cameraLock = false;
-			gLevel->updateStage = true;
 			
 			//Initialize debug and routine
 			debug += 0x100;

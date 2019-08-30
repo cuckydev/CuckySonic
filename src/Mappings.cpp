@@ -60,7 +60,6 @@ MAPPINGS::MAPPINGS(MAPPINGS **linkedList, const char *path)
 
 MAPPINGS::~MAPPINGS()
 {
-	LOG(("FREEING MAPPING %p\n", (void*)this));
 	//Free allocated data
 	free(rect);
 	free(origin);

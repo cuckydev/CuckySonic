@@ -714,8 +714,6 @@ void LEVEL::DynamicEvents()
 				else
 					bottomBoundaryTarget = 0x4E0;
 			}
-			
-			
 			break;
 		default:
 			break;
@@ -732,6 +730,8 @@ void LEVEL::DynamicEvents()
 		
 		//Move
 		bottomBoundary -= move;
+		if (bottomBoundaryTarget > bottomBoundary)
+			bottomBoundary = bottomBoundaryTarget;
 	}
 	else if (bottomBoundaryTarget > bottomBoundary)
 	{
@@ -741,6 +741,8 @@ void LEVEL::DynamicEvents()
 		
 		//Move
 		bottomBoundary += move;
+		if (bottomBoundaryTarget < bottomBoundary)
+			bottomBoundary = bottomBoundaryTarget;
 	}
 	
 	//Set boundaries to target

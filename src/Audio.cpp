@@ -10,7 +10,7 @@
 
 SDL_AudioDeviceID audioDevice;
 
-//Music
+//Music definitions
 MUSICDEFINITION musicDefinition[MUSICID_MAX] = {
 	{NULL, 0, 0}, //MUSICID_NULL
 	{"data/Audio/Music/Title.ogg", 0, 0},
@@ -289,13 +289,97 @@ void SOUND::Mix(float *stream, int samples)
 	}
 }
 
+//Music class (using stb_vorbis backend)
+#ifdef WINDOWS
+	#include <wchar.h> //Required for opening the actual files
+	#include <stringapiset.h>
+#endif
+
+//Constructor and destructor
+MUSIC::MUSIC(const char *path)
+{
+	LOG(("Loading music file from %s... ", path));
+	
+	#ifdef WINDOWS
+		//Open file (Windows only UTF-16 wchar bullshit)
+		GET_GLOBAL_PATH(musicPath, path);
+		
+		//Convert to UTF-16
+		wchar_t wcharBuffer[0x200];
+		MultiByteToWideChar(CP_UTF8, 0, musicPath, -1, wcharBuffer, 0x200);
+		
+		//Open the file with our newly converted path
+		FILE *fp = _wfopen(wcharBuffer, L"rb");
+	#else
+		//Open file
+		GET_GLOBAL_PATH(musicPath, path);
+		FILE *fp = fopen(musicPath, "rb");
+	#endif
+	
+	//If the file failed to open...
+	if (fp == NULL)
+	{
+		Error(fail = "Failed to open the given file");
+		return;
+	}
+	
+	//Open our stb_vorbis file from this
+	int error;
+	file = stb_vorbis_open_file(fp, 1, &error, NULL);
+	
+	if (file == NULL)
+	{
+		char error[0x40];
+		sprintf(error, "Error: %d", error);
+		Warn(error);
+		return;
+	}
+	
+	LOG(("Success!\n"));
+}
+
+MUSIC::~MUSIC()
+{
+	//Close our loaded file
+	stb_vorbis_close(file);
+}
+
+void MUSIC::Mix(float *stream, int samples)
+{
+	
+}
+
+//Playback functions
+void MUSIC::Play()
+{
+	
+}
+
+int MUSIC::Pause()
+{
+	return 0;
+}
+
+void MUSIC::Resume(int position)
+{
+	
+}
+
 //Music functions
+MUSIC *currentMusic;
+
 void PlayMusic(MUSICID music)
 {
 	//Wait for audio device to be finished and lock it
 	SDL_LockAudioDevice(audioDevice);
 	
-	(void)music;
+	//Unload current song
+	if (currentMusic)
+		delete currentMusic;
+	
+	//Load new song (if not null)
+	if (music != MUSICID_NULL)
+		currentMusic = new MUSIC(musicDefinition[music].path);
 	
 	//Resume audio device
 	SDL_UnlockAudioDevice(audioDevice);
@@ -303,32 +387,14 @@ void PlayMusic(MUSICID music)
 
 int PauseMusic()
 {
-	//Wait for audio device to be finished and lock it
-	SDL_LockAudioDevice(audioDevice);
-	
-	//Resume audio device
-	SDL_UnlockAudioDevice(audioDevice);
-	return 0;
+	//Pause and return current position
+	return currentMusic->Pause();
 }
 
 void ResumeMusic(int position)
 {
-	//Wait for audio device to be finished and lock it
-	SDL_LockAudioDevice(audioDevice);
-	
-	(void)position;
-	
-	//Resume audio device
-	SDL_UnlockAudioDevice(audioDevice);
-}
-
-void UnloadMusic()
-{
-	//Wait for audio device to be finished and lock it
-	SDL_LockAudioDevice(audioDevice);
-	
-	//Resume audio device
-	SDL_UnlockAudioDevice(audioDevice);
+	//Resume at given position
+	currentMusic->Resume(position);
 }
 
 //Callback function
@@ -479,6 +545,10 @@ void QuitAudio()
 		delete sound;
 		sound = next;
 	}
+	
+	//Unload current song
+	if (currentMusic)
+		delete currentMusic;
 	
 	//Close our audio device
 	SDL_CloseAudioDevice(audioDevice);

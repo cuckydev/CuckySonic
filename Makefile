@@ -10,12 +10,16 @@ endif
 
 FILENAME ?= $(FILENAME_DEF)
 
-ifeq ($(CONSOLE), 1)
-	CXXFLAGS += -mconsole
+ifeq ($(WINDOWS), 1)
+	CXXFLAGS += -DWINDOWS
+	
+	ifeq ($(CONSOLE), 1)
+		CXXFLAGS += -mconsole
+	endif
 endif
 
 #CXX flags and libraries
-CXXFLAGS += `pkg-config --cflags sdl2` -Wall -Wextra -pedantic -Wformat-overflow=0 -MMD -MP -MF $@.d 
+CXXFLAGS += `pkg-config --cflags sdl2` -MMD -MP -MF $@.d 
 
 ifeq ($(STATIC), 1)
 	LDFLAGS += -static
@@ -33,6 +37,7 @@ SOURCES = \
 	Event \
 	Input \
 	Audio \
+	Audio_stb_vorbis \
 	MathUtil \
 	Fade \
 	Mappings \

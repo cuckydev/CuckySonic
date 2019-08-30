@@ -118,16 +118,39 @@ class SOUND
 		void Mix(float *stream, int samples);
 };
 
-//Audio functions
-void PlaySound(SOUNDID id);
-void StopSound(SOUNDID id);
+//Music class (using stb_vorbis backend)
+#define STB_VORBIS_HEADER_ONLY
+#include "Audio_stb_vorbis.cpp"
 
-extern MUSICID gCurrentMusic;
+class MUSIC
+{
+	public:
+		//Failure
+		const char *fail;
+		
+		//stb_vorbis decoder
+		stb_vorbis *file;
+	
+	public:
+		MUSIC(const char *path);
+		~MUSIC();
+		
+		void Play();
+		int Pause();
+		void Resume(int position);
+		
+		void Mix(float *stream, int samples);
+};
 
+//Music functions
 void PlayMusic(MUSICID music);
 int PauseMusic();
 void ResumeMusic(int position);
-void UnloadMusic();
 
+//Sound functions
+void PlaySound(SOUNDID id);
+void StopSound(SOUNDID id);
+
+//Audio subsystem functions
 bool InitializeAudio();
 void QuitAudio();
