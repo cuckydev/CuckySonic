@@ -63,8 +63,8 @@ void ObjRingSpawner(OBJECT *object)
 		newObject->y.pos = yPos;
 		
 		//Get next position
-		xPos += posData[object->subtype & 0xF0][0];
-		yPos += posData[object->subtype & 0xF0][1];
+		xPos += posData[(object->subtype & 0xF0) >> 4][0];
+		yPos += posData[(object->subtype & 0xF0) >> 4][1];
 	}
 	
 	//Delete us
