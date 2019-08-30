@@ -10,6 +10,7 @@ enum MUSICID
 	MUSICID_NULL,
 	MUSICID_TITLE,
 	MUSICID_MENU,
+	MUSICID_SPEED_SHOES,
 	MUSICID_GHZ,
 	MUSICID_EHZ,
 	MUSICID_MAX,
@@ -68,8 +69,7 @@ enum SOUNDCHANNEL
 struct MUSICDEFINITION
 {
 	const char *path;
-	int loopLength;	//How many samples the looping part lasts
-	int loopEnd; //When the looping part ends
+	int loopStart;	//How many samples the looping part lasts
 };
 
 struct SOUNDDEFINITION

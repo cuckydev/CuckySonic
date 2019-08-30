@@ -755,15 +755,29 @@ void LEVEL::DynamicEvents()
 	int16_t left = camera->x;
 	int16_t right = camera->x + SCREEN_WIDTH;
 	
-	if (left < leftBoundaryTarget)
-		leftBoundary = left;
+	if (leftBoundary < leftBoundaryTarget)
+	{
+		if (left < leftBoundaryTarget)
+			leftBoundary = left;
+		else
+			leftBoundary = leftBoundaryTarget;
+	}
 	else
+	{
 		leftBoundary = leftBoundaryTarget;
+	}
 	
-	if (right > rightBoundaryTarget)
-		rightBoundary = right;
+	if (rightBoundary > rightBoundaryTarget)
+	{
+		if (right > rightBoundaryTarget)
+			rightBoundary = right;
+		else
+			rightBoundary = rightBoundaryTarget;
+	}
 	else
+	{
 		rightBoundary = rightBoundaryTarget;
+	}
 }
 
 //Texture cache

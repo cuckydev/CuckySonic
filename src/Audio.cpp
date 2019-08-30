@@ -12,11 +12,12 @@ SDL_AudioDeviceID audioDevice;
 
 //Music definitions
 MUSICDEFINITION musicDefinition[MUSICID_MAX] = {
-	{NULL, 0, 0}, //MUSICID_NULL
-	{"data/Audio/Music/Title.ogg", 0, 0},
-	{"data/Audio/Music/Menu.ogg", 1390138, 1390138},
-	{"data/Audio/Music/GHZ.ogg", 1693960, 2328494},
-	{"data/Audio/Music/EHZ.ogg", 1828071, 1981583},
+	{NULL, 0}, //MUSICID_NULL
+	{"data/Audio/Music/Title.ogg", -1},
+	{"data/Audio/Music/Menu.ogg", 0},
+	{"data/Audio/Music/SpeedShoes.ogg", -1},
+	{"data/Audio/Music/GHZ.ogg", 635083},
+	{"data/Audio/Music/EHZ.ogg", 153816},
 };
 
 //Sound effects
@@ -441,7 +442,7 @@ float MUSIC::GetVolume()
 void MUSIC::Loop()
 {
 	//Seek backwards definition->loopLength frames
-	if (stb_vorbis_seek_frame(file, (int)(internalPosition -= (double)definition->loopLength)) < 0)
+	if (stb_vorbis_seek_frame(file, (int)(internalPosition = definition->loopStart)) < 0)
 	{
 		Warn("Failed to play the music at given position");
 		playing = false;
@@ -451,10 +452,6 @@ void MUSIC::Loop()
 
 void MUSIC::Mix(float *stream, int samples)
 {
-	//Only mix if playing
-	if (!playing)
-		return;
-	
 	//Read the given amount of samples
 	float buffer[AUDIO_SAMPLES * 2];
 	float *bufferCopy = &(*buffer);
@@ -473,7 +470,7 @@ void MUSIC::Mix(float *stream, int samples)
 		
 		if (thisRead == 0)
 		{
-			if (definition->loopLength <= 0)
+			if (definition->loopStart < 0)
 			{
 				//Doesn't loop
 				playing = false;
@@ -485,18 +482,6 @@ void MUSIC::Mix(float *stream, int samples)
 				Loop();
 			}
 		}
-		else if (definition->loopLength > 0 && internalPosition >= definition->loopEnd)
-		{
-			//Loop back
-			Loop();
-		}
-	}
-	
-	//Fill the rest of the data with 0.0
-	while (samplesRead++ < samples)
-	{
-		*bufferCopy++ = 0.0;
-		*bufferCopy++ = 0.0;
 	}
 	
 	//Copy the buffer into our stream
@@ -504,8 +489,16 @@ void MUSIC::Mix(float *stream, int samples)
 	
 	for (int i = 0; i < samples; i++)
 	{
-		*stream++ = (*bufferCopy++) * volume;
-		*stream++ = (*bufferCopy++) * volume;
+		if (i < samplesRead)
+		{
+			*stream++ = (*bufferCopy++) * volume;
+			*stream++ = (*bufferCopy++) * volume;
+		}
+		else
+		{
+			*stream++ = 0.0f;
+			*stream++ = 0.0f;
+		}
 	}
 }
 
@@ -569,7 +562,7 @@ void AudioCallback(void *userdata, uint8_t *stream, int length)
 	//Get our buffer to render to
 	int samples = length / (2 * sizeof(float));
 	
-	if (currentMusic != NULL)
+	if (currentMusic != NULL && currentMusic->playing)
 	{
 		//Mix the music into the buffer, we don't need to clear the buffer here because the music sets the buffer, rather than add onto it
 		currentMusic->Mix((float*)stream, samples);
