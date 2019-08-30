@@ -29,80 +29,44 @@ void ObjRing(OBJECT *object)
 	}
 }
 
+//Used for Sonic 1 levels
+static int16_t posData[16][2] = {
+	{ 0x10, 0x00},
+	{ 0x18, 0x00},
+	{ 0x20, 0x00},
+	{ 0x00, 0x10},
+	{ 0x00, 0x18},
+	{ 0x00, 0x20},
+	{ 0x10, 0x10},
+	{ 0x18, 0x18},
+	{ 0x20, 0x20},
+	{-0x10, 0x10},
+	{-0x18, 0x18},
+	{-0x20, 0x20},
+	{ 0x10, 0x08},
+	{ 0x18, 0x10},
+	{-0x10, 0x08},
+	{-0x18, 0x10},
+};
+		
 void ObjRingSpawner(OBJECT *object)
 {
 	int16_t xPos = object->x.pos;
 	int16_t yPos = object->y.pos;
 	
+	//Create rings (lowest nibble of subtype)
 	for (int i = 0; i <= (object->subtype & 0xF); i++)
 	{
+		//Create ring object
 		OBJECT *newObject = new OBJECT(&gLevel->objectList, &ObjRing);
 		newObject->x.pos = xPos;
 		newObject->y.pos = yPos;
 		
-		switch (object->subtype & 0xF0)
-		{
-			case 0x00:
-				xPos += 0x10;
-				break;
-			case 0x10:
-				xPos += 0x18;
-				break;
-			case 0x20:
-				xPos += 0x20;
-				break;
-			case 0x30:
-				yPos += 0x10;
-				break;
-			case 0x40:
-				yPos += 0x18;
-				break;
-			case 0x50:
-				yPos += 0x20;
-				break;
-			case 0x60:
-				xPos += 0x10;
-				yPos += 0x10;
-				break;
-			case 0x70:
-				xPos += 0x18;
-				yPos += 0x18;
-				break;
-			case 0x80:
-				xPos += 0x20;
-				yPos += 0x20;
-				break;
-			case 0x90:
-				xPos -= 0x10;
-				yPos += 0x10;
-				break;
-			case 0xA0:
-				xPos -= 0x18;
-				yPos += 0x18;
-				break;
-			case 0xB0:
-				xPos -= 0x20;
-				yPos += 0x20;
-				break;
-			case 0xC0:
-				xPos += 0x10;
-				yPos += 0x08;
-				break;
-			case 0xD0:
-				xPos += 0x18;
-				yPos += 0x0C;
-				break;
-			case 0xE0:
-				xPos -= 0x10;
-				yPos += 0x08;
-				break;
-			case 0xF0:
-				xPos -= 0x18;
-				yPos += 0x0C;
-				break;
-		}
+		//Get next position
+		xPos += posData[object->subtype & 0xF0][0];
+		yPos += posData[object->subtype & 0xF0][1];
 	}
 	
-	//Delete
+	//Delete us
 	object->deleteFlag = true;
 }
