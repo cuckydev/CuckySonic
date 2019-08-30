@@ -6,12 +6,24 @@
 #include "SDL_events.h"
 
 bool gDebugEnabled = false;
+
+unsigned int gScore;
+unsigned int gTime;
+unsigned int gRings;
+unsigned int gLives;
+
 GAMEMODE gGameMode;
 
 bool EnterGameLoop()
 {
 	//Initialize game memory
 	gGameMode = GAMEMODE_SPLASH; //Start at splash screen
+	
+	//Initialize our score time and rings
+	gScore = 0;
+	gTime = 0;
+	gRings = 0;
+	gLives = 3;
 	
 	//Run game code
 	bool noExit = true;

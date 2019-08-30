@@ -2191,8 +2191,8 @@ void PLAYER::LevelBound()
 	#endif
 	
 	lbType nextPos = (xPosLong + (xVel * 0x100)) / 0x10000;
-	lbType leftBound = gLevel->leftBoundary2 + 0x10;
-	lbType rightBound = gLevel->rightBoundary2 + 0x40 - 0x18;
+	lbType leftBound = gLevel->leftBoundary + 0x10;
+	lbType rightBound = gLevel->rightBoundary + 0x40 - 0x18;
 	
 	//Clip us into the boundaries
 	if (nextPos < leftBound)
@@ -2202,9 +2202,9 @@ void PLAYER::LevelBound()
 	
 	//Die if reached bottom boundary
 	#ifndef SONIC1_DEATH_BOUNDARY
-	if (status.reverseGravity ? (y.pos <= gLevel->topBoundary) : (y.pos >= gLevel->bottomBoundary))
+	if (status.reverseGravity ? (y.pos <= gLevel->topBoundaryTarget) : (y.pos >= gLevel->bottomBoundaryTarget))
 	#else
-	if (status.reverseGravity ? (y.pos <= gLevel->topBoundary2) : (y.pos >= gLevel->bottomBoundary2))
+	if (status.reverseGravity ? (y.pos <= gLevel->topBoundary) : (y.pos >= gLevel->bottomBoundary))
 	#endif
 	{
 		x.pos = nextPos;

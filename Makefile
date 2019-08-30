@@ -39,12 +39,14 @@ SOURCES = \
 	Object \
 	Camera \
 	TitleCard \
+	Hud \
 	LevelSpecific/GHZ \
 	LevelSpecific/EHZ \
 	Objects/PathSwitcher \
 	Objects/Goalpost \
 	Objects/Spiral \
 	Objects/Bridge \
+	Objects/Ring \
 	Objects/Motobug \
 
 #What to compile

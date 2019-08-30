@@ -75,9 +75,15 @@ void CAMERA::Track(PLAYER *trackPlayer)
 		if (!trackPlayer->scrollDelay) //Don't increase if scroll is delayed
 		{
 			if (abs(speed) >= 0x600 || trackPlayer->spindashing)
-				approach(xPan, ((trackPlayer->spindashing ? trackPlayer->status.xFlip : speed < 0) ? -64 : 64), 2); //Pan towards our moving direction
+			{
+				//Pan towards our moving direction
+				approach(xPan, ((trackPlayer->spindashing ? trackPlayer->status.xFlip : speed < 0) ? -64 : 64), 2);
+			}
 			else
-				approach(xPan, 0, 2); //Unpan
+			{
+				//Unpan
+				approach(xPan, 0, 2);
+			}
 		}
 		
 		//Pan our track position
@@ -154,12 +160,12 @@ void CAMERA::Track(PLAYER *trackPlayer)
 		y -= (tDiff > vScroll ? vScroll : tDiff);
 	
 	//Keep inside of level boundaries
-	if (x < gLevel->leftBoundary2)
-		x = gLevel->leftBoundary2;
-	if (y < gLevel->topBoundary2)
-		y = gLevel->topBoundary2;
-	if (x > gLevel->rightBoundary2 - SCREEN_WIDTH)
-		x = gLevel->rightBoundary2 - SCREEN_WIDTH;
-	if (y > gLevel->bottomBoundary2 - SCREEN_HEIGHT)
-		y = gLevel->bottomBoundary2 - SCREEN_HEIGHT;
+	if (x < gLevel->leftBoundary)
+		x = gLevel->leftBoundary;
+	if (y < gLevel->topBoundary)
+		y = gLevel->topBoundary;
+	if (x > gLevel->rightBoundary - SCREEN_WIDTH)
+		x = gLevel->rightBoundary - SCREEN_WIDTH;
+	if (y > gLevel->bottomBoundary - SCREEN_HEIGHT)
+		y = gLevel->bottomBoundary - SCREEN_HEIGHT;
 }

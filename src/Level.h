@@ -5,6 +5,7 @@
 #include "Object.h"
 #include "Camera.h"
 #include "TitleCard.h"
+#include "Hud.h"
 #include "GameConstants.h"
 #include "Audio.h"
 
@@ -134,6 +135,9 @@ class LEVEL
 		//Level ID
 		int levelId;
 		
+		//Level music
+		MUSICID musicId;
+		
 		//Game update stuff
 		int frameCounter; //Frames the level has been loaded
 		
@@ -145,6 +149,7 @@ class LEVEL
 		TEXTURE *tileTexture;
 		
 		TEXTURE *backgroundTexture;
+		uint16_t *backgroundScroll;
 		
 		PALETTECYCLE palCycle[PALETTE_CYCLES];
 		
@@ -166,18 +171,19 @@ class LEVEL
 		uint16_t rightBoundary;
 		uint16_t topBoundary;
 		uint16_t bottomBoundary;
-		uint16_t leftBoundary2;
-		uint16_t rightBoundary2;
-		uint16_t topBoundary2;
-		uint16_t bottomBoundary2;
+		uint16_t leftBoundaryTarget;
+		uint16_t rightBoundaryTarget;
+		uint16_t topBoundaryTarget;
+		uint16_t bottomBoundaryTarget;
 		
 		//Players and objects
 		PLAYER *playerList;
 		OBJECT *objectList;
 		CAMERA *camera;
 		
-		//Title card
+		//Title card and HUD
 		TITLECARD *titleCard;
+		HUD *hud;
 		
 		//Object texture cache
 		TEXTURE *objTextureCache;

@@ -1,3 +1,2 @@
-Credit to the Soft Directmedia Layer team for creating SDL2
 Credit to Anne (Sketch) for the corkscrew animation sprites
 And thanks to everyone behind the Sonic 1, 2, and 3K disassemblies for their hard work to make something like this possible!

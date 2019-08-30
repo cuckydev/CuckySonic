@@ -17,7 +17,7 @@ OBJECTFUNCTION objFuncSonic1[] = {
 	NULL, NULL, NULL, NULL, NULL, &ObjGoalpost, NULL, NULL,
 	NULL, &ObjBridge, NULL, NULL, NULL, NULL, NULL, NULL,
 	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+	NULL, NULL, NULL, NULL, NULL, &ObjRingSpawner, NULL, NULL,
 	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
 	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
 	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
@@ -222,10 +222,10 @@ bool LEVEL::LoadLayout(LEVELTABLE *tableEntry)
 	topBoundary = tableEntry->topBoundary;
 	bottomBoundary = tableEntry->bottomBoundary;
 	
-	leftBoundary2 = leftBoundary;
-	rightBoundary2 = rightBoundary;
-	topBoundary2 = topBoundary;
-	bottomBoundary2 = bottomBoundary;
+	leftBoundaryTarget = leftBoundary;
+	rightBoundaryTarget = rightBoundary;
+	topBoundaryTarget = topBoundary;
+	bottomBoundaryTarget = bottomBoundary;
 	
 	LOG(("Success!\n"));
 	return false;
@@ -370,9 +370,12 @@ bool LEVEL::LoadObjects(LEVELTABLE *tableEntry)
 		uint8_t subtype = SDL_ReadU8(objectFile);
 		
 		OBJECT *newObject = new OBJECT(&objectList, tableEntry->objectFunctionList[id & 0x7F]);
-		if (newObject == NULL)
+		if (newObject == NULL || newObject->fail)
 		{
-			Error(fail = "Failed to create object");
+			if (newObject == NULL)
+				Error(fail = "Failed to create object");
+			else
+				Error(fail = newObject->fail);
 			return true;
 		}
 		
@@ -385,6 +388,53 @@ bool LEVEL::LoadObjects(LEVELTABLE *tableEntry)
 	}
 	
 	SDL_RWclose(objectFile);
+	
+	//Open external ring file
+	GET_APPEND_PATH(ringPath, globalPath, ".ring");
+	
+	SDL_RWops *ringFile = SDL_RWFromFile(ringPath, "rb");
+	
+	if (ringFile == NULL)
+	{
+		Error(fail = SDL_GetError());
+		return true;
+	}
+	
+	//Read external ring data
+	int rings = SDL_RWsize(ringFile) / 4;
+	
+	for (int i = 0; i < rings; i++)
+	{
+		int16_t xPos = SDL_ReadBE16(ringFile);
+		int16_t word2 = SDL_ReadBE16(ringFile);
+		int16_t yPos = word2 & 0x0FFF;
+		
+		int type = (word2 & 0xF000) >> 12;
+		
+		for (int v = 0; v <= (type & 0x7); v++)
+		{
+			//Create ring object
+			OBJECT *newObject = new OBJECT(&objectList, &ObjRing);
+			if (newObject == NULL || newObject->fail)
+			{
+				if (newObject == NULL)
+					Error(fail = "Failed to create object");
+				else
+					Error(fail = newObject->fail);
+				return true;
+			}
+			
+			newObject->x.pos = xPos;
+			newObject->y.pos = yPos;
+			
+			//Offset
+			if (type & 0x8)
+				yPos += 0x18;
+			else
+				xPos += 0x18;
+		}
+	}
+	
 	LOG(("Success!\n"));
 	return false;
 }
@@ -406,6 +456,9 @@ bool LEVEL::LoadArt(LEVELTABLE *tableEntry)
 				Error(fail = backgroundTexture->fail);
 				return true;
 			}
+			
+			//Allocate background scroll array
+			backgroundScroll = (uint16_t*)malloc(sizeof(uint16_t) * backgroundTexture->height);
 			
 			//Load our foreground tilemap
 			GET_APPEND_PATH(artPath, tableEntry->artReferencePath, ".foreground.bmp");
@@ -460,6 +513,8 @@ void LEVEL::UnloadAll()
 		delete camera;
 	if (titleCard != NULL)
 		delete titleCard;
+	if (hud != NULL)
+		delete hud;
 	
 	//Unload object textures and mappings
 	for (TEXTURE *texture = objTextureCache; texture != NULL;)
@@ -541,12 +596,25 @@ LEVEL::LEVEL(int id, int players, const char **playerPaths)
 	
 	inTitleCard = true;
 	
+	//HUD
+	hud = new HUD();
+	if (hud == NULL || hud->fail)
+	{
+		Error(fail = hud->fail);
+		UnloadAll();
+		return;
+	}
+	
 	//Initialize state
 	updateTime = true;
 	updateStage = true;
 	
 	//Play music
-	PlayMusic(tableEntry->music);
+	PlayMusic(musicId = tableEntry->music);
+	
+	//Clear time and rings
+	gTime = 0;
+	gRings = 0;
 	
 	LOG(("Success!\n"));
 }
@@ -642,9 +710,9 @@ void LEVEL::DynamicEvents()
 			{
 				//Update boundaries (GHZ1)
 				if (camera->x < 0x1780)
-					bottomBoundary = 0x3E0;
+					bottomBoundaryTarget = 0x3E0;
 				else
-					bottomBoundary = 0x4E0;
+					bottomBoundaryTarget = 0x4E0;
 			}
 			
 			
@@ -656,32 +724,38 @@ void LEVEL::DynamicEvents()
 	//Move up/down to the boundary
 	int16_t move = 2;
 
-	if (bottomBoundary < bottomBoundary2)
+	if (bottomBoundaryTarget < bottomBoundary)
 	{
 		//Move up to the boundary smoothly
-		if ((camera->y + SCREEN_HEIGHT) > bottomBoundary)
-			bottomBoundary2 = (camera->y + SCREEN_HEIGHT);
+		if ((camera->y + SCREEN_HEIGHT) > bottomBoundaryTarget)
+			bottomBoundary = (camera->y + SCREEN_HEIGHT);
 		
 		//Move
-		bottomBoundary2 -= move;
+		bottomBoundary -= move;
 	}
-	else if (bottomBoundary > bottomBoundary2)
+	else if (bottomBoundaryTarget > bottomBoundary)
 	{
 		//Move faster if in mid-air
-		if ((camera->y + 8 + SCREEN_HEIGHT) >= bottomBoundary2 && playerList->status.inAir)
+		if ((camera->y + 8 + SCREEN_HEIGHT) >= bottomBoundary && playerList->status.inAir)
 			move *= 4;
 		
 		//Move
-		bottomBoundary2 += move;
+		bottomBoundary += move;
 	}
 	
 	//Set boundaries to target
-	int16_t xPos = playerList->x.pos - (SCREEN_WIDTH / 2);
-	int16_t yPos = playerList->y.pos;
+	int16_t left = camera->x;
+	int16_t right = camera->x + SCREEN_WIDTH;
 	
-	//Cap to left
-	if (xPos < 0)
-		xPos = 0;
+	if (left < leftBoundaryTarget)
+		leftBoundary = left;
+	else
+		leftBoundary = leftBoundaryTarget;
+	
+	if (right > rightBoundaryTarget)
+		rightBoundary = right;
+	else
+		rightBoundary = rightBoundaryTarget;
 }
 
 //Texture cache
@@ -815,6 +889,11 @@ bool LEVEL::Update(bool checkTitleCard)
 	if (updateStage)
 		PaletteUpdate();
 	
+	//Increase our time
+	if (gLevel->updateTime)
+		gTime++;
+	
+	//Increment frame counter
 	frameCounter++;
 	return true;
 }
@@ -825,7 +904,6 @@ void LEVEL::Draw()
 	if (backgroundTexture != NULL && camera != NULL)
 	{
 		//Get our background scroll
-		uint16_t backgroundScroll[backgroundTexture->height];
 		int16_t backX = camera->x;
 		int16_t backY = camera->y;
 		
@@ -881,4 +959,7 @@ void LEVEL::Draw()
 	
 	for (OBJECT *object = objectList; object != NULL; object = object->next)
 		object->DrawRecursive();
+	
+	//Draw HUD
+	hud->Draw();
 }

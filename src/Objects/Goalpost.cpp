@@ -50,8 +50,10 @@ void ObjGoalpost(OBJECT *object)
 			//If the main player is near us, start spinning
 			if (gLevel->playerList->x.pos >= object->x.pos && gLevel->playerList->x.pos < (object->x.pos + 0x20))
 			{
-				//Lock the camera and increment routine
+				//Lock the camera, timer, and increment routine
 				gLevel->leftBoundary2 = gLevel->rightBoundary2 - SCREEN_WIDTH;
+				gLevel->updateTime = false;
+				
 				object->routine++;
 			}
 			break;

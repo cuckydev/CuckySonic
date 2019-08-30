@@ -13,8 +13,16 @@ enum GAMEMODE
 	GAMEMODE_CREDITS,		//Credits sequence
 };
 
+//Debug enabled boolean
 extern bool gDebugEnabled;
 
+//Score, time, rings, and lives
+extern unsigned int gScore;
+extern unsigned int gTime;
+extern unsigned int gRings;
+extern unsigned int gLives;
+
+//Gamemode and level state
 extern GAMEMODE gGameMode;
 extern LEVEL *gLevel;
 
