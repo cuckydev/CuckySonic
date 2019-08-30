@@ -43,15 +43,15 @@ void ObjGoalpost(OBJECT *object)
 		case 1: //Check for contact
 		{
 			//If near the end of the level, lock screen
-			int16_t boundary = gLevel->rightBoundary2 - SCREEN_WIDTH - 0x100;
+			int16_t boundary = gLevel->rightBoundaryTarget - SCREEN_WIDTH - 0x100;
 			if (gLevel->camera->x >= boundary)
-				gLevel->leftBoundary2 = boundary;
+				gLevel->leftBoundaryTarget = boundary;
 			
 			//If the main player is near us, start spinning
 			if (gLevel->playerList->x.pos >= object->x.pos && gLevel->playerList->x.pos < (object->x.pos + 0x20))
 			{
 				//Lock the camera, timer, and increment routine
-				gLevel->leftBoundary2 = gLevel->rightBoundary2 - SCREEN_WIDTH;
+				gLevel->leftBoundaryTarget = gLevel->rightBoundaryTarget - SCREEN_WIDTH;
 				gLevel->updateTime = false;
 				
 				object->routine++;
