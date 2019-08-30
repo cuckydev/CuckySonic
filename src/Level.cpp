@@ -909,7 +909,7 @@ void LEVEL::Draw()
 		
 		GetBackgroundScroll(updateStage, backgroundScroll, &backX, &backY);
 		
-		//Draw each scanline
+		//Draw each line
 		for (int i = 0; i < backgroundTexture->height; i++)
 		{
 			for (int x = -(backgroundScroll[i] % backgroundTexture->width); x < SCREEN_WIDTH; x += backgroundTexture->width)

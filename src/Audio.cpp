@@ -136,7 +136,7 @@ SOUND::SOUND(const char *path)
 
 SOUND::SOUND(SOUND *ourParent)
 {
-	LOG(("Creating a sound from parent %p... ", ourParent));
+	LOG(("Creating a sound from parent %p... ", (void*)ourParent));
 	
 	//Wait for audio device to be finished and lock it
 	SDL_LockAudioDevice(audioDevice);
@@ -295,6 +295,8 @@ void PlayMusic(MUSICID music)
 	//Wait for audio device to be finished and lock it
 	SDL_LockAudioDevice(audioDevice);
 	
+	(void)music;
+	
 	//Resume audio device
 	SDL_UnlockAudioDevice(audioDevice);
 }
@@ -313,6 +315,8 @@ void ResumeMusic(int position)
 {
 	//Wait for audio device to be finished and lock it
 	SDL_LockAudioDevice(audioDevice);
+	
+	(void)position;
 	
 	//Resume audio device
 	SDL_UnlockAudioDevice(audioDevice);
@@ -372,7 +376,7 @@ void PlaySound(SOUNDID id)
 			spindashPitch = 11;
 		
 		//Set sound id
-		playId = playId = (SOUNDID)((unsigned int)SOUNDID_SPINDASH_REV + spindashPitch);
+		playId = (SOUNDID)((unsigned int)SOUNDID_SPINDASH_REV + spindashPitch);
 		
 		//Update timer
 		spindashTimer = SDL_GetTicks() + 1000;

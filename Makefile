@@ -1,6 +1,7 @@
 #Release and debug
 ifeq ($(RELEASE), 1)
-	CXXFLAGS = -O3 -s -flto
+	CXXFLAGS = -O3 -flto
+	LDFLAGS = -s
 	FILENAME_DEF = release
 else
 	CXXFLAGS = -O0 -ggdb3 -DDEBUG
@@ -14,8 +15,14 @@ ifeq ($(CONSOLE), 1)
 endif
 
 #CXX flags and libraries
-CXXFLAGS += `pkg-config --cflags sdl2` -MMD -MP -MF -Wall -Wextra -pedantic -Wformat-overflow=0
-LIBS += `pkg-config --libs sdl2 --static` -static
+CXXFLAGS += `pkg-config --cflags sdl2` -Wall -Wextra -pedantic -Wformat-overflow=0 -MMD -MP -MF $@.d 
+
+ifeq ($(STATIC), 1)
+	LDFLAGS += -static
+	LIBS += `pkg-config --libs sdl2 --static`
+else
+	LIBS += `pkg-config --libs sdl2`
+endif
 
 #Sources to compile
 SOURCES = \
@@ -64,7 +71,7 @@ all: build/$(FILENAME)
 build/$(FILENAME): $(OBJECTS)
 	@mkdir -p $(@D)
 	@echo Linking...
-	@$(CXX) $(CXXFLAGS) $^ -o $@ $(LIBS)
+	@$(CXX) $(CXXFLAGS) $(LDFLAGS) $^ -o $@ $(LIBS)
 	@echo Finished linking $@
 
 obj/$(FILENAME)/%.o: src/%.cpp

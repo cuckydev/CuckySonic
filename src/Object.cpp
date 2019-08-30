@@ -37,12 +37,6 @@ OBJECT::OBJECT(OBJECT **linkedList, void (*objectFunction)(OBJECT *object))
 
 OBJECT::~OBJECT()
 {
-	//Unload texture and mappings
-	if (texture && texture->list == NULL)
-		delete texture;
-	if (mappings && mappings->list == NULL)
-		delete mappings;
-	
 	//Detach from linked list
 	if (list != NULL)
 	{
@@ -185,6 +179,8 @@ void OBJECT::PlatformObject(int16_t width, int16_t height, int16_t xPos)
 
 void OBJECT::PlatformObject2(PLAYER *player, int i, int16_t width, int16_t height, int16_t xPos)
 {
+	(void)xPos;
+	
 	//Check if we're in a state where we can enter onto the platform
 	int16_t xDiff = (player->x.pos - x.pos) + width;
 	if (player->yVel < 0 || xDiff < 0 || xDiff >= width * 2)

@@ -53,7 +53,6 @@ void ObjBridge(OBJECT *object)
 			//Get our type properties
 			int16_t yPos = object->y.pos;
 			object->scratchU16[SCRATCH_ORIGINY] = yPos;
-			int16_t xPos = object->x.pos;
 			
 			int *subtypePointer = &object->subtype;
 			int subtype = *subtypePointer;
@@ -79,6 +78,11 @@ void ObjBridge(OBJECT *object)
 			int depressPlayers = 0;
 			int depressPosition = 0;
 			int depressForce = 0;
+			
+			(void)subtype;
+			(void)depressPlayers;
+			(void)depressPosition;
+			(void)depressForce;
 			
 			int i = 0;
 			for (OBJECT *child = object->children; child != NULL; child = child->next)

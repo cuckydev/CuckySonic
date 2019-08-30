@@ -8,7 +8,7 @@
 //#define FIX_CAMERA_YSHIFT    //This makes the camera shifting for when rolling less bad
 
 //Optional differences
-//#define CAMERA_CD_PAN
+//#define CAMERA_CD_PAN //NOTE: pretty crappy since it only really works in CD because it has a lot of crappy flat ground and stuff
 
 //Constants
 #define CAMERA_GROUND_YMARGIN_BOTTOM 0

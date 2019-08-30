@@ -3,7 +3,7 @@
 
 void GHZ_PaletteCycle(LEVEL *lvl)
 {
-	
+	(void)lvl;
 }
 
 const uint32_t ghzCloudScroll[] = {0x10000, 0xC000, 0x8000};

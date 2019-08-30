@@ -330,11 +330,6 @@ PLAYER::PLAYER(PLAYER **linkedList, const char *specPath, PLAYER *myFollow, int 
 
 PLAYER::~PLAYER()
 {
-	if (texture && texture->list == NULL)
-		delete texture;
-	if (mappings)
-		delete mappings;
-	
 	//Detach from linked list
 	if (list != NULL)
 	{
@@ -2160,7 +2155,10 @@ void PLAYER::KillCharacter()
 		
 		//If the lead player, quit level's update
 		if (follow == NULL)
+		{
 			gLevel->updateStage = false;
+			gLevel->updateTime = false;
+		}
 		
 		//Do animation and sound
 		anim = PLAYERANIMATION_DEATH;
@@ -2838,7 +2836,7 @@ void PLAYER::CPUControl()
 						controlPress.down = true;
 						
 						//If taking too long, quit
-						if (cpuTimer & 0x7F == 0)
+						if ((cpuTimer & 0x7F) == 0)
 						{
 							controlHeld = {false, false, false, false, false, false, false, false};
 							controlPress = {false, false, false, false, false, false, false, false};
@@ -2877,6 +2875,7 @@ void PLAYER::CPUControl()
 						controlPress = {false, false, false, false, false, false, false, false};
 						cpuRoutine = CPUROUTINE_NORMAL;
 					}
+					
 					//Every 20 frames rev our spindash
 					else if ((cpuTimer & 0x1F) == 0)
 					{
@@ -2889,6 +2888,8 @@ void PLAYER::CPUControl()
 					}
 				}
 			}
+			break;
+		default:
 			break;
 	}
 	
@@ -3346,6 +3347,8 @@ void PLAYER::RideObject(void *ride, bool *standingBit)
 
 void PLAYER::MoveOnPlatform(void *platform, int16_t width, int16_t height, int16_t xPos)
 {
+	(void)width;
+	
 	OBJECT *platformObject = (OBJECT*)platform;
 	int top = platformObject->y.pos - height;
 	
