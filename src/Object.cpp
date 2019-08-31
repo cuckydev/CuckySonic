@@ -73,6 +73,30 @@ void OBJECT::MoveAndFall()
 	yVel += 0x38;
 }
 
+//Hurt function
+bool OBJECT::Hurt(PLAYER *player)
+{
+	//TODO: Points chain
+	//TODO: Create explosion
+	
+	//Adjust player's velocity
+	if (player->yVel >= 0)
+	{
+		if (player->y.pos < y.pos)
+			player->yVel = -player->yVel; //If above us, reverse player velocity
+		else
+			player->yVel -= 0x100; //If below us, slow down a bit
+	}
+	else
+	{
+		player->yVel += 0x100; //If moving upwards, slow down a bit
+	}
+	
+	//Delete us
+	deleteFlag = true;
+	return true;
+}
+
 //Shared animate function
 void OBJECT::Animate(const uint8_t **animationList)
 {

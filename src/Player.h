@@ -4,6 +4,7 @@
 #include "Render.h"
 #include "Mappings.h"
 #include "Input.h"
+#include "Audio.h"
 #include "LevelCollision.h"
 
 #define PLAYER_RECORD_LENGTH 0x40
@@ -375,8 +376,11 @@ class PLAYER
 		void RollSpeed();
 		
 		void DeadCheckRespawn();
+		void HurtStop();
 		
-		void KillCharacter();
+		bool KillCharacter(SOUNDID soundId);
+		bool CheckHurt(void *hit);
+		bool HurtCharacter(void *hit);
 		
 		void LevelBoundSide(int32_t bound);
 		void LevelBound();
@@ -398,6 +402,9 @@ class PLAYER
 		void RestoreStateDebug();
 		void DebugControl();
 		void DebugMode();
+		
+		bool TouchResponseObject(void *objPointer);
+		void TouchResponse();
 		
 		void RideObject(void *ride, bool *standingBit);
 		void MoveOnPlatform(void *platform, int16_t width, int16_t height, int16_t xPos);

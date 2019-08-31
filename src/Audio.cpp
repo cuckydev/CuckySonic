@@ -464,7 +464,7 @@ void MUSIC::Mix(float *stream, int samples)
 		int thisRead = stb_vorbis_get_samples_float_interleaved(file, channels, buffer, (samples - samplesRead) * channels);
 		
 		//Move through file and buffer
-		bufferCopy += thisRead;
+		bufferCopy += thisRead * 2;
 		samplesRead += thisRead;
 		internalPosition += (double)thisRead;
 		
@@ -508,7 +508,7 @@ MUSIC *currentMusic;
 void PlayMusic(MUSICID music)
 {
 	//Unload current song
-	if (currentMusic)
+	if (currentMusic != NULL)
 	{
 		//Wait for audio device to be finished and lock it
 		SDL_LockAudioDevice(audioDevice);
@@ -718,7 +718,17 @@ void QuitAudio()
 	
 	//Unload current song
 	if (currentMusic != NULL)
-		delete currentMusic;
+	{
+		//Wait for audio device to be finished and lock it
+		SDL_LockAudioDevice(audioDevice);
+		
+		MUSIC *rememberMusic = currentMusic;
+		currentMusic = NULL;
+		
+		//Resume audio device then delete original music
+		SDL_UnlockAudioDevice(audioDevice);
+		delete rememberMusic;
+	}
 	
 	//Close our audio device
 	SDL_CloseAudioDevice(audioDevice);

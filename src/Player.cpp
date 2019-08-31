@@ -2126,7 +2126,7 @@ void PLAYER::DeadCheckRespawn()
 				return;
 		}
 	#else
-		if (y.pos < gLevel->bottomBoundary2 + 0x20)
+		if ((unsigned)y.pos < gLevel->bottomBoundaryTarget + 0x20)
 			return;
 	#endif
 	
@@ -2135,7 +2135,57 @@ void PLAYER::DeadCheckRespawn()
 	restartCountdown = 60;
 }
 
-void PLAYER::KillCharacter()
+void PLAYER::HurtStop()
+{
+	//Check if we've fallen off the stage, and die
+	if (status.reverseGravity)
+	{
+		if (y.pos < gLevel->topBoundaryTarget)
+		{
+			KillCharacter(SOUNDID_HURT);
+			return;
+		}
+	}
+	else
+	{
+		if (y.pos >= gLevel->bottomBoundaryTarget)
+		{
+			KillCharacter(SOUNDID_HURT);
+			return;
+		}
+	}
+	
+	//Check if we've touched the ground
+	DoLevelCollision();
+	
+	if (!status.inAir)
+	{
+		//Clear our speed
+		xVel = 0;
+		yVel = 0;
+		inertia = 0;
+		
+		//Clear our object control
+		objectControl.disableOurMovement = false;
+		objectControl.disableAnimation = false;
+		objectControl.disableWallCollision = false;
+		objectControl.disableObjectInteract = false;
+		objectControl.disableObjectInteract2 = false;
+		
+		//Reset animation and priority
+		anim = PLAYERANIMATION_WALK;
+		priority = 2;
+		
+		//Set routine
+		routine = PLAYERROUTINE_CONTROL;
+		
+		//Restart invulnerability timer (why)
+		invulnerabilityTime = 120;
+		spindashing = false;
+	}
+}
+
+bool PLAYER::KillCharacter(SOUNDID soundId)
 {
 	if (debug == 0)
 	{
@@ -2143,7 +2193,11 @@ void PLAYER::KillCharacter()
 		item.hasShield = false;
 		item.isInvincible = false;
 		item.hasSpeedShoes = false;
-		status.isSliding = false;
+		item.shieldReflect = false;
+		item.immuneFire = false;
+		item.immuneElectric = false;
+		item.immuneWater = false;
+		
 		routine = PLAYERROUTINE_DEATH;
 		ResetOnFloor2();
 		status.inAir = true;
@@ -2163,8 +2217,114 @@ void PLAYER::KillCharacter()
 		//Do animation and sound
 		anim = PLAYERANIMATION_DEATH;
 		highPriority = true;
-		PlaySound(SOUNDID_HURT);
+		PlaySound(soundId);
+		return true;
 	}
+	
+	return false;
+}
+
+bool PLAYER::CheckHurt(void *hit)
+{
+	OBJECT *object = (OBJECT*)hit;
+	
+	//Check our shield and invincibility state
+	if (item.hasShield || item.isInvincible || item.immuneFire || item.immuneElectric || item.immuneWater)
+	{
+		//If we're immune to the object, don't hurt us
+		if ((item.immuneFire && object->hurtType.fire) || (item.immuneElectric && object->hurtType.electric) || (item.immuneWater && object->hurtType.water))
+			return true;
+		
+		//If invincible, don't hurt us
+		if (!item.hasShield)
+			return true;
+	}
+	
+	//If has a power-up or using the character's special move thing (flying, gliding)
+	if (jumpAbility == 1 || item.hasShield || item.isInvincible)
+	{
+		//If we should be reflected, reflect
+		if (object->hurtType.reflect)
+		{
+			//Get the velocity to reflect at
+			int16_t xVel, yVel;
+			uint8_t angle = GetAtan(x.pos - object->x.pos, y.pos - object->y.pos);
+			GetSine(angle, &xVel, &yVel);
+			
+			object->xVel = (xVel * 0x800) >> 8;
+			object->yVel = (yVel * 0x800) >> 8;
+			
+			//Clear the object's collision
+			object->collisionType = COLLISIONTYPE_ENEMY;
+			object->touchWidth = 0;
+			object->touchHeight = 0;
+			return true;
+		}
+	}
+	
+	//Check if we can be hurt
+	if (item.isInvincible)
+		return true;
+	else if (invulnerabilityTime <= 0)
+		return HurtCharacter(hit);
+	
+	return false;
+}
+
+bool PLAYER::HurtCharacter(void *hit)
+{
+	OBJECT *object = (OBJECT*)hit;
+	
+	//If a spike object, use the spike hurt sound
+	SOUNDID soundId = SOUNDID_HURT;
+	
+	//TODO: above
+	
+	//Get which ring count to use
+	unsigned int *rings = &gRings; //TODO: multiplayer stuff
+	
+	//If we have a shield, lose it, otherwise, lose rings
+	if (item.hasShield || item.shieldReflect || item.immuneFire || item.immuneElectric || item.immuneWater)
+	{
+		item.hasShield = false;
+		item.shieldReflect = false;
+		item.immuneFire = false;
+		item.immuneElectric = false;
+		item.immuneWater = false;
+	}
+	else
+	{
+		//Check if we should die
+		if (*rings == 0)
+		{
+			//Die, using the sound id we've gotten
+			return KillCharacter(soundId);
+		}
+		else
+		{
+			//Lose rings
+			//TEMP
+			*rings = 0;
+		}
+	}
+	
+	//Enter hurt routine
+	routine = PLAYERROUTINE_HURT;
+	ResetOnFloor2();
+	status.inAir = true;
+	
+	//Get our hurt velocity
+	xVel = status.underwater ? 0x100 : 0x200;
+	yVel = status.underwater ? -0x200 : -0x400;
+	
+	if (x.pos < object->x.pos)
+		xVel = -xVel;
+	
+	//Other stuff for getting hurt
+	inertia = 0;
+	anim = PLAYERANIMATION_HURT;
+	invulnerabilityTime = 120;
+	return true;
 }
 
 //Level boundary function
@@ -2209,7 +2369,7 @@ void PLAYER::LevelBound()
 		x.sub = 0;
 		xVel = 0;
 		inertia = 0;
-		KillCharacter();
+		KillCharacter(SOUNDID_HURT);
 	}
 }
 
@@ -2989,35 +3149,6 @@ void PLAYER::Update()
 								SlopeRepel();
 							}
 						}
-						//In mid-air, falling
-						else if (status.inBall == false && status.inAir == true)
-						{
-							//Handle our movement
-							JumpHeight();
-							ChgJumpDir();
-							
-							//Keep us in level bounds
-							LevelBound();
-							
-							//Move according to our velocity
-							xPosLong += xVel * 0x100;
-							if (status.reverseGravity)
-								yPosLong -= yVel * 0x100;
-							else
-								yPosLong += yVel * 0x100;
-							
-							//Gravity (0x38 above water, 0x10 below water)
-							yVel += 0x38;
-							if (status.underwater)
-								yVel -= 0x28;
-							
-							//Handle our angle receding when we run / jump off of a ledge
-							JumpAngle();
-							
-							//Handle collision
-							DoLevelCollision();
-						}
-						//Rolling on the ground
 						else if (status.inBall == true && status.inAir == false)
 						{
 							if (status.pinballMode || Jump())
@@ -3041,8 +3172,8 @@ void PLAYER::Update()
 								SlopeRepel();
 							}
 						}
-						//Jumping or rolled off of a ledge
-						else if (status.inBall == true && status.inAir == true)
+						//In mid-air
+						else if (status.inAir == true)
 						{
 							//Handle our movement
 							JumpHeight();
@@ -3096,12 +3227,46 @@ void PLAYER::Update()
 					}
 					
 					//Interact with objects
-					//if (objectControl.disableObjectInteract || objectControl.disableObjectInteract2)
-					//	TouchResponse();
+					if (!(objectControl.disableObjectInteract || objectControl.disableObjectInteract2))
+						TouchResponse();
 					break;
 					
 				case PLAYERROUTINE_HURT:
+					//Handle our debug buttons
+					if (gDebugEnabled && controller == 0)
+					{
+						if (gController[controller].press.b)
+						{
+							controlLock = false;
+							debug = 1;
+							return;
+						}
+					}
+					
+					//Move according to our velocity
+					xPosLong += xVel * 0x100;
+					if (status.reverseGravity)
+						yPosLong -= yVel * 0x100;
+					else
+						yPosLong += yVel * 0x100;
+					
+					//Gravity (0x30 above water, 0x10 below water)
+					yVel += 0x30;
+					if (status.underwater)
+						yVel -= 0x20;
+					
+					//Handle other movements
+					HurtStop();
+					LevelBound();
+					RecordPos();
+					
+					//Draw
 					Draw();
+					
+					//Animate
+					Animate();
+					if (status.reverseGravity)
+						renderFlags.yFlip ^= 1;
 					break;
 					
 				case PLAYERROUTINE_DEATH:
@@ -3110,6 +3275,7 @@ void PLAYER::Update()
 					{
 						if (gController[controller].press.b)
 						{
+							controlLock = false;
 							debug = 1;
 							return;
 						}
@@ -3129,6 +3295,11 @@ void PLAYER::Update()
 					//Record pos and draw
 					RecordPos();
 					Draw();
+					
+					//Animate
+					Animate();
+					if (status.reverseGravity)
+						renderFlags.yFlip ^= 1;
 					break;
 					
 				case PLAYERROUTINE_RESET_LEVEL:
@@ -3315,6 +3486,138 @@ void PLAYER::DebugMode()
 }
 
 //Object interaction functions
+bool PLAYER::TouchResponseObject(void *objPointer)
+{
+	//Iterate through children first
+	OBJECT *object = (OBJECT*)objPointer;
+	for (OBJECT *obj = object->children; obj != NULL; obj = obj->next)
+	{
+		if (TouchResponseObject((void*)obj))
+			return true;
+	}
+	
+	int16_t playerLeft, playerTop, playerWidth, playerHeight;
+	
+	/* https://www.youtube.com/watch?v=32Hp1LW08Yc
+		bsr.w	ShieldTouchResponse
+		tst.b	character_id(a0)			; Is the player Sonic?
+		bne.s	Touch_NoInstaShield			; If not, branch
+		move.b	status_secondary(a0),d0
+		andi.b	#$73,d0					; Does the player have any shields or is invincible?
+		bne.s	Touch_NoInstaShield			; If so, branch
+		; By this point, we're focussing purely on the Insta-Shield
+		cmpi.b	#1,double_jump_flag(a0)			; Is the Insta-Shield currently in its 'attacking' mode?
+		bne.s	Touch_NoInstaShield			; If not, branch
+		move.b	status_secondary(a0),d0			; Get status_secondary...
+		move.w	d0,-(sp)				; ...and save it
+		bset	#Status_Invincible,status_secondary(a0)	; Make the player invincible
+		move.w	x_pos(a0),d2				; Get player's x_pos
+		move.w	y_pos(a0),d3				; Get player's y_pos
+		subi.w	#$18,d2					; Subtract width of Insta-Shield
+		subi.w	#$18,d3					; Subtract height of Insta-Shield
+		move.w	#$30,d4					; Player's width
+		move.w	#$30,d5					; Player's height
+		bsr.s	Touch_Process
+		move.w	(sp)+,d0				; Get the backed-up status_secondary
+		btst	#Status_Invincible,d0			; Was the player already invincible (wait, what? An earlier check ensures that this can't happen)
+		bne.s	.alreadyinvincible			; If so, branch
+		bclr	#Status_Invincible,status_secondary(a0)	; Make the player vulnerable again
+
+	.alreadyinvincible:
+		moveq	#0,d0
+		rts
+	*/
+	
+	//Get player hitbox
+	playerWidth = 8; //radius
+	playerLeft = x.pos - playerWidth;
+	playerWidth *= 2; //diameter
+	
+	playerHeight = yRadius - 3; //radius
+	playerTop = y.pos - playerHeight;
+	playerHeight *= 2; //diameter
+	
+	/*
+	//Code to handle the ducking hitbox from Sonic 1 and 2
+	if (anim == PLAYERANIMATION_DUCK)
+	{
+		playerTop += 12;
+		playerHeight = 10;
+	}
+	*/
+	
+	//Check object
+	if ((object->collisionType != COLLISIONTYPE_ENEMY && object->collisionType != COLLISIONTYPE_BOSS) || (object->touchWidth | object->touchHeight) != 0)
+	{
+		//Check if our hitboxes are colliding
+		int16_t horizontalCheck = playerLeft - (object->x.pos - object->touchWidth);
+		int16_t verticalCheck = playerTop - (object->y.pos - object->touchHeight);
+		
+		if (horizontalCheck >= -playerWidth && horizontalCheck <= object->touchWidth * 2 && verticalCheck >= -playerHeight && verticalCheck <= object->touchHeight * 2)
+		{
+			//If so, handle interaction
+			switch (object->collisionType)
+			{
+				case COLLISIONTYPE_ENEMY:
+				case COLLISIONTYPE_BOSS:
+					//Check if we're gonna hurt the enemy, or ourselves
+					if (item.isInvincible || anim == PLAYERANIMATION_SPINDASH || anim == PLAYERANIMATION_ROLL)
+						return object->Hurt(this);
+					
+					//Check character specific states
+					switch (characterType)
+					{
+						case CHARACTERTYPE_TAILS:
+							//If not flying or underwater, hurt us
+							if (jumpAbility == 0 || status.underwater)
+								return CheckHurt(objPointer);
+							
+							//If the object is above or to the side of us, hurt them
+							if (((GetAtan(x.pos - object->x.pos, y.pos - object->y.pos) + 0x20) & 0xFF) < 0x40)
+								return object->Hurt(this);
+							
+							//Hurt us
+							return CheckHurt(objPointer);
+						case CHARACTERTYPE_KNUCKLES:
+							//If gliding or sliding after gliding, hurt the object
+							if (jumpAbility == 1 || jumpAbility == 3)
+								return object->Hurt(this);
+							
+							//Otherwise, hurt us
+							return CheckHurt(objPointer);
+						default:
+							return CheckHurt(objPointer);
+					}
+					break;
+				case COLLISIONTYPE_SPECIAL:
+					//Yeah, no
+					return true;
+				case COLLISIONTYPE_HURT:
+					return CheckHurt(objPointer);
+				case COLLISIONTYPE_OTHER:
+					if (invulnerabilityTime < 90)
+						object->routine = 2;
+					return true;
+				case COLLISIONTYPE_MONITOR:
+					return true;
+			}
+		}
+	}
+	
+	//Object and player haven't made contact
+	return false;
+}
+
+void PLAYER::TouchResponse()
+{
+	//Iterate through every object
+	for (OBJECT *obj = gLevel->objectList; obj != NULL; obj = obj->next)
+	{
+		if (TouchResponseObject((void*)obj))
+			return;
+	}
+}
+
 void PLAYER::RideObject(void *ride, bool *standingBit)
 {
 	//If already standing on an object, clear that object's standing bit

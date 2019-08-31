@@ -2,6 +2,21 @@
 #include "../Level.h"
 #include "../Game.h"
 #include "../Log.h"
+#include "../Audio.h"
+
+static const uint8_t animationCollect[] =	{0x05,0x04,0x05,0x06,0x07,0xFC};
+
+static const uint8_t *animationList[] = {
+	animationCollect,
+};
+
+void CollectRing()
+{
+	//Increment ring count
+	if (gRings < 999)
+		gRings++;
+	PlaySound(SOUNDID_RING);
+}
 
 void ObjRing(OBJECT *object)
 {
@@ -20,11 +35,37 @@ void ObjRing(OBJECT *object)
 			object->renderFlags.alignPlane = true;
 			object->widthPixels = 8;
 			object->priority = 2;
+			
+			//Collision box
+			object->collisionType = COLLISIONTYPE_OTHER;
+			object->touchWidth = 6;
+			object->touchHeight = 6;
 		}
 	//Fallthrough
 		case 1: //Waiting for contact, just animate
 			object->mappingFrame = (gLevel->frameCounter >> 3) & 0x3;
 			object->Draw();
+			break;
+		case 2: //Touched player, collect a ring
+			//Increment routine
+			object->routine++;
+			
+			//Clear collision and increase priority
+			object->collisionType = COLLISIONTYPE_ENEMY;
+			object->touchWidth = 0;
+			object->touchHeight = 0;
+			
+			object->priority = 1;
+			
+			//Collect the ring
+			CollectRing();
+	//Fallthrough
+		case 3:
+			object->Animate(animationList);
+			object->Draw();
+			break;
+		case 4:
+			object->deleteFlag = true;
 			break;
 	}
 }

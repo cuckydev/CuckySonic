@@ -39,7 +39,10 @@ void ObjMotobug(OBJECT *object)
 			//Collision
 			object->xRadius = 8;
 			object->yRadius = 14;
-			object->collisionType = 0x0C;
+			
+			object->collisionType = COLLISIONTYPE_ENEMY;
+			object->touchWidth = 20;
+			object->touchHeight = 16;
 		}
 		//Fallthrough
 		case 1: //Waiting to spawn

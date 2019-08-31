@@ -8,6 +8,16 @@
 
 #define OBJECT_PLAYER_REFERENCES 0x100
 
+enum COLLISIONTYPE
+{
+	COLLISIONTYPE_ENEMY,
+	COLLISIONTYPE_BOSS,
+	COLLISIONTYPE_OTHER,
+	COLLISIONTYPE_HURT,
+	COLLISIONTYPE_SPECIAL,
+	COLLISIONTYPE_MONITOR,
+};
+
 class OBJECT
 {
 	public:
@@ -90,7 +100,18 @@ class OBJECT
 		//Collision box size
 		uint8_t xRadius;
 		uint8_t yRadius;
-		uint8_t collisionType;
+		
+		COLLISIONTYPE collisionType;
+		uint8_t touchWidth;
+		uint8_t touchHeight;
+		
+		struct
+		{
+			bool reflect : 1;	//Projectile that gets reflected
+			bool fire : 1;		//Is fire
+			bool electric : 1;	//Is electric
+			bool water : 1;		//Is water
+		} hurtType;
 		
 		//Sprite properties
 		bool highPriority;		//Drawn above the foreground
@@ -155,6 +176,8 @@ class OBJECT
 		
 		void Move();
 		void MoveAndFall();
+		
+		bool Hurt(PLAYER *player);
 		
 		void Animate(const uint8_t **animationList);
 		int16_t CheckFloorEdge(COLLISIONLAYER layer, int16_t xPos, int16_t yPos, uint8_t *outAngle);

@@ -91,7 +91,7 @@ bool GM_Title(bool *noError)
 	int frame = 0;
 	
 	//Sonic's animation and position
-	int sonicTime = 54;
+	int sonicTime = 60;
 	
 	int sonicX = ((SCREEN_WIDTH / 2) - 24) * 0x100;
 	int sonicY = (bannerY + 16) * 0x100;
@@ -117,8 +117,9 @@ bool GM_Title(bool *noError)
 	FillPaletteBlack(titleTexture->loadedPalette);
 	FillPaletteBlack(backgroundTexture->loadedPalette);
 	
-	//Play title song
+	//Play title song (silent)
 	PlayMusic(MUSICID_TITLE);
+	SetMusicVolume(0.0f);
 	
 	//Our loop
 	bool noExit = true;
@@ -134,14 +135,21 @@ bool GM_Title(bool *noError)
 		
 		if (!selected)
 		{
+			//Fade asset sheet palette in
 			PaletteFadeInFromBlack(titleTexture->loadedPalette);
 			PaletteFadeInFromBlack(backgroundTexture->loadedPalette);
+			
+			//Fade music in
+			SetMusicVolume(min(GetMusicVolume() + (1.0f / 24.0f), 1.0f));
 		}
 		else
 		{
+			//Fade asset sheet palette out
 			bool res1 = PaletteFadeOutToBlack(titleTexture->loadedPalette);
 			bool res2 = PaletteFadeOutToBlack(backgroundTexture->loadedPalette);
 			breakThisState = res1 && res2;
+			
+			//Fade music out
 			SetMusicVolume(max(GetMusicVolume() - (1.0f / 24.0f), 0.0f));
 		}
 		
