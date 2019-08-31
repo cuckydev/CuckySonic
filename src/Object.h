@@ -35,8 +35,6 @@ class OBJECT
 			bool alignPlane : 1;
 			bool alignBackground : 1; //Basically, align to background if above is set
 			bool assumePixelHeight : 1;
-			bool bit5 : 1;
-			bool bit6 : 1;
 			bool onScreen : 1;
 		} renderFlags;
 		

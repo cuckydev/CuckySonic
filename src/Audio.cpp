@@ -49,6 +49,11 @@ SOUNDDEFINITION soundDefinition[SOUNDID_MAX] = {
 	{SOUNDCHANNEL_FM4,	NULL, SOUNDID_RING}, //SOUNDID_RING_LEFT
 	{SOUNDCHANNEL_FM3,	NULL, SOUNDID_RING}, //SOUNDID_RING_RIGHT
 	
+	{SOUNDCHANNEL_FM4,	"data/Audio/Sound/RingLoss.wav", SOUNDID_NULL},
+	
+	{SOUNDCHANNEL_FM4, "data/Audio/Sound/Pop.wav", SOUNDID_NULL},
+	{SOUNDCHANNEL_FM3, "data/Audio/Sound/GoalpostSpin.wav", SOUNDID_NULL},
+	
 	{SOUNDCHANNEL_DAC,	"data/Audio/Sound/SplashJingle.wav", SOUNDID_NULL},
 };
 
@@ -82,8 +87,6 @@ SOUND::SOUND(const char *path)
 	}
 	
 	//Build our audio CVT
-	int f = SDL_GetTicks();
-	
 	SDL_AudioCVT wavCVT;
 	if (SDL_BuildAudioCVT(&wavCVT, wavSpec.format, wavSpec.channels, wavSpec.freq, AUDIO_F32, 2, wavSpec.freq) < 0)
 	{
@@ -110,8 +113,6 @@ SOUND::SOUND(const char *path)
 
 	//Convert our data, finally
 	SDL_ConvertAudio(&wavCVT);
-	
-	LOG(("time %d ", SDL_GetTicks() - f));
 	
 	//Use the data given
 	buffer = (float*)wavCVT.buf;

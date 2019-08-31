@@ -5,13 +5,31 @@
 
 #include "SDL_events.h"
 
+//Debug bool
 bool gDebugEnabled = false;
 
+//Score, time, rings, and lives
 unsigned int gScore;
 unsigned int gTime;
 unsigned int gRings;
 unsigned int gLives;
 
+//Generic game functions
+void AddToScore(unsigned int score)
+{
+	//TODO: there's some extra life code that's supposed to be done here
+	gScore += score;
+}
+
+void CollectRing()
+{
+	//Increment ring count
+	if (gRings < 999)
+		gRings++;
+	PlaySound(SOUNDID_RING);
+}
+
+//Game loop
 GAMEMODE gGameMode;
 
 bool EnterGameLoop()
@@ -19,7 +37,7 @@ bool EnterGameLoop()
 	//Initialize game memory
 	gGameMode = GAMEMODE_SPLASH; //Start at splash screen
 	
-	//Initialize our score time and rings
+	//Initialize our score, time, rings and lives
 	gScore = 0;
 	gTime = 0;
 	gRings = 0;

@@ -54,6 +54,8 @@ void ObjGoalpost(OBJECT *object)
 				gLevel->leftBoundaryTarget = gLevel->rightBoundaryTarget - SCREEN_WIDTH;
 				gLevel->updateTime = false;
 				
+				//Play sound and increment routine
+				PlaySound(SOUNDID_GOALPOST_SPIN);
 				object->routine++;
 			}
 			break;

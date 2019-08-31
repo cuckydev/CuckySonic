@@ -785,7 +785,7 @@ TEXTURE* LEVEL::GetObjectTexture(const char *path)
 {
 	for (TEXTURE *texture = objTextureCache; texture != NULL; texture = texture->next)
 	{
-		if (texture->source == path)
+		if (!strcmp(texture->source, path))
 			return texture;
 	}
 	
@@ -808,7 +808,7 @@ MAPPINGS* LEVEL::GetObjectMappings(const char *path)
 {
 	for (MAPPINGS *mappings = objMappingsCache; mappings != NULL; mappings = mappings->next)
 	{
-		if (mappings->source == path)
+		if (!strcmp(mappings->source, path))
 			return mappings;
 	}
 	

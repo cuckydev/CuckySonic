@@ -29,4 +29,9 @@ extern LEVEL *gLevel;
 extern int gGameLoadLevel;
 extern int gGameLoadCharacter;
 
+//Generic game functions
+void AddToScore(unsigned int score);
+void CollectRing();
+
+//Game loop function
 bool EnterGameLoop();

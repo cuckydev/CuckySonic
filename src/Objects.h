@@ -7,4 +7,7 @@ void ObjGoalpost(OBJECT *object);
 void ObjBridge(OBJECT *object);
 void ObjRing(OBJECT *object);
 void ObjRingSpawner(OBJECT *object);
+void ObjBouncingRing(OBJECT *object);
+void ObjBouncingRing_ReverseGravity(OBJECT *object);
+void ObjExplosion(OBJECT *object);
 void ObjMotobug(OBJECT *object);

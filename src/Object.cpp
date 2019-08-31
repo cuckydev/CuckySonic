@@ -1,4 +1,5 @@
 #include "Object.h"
+#include "Objects.h"
 #include "Game.h"
 #include "Log.h"
 #include "LevelCollision.h"
@@ -74,10 +75,36 @@ void OBJECT::MoveAndFall()
 }
 
 //Hurt function
+const uint16_t enemyPoints[] = {100, 200, 500, 1000};
+
 bool OBJECT::Hurt(PLAYER *player)
 {
-	//TODO: Points chain
-	//TODO: Create explosion
+	//Handle chain point bonus
+	uint16_t lastCounter = player->chainPointCounter;
+	player->chainPointCounter += 2;
+	
+	//Cap our actual bonus at 3
+	if (lastCounter >= 3)
+		lastCounter = 3;
+	
+	//move.w	d0,objoff_3E(a1)
+	
+	//Get our bonus points
+	uint16_t bonus = enemyPoints[lastCounter];
+	
+	//If destroyed 16 enemies, give us 10000 points
+	if (player->chainPointCounter >= 16)
+	{
+		bonus = 10000;
+		//move.w	#$A,objoff_3E(a1)
+	}
+	
+	//Give us the points bonus
+	AddToScore(bonus);
+	
+	//Turn us into an explosion
+	function = &ObjExplosion;
+	routine = 0;
 	
 	//Adjust player's velocity
 	if (player->yVel >= 0)
@@ -92,8 +119,6 @@ bool OBJECT::Hurt(PLAYER *player)
 		player->yVel += 0x100; //If moving upwards, slow down a bit
 	}
 	
-	//Delete us
-	deleteFlag = true;
 	return true;
 }
 

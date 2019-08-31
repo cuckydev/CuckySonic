@@ -9,6 +9,7 @@
 #include "Level.h"
 #include "Game.h"
 #include "Object.h"
+#include "Objects.h"
 #include "GameConstants.h"
 
 //Bug-fixes
@@ -1175,6 +1176,9 @@ void PLAYER::ResetOnFloor3()
 	status.rollJumping = false;
 	status.jumping = false;
 	
+	//Clear chain point counter
+	chainPointCounter = 0;
+	
 	//Clear flipping
 	flipAngle = 0;
 	flipType = 0;
@@ -2303,8 +2307,9 @@ bool PLAYER::HurtCharacter(void *hit)
 		else
 		{
 			//Lose rings
-			//TEMP
-			*rings = 0;
+			OBJECT *ringObject = new OBJECT(&gLevel->objectList, &ObjBouncingRing);
+			ringObject->x.pos = x.pos;
+			ringObject->y.pos = y.pos;
 		}
 	}
 	
@@ -2324,6 +2329,8 @@ bool PLAYER::HurtCharacter(void *hit)
 	inertia = 0;
 	anim = PLAYERANIMATION_HURT;
 	invulnerabilityTime = 120;
+	
+	PlaySound(soundId);
 	return true;
 }
 
@@ -3303,6 +3310,7 @@ void PLAYER::Update()
 					break;
 					
 				case PLAYERROUTINE_RESET_LEVEL:
+					//After a second, fade the level out to restart
 					if (--restartCountdown == 0)
 						gLevel->SetFade(false, false);
 					break;
@@ -3331,6 +3339,13 @@ void PLAYER::Update()
 	//Restart if start + a
 	if (gController[controller].press.start && gController[controller].held.a)
 		gLevel->SetFade(false, false);
+	if (gController[controller].held.start && gController[controller].held.b)
+	{
+		gRings = 32;
+		OBJECT *ringObject = new OBJECT(&gLevel->objectList, &ObjBouncingRing);
+		ringObject->x.pos = x.pos;
+		ringObject->y.pos = y.pos;
+	}
 }
 
 //Draw our player

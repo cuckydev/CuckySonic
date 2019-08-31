@@ -242,6 +242,9 @@ class PLAYER
 		
 		void *interact;	//Object we're touching
 		
+		//Chain point counter
+		uint16_t chainPointCounter;
+		
 		//Spindash
 		bool spindashing;			//Set if we're spindashing
 		uint16_t spindashCounter;	//Our counter for spindashing

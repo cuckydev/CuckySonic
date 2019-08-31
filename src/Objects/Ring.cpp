@@ -10,14 +10,6 @@ static const uint8_t *animationList[] = {
 	animationCollect,
 };
 
-void CollectRing()
-{
-	//Increment ring count
-	if (gRings < 999)
-		gRings++;
-	PlaySound(SOUNDID_RING);
-}
-
 void ObjRing(OBJECT *object)
 {
 	switch (object->routine)
@@ -60,11 +52,11 @@ void ObjRing(OBJECT *object)
 			//Collect the ring
 			CollectRing();
 	//Fallthrough
-		case 3:
+		case 3: //Sparkling
 			object->Animate(animationList);
 			object->Draw();
 			break;
-		case 4:
+		case 4: //Deleting after sparkle
 			object->deleteFlag = true;
 			break;
 	}

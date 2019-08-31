@@ -59,6 +59,8 @@ SOURCES = \
 	Objects/Spiral \
 	Objects/Bridge \
 	Objects/Ring \
+	Objects/BouncingRing \
+	Objects/Explosion \
 	Objects/Motobug \
 
 #What to compile
