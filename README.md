@@ -1,7 +1,7 @@
 # CuckySonic
 An accurate Sonic the Hedgehog engine in C++.
 
-![Screenshot](cap1.png)
+![Screenshot](cap.png)
 
 Credits to everyone behind the Sonic 3 and Knuckles disassembly for making this possible.
 
