@@ -3339,13 +3339,6 @@ void PLAYER::Update()
 	//Restart if start + a
 	if (gController[controller].press.start && gController[controller].held.a)
 		gLevel->SetFade(false, false);
-	if (gController[controller].held.start && gController[controller].held.b)
-	{
-		gRings = 32;
-		OBJECT *ringObject = new OBJECT(&gLevel->objectList, &ObjBouncingRing);
-		ringObject->x.pos = x.pos;
-		ringObject->y.pos = y.pos;
-	}
 }
 
 //Draw our player
