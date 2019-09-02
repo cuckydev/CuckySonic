@@ -17,7 +17,7 @@ OBJECTFUNCTION objFuncSonic1[] = {
 	NULL, NULL, NULL, &ObjPathSwitcher, NULL, NULL, NULL, NULL,
 	NULL, NULL, NULL, NULL, NULL, &ObjGoalpost, NULL, NULL,
 	NULL, &ObjBridge, NULL, NULL, NULL, NULL, NULL, NULL,
-	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+	&ObjGHZPlatform, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
 	NULL, NULL, NULL, NULL, NULL, &ObjRingSpawner, NULL, NULL,
 	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
 	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
@@ -607,6 +607,8 @@ LEVEL::LEVEL(int id, int players, const char **playerPaths)
 	}
 	
 	//Initialize state
+	OscillatoryInit();
+	
 	updateTime = true;
 	updateStage = true;
 	
@@ -846,6 +848,92 @@ void LEVEL::GetBackgroundScroll(bool updateScroll, uint16_t *array, int16_t *cam
 	}
 }
 
+//Oscillatory Update
+static const bool oscillatoryInitialDirection[OSCILLATORY_VALUES] = {false, false, true, true, false, false, false, false, false, false, false, false, false};
+
+static const uint16_t oscillatoryInitial[OSCILLATORY_VALUES][2] = {
+	{0x0080, 0x0000},
+	{0x0080, 0x0000},
+	{0x0080, 0x0000},
+	{0x0080, 0x0000},
+	{0x0080, 0x0000},
+	{0x0080, 0x0000},
+	{0x0080, 0x0000},
+	{0x0080, 0x0000},
+	{0x0080, 0x0000},
+	{0x50F0, 0x011E},
+	{0x2080, 0x00B4},
+	{0x3080, 0x010E},
+	{0x5080, 0x01C2},
+	{0x7080, 0x0276},
+	{0x0080, 0x0000},
+	{0x0080, 0x0000},
+};
+
+static const uint16_t oscillatorySettings[OSCILLATORY_VALUES][2] = {
+//frequency, amplitude
+	{0x0002, 0x0010},
+	{0x0002, 0x0018},
+	{0x0002, 0x0020},
+	{0x0002, 0x0030},
+	{0x0004, 0x0020},
+	{0x0008, 0x0008},
+	{0x0008, 0x0040},
+	{0x0004, 0x0040},
+	{0x0002, 0x0050},
+	{0x0002, 0x0050},
+	{0x0002, 0x0020},
+	{0x0003, 0x0030},
+	{0x0005, 0x0050},
+	{0x0007, 0x0070},
+	{0x0002, 0x0010},
+	{0x0002, 0x0010},
+};
+
+void LEVEL::OscillatoryInit()
+{
+	//Copy our initial oscillation values
+	for (int i = 0; i < OSCILLATORY_VALUES; i++)
+	{
+		oscillateDirection[i] = oscillatoryInitialDirection[i];
+		oscillate[i][0] = oscillatoryInitial[i][0];
+		oscillate[i][1] = oscillatoryInitial[i][1];
+	}
+}
+
+void LEVEL::OscillatoryUpdate()
+{
+	//Update all of our oscillation values
+	for (int i = 0; i < OSCILLATORY_VALUES; i++)
+	{
+		//Get our frequency and amplitude
+		uint16_t frequency = oscillatorySettings[i][0];
+		uint16_t amplitude = oscillatorySettings[i][1];
+		
+		//Check if our direction is reversed
+		if (oscillateDirection[i] == false)
+		{
+			//Increment according to our frequency
+			oscillate[i][1] += frequency;
+			oscillate[i][0] += (int16_t)oscillate[i][1];
+			
+			//Reverse if reached amplitude
+			if ((uint8_t)(oscillate[i][0] >> 8) <= (uint8_t)amplitude)
+				oscillateDirection[i] = true;
+		}
+		else
+		{
+			//Increment according to our frequency
+			oscillate[i][1] -= frequency;
+			oscillate[i][0] += (int16_t)oscillate[i][1];
+			
+			//Reverse if reached amplitude
+			if ((uint8_t)(oscillate[i][0] >> 8) > (uint8_t)amplitude)
+				oscillateDirection[i] = false;
+		}
+	}
+}
+
 //Level update and draw
 bool LEVEL::Update(bool checkTitleCard)
 {
@@ -854,18 +942,15 @@ bool LEVEL::Update(bool checkTitleCard)
 	{
 		titleCard->UpdateAndDraw();
 		if (inTitleCard)
-		{
-			frameCounter++;
 			return true;
-		}
 	}
 	
 	//Quit if fading
 	if (fading)
-	{
-		frameCounter++;
 		return true;
-	}
+	
+	//Increment frame counter
+	frameCounter++;
 	
 	//Update players
 	for (PLAYER *player = playerList; player != NULL; player = player->next)
@@ -907,16 +992,13 @@ bool LEVEL::Update(bool checkTitleCard)
 	if (playerList != NULL)
 		DynamicEvents();
 	
-	//Update level palette
-	if (updateStage)
-		PaletteUpdate();
+	//Update all other level stuff
+	OscillatoryUpdate();
+	PaletteUpdate();
 	
 	//Increase our time
 	if (gLevel->updateTime)
 		gTime++;
-	
-	//Increment frame counter
-	frameCounter++;
 	return true;
 }
 

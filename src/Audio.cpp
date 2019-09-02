@@ -292,8 +292,8 @@ void SOUND::Mix(float *stream, int samples)
 }
 
 //Music class (using stb_vorbis backend)
-#ifdef WINDOWS
-	#include <wchar.h> //Required for opening the actual files
+#ifdef WINDOWS //Include Windows stuff, required for opening the files with UTF-16 paths
+	#include <wchar.h>
 	#include <stringapiset.h>
 #endif
 

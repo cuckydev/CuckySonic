@@ -11,3 +11,4 @@ void ObjBouncingRing(OBJECT *object);
 void ObjBouncingRing_ReverseGravity(OBJECT *object);
 void ObjExplosion(OBJECT *object);
 void ObjMotobug(OBJECT *object);
+void ObjGHZPlatform(OBJECT *object);

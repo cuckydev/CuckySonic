@@ -191,7 +191,7 @@ int16_t OBJECT::CheckFloorEdge(COLLISIONLAYER layer, int16_t xPos, int16_t yPos,
 }
 
 //Object collision functions
-void OBJECT::PlatformObject(int16_t width, int16_t height, int16_t xPos)
+void OBJECT::PlatformObject(int16_t width, int16_t height, int16_t lastXPos)
 {
 	int i = 0;
 	for (PLAYER *player = gLevel->playerList; player != NULL; player = player->next)
@@ -200,50 +200,55 @@ void OBJECT::PlatformObject(int16_t width, int16_t height, int16_t xPos)
 		if (playerContact[i].standing == true)
 		{
 			//Check if we're still on the platform
-			if (!player->status.inAir)
+			int16_t xDiff = player->x.pos - x.pos + width;
+			
+			if (!player->status.inAir && xDiff >= 0 && xDiff < width * 2)
 			{
-				int16_t xDiff = player->x.pos - xPos + width;
-				if (xDiff >= 0 && xDiff < width * 2)
-				{
-					player->MoveOnPlatform((void*)this, width, height, xPos);
-					i++;
-					continue;
-				}
+				//Move on the platform
+				player->MoveOnPlatform((void*)this, height, lastXPos);
 			}
-		
-			//We left the platform
-			player->status.shouldNotFall = false;
-			player->status.inAir = true;
-			playerContact[i].standing = false;
+			else
+			{
+				//We've jumped or fell off the platform
+				ExitPlatform(player, i);
+			}
 		}
 		else
 		{
-			PlatformObject2(player, i, width, height, xPos);
+			//Check if we're going to land on the platform
+			LandOnPlatform(player, i, width, height);
 		}
 		
-		//Increment index
+		//Check next player
 		i++;
 	}
 }
 
-void OBJECT::PlatformObject2(PLAYER *player, int i, int16_t width, int16_t height, int16_t xPos)
+void OBJECT::LandOnPlatform(PLAYER *player, int i, int16_t width, int16_t height)
 {
-	(void)xPos;
-	
 	//Check if we're in a state where we can enter onto the platform
 	int16_t xDiff = (player->x.pos - x.pos) + width;
 	if (player->yVel < 0 || xDiff < 0 || xDiff >= width * 2)
 		return;
 	
-	//Land (or walk onto I guess) on platform
+	//Land on platform
 	int16_t playerBottom = (player->y.pos + player->yRadius) + 4;
 	int16_t yThing = (y.pos - height) - playerBottom;
 	
+	//If we're on top of the platform, and not in an intangible state
 	if (yThing > 0 || yThing < -16 || player->objectControl.disableObjectInteract || player->routine == PLAYERROUTINE_DEATH)
 		return;
 	
+	//Land on top of the platform
 	player->y.pos += yThing + 3;
-	player->RideObject((void*)this, (&playerContact[i].standing - (size_t)this));
+	player->AttachToObject((void*)this, (&playerContact[i].standing - (size_t)this));
+}
+
+void OBJECT::ExitPlatform(PLAYER *player, int i)
+{
+	player->status.shouldNotFall = false;
+	player->status.inAir = true;
+	playerContact[i].standing = false;
 }
 
 //Update and drawing objects

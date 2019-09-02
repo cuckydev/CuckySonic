@@ -62,6 +62,7 @@ SOURCES = \
 	Objects/BouncingRing \
 	Objects/Explosion \
 	Objects/Motobug \
+	Objects/GHZPlatform
 
 #What to compile
 OBJECTS = $(addprefix obj/$(FILENAME)/, $(addsuffix .o, $(SOURCES)))

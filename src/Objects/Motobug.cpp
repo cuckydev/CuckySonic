@@ -33,7 +33,7 @@ void ObjMotobug(OBJECT *object)
 			//Initialize other properties
 			object->routine++;
 			object->renderFlags.alignPlane = true;
-			object->widthPixels = 0x18;
+			object->widthPixels = 24;
 			object->priority = 4;
 			
 			//Collision

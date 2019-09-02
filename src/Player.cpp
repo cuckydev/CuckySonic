@@ -1183,7 +1183,6 @@ void PLAYER::ResetOnFloor3()
 	flipAngle = 0;
 	flipType = 0;
 	flipsRemaining = 0;
-	scrollDelay = 0;
 	
 	#ifndef SONIC12_NO_JUMP_ABILITY
 		//Jump ability
@@ -3626,14 +3625,14 @@ void PLAYER::TouchResponse()
 	}
 }
 
-void PLAYER::RideObject(void *ride, bool *standingBit)
+void PLAYER::AttachToObject(void *object, bool *standingBit)
 {
 	//If already standing on an object, clear that object's standing bit
 	if (status.shouldNotFall)
 		*((bool*)interact + (size_t)standingBit) = false; //Clear the object we're standing on's standing bit
 	
 	//Set to stand on this object
-	interact = ride;
+	interact = object;
 	angle = 0;
 	yVel = 0;
 	inertia = xVel;
@@ -3644,13 +3643,11 @@ void PLAYER::RideObject(void *ride, bool *standingBit)
 	
 	status.shouldNotFall = true;
 	status.inAir = false;
-	*((bool*)ride + (size_t)standingBit) = true;
+	*((bool*)object + (size_t)standingBit) = true;
 }
 
-void PLAYER::MoveOnPlatform(void *platform, int16_t width, int16_t height, int16_t xPos)
+void PLAYER::MoveOnPlatform(void *platform, int16_t height, int16_t lastXPos)
 {
-	(void)width;
-	
 	OBJECT *platformObject = (OBJECT*)platform;
 	int top = platformObject->y.pos - height;
 	
@@ -3658,7 +3655,7 @@ void PLAYER::MoveOnPlatform(void *platform, int16_t width, int16_t height, int16
 	if (objectControl.disableObjectInteract || routine == PLAYERROUTINE_DEATH || debug != 0)
 		return;
 	
-	//Move onto the top of the platform
+	//Move with the platform
+	x.pos += (platformObject->x.pos - lastXPos);
 	y.pos = top - yRadius;
-	x.pos -= (platformObject->x.pos - xPos);
 }

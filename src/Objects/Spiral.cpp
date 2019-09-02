@@ -108,7 +108,8 @@ void ObjSpiral(OBJECT *object) //Also MTZ cylinder
 					if (player->status.inAir) //Don't run on corkscrew if in mid-air
 						continue;
 					
-					if (!player->status.shouldNotFall) //If not standing on an object
+					//Check if we're at the sides of the spiral
+					if (!player->status.shouldNotFall) //If not standing on an object (already on a spiral)
 					{
 						//Check if we're at the sides of the spiral
 						int16_t xOff = player->x.pos - object->x.pos;
@@ -122,14 +123,6 @@ void ObjSpiral(OBJECT *object) //Also MTZ cylinder
 							if (xOff < 0xC0 || xOff > 0xD0)
 								continue;
 						}
-						
-						//Check if we're near the bottom and not already on an object controlling us
-						int16_t yOff = player->y.pos - object->y.pos - 0x10;
-						if (yOff < 0 || yOff >= 0x30 || player->objectControl.disableOurMovement)
-							continue;
-						
-						//Set the player to run on the spiral
-						player->RideObject(object, standBit - (size_t)object);
 					}
 					else
 					{
@@ -145,15 +138,15 @@ void ObjSpiral(OBJECT *object) //Also MTZ cylinder
 							if (xOff < 0xB0 || xOff > 0xC0)
 								continue;
 						}
-						
-						//Check if we're near the bottom and not already on an object controlling us
-						int16_t yOff = player->y.pos - object->y.pos - 0x10;
-						if (yOff < 0 || yOff >= 0x30 || player->objectControl.disableOurMovement)
-							continue;
-						
-						//Set the player to run on the spiral
-						player->RideObject(object, standBit - (size_t)object);
 					}
+					
+					//Check if we're near the bottom and not already on an object controlling us
+					int16_t yOff = player->y.pos - object->y.pos - 0x10;
+					if (yOff < 0 || yOff >= 0x30 || player->objectControl.disableOurMovement)
+						continue;
+					
+					//Set the player to run on the spiral
+					player->AttachToObject(object, standBit - (size_t)object);
 				}
 				else
 				{

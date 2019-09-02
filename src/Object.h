@@ -6,6 +6,7 @@
 #include "GameConstants.h"
 #include "Player.h"
 
+#define SCRATCH_ENTRIES 0x20
 #define OBJECT_PLAYER_REFERENCES 0x100
 
 enum COLLISIONTYPE
@@ -151,15 +152,12 @@ class OBJECT
 		OBJECT *children;
 		
 		//Scratch memory
-		union
-		{
-			uint8_t scratchU8[0x10];
-			uint16_t scratchU16[0x8];
-			uint32_t scratchU32[0x4];
-			int8_t scratchS8[0x10];
-			int16_t scratchS16[0x8];
-			int32_t scratchS32[0x4];
-		};
+		 uint8_t  scratchU8[SCRATCH_ENTRIES];
+		  int8_t  scratchS8[SCRATCH_ENTRIES];
+		uint16_t scratchU16[SCRATCH_ENTRIES];
+		 int16_t scratchS16[SCRATCH_ENTRIES];
+		uint32_t scratchU32[SCRATCH_ENTRIES];
+		 int32_t scratchS32[SCRATCH_ENTRIES];
 		
 		//Deletion flag
 		bool deleteFlag;
@@ -180,8 +178,9 @@ class OBJECT
 		void Animate(const uint8_t **animationList);
 		int16_t CheckFloorEdge(COLLISIONLAYER layer, int16_t xPos, int16_t yPos, uint8_t *outAngle);
 		
-		void PlatformObject(int16_t width, int16_t height, int16_t xPos);
-		void PlatformObject2(PLAYER *player, int i, int16_t width, int16_t height, int16_t xPos);
+		void PlatformObject(int16_t width, int16_t height, int16_t lastXPos);
+		void LandOnPlatform(PLAYER *player, int i, int16_t width, int16_t height);
+		void ExitPlatform(PLAYER *player, int i);
 		
 		bool Update();
 		void Draw();

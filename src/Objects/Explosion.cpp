@@ -55,10 +55,10 @@ void ObjExplosion(OBJECT *object)
 			//Animate
 			if (object->animFrameDuration-- == 0)
 			{
-				object->animFrameDuration = 7;
+				object->animFrameDuration = 3;
 				
 				//Advance frame, and delete once finished
-				if (++object->mappingFrame >= 5)
+				if (++object->mappingFrame == 5)
 				{
 					object->deleteFlag = true;
 					break;

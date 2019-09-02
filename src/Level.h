@@ -11,6 +11,8 @@
 
 #define PALETTE_CYCLES 8
 
+#define OSCILLATORY_VALUES 16
+
 //Object function definition
 typedef void (*OBJECTFUNCTION)(OBJECT*);
 
@@ -144,6 +146,10 @@ class LEVEL
 		bool updateTime; //If the timer should update (at the end of the level)
 		bool updateStage; //If objects and other stuff should update (player not dead)
 		
+		//Oscillatory stuff
+		bool oscillateDirection[OSCILLATORY_VALUES];
+		uint16_t oscillate[OSCILLATORY_VALUES][2];
+		
 		//Art
 		ARTFORMAT artFormat;
 		TEXTURE *tileTexture;
@@ -218,6 +224,9 @@ class LEVEL
 		
 		void PaletteUpdate();
 		void GetBackgroundScroll(bool updateScroll, uint16_t *array, int16_t *cameraX, int16_t *cameraY);
+		
+		void OscillatoryInit();
+		void OscillatoryUpdate();
 		
 		bool Update(bool checkTitleCard);
 		void Draw();
