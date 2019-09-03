@@ -4,8 +4,8 @@
 #include <stdint.h>
 
 //Screen size constants (TODO: make variable versions of this)
-#define SCREEN_WIDTH	398
-#define SCREEN_HEIGHT	224
+#define SCREEN_WIDTH	426
+#define SCREEN_HEIGHT	240
 #define SCREEN_SCALE	2
 
 //Set pixel macro

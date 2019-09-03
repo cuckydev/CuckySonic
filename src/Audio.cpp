@@ -268,8 +268,9 @@ void SOUND::Mix(float *stream, int samples)
 		for (int channel = 0; channel < 2; channel++)
 		{
 			//Get the in-between sample this is (linear interpolation)
-			const float sample1 = buffer[(int)sample * 2 + channel];
-			const float sample2 = (((int)sample + 1) >= size) ? 0 : buffer[(int)sample * 2 + channel + 1];
+			const int intSample = std::floor(sample);
+			const float sample1 = buffer[intSample * 2 + channel];
+			const float sample2 = ((intSample + 1) >= size) ? 0 : buffer[intSample * 2 + channel + 1];
 			
 			//Interpolate sample
 			const float subPos = (float)fmod(sample, 1.0);
@@ -455,17 +456,17 @@ void MUSIC::Mix(float *stream, int samples)
 {
 	//Read the given amount of samples
 	float buffer[AUDIO_SAMPLES * 2];
-	float *bufferCopy = &(*buffer);
+	float *bufferPointer = &(*buffer);
 	
 	int samplesRead = 0;
 	
 	while (samplesRead < samples)
 	{
 		//Read data
-		int thisRead = stb_vorbis_get_samples_float_interleaved(file, channels, buffer, (samples - samplesRead) * channels);
+		int thisRead = stb_vorbis_get_samples_float_interleaved(file, channels, bufferPointer, (samples - samplesRead) * channels);
 		
 		//Move through file and buffer
-		bufferCopy += thisRead * 2;
+		bufferPointer += thisRead * 2;
 		samplesRead += thisRead;
 		internalPosition += (double)thisRead;
 		
@@ -486,14 +487,14 @@ void MUSIC::Mix(float *stream, int samples)
 	}
 	
 	//Copy the buffer into our stream
-	bufferCopy = &(*buffer);
+	bufferPointer = &(*buffer);
 	
 	for (int i = 0; i < samples; i++)
 	{
 		if (i < samplesRead)
 		{
-			*stream++ = (*bufferCopy++) * volume;
-			*stream++ = (*bufferCopy++) * volume;
+			*stream++ = (*bufferPointer++) * volume;
+			*stream++ = (*bufferPointer++) * volume;
 		}
 		else
 		{

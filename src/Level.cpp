@@ -849,7 +849,7 @@ void LEVEL::GetBackgroundScroll(bool updateScroll, uint16_t *array, int16_t *cam
 }
 
 //Oscillatory Update
-static const bool oscillatoryInitialDirection[OSCILLATORY_VALUES] = {false, false, true, true, false, false, false, false, false, false, false, false, false};
+static const bool oscillatoryInitialDirection[OSCILLATORY_VALUES] = {false, false, true, true, true, true, true, false, false, false, false, false, false};
 
 static const uint16_t oscillatoryInitial[OSCILLATORY_VALUES][2] = {
 	{0x0080, 0x0000},
@@ -918,7 +918,7 @@ void LEVEL::OscillatoryUpdate()
 			oscillate[i][0] += (int16_t)oscillate[i][1];
 			
 			//Reverse if reached amplitude
-			if ((uint8_t)(oscillate[i][0] >> 8) <= (uint8_t)amplitude)
+			if ((uint8_t)(oscillate[i][0] >> 8) > (uint8_t)amplitude)
 				oscillateDirection[i] = true;
 		}
 		else
@@ -928,7 +928,7 @@ void LEVEL::OscillatoryUpdate()
 			oscillate[i][0] += (int16_t)oscillate[i][1];
 			
 			//Reverse if reached amplitude
-			if ((uint8_t)(oscillate[i][0] >> 8) > (uint8_t)amplitude)
+			if ((uint8_t)(oscillate[i][0] >> 8) <= (uint8_t)amplitude)
 				oscillateDirection[i] = false;
 		}
 	}

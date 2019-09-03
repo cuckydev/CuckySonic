@@ -1514,7 +1514,8 @@ void PLAYER::JumpAngle()
 		{
 			nextFlipAngle += flipSpeed;
 			
-			if (nextFlipAngle < flipSpeed && --flipsRemaining <= 0) //If flipped
+			typeof(flipsRemaining) lastFlipsRemaining = flipsRemaining;
+			if (nextFlipAngle < flipAngle && --flipsRemaining > lastFlipsRemaining) //If flipped
 			{
 				flipsRemaining = 0;
 				nextFlipAngle = 0;
@@ -1524,7 +1525,8 @@ void PLAYER::JumpAngle()
 		{
 			nextFlipAngle -= flipSpeed;
 			
-			if (nextFlipAngle < flipSpeed && --flipsRemaining <= 0) //If flipped
+			typeof(flipsRemaining) lastFlipsRemaining = flipsRemaining;
+			if (nextFlipAngle > flipAngle && --flipsRemaining > lastFlipsRemaining) //If flipped
 			{
 				flipsRemaining = 0;
 				nextFlipAngle = 0;
@@ -3355,7 +3357,7 @@ void PLAYER::Display()
 		{
 			//Resume music
 			//if (gLevel->boss == 0 && airRemaining >= 12)
-			//	PlayMusic(gLevel->musicId);
+				PlayMusic(gLevel->musicId);
 			item.isInvincible = false;
 		}
 	}

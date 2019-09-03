@@ -4,52 +4,42 @@
 #include "MathUtil.h"
 #include "Log.h"
 
-//Bug-fixes
-//#define FIX_CAMERA_YSHIFT    //This makes the camera shifting for when rolling less bad
-
-//Optional differences
-//#define CAMERA_CD_PAN //NOTE: pretty crappy since it only really works in CD because it has a lot of crappy flat ground and stuff
+//Define things
+//#define CAMERA_CD_PAN
 
 //Constants
-#define CAMERA_GROUND_YMARGIN_BOTTOM 0
-#define CAMERA_GROUND_YMARGIN_OFFSET 16
+#define CAMERA_HSCROLL_LEFT		-16
+#define CAMERA_HSCROLL_SIZE		 16
 
-#define CAMERA_AIR_YMARGIN_BOTTOM 64
-#define CAMERA_AIR_YMARGIN_OFFSET 48
-
-#define CAMERA_XMARGIN_RIGHT 16
-#define CAMERA_XMARGIN_OFFSET 16
+#define CAMERA_VSCROLL_OFFSET	-16
+#define CAMERA_VSCROLL_UP		 32
+#define CAMERA_VSCROLL_DOWN		 32
 
 #define LOOK_PANTIME 120
-
-#define approach(var, to, am)	if (var < to)	\
-								{	\
-									var += am;	\
-									if (var > to)	\
-										var = to;	\
-								}	\
-								if (var > to)	\
-								{	\
-									var -= am;	\
-									if (var < to)	\
-										var = to;	\
-								}
 
 CAMERA::CAMERA(PLAYER *trackPlayer)
 {
 	//Clear memory
 	memset(this, 0, sizeof(CAMERA));
 	
-	//Attach to our given player
+	//Move to our given player
 	x = trackPlayer->x.pos - (SCREEN_WIDTH / 2);
 	y = trackPlayer->y.pos - (SCREEN_HEIGHT / 2 - 16);
-	Track(trackPlayer);
+	
+	//Keep inside level boundaries
+	if (x < gLevel->leftBoundary)
+		x = gLevel->leftBoundary;
+	if (x + SCREEN_WIDTH > gLevel->rightBoundary)
+		x = gLevel->rightBoundary - SCREEN_WIDTH;
+	if (y < gLevel->topBoundary)
+		y = gLevel->topBoundary;
+	if (y + SCREEN_HEIGHT > gLevel->bottomBoundary)
+		y = gLevel->bottomBoundary - SCREEN_HEIGHT;
 	return;
 }
 
 CAMERA::~CAMERA()
 {
-	//Nothing to free
 	return;
 }
 
@@ -59,8 +49,8 @@ void CAMERA::Track(PLAYER *trackPlayer)
 	if (trackPlayer->cameraLock)
 		return;
 	
-	//Get our track positions
-	int trackX = trackPlayer->x.pos, trackY = trackPlayer->y.pos;
+	//Scroll horizontally to the player
+	int16_t trackX = trackPlayer->x.pos;
 	
 	if (trackPlayer->scrollDelay)
 	{
@@ -68,104 +58,105 @@ void CAMERA::Track(PLAYER *trackPlayer)
 		trackX = trackPlayer->posRecord[(trackPlayer->recordPos - ((trackPlayer->scrollDelay / 0x100) + 1)) % PLAYER_RECORD_LENGTH].x;
 	}
 	
-	//Camera panning
-	#ifdef CAMERA_CD_PAN
-		int16_t speed = trackPlayer->inertia;
-		
-		if (!trackPlayer->scrollDelay) //Don't increase if scroll is delayed
-		{
-			if (abs(speed) >= 0x600 || trackPlayer->spindashing)
-			{
-				//Pan towards our moving direction
-				approach(xPan, ((trackPlayer->spindashing ? trackPlayer->status.xFlip : speed < 0) ? -64 : 64), 2);
-			}
-			else
-			{
-				//Unpan
-				approach(xPan, 0, 2);
-			}
-		}
-		
-		//Pan our track position
-		trackX += xPan;
-	#endif
+	int16_t hScrollOffset = trackX - x - xPan;
 	
-	#ifndef FIX_CAMERA_YSHIFT
-		//Shift downwards when rolling
-		if (trackPlayer->status.inBall)
-			trackY -= (trackPlayer->defaultYRadius - trackPlayer->rollYRadius);
-	#else
-		//Shift downwards when rolling
-		uint8_t difference = trackPlayer->defaultYRadius - trackPlayer->yRadius;
-	
-		int16_t sin, cos;
-		GetSine(trackPlayer->angle - 0x40, &sin, &cos);
-		
-		trackX += cos * difference / 0x100;
-		trackY += sin * difference / 0x100;
-	#endif
-	
-	//Handle looking up and down
-	if (trackPlayer->anim == PLAYERANIMATION_LOOKUP || trackPlayer->anim == PLAYERANIMATION_DUCK)
+	if ((hScrollOffset -= (SCREEN_WIDTH / 2 + CAMERA_HSCROLL_LEFT)) < 0) //Scroll to the left
 	{
-		if (lookTimer < LOOK_PANTIME)
-		{
-			//Increase timer and unpan
-			lookTimer++;
-			approach(lookPan, 0, 2);
-		}
-		else
-		{
-			//Pan to our intended direction
-			approach(lookPan, (trackPlayer->anim == PLAYERANIMATION_LOOKUP ? -104 : 88), 2);
-		}
+		//Cap our scrolling to 16 pixels per frame
+		if (hScrollOffset <= -16)
+			hScrollOffset = -16;
+		
+		//Scroll and keep within level boundaries
+		x += hScrollOffset;
+		if (x < gLevel->leftBoundary)
+			x = gLevel->leftBoundary;
 	}
-	else
+	else if ((hScrollOffset -= CAMERA_HSCROLL_SIZE) >= 0) //Scroll to the right
 	{
-		//Unpan
-		lookTimer = 0;
-		approach(lookPan, 0, 2);
+		//Cap our scrolling to 16 pixels per frame
+		if (hScrollOffset > 16)
+			hScrollOffset = 16;
+		
+		//Scroll and keep within level boundaries
+		x += hScrollOffset;
+		if ((x + SCREEN_WIDTH) > gLevel->rightBoundary)
+			x = gLevel->rightBoundary - SCREEN_WIDTH;
 	}
 	
-	trackY += lookPan;
+	//Scroll vertically to the player
+	int16_t vScrollOffset = trackPlayer->y.pos - y - (SCREEN_HEIGHT / 2 + CAMERA_VSCROLL_OFFSET) - lookPan;
 	
-	//Scroll horizontally to our tracked position
-	int rDiff = (trackX - x) - (SCREEN_WIDTH / 2 + CAMERA_XMARGIN_RIGHT - CAMERA_XMARGIN_OFFSET);
-	int lDiff = (SCREEN_WIDTH / 2 - CAMERA_XMARGIN_OFFSET) - (trackX - x);
+	if (trackPlayer->status.inBall)
+		vScrollOffset -= 5; //Shift up 5 pixels if in ball-form
 	
-	if (rDiff > 0)
-		x += (rDiff > 16 ? 16 : rDiff);
-	if (lDiff > 0)
-		x -= (lDiff > 16 ? 16 : lDiff);
-	
-	//Scroll vertically to our tracked position
-	int tDiff, bDiff, vScroll;
+	//Handle our specific scrolling
+	uint16_t scrollSpeed = 16;
 	
 	if (trackPlayer->status.inAir)
 	{
-		tDiff = (SCREEN_HEIGHT / 2 - CAMERA_AIR_YMARGIN_OFFSET) - (trackY - y);
-		bDiff = (trackY - y) - (SCREEN_HEIGHT / 2 + CAMERA_AIR_YMARGIN_BOTTOM - CAMERA_AIR_YMARGIN_OFFSET);
-		vScroll = 16;
+		//Scrolling in mid-air
+		if (vScrollOffset < -CAMERA_VSCROLL_UP)
+			vScrollOffset += CAMERA_VSCROLL_UP;
+		else if (vScrollOffset >= CAMERA_VSCROLL_DOWN)
+			vScrollOffset -= CAMERA_VSCROLL_DOWN;
+		else
+			vScrollOffset = 0;
 	}
 	else
 	{
-		tDiff = (SCREEN_HEIGHT / 2 - CAMERA_GROUND_YMARGIN_OFFSET) - (trackY - y);
-		bDiff = (trackY - y) - (SCREEN_HEIGHT / 2 + CAMERA_GROUND_YMARGIN_BOTTOM - CAMERA_GROUND_YMARGIN_OFFSET);
-		vScroll = abs(trackPlayer->inertia) >= 0x800 ? 16 : 6;
+		//Get our scroll speed
+		if (lookPan)
+			scrollSpeed = 2;
+		else
+			scrollSpeed = (abs(trackPlayer->inertia) >= 0x800) ? 16 : 6;
 	}
 	
-	if (bDiff > 0)
-		y += (bDiff > vScroll ? vScroll : bDiff);
-	if (tDiff > 0)
-		y -= (tDiff > vScroll ? vScroll : tDiff);
+	if (vScrollOffset < 0)
+	{
+		//Scroll upwards (cap to scrollSpeed)
+		if (vScrollOffset <= -scrollSpeed)
+			vScrollOffset = -scrollSpeed;
+		y += vScrollOffset;
+		
+		//Keep within level boundaries
+		if (y < gLevel->topBoundary)
+			y = gLevel->topBoundary;
+	}
+	else if (vScrollOffset > 0)
+	{
+		//Scroll downwards (cap to scrollSpeed)
+		if (vScrollOffset > scrollSpeed)
+			vScrollOffset = scrollSpeed;
+		y += vScrollOffset;
+		
+		//Keep within level boundaries
+		if (y + SCREEN_HEIGHT > gLevel->bottomBoundary)
+			y = gLevel->bottomBoundary - SCREEN_HEIGHT;
+	}
 	
-	//Keep inside of level boundaries
-	if (x < gLevel->leftBoundary)
-		x = gLevel->leftBoundary;
-	if (y < gLevel->topBoundary)
-		y = gLevel->topBoundary;
-	if (x > gLevel->rightBoundary - SCREEN_WIDTH)
-		x = gLevel->rightBoundary - SCREEN_WIDTH;
-	if (y > gLevel->bottomBoundary - SCREEN_HEIGHT)
-		y = gLevel->bottomBoundary - SCREEN_HEIGHT;
+	#ifdef CAMERA_CD_PAN
+		//Handle CD panning
+		if (trackPlayer->spindashing)
+		{
+			if (trackPlayer->status.xFlip)
+				xPan = min(xPan + 2,  64);
+			else
+				xPan = max(xPan - 2, -64);
+		}
+		else if (abs(trackPlayer->inertia) >= 0x600)
+		{
+			if (trackPlayer->inertia < 0)
+				xPan = min(xPan + 2,  64);
+			else
+				xPan = max(xPan - 2, -64);
+		}
+		else
+		{
+			//Pan back to the center
+			if (xPan > 0)
+				xPan = max(xPan - 2,   0);
+			else if (xPan < 0)
+				xPan = min(xPan + 2,   0);
+		}
+	#endif
 }

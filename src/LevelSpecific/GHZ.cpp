@@ -62,11 +62,11 @@ void GHZ_BackgroundScroll(bool updateScroll, uint16_t *array, int16_t *cameraX, 
 	
 	//Water
 	int32_t delta = ((((*cameraX) - scrollBG2) * 0x100) / 0x68) * 0x100;
-	uint32_t accumulate = scrollBG2 * 0x10000;
+	uint32_t accumulate = scrollBG2 << 16;
 	
 	for (int i = line; i < gLevel->backgroundTexture->height; i++)
 	{
-		*arrValue++ = accumulate / 0x10000;
+		*arrValue++ = accumulate >> 16;
 		accumulate += delta;
 		line++;
 	}
