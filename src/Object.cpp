@@ -219,7 +219,7 @@ void OBJECT::PlatformObject(int16_t width, int16_t height, int16_t lastXPos)
 			LandOnPlatform(player, i, width, height);
 		}
 		
-		//Check next player
+		//Check next player's contact
 		i++;
 	}
 }
@@ -249,6 +249,150 @@ void OBJECT::ExitPlatform(PLAYER *player, int i)
 	player->status.shouldNotFall = false;
 	player->status.inAir = true;
 	playerContact[i].standing = false;
+}
+
+//Solid object and its variants
+OBJECT_SOLIDTOUCH OBJECT::SolidObject(int16_t width, int16_t height, int16_t lastXPos)
+{
+	//Get cleared solid touch
+	OBJECT_SOLIDTOUCH solidTouch;
+	memset(&solidTouch, 0, sizeof(OBJECT_SOLIDTOUCH));
+	
+	//Check all players
+	int i = 0;
+	for (PLAYER *player = gLevel->playerList; player != NULL; player = player->next)
+	{
+		//Check if we're still standing on the object
+		if (playerContact[i].standing)
+		{
+			//Check if we're to exit the top of the object
+			int16_t xDiff = (player->x.pos - x.pos) + width;
+			if (player->status.inAir || xDiff < 0 || xDiff >= width * 2)
+			{
+				//Exit top as platform, then check next player
+				ExitPlatform(player, i++);
+				continue;
+			}
+			
+			//Move with the object
+			player->MoveOnPlatform((void*)this, height, lastXPos);
+			
+			//Check next player
+			i++;
+			continue;
+		}
+		else
+		{
+			//Check for collisions, then check next player
+			SolidObjectCont(&solidTouch, player, i++, width, height, lastXPos);
+			continue;
+		}
+	}
+	
+	return solidTouch;
+}
+
+void OBJECT::SolidObjectCont(OBJECT_SOLIDTOUCH *solidTouch, PLAYER *player, int i, int16_t width, int16_t height, int16_t lastXPos)
+{
+	//Check if we're within range
+	int16_t xDiff = (player->x.pos - x.pos) + width;
+	int16_t checkHeight = player->yRadius + height;
+	int16_t yDiff = checkHeight + (player->y.pos - y.pos + 4);
+	
+	if (!(player->objectControl.disableObjectInteract || (xDiff < 0 || xDiff >= width * 2) || (yDiff < 0 || yDiff >= checkHeight * 2)))
+	{
+		//Check if we're intangible
+		if (!(player->routine == PLAYERROUTINE_DEATH || player->debug))
+		{
+			//Get our absolute position differences
+			int16_t xDiff2 = xDiff;
+			if (xDiff2 < width)
+				xDiff2 = -(width * 2 - xDiff);
+			
+			int16_t yDiff2 = yDiff;
+			if (yDiff2 < checkHeight)
+				yDiff2 = -(checkHeight * 2 - yDiff - 4);
+			
+			//If our horizontal difference is greater than the vertical difference (we're above / below the object)
+			if (xDiff2 >= yDiff2)
+			{
+				if (yDiff >= 0)
+				{
+					//Check our vertical difference
+					if (yDiff < 16 || (yDiff < 20 /*and id isn't ObjID_LauncherSpring*/))
+					{
+						//Check our horizontal range
+						int16_t xDiff3 = (player->x.pos - x.pos) + widthPixels;
+						int16_t width2 = widthPixels * 2;
+						
+						if (!(xDiff3 < 0 || xDiff3 >= width2))
+						{
+							//Land on the object
+							player->y.pos -= (checkHeight -= 4) - 1;
+							player->AttachToObject((void*)this, (&playerContact[i].standing - (size_t)this));
+							solidTouch->top[i] = true;
+						}
+						
+						return;
+					}
+					
+					SolidObjectClearPush(player, i);
+					return;
+				}
+				else
+				{
+					if (player->yVel != 0)
+					{
+						//Clip us out of the top (why does it check if yOff is negative?)
+						if (player->yVel < 0 && yDiff < 0)
+						{
+							player->y.pos -= checkHeight;
+							player->yVel = 0;
+						}
+						
+						//Set to touch the bottom
+						solidTouch->bottom[i] = true;
+						return;
+					}
+					else
+					{
+						if (!player->status.inAir)
+						{
+							int16_t absXDiff = abs(xDiff2);
+							
+							if (absXDiff >= 16)
+							{
+								//Crush the player and set the bottom touch flag
+								player->KillCharacter(SOUNDID_HURT);
+								solidTouch->bottom[i] = true;
+								return;
+							}
+							
+							//Fallthrough into horizontal check
+						}
+					}
+				}
+			}
+			
+			//Horizontal checking
+			
+		}
+	}
+}
+
+void OBJECT::SolidObjectClearPush(PLAYER *player, int i)
+{
+	//Check we should stop pushing
+	if (playerContact[i].pushing)
+	{
+		//Reset animation
+		if (player->anim != PLAYERANIMATION_ROLL)
+			player->anim = PLAYERANIMATION_RUN; //wrong animation id
+		
+		//Clear pushing flags
+		playerContact[i].pushing = false;
+		player->status.pushing = false;
+	}
 }
 
 //Update and drawing objects

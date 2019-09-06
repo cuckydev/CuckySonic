@@ -301,9 +301,6 @@ void SOUND::Mix(float *stream, int samples)
 //Constructor and destructor
 MUSIC::MUSIC(MUSICDEFINITION *ourDefinition)
 {
-	//Wait for audio device to be finished and lock it
-	SDL_LockAudioDevice(audioDevice);
-	
 	memset(this, 0, sizeof(MUSIC));
 	definition = ourDefinition;
 	
@@ -357,23 +354,14 @@ MUSIC::MUSIC(MUSICDEFINITION *ourDefinition)
 	//Initialize other properties
 	volume = 1.0f;
 	
-	//Resume audio device
-	SDL_UnlockAudioDevice(audioDevice);
-	
 	LOG(("Success!\n"));
 }
 
 MUSIC::~MUSIC()
 {
-	//Wait for audio device to be finished and lock it
-	SDL_LockAudioDevice(audioDevice);
-	
 	//Close our loaded file
 	if (file != NULL)
 		stb_vorbis_close(file);
-	
-	//Resume audio device
-	SDL_UnlockAudioDevice(audioDevice);
 }
 
 //Playback functions
@@ -506,33 +494,48 @@ void MUSIC::Mix(float *stream, int samples)
 
 //Music functions
 MUSIC *currentMusic;
+SDL_Thread *loadMusicThread;
+MUSICID gCurrentMusic;
 
-void PlayMusic(MUSICID music)
+int LoadMusicThreadFunction(void *ptr)
 {
 	//Unload current song
 	if (currentMusic != NULL)
-	{
-		//Wait for audio device to be finished and lock it
-		SDL_LockAudioDevice(audioDevice);
-		
-		MUSIC *rememberMusic = currentMusic;
-		currentMusic = NULL;
-		
-		//Resume audio device then delete original music
-		SDL_UnlockAudioDevice(audioDevice);
-		delete rememberMusic;
-	}
+		delete currentMusic;
 	
 	//Load new song (if not null)
-	if (music != MUSICID_NULL)
+	if (gCurrentMusic != MUSICID_NULL)
 	{
-		currentMusic = new MUSIC(&musicDefinition[music]);
+		currentMusic = new MUSIC(&musicDefinition[gCurrentMusic]);
 		currentMusic->Play(0);
 	}
+	
+	return (loadMusicThread = NULL) == NULL;
+}
+
+void PlayMusic(MUSICID music)
+{
+	//Wait for song to have already finished loading
+	if (loadMusicThread)
+	{
+		SDL_WaitThread(loadMusicThread, NULL);
+		loadMusicThread = NULL;
+	}
+	
+	//Load new song in a separate thread
+	gCurrentMusic = music;
+	loadMusicThread = SDL_CreateThread(LoadMusicThreadFunction, "LoadMusicThread", NULL);
 }
 
 int PauseMusic()
 {
+	//Wait for song to have already finished loading
+	if (loadMusicThread)
+	{
+		SDL_WaitThread(loadMusicThread, NULL);
+		loadMusicThread = NULL;
+	}
+	
 	//Pause and return current position
 	if (currentMusic != NULL)
 		return currentMusic->Pause();
@@ -541,6 +544,13 @@ int PauseMusic()
 
 void ResumeMusic(int position)
 {
+	//Wait for song to have already finished loading
+	if (loadMusicThread)
+	{
+		SDL_WaitThread(loadMusicThread, NULL);
+		loadMusicThread = NULL;
+	}
+	
 	//Resume at given position
 	if (currentMusic != NULL)
 		currentMusic->Play(position);
@@ -548,6 +558,10 @@ void ResumeMusic(int position)
 
 void SetMusicVolume(float volume)
 {
+	//If song is still loading, don't modify
+	if (loadMusicThread)
+		return;
+	
 	//Set the volume
 	if (currentMusic != NULL)
 		currentMusic->SetVolume(volume);
@@ -555,6 +569,10 @@ void SetMusicVolume(float volume)
 
 float GetMusicVolume()
 {
+	//If song is still loading, return default value
+	if (loadMusicThread)
+		return 1.0;
+	
 	//Get and return the volume
 	if (currentMusic != NULL)
 		return currentMusic->GetVolume();
@@ -570,7 +588,7 @@ void AudioCallback(void *userdata, uint8_t *stream, int length)
 	//Get our buffer to render to
 	int samples = length / (2 * sizeof(float));
 	
-	if (currentMusic != NULL && currentMusic->playing)
+	if (loadMusicThread == NULL && currentMusic != NULL && currentMusic->playing)
 	{
 		//Mix the music into the buffer, we don't need to clear the buffer here because the music sets the buffer, rather than add onto it
 		currentMusic->Mix((float*)stream, samples);

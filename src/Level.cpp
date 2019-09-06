@@ -533,6 +533,17 @@ void LEVEL::UnloadAll()
 	}
 }
 
+//Assets to pre-load (Assets that are loaded by objects that are usually created mid-game)
+const char *preloadTexture[] = {
+	"data/Object/Explosion.bmp",
+	NULL,
+};
+
+const char *preloadMappings[] = {
+	"data/Object/Explosion.map",
+	NULL,
+};
+
 //Level class
 LEVEL::LEVEL(int id, int players, const char **playerPaths)
 {
@@ -555,6 +566,12 @@ LEVEL::LEVEL(int id, int players, const char **playerPaths)
 		UnloadAll();
 		return;
 	}
+	
+	//Pre-load assets
+	for (int i = 0; preloadTexture[i] != NULL; i++)
+		GetObjectTexture(preloadTexture[i]);
+	for (int i = 0; preloadMappings[i] != NULL; i++)
+		GetObjectMappings(preloadMappings[i]);
 	
 	//Create our players
 	PLAYER *follow = NULL;

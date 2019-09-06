@@ -97,8 +97,8 @@ void ObjGHZPlatform_Move(OBJECT *object)
 						//Make player airborne
 						player->status.inAir = true;
 						player->status.shouldNotFall = false;
-						//player->routine = PLAYERROUTINE_CONTROL; //This can't cause anything but absolute mayhem
 						object->playerContact[i].standing = false;
+						player->yVel = object->yVel;
 					}
 					
 					i++;

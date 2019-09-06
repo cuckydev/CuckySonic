@@ -15,7 +15,9 @@
 #define CAMERA_VSCROLL_UP		 32
 #define CAMERA_VSCROLL_DOWN		 32
 
-#define LOOK_PANTIME 120
+#define LOOK_PANTIME	120
+#define LOOK_PAN_UP		104
+#define LOOK_PAN_DOWN	88
 
 CAMERA::CAMERA(PLAYER *trackPlayer)
 {
@@ -45,6 +47,33 @@ CAMERA::~CAMERA()
 
 void CAMERA::Track(PLAYER *trackPlayer)
 {
+	//Handle panning while player is looking up / down
+	if (trackPlayer->anim == PLAYERANIMATION_LOOKUP)
+	{
+		//Wait LOOK_PANTIME frames, then look LOOK_PAN_UP pixels
+		if (lookTimer >= LOOK_PANTIME)
+			lookPan = min(lookPan + 2, LOOK_PAN_UP);
+		else
+			lookTimer++;
+	}
+	else if (trackPlayer->anim == PLAYERANIMATION_DUCK)
+	{
+		//Wait LOOK_PANTIME frames, then look LOOK_PAN_DOWN pixels
+		if (lookTimer >= LOOK_PANTIME)
+			lookPan = max(lookPan - 2, -LOOK_PAN_DOWN);
+		else
+			lookTimer++;
+	}
+	else
+	{
+		//Reset panning
+		if (lookPan < 0)
+			lookPan = min(lookPan + 2, 0);
+		if (lookPan > 0)
+			lookPan = max(lookPan - 2, 0);
+		lookTimer = 0;
+	}
+	
 	//Don't move if locked
 	if (trackPlayer->cameraLock)
 		return;

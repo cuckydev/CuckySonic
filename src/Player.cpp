@@ -2175,7 +2175,6 @@ void PLAYER::HurtStop()
 		objectControl.disableAnimation = false;
 		objectControl.disableWallCollision = false;
 		objectControl.disableObjectInteract = false;
-		objectControl.disableObjectInteract2 = false;
 		
 		//Reset animation and priority
 		anim = PLAYERANIMATION_WALK;
@@ -3235,7 +3234,7 @@ void PLAYER::Update()
 					}
 					
 					//Interact with objects
-					if (!(objectControl.disableObjectInteract || objectControl.disableObjectInteract2))
+					if (!objectControl.disableObjectInteract)
 						TouchResponse();
 					break;
 					
@@ -3350,15 +3349,38 @@ void PLAYER::Display()
 		Draw();
 	
 	//Handle invincibility (every 8 frames)
-	if (item.isInvincible && invincibilityTime != 0 && (gLevel->frameCounter & 0x7) == 0)
+	if (item.isInvincible && invincibilityTime != 0 && (gLevel->frameCounter & 0x7) == 0 && -invincibilityTime == 0)
 	{
-		//If our invincibility is running out
-		if (--invincibilityTime == 0)
+		//Resume music
+		//if (gCurrentMusic == MUSICID_INVINCIBILITY)
+			PlayMusic(gLevel->musicId);
+		
+		//Lose invincibility
+		item.isInvincible = false;
+	}
+	
+	//Handle speed shoes (every 8 frames)
+	if (item.hasSpeedShoes && speedShoesTime != 0 && (gLevel->frameCounter & 0x7) == 0 && --speedShoesTime == 0)
+	{
+		//Resume music
+		if (gCurrentMusic == MUSICID_SPEED_SHOES)
+			PlayMusic(gLevel->musicId);
+		
+		//Lose speed shoes
+		item.hasSpeedShoes = false;
+		
+		//Reset our speed
+		if (super)
 		{
-			//Resume music
-			//if (gLevel->boss == 0 && airRemaining >= 12)
-				PlayMusic(gLevel->musicId);
-			item.isInvincible = false;
+			top = 0xA00;
+			acceleration = 0x30;
+			deceleration = 0x100;
+		}
+		else
+		{
+			top = 0x600;
+			acceleration = 0xC;
+			deceleration = 0x80;
 		}
 	}
 }

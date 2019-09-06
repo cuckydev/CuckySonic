@@ -19,6 +19,13 @@ enum COLLISIONTYPE
 	COLLISIONTYPE_MONITOR,
 };
 
+struct OBJECT_SOLIDTOUCH
+{
+	bool side[OBJECT_PLAYER_REFERENCES];
+	bool bottom[OBJECT_PLAYER_REFERENCES];
+	bool top[OBJECT_PLAYER_REFERENCES];
+};
+
 class OBJECT
 {
 	public:
@@ -181,6 +188,10 @@ class OBJECT
 		void PlatformObject(int16_t width, int16_t height, int16_t lastXPos);
 		void LandOnPlatform(PLAYER *player, int i, int16_t width, int16_t height);
 		void ExitPlatform(PLAYER *player, int i);
+		
+		OBJECT_SOLIDTOUCH SolidObject(int16_t width, int16_t height, int16_t lastXPos);
+		void SolidObjectCont(OBJECT_SOLIDTOUCH *solidTouch, PLAYER *player, int i, int16_t width, int16_t height, int16_t lastXPos);
+		void SolidObjectClearPush(PLAYER *player, int i);
 		
 		bool Update();
 		void Draw();

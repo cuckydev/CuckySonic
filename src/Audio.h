@@ -158,6 +158,8 @@ class MUSIC
 };
 
 //Music functions
+extern MUSICID gCurrentMusic;
+
 void PlayMusic(MUSICID music);
 int PauseMusic();
 void ResumeMusic(int position);
