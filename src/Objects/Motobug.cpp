@@ -89,6 +89,7 @@ void ObjMotobug(OBJECT *object)
 				case 1:
 				{
 					//Move and check if we're going over an edge
+					int16_t lastX = object->x.pos;
 					object->Move();
 					
 					int16_t distance = object->CheckFloorEdge(COLLISIONLAYER_NORMAL_TOP, object->x.pos, object->y.pos, NULL);

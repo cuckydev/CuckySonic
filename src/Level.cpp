@@ -18,7 +18,7 @@ OBJECTFUNCTION objFuncSonic1[] = {
 	NULL, NULL, NULL, NULL, NULL, &ObjGoalpost, NULL, NULL,
 	NULL, &ObjBridge, NULL, NULL, NULL, NULL, NULL, NULL,
 	&ObjGHZPlatform, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-	NULL, NULL, NULL, NULL, NULL, &ObjRingSpawner, NULL, NULL,
+	NULL, NULL, NULL, NULL, NULL, &ObjRingSpawner, &ObjMonitor, NULL,
 	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
 	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
 	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
@@ -37,7 +37,7 @@ OBJECTFUNCTION objFuncSonic2[] = {
 	NULL, NULL, NULL, NULL, NULL, &ObjGoalpost, NULL, NULL,
 	NULL, &ObjBridge, NULL, NULL, NULL, NULL, NULL, NULL,
 	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+	NULL, NULL, NULL, NULL, NULL, NULL, &ObjMonitor, NULL,
 	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
 	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
 	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
@@ -1044,21 +1044,15 @@ void LEVEL::Draw()
 	//Draw foreground
 	if (layout.foreground != NULL && tileTexture != NULL && camera != NULL)
 	{
-		int cLeft = camera->x / 16;
-		int cTop = camera->y / 16;
-		int cRight = (camera->x + SCREEN_WIDTH) / 16;
-		int cBottom = (camera->y + SCREEN_HEIGHT) / 16;
+		int cLeft = max(camera->x / 16, 0);
+		int cTop = max(camera->y / 16, 0);
+		int cRight = min((camera->x + SCREEN_WIDTH) / 16, gLevel->layout.width - 1);
+		int cBottom = min((camera->y + SCREEN_HEIGHT) / 16, gLevel->layout.height - 1);
 		
 		for (int ty = cTop; ty <= cBottom; ty++)
 		{
-			if (ty < 0 || ty >= layout.height)
-				continue;
-			
 			for (int tx = cLeft; tx <= cRight; tx++)
 			{
-				if (tx < 0 || tx >= layout.width)
-					continue;
-				
 				//Get tile
 				TILE *tile = &layout.foreground[ty * layout.width + tx];
 				
