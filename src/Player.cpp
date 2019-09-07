@@ -1881,7 +1881,7 @@ void PLAYER::Move()
 							status.xFlip = false;
 							anim = PLAYERANIMATION_BALANCE;
 						}
-						else
+						else if (tilt == 3) //If there's no floor to the right of us
 						{
 							status.xFlip = true;
 							anim = PLAYERANIMATION_BALANCE;
