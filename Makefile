@@ -63,6 +63,7 @@ SOURCES = \
 	Objects/Explosion \
 	Objects/Motobug \
 	Objects/GHZPlatform \
+	Objects/GHZEdgeWall \
 	Objects/Monitor \
 
 #What to compile

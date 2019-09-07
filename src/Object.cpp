@@ -308,14 +308,14 @@ void OBJECT::SolidObjectCont(OBJECT_SOLIDTOUCH *solidTouch, PLAYER *player, int 
 		{
 			//Get our clip differences
 			int16_t xClip = xDiff;
-			if (xClip >= width)
+			if (xDiff >= width)
 			{
 				xDiff -= width * 2;
 				xClip = -xDiff;
 			}
 			
 			int16_t yClip = yDiff;
-			if (yClip >= height)
+			if (yDiff >= height)
 			{
 				yDiff -= (4 + (checkHeight * 2));
 				yClip = -yDiff;
