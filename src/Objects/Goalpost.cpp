@@ -100,7 +100,7 @@ void ObjGoalpost(OBJECT *object)
 			//TEMP: Load next level
 			gLevel->SetFade(false, false);
 			gGameLoadLevel++;
-			gGameLoadLevel %= 2;
+			gGameLoadLevel %= LEVELID_MAX;
 			break;
 		}
 	}

@@ -3574,7 +3574,7 @@ bool PLAYER::TouchResponseObject(void *objPointer)
 	*/
 	
 	//Check object
-	if ((object->collisionType != COLLISIONTYPE_ENEMY && object->collisionType != COLLISIONTYPE_BOSS) || (object->touchWidth | object->touchHeight) != 0)
+	if (object->collisionType != COLLISIONTYPE_NULL)
 	{
 		//Check if our hitboxes are colliding
 		int16_t horizontalCheck = playerLeft - (object->x.pos - object->touchWidth);

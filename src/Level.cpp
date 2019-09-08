@@ -17,7 +17,7 @@ OBJECTFUNCTION objFuncSonic1[] = {
 	NULL, NULL, NULL, &ObjPathSwitcher, NULL, NULL, NULL, NULL,
 	NULL, NULL, NULL, NULL, NULL, &ObjGoalpost, NULL, NULL,
 	NULL, &ObjBridge, NULL, NULL, NULL, NULL, NULL, NULL,
-	&ObjGHZPlatform, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+	&ObjGHZPlatform, NULL, NULL, NULL, &ObjSonic1Scenery, NULL, NULL, NULL,
 	NULL, NULL, NULL, NULL, NULL, &ObjRingSpawner, &ObjMonitor, NULL,
 	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
 	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
@@ -562,6 +562,10 @@ LEVEL::LEVEL(int id, int players, const char **playerPaths)
 	
 	LEVELTABLE *tableEntry = &gLevelTable[levelId = (LEVELID)id];
 	
+	//Copy zone and act id
+	zone = tableEntry->zone;
+	act = tableEntry->act;
+	
 	//Load data
 	if (LoadMappings(tableEntry) || LoadLayout(tableEntry) || LoadCollisionTiles(tableEntry) || LoadObjects(tableEntry) || LoadArt(tableEntry))
 	{
@@ -731,16 +735,25 @@ bool LEVEL::UpdateFade()
 void LEVEL::DynamicEvents()
 {
 	//Get our bottom boundary
-	switch (zone)
+	int16_t checkX = camera->x + (SCREEN_WIDTH - 320) / 2;
+	
+	switch (levelId)
 	{
-		case ZONEID_GHZ: //Green Hill Zone
-			if (act == 0) //GHZ1
-			{
-				if (camera->x < 0x1780)
-					bottomBoundaryTarget = 0x3E0;
-				else
-					bottomBoundaryTarget = 0x4E0;
-			}
+		case LEVELID_GHZ1: //Green Hill Zone Act 1
+			if (checkX < 0x1780)
+				bottomBoundaryTarget = 0x3E0;
+			else
+				bottomBoundaryTarget = 0x4E0;
+			break;
+		case LEVELID_GHZ2:
+			if (checkX >= 0x1D60)
+				bottomBoundaryTarget = 0x3E0;
+			else if (checkX >= 0x1600)
+				bottomBoundaryTarget = 0x4E0;
+			else if (checkX >= 0xED0)
+				bottomBoundaryTarget = 0x2E0;
+			else
+				bottomBoundaryTarget = 0x3E0;
 			break;
 		default:
 			break;

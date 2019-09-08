@@ -42,11 +42,8 @@ void ObjRing(OBJECT *object)
 			//Increment routine
 			object->routine++;
 			
-			//Clear collision and increase priority
-			object->collisionType = COLLISIONTYPE_ENEMY;
-			object->touchWidth = 0;
-			object->touchHeight = 0;
-			
+			//Clear collision and change priority
+			object->collisionType = COLLISIONTYPE_NULL;
 			object->priority = 1;
 			
 			//Collect the ring

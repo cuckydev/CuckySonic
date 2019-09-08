@@ -58,6 +58,7 @@ SOURCES = \
 	Objects/Goalpost \
 	Objects/Spiral \
 	Objects/Bridge \
+	Objects/Sonic1Scenery \
 	Objects/Ring \
 	Objects/BouncingRing \
 	Objects/Explosion \

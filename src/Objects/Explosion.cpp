@@ -38,9 +38,7 @@ void ObjExplosion(OBJECT *object)
 			object->priority = 1;
 			
 			//Clear collision
-			object->collisionType = COLLISIONTYPE_ENEMY;
-			object->touchWidth = 0;
-			object->touchHeight = 0;
+			object->collisionType = COLLISIONTYPE_NULL;
 			
 			//Other stuff
 			object->widthPixels = 12;
