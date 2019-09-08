@@ -81,7 +81,7 @@ bool OBJECT::Hurt(PLAYER *player)
 {
 	//Handle chain point bonus
 	uint16_t lastCounter = player->chainPointCounter;
-	player->chainPointCounter += 2;
+	player->chainPointCounter++;
 	
 	//Cap our actual bonus at 3
 	if (lastCounter >= 3)
