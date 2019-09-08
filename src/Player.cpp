@@ -258,7 +258,6 @@ PLAYER::PLAYER(PLAYER **linkedList, const char *specPath, PLAYER *myFollow, int 
 	
 	characterType = (CHARACTERTYPE)SDL_ReadU8(playerSpec);
 	
-	//Close file
 	SDL_RWclose(playerSpec);
 	
 	//Set render properties

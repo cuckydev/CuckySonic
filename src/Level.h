@@ -43,9 +43,27 @@ enum ARTFORMAT
 };
 
 //Individual level definition table
+enum ZONEID
+{
+	ZONEID_GHZ,
+	ZONEID_EHZ,
+};
+
+enum LEVELID
+{
+	LEVELID_GHZ1,
+	LEVELID_GHZ2,
+	LEVELID_EHZ1,
+	LEVELID_MAX,
+};
+
 struct LEVELTABLE
 {
-	//Zone name and act number
+	//Zone name and act id
+	ZONEID zone;
+	int act;
+	
+	//Zone name and subtitle
 	const char *name;
 	const char *subtitle;
 	
@@ -135,7 +153,10 @@ class LEVEL
 		const char *fail;
 		
 		//Level ID
-		int levelId;
+		LEVELID levelId;
+		
+		ZONEID zone;
+		int act;
 		
 		//Level music
 		MUSICID musicId;

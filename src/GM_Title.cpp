@@ -91,13 +91,13 @@ bool GM_Title(bool *noError)
 	int frame = 0;
 	
 	//Sonic's animation and position
-	int sonicTime = 60;
+	int sonicTime = 54;
 	
-	int sonicX = ((SCREEN_WIDTH / 2) - 24) * 0x100;
+	int sonicX = (SCREEN_WIDTH / 2) * 0x100;
 	int sonicY = (bannerY + 16) * 0x100;
 	
-	int sonicXsp = -0x200;
-	int sonicYsp = -0x4E0;
+	int sonicXsp = -0x400;
+	int sonicYsp = -0x400;
 	
 	int sonicFrame = 0;
 	int sonicHandFrame = 0;
@@ -219,15 +219,15 @@ bool GM_Title(bool *noError)
 			if ((sonicX += sonicXsp) > (SCREEN_WIDTH / 2) * 0x100)
 				sonicX = (SCREEN_WIDTH / 2) * 0x100;
 			else
-				sonicXsp += 48;
+				sonicXsp += 54;
 				
 			if ((sonicY += sonicYsp) < (bannerY - 70) * 0x100)
 				sonicY = (bannerY - 70) * 0x100;
-			else if ((sonicYsp += 0x24) > 0)
+			else if ((sonicYsp += 24) > 0)
 				sonicYsp = 0;
 			
 			//Animate Sonic
-			if (sonicY < (bannerY - 32) * 0x100 && ++sonicAnimTimer >= 5)
+			if (sonicY < (bannerY - 40) * 0x100 && ++sonicAnimTimer >= 5)
 			{
 				//Reset timer and advance frame
 				sonicAnimTimer = 0;
@@ -272,7 +272,7 @@ bool GM_Title(bool *noError)
 		
 		//Render our software buffer to the screen
 		if (!(*noError = gSoftwareBuffer->RenderToScreen(&backgroundTexture->loadedPalette->colour[0])))
-			return false;
+			break;
 		
 		if (breakThisState)
 			break;

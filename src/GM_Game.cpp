@@ -10,8 +10,8 @@
 
 LEVEL *gLevel;
 
-int gGameLoadLevel;
-int gGameLoadCharacter;
+int gGameLoadLevel = 0;
+int gGameLoadCharacter = 0;
 
 const char *p0[] = {"data/Sonic/Sonic"};
 const char *p1[] = {"data/Sonic/Sonic", "data/Tails/Tails"};
@@ -36,7 +36,13 @@ bool GM_Game(bool *noError)
 	
 	//Initialize level fade
 	ClearControllerInput();
-	gLevel->Update(false);
+	
+	if (!(*noError = gLevel->Update(false)))
+	{
+		delete gLevel;
+		return false;
+	}
+	
 	gLevel->SetFade(true, false);
 	
 	//Our loop
@@ -52,11 +58,7 @@ bool GM_Game(bool *noError)
 		bool breakThisState = false;
 		
 		if (!(*noError = gLevel->Update(true)))
-		{
-			//Unload level
-			delete gLevel;
-			return false;
-		}
+			break;
 		
 		//Handle level fading
 		if (gLevel->fading)
@@ -80,11 +82,7 @@ bool GM_Game(bool *noError)
 		
 		//Render our software buffer to the screen (using the first colour of our splash texture, should be white)
 		if (!(*noError = gSoftwareBuffer->RenderToScreen(&gLevel->backgroundTexture->loadedPalette->colour[0])))
-		{
-			//Unload level
-			delete gLevel;
-			return false;
-		}
+			break;
 		
 		//Go to next state if set to break this state
 		if (breakThisState)

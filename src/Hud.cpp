@@ -1,6 +1,7 @@
 #include "Hud.h"
 #include "Level.h"
 #include "Game.h"
+#include "Error.h"
 
 //Constructor and deconstructor
 HUD::HUD()
@@ -11,7 +12,7 @@ HUD::HUD()
 	texture = gLevel->GetObjectTexture("data/HUD.bmp");
 	if (texture == NULL || texture->fail)
 	{
-		fail = texture->fail;
+		Error(fail = texture->fail);
 		return;
 	}
 }

@@ -3,6 +3,7 @@
 #include "TitleCard.h"
 #include "MathUtil.h"
 #include "Log.h"
+#include "Error.h"
 
 PALCOLOUR titleCardBackground;
 
@@ -15,14 +16,14 @@ TITLECARD::TITLECARD(const char *levelName, const char *levelSubtitle)
 	texture = gLevel->GetObjectTexture("data/TitleCard.bmp");
 	if (texture == NULL || texture->fail)
 	{
-		fail = texture->fail;
+		Error(fail = texture->fail);
 		return;
 	}
 	
 	fontTexture = gLevel->GetObjectTexture("data/GenericFont.bmp");
 	if (fontTexture == NULL || fontTexture->fail)
 	{
-		fail = fontTexture->fail;
+		Error(fail = fontTexture->fail);
 		return;
 	}
 	

@@ -109,7 +109,7 @@ bool GM_Splash(bool *noError)
 		
 		//Render our software buffer to the screen (using the first colour of our splash texture, should be white)
 		if (!(*noError = gSoftwareBuffer->RenderToScreen(&splashTexture->loadedPalette->colour[0])))
-			return false;
+			break;
 		
 		//Increment frame counter (and end once we reach splash time)
 		if (frame++ >= SPLASH_TIME)

@@ -52,9 +52,12 @@ OBJECTFUNCTION objFuncSonic2[] = {
 };
 
 //Our level table
-LEVELTABLE gLevelTable[] = {
-	{"Green Hill Zone", "Act 1", LEVELFORMAT_CHUNK128_SONIC2, ARTFORMAT_BMP, "data/Level/GHZ/ghz1", "data/Level/GHZ/ghz", "data/Level/sonic1", "data/Level/GHZ/ghz", MUSICID_GHZ, objFuncSonic1, 0x0050, 0x03B0, 0x0000, 0x25FF + (SCREEN_WIDTH - 320) / 2, 0x0000, 0x03E0},
-	{"Emerald Hill Zone", "Act 1", LEVELFORMAT_CHUNK128_SONIC2, ARTFORMAT_BMP, "data/Level/EHZ/ehz1", "data/Level/EHZ/ehz", "data/Level/sonic2", "data/Level/EHZ/ehz", MUSICID_EHZ, objFuncSonic2, 0x0060, 0x028F, 0x0000, 0x2AE0 + (SCREEN_WIDTH - 320) / 2, 0x0000, 0x0400},
+LEVELTABLE gLevelTable[LEVELID_MAX] = {
+	//ZONEID_GHZ
+		/*LEVELID_GHZ1*/ {ZONEID_GHZ, 0, "Green Hill Zone", "Act 1", LEVELFORMAT_CHUNK128_SONIC2, ARTFORMAT_BMP, "data/Level/GHZ/ghz1", "data/Level/GHZ/ghz", "data/Level/sonic1", "data/Level/GHZ/ghz", MUSICID_GHZ, objFuncSonic1, 0x0050, 0x03B0, 0x0000, 0x25FF + (SCREEN_WIDTH - 320) / 2, 0x0000, 0x03E0},
+		/*LEVELID_GHZ2*/ {ZONEID_GHZ, 1, "Green Hill Zone", "Act 2", LEVELFORMAT_CHUNK128_SONIC2, ARTFORMAT_BMP, "data/Level/GHZ/ghz2", "data/Level/GHZ/ghz", "data/Level/sonic1", "data/Level/GHZ/ghz", MUSICID_GHZ, objFuncSonic1, 0x0050, 0x00FC, 0x0000, 0x1FFF + (SCREEN_WIDTH - 320) / 2, 0x0000, 0x03E0},
+	//ZONEID_EHZ
+		/*LEVELID_EHZ1*/ {ZONEID_EHZ, 0, "Emerald Hill Zone", "Act 1", LEVELFORMAT_CHUNK128_SONIC2, ARTFORMAT_BMP, "data/Level/EHZ/ehz1", "data/Level/EHZ/ehz", "data/Level/sonic2", "data/Level/EHZ/ehz", MUSICID_EHZ, objFuncSonic2, 0x0060, 0x028F, 0x0000, 0x2AE0 + (SCREEN_WIDTH - 320) / 2, 0x0000, 0x0400},
 };
 
 //Loading functions
@@ -383,8 +386,8 @@ bool LEVEL::LoadObjects(LEVELTABLE *tableEntry)
 		//Apply data
 		newObject->x.pos = xPos;
 		newObject->y.pos = yPos;
-		newObject->status.xFlip = (word2 & 0x8000) != 0;
-		newObject->status.yFlip = (word2 & 0x4000) != 0;
+		newObject->status.yFlip = (word2 & 0x8000) != 0;
+		newObject->status.xFlip = (word2 & 0x4000) != 0;
 		newObject->subtype = subtype;
 	}
 	
@@ -557,7 +560,7 @@ LEVEL::LEVEL(int id, int players, const char **playerPaths)
 	if (id < 0)
 		Error(fail = "Invalid level ID given");
 	
-	LEVELTABLE *tableEntry = &gLevelTable[levelId = id];
+	LEVELTABLE *tableEntry = &gLevelTable[levelId = (LEVELID)id];
 	
 	//Load data
 	if (LoadMappings(tableEntry) || LoadLayout(tableEntry) || LoadCollisionTiles(tableEntry) || LoadObjects(tableEntry) || LoadArt(tableEntry))
@@ -583,7 +586,7 @@ LEVEL::LEVEL(int id, int players, const char **playerPaths)
 		
 		if (newPlayer->fail)
 		{
-			Error(fail = newPlayer->fail);
+			fail = newPlayer->fail;
 			UnloadAll();
 			return;
 		}
@@ -607,7 +610,7 @@ LEVEL::LEVEL(int id, int players, const char **playerPaths)
 	titleCard = new TITLECARD(tableEntry->name, tableEntry->subtitle);
 	if (titleCard == NULL || titleCard->fail)
 	{
-		Error(fail = titleCard->fail);
+		fail = titleCard->fail;
 		UnloadAll();
 		return;
 	}
@@ -618,7 +621,7 @@ LEVEL::LEVEL(int id, int players, const char **playerPaths)
 	hud = new HUD();
 	if (hud == NULL || hud->fail)
 	{
-		Error(fail = hud->fail);
+		fail = hud->fail;
 		UnloadAll();
 		return;
 	}
@@ -728,12 +731,11 @@ bool LEVEL::UpdateFade()
 void LEVEL::DynamicEvents()
 {
 	//Get our bottom boundary
-	switch (levelId)
+	switch (zone)
 	{
-		case 0: //Green Hill Zone
-			if (levelId == 0)
+		case ZONEID_GHZ: //Green Hill Zone
+			if (act == 0) //GHZ1
 			{
-				//Update boundaries (GHZ1)
 				if (camera->x < 0x1780)
 					bottomBoundaryTarget = 0x3E0;
 				else
@@ -841,12 +843,12 @@ void LEVEL::PaletteUpdate()
 	if (tileTexture == NULL || tileTexture->loadedPalette == NULL)
 		return;
 	
-	switch (levelId)
+	switch (zone)
 	{
-		case 0: //Green Hill Zone
+		case ZONEID_GHZ: //Green Hill Zone
 			GHZ_PaletteCycle(this);
 			break;
-		case 1: //Emerald Hill Zone
+		case ZONEID_EHZ: //Emerald Hill Zone
 			EHZ_PaletteCycle(this);
 			break;
 	}
@@ -854,12 +856,12 @@ void LEVEL::PaletteUpdate()
 
 void LEVEL::GetBackgroundScroll(bool updateScroll, uint16_t *array, int16_t *cameraX, int16_t *cameraY)
 {
-	switch (levelId)
+	switch (zone)
 	{
-		case 0: //Green Hill Zone
+		case ZONEID_GHZ: //Green Hill Zone
 			GHZ_BackgroundScroll(updateScroll, array, cameraX, cameraY);
 			break;
-		case 1: //Emerald Hill Zone
+		case ZONEID_EHZ: //Emerald Hill Zone
 			EHZ_BackgroundScroll(updateScroll, array, cameraX, cameraY);
 			break;
 	}

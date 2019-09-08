@@ -15,12 +15,12 @@ void ObjBridgeSegment(OBJECT *object)
 		object->priority = 3;
 		
 		//Load graphics
-		switch (gLevel->levelId)
+		switch (gLevel->zone)
 		{
-			case 0: //Green Hill Zone
+			case ZONEID_GHZ: //Green Hill Zone
 				object->texture = gLevel->GetObjectTexture("data/Object/GHZBridge.bmp");
 				break;
-			case 1: //Emerald Hill Zone
+			case ZONEID_EHZ: //Emerald Hill Zone
 				object->texture = gLevel->GetObjectTexture("data/Object/EHZBridge.bmp");
 				break;
 		}
@@ -134,13 +134,12 @@ void ObjBridge(OBJECT *object)
 			int i = 0;
 			for (OBJECT *child = object->children; child != NULL; child = child->next)
 			{
-				uint8_t angle;
-				
 				//Get the angle of this log (go up to 0x40 from the left, and go back down to 0x00 to the right)
-				if (i <= depressPosition) //To the left of the depress position
-					angle = (0x40 * (i + 1)) / (depressPosition + 1);
+				uint8_t angle;
+				if (i <= depressPosition)
+					angle = (0x40 * (i + 1)) / (depressPosition + 1); //To the left of the depress position
 				else
-					angle = (0x40 * (subtype - i)) / (subtype - depressPosition);
+					angle = (0x40 * (subtype - i)) / (subtype - depressPosition); //To the right of the depress position
 				
 				//Get the depression value from the value above, scaled by the force of the players on it (0x00 with no-one on it, 0x40 when someone is on it)
 				int16_t depress;
