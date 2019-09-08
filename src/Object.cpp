@@ -200,9 +200,9 @@ void OBJECT::PlatformObject(int16_t width, int16_t height, int16_t lastXPos)
 		if (playerContact[i].standing == true)
 		{
 			//Check if we're still on the platform
-			int16_t xDiff = player->x.pos - x.pos + width;
+			int16_t xDiff = player->x.pos - lastXPos + width;
 			
-			if (!player->status.inAir && xDiff >= 0 && xDiff < width * 2)
+			if (!player->status.inAir && xDiff >= 0 && xDiff <= width * 2)
 			{
 				//Move on the platform
 				player->MoveOnPlatform((void*)this, height, lastXPos);
@@ -216,7 +216,7 @@ void OBJECT::PlatformObject(int16_t width, int16_t height, int16_t lastXPos)
 		else
 		{
 			//Check if we're going to land on the platform
-			LandOnPlatform(player, i, width, height);
+			LandOnPlatform(player, i, width, height, lastXPos);
 		}
 		
 		//Check next player's contact
@@ -224,11 +224,11 @@ void OBJECT::PlatformObject(int16_t width, int16_t height, int16_t lastXPos)
 	}
 }
 
-void OBJECT::LandOnPlatform(PLAYER *player, int i, int16_t width, int16_t height)
+void OBJECT::LandOnPlatform(PLAYER *player, int i, int16_t width, int16_t height, int16_t lastXPos)
 {
 	//Check if we're in a state where we can enter onto the platform
-	int16_t xDiff = (player->x.pos - x.pos) + width;
-	if (player->yVel < 0 || xDiff < 0 || xDiff >= width * 2)
+	int16_t xDiff = (player->x.pos - lastXPos) + width;
+	if (player->yVel < 0 || xDiff < 0 || xDiff > width * 2)
 		return;
 	
 	//Land on platform
@@ -240,14 +240,13 @@ void OBJECT::LandOnPlatform(PLAYER *player, int i, int16_t width, int16_t height
 		return;
 	
 	//Land on top of the platform
-	player->y.pos += yThing + 3;
+	player->y.pos += yThing + 4;
 	player->AttachToObject((void*)this, (&playerContact[i].standing - (size_t)this));
 }
 
 void OBJECT::ExitPlatform(PLAYER *player, int i)
 {
 	player->status.shouldNotFall = false;
-	player->status.inAir = true;
 	playerContact[i].standing = false;
 }
 
@@ -335,10 +334,10 @@ void OBJECT::SolidObjectCont(OBJECT_SOLIDTOUCH *solidTouch, PLAYER *player, int 
 						//Check our horizontal range
 						int16_t xDiff2 = (player->x.pos - x.pos) + widthPixels;
 						
-						if (!(xDiff2 < 0 || xDiff2 >= widthPixels * 2))
+						if (xDiff2 >= 0 && xDiff2 < widthPixels * 2 && player->yVel >= 0)
 						{
 							//Land on the object
-							player->y.pos -= (yDiff + 1);
+							player->y.pos -= yDiff;
 							player->AttachToObject((void*)this, (&playerContact[i].standing - (size_t)this));
 							
 							//Set top touch flag

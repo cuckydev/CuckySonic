@@ -2211,12 +2211,9 @@ bool PLAYER::KillCharacter(SOUNDID soundId)
 		yVel = -0x700;
 		inertia = 0;
 		
-		//If the lead player, quit level's update
+		//If the lead player, freeze level
 		if (follow == NULL)
-		{
 			gLevel->updateStage = false;
-			gLevel->updateTime = false;
-		}
 		
 		//Do animation and sound
 		anim = PLAYERANIMATION_DEATH;

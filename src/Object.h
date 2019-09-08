@@ -186,7 +186,7 @@ class OBJECT
 		int16_t CheckFloorEdge(COLLISIONLAYER layer, int16_t xPos, int16_t yPos, uint8_t *outAngle);
 		
 		void PlatformObject(int16_t width, int16_t height, int16_t lastXPos);
-		void LandOnPlatform(PLAYER *player, int i, int16_t width, int16_t height);
+		void LandOnPlatform(PLAYER *player, int i, int16_t width, int16_t height, int16_t lastXPos);
 		void ExitPlatform(PLAYER *player, int i);
 		
 		OBJECT_SOLIDTOUCH SolidObject(int16_t width, int16_t height, int16_t lastXPos);

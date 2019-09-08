@@ -36,8 +36,9 @@ void ObjBridge(OBJECT *object)
 {
 	enum SCRATCH
 	{
-		SCRATCH_ORIGINY = 0,	// 2 bytes
-		SCRATCH_FORCE = 0,		// 2 bytes
+		//S16
+		SCRATCHS16_DEPRESS_POSITION = 0,
+		SCRATCHS16_DEPRESS_FORCE = 1,
 	};
 	
 	switch (object->routine)
@@ -51,9 +52,6 @@ void ObjBridge(OBJECT *object)
 			object->widthPixels = 0x80;
 			
 			//Get our type properties
-			int16_t yPos = object->y.pos;
-			object->scratchU16[SCRATCH_ORIGINY] = yPos;
-			
 			int *subtypePointer = &object->subtype;
 			int subtype = *subtypePointer;
 			int bridgeRadius = (subtype / 2) * 16;
@@ -65,28 +63,96 @@ void ObjBridge(OBJECT *object)
 				OBJECT *newSegment = new OBJECT(&object->children, &ObjBridgeSegment);
 				newSegment->parent = (void*)object;
 				newSegment->x.pos = bridgeLeft + 16 * i;
-				newSegment->y.pos = object->scratchU16[SCRATCH_ORIGINY];
+				newSegment->y.pos = object->y.pos;
 			}
 		}
 //Fallthrough
 		case 1:
 		{
-			//Get our depression
+			//Handle our depression
 			int subtype = object->subtype;
-			int16_t depress[0x100];
 			
-			int depressPlayers = 0;
-			int depressPosition = 0;
-			int depressForce = 0;
+			//Get our depression force values (basically, it just increments by 2 to the middle, then decrements by 2)
+			//ex. 2, 4, 6, 8, 8, 6, 4, 2 (at least it should produce results like this)
+			int16_t depressForce[0x100];
 			
-			(void)subtype;
-			(void)depressPlayers;
-			(void)depressPosition;
-			(void)depressForce;
+			for (int i = 0, v = 0; i < subtype / 2; i++)
+				depressForce[i] = (v += 2);
+			for (int i = subtype - 1, v = 0; i >= subtype / 2; i--)
+				depressForce[i] = (v += 2);
+			
+			//Get our depression value
+			int depressCurrentPosition = 0;
+			int depressCurrentForce = 0;
+			int depressCurrentPlayers = 0;
+			
+			//Check players on the bridge
+			int16_t bridgeLeft = (object->x.pos - (subtype * 8));
+			
+			for (PLAYER *player = gLevel->playerList; player != NULL; player = player->next)
+			{
+				OBJECT *child = object->children;
+				int log = 0;
+				
+				for (OBJECT *child = object->children; child != NULL; child = child->next)
+				{
+					//Check this log
+					if (player->status.shouldNotFall && player->interact == (void*)child)
+					{
+						//Depress at this log
+						depressCurrentPosition += log;
+						depressCurrentForce += depressForce[log];
+						depressCurrentPlayers++;
+					}
+					
+					//Check next log
+					log++;
+				}
+			}
+			
+			//Update our depression values
+			if (depressCurrentPlayers != 0) //There are players standing on us
+			{
+				//Increment our angle / force, so there's a smooth transition when running on / landing on the bridge
+				if (object->angle < 0x40)
+					object->angle += 4;
+				
+				//Update our position and force
+				object->scratchS16[SCRATCHS16_DEPRESS_POSITION] = depressCurrentPosition / depressCurrentPlayers;
+				object->scratchS16[SCRATCHS16_DEPRESS_FORCE] = depressCurrentForce / depressCurrentPlayers;
+			}
+			else
+			{
+				//Decrement our angle / force, so it transitions back when jumping off / running off the bridge
+				if (object->angle > 0)
+					object->angle -= 4;
+			}
+			
+			//Depress the log children
+			int16_t depressPosition = object->scratchS16[SCRATCHS16_DEPRESS_POSITION];
 			
 			int i = 0;
 			for (OBJECT *child = object->children; child != NULL; child = child->next)
-				child->y.pos = object->scratchU16[SCRATCH_ORIGINY] + depress[i++];
+			{
+				uint8_t angle;
+				
+				//Get the angle of this log (go up to 0x40 from the left, and go back down to 0x00 to the right)
+				if (i <= depressPosition) //To the left of the depress position
+					angle = (0x40 * (i + 1)) / (depressPosition + 1);
+				else
+					angle = (0x40 * (subtype - i)) / (subtype - depressPosition);
+				
+				//Get the depression value from the value above, scaled by the force of the players on it (0x00 with no-one on it, 0x40 when someone is on it)
+				int16_t depress;
+				GetSine(object->angle * angle / 0x40, &depress, NULL);
+				
+				//Set our depression position
+				child->y.pos = object->y.pos + (depress * object->scratchS16[SCRATCHS16_DEPRESS_FORCE] / 0x100);
+				child->PlatformObject(8, 8, child->x.pos);
+				
+				//Increment our log index
+				i++;
+			}
 			break;
 		}
 	}
