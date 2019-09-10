@@ -48,9 +48,6 @@ class TEXTURE
 		
 		//Texture data
 		uint8_t *texture;
-		uint8_t *textureXFlip;
-		uint8_t *textureYFlip;
-		uint8_t *textureXYFlip;
 		int width;
 		int height;
 		
