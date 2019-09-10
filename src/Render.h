@@ -93,7 +93,7 @@ struct RENDERQUEUE
 			int srcX, srcY;
 			PALETTE *palette;
 			TEXTURE *texture;
-			uint8_t *srcBuffer;
+			bool xFlip, yFlip;
 		} texture;
 		struct
 		{

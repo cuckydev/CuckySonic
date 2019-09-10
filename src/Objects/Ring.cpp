@@ -60,7 +60,7 @@ void ObjRing(OBJECT *object)
 }
 
 //Used for Sonic 1 levels
-static int16_t posData[16][2] = {
+static const int8_t posData[16][2] = {
 	{ 0x10, 0x00},
 	{ 0x18, 0x00},
 	{ 0x20, 0x00},
@@ -85,7 +85,11 @@ void ObjRingSpawner(OBJECT *object)
 	int16_t yPos = object->y.pos;
 	
 	//Create rings (lowest nibble of subtype)
-	for (int i = 0; i <= (object->subtype & 0xF); i++)
+	int ringsToMake = (object->subtype & 0x7);
+	if (ringsToMake == 7)
+		ringsToMake = 6;
+	
+	for (int i = 0; i <= ringsToMake; i++)
 	{
 		//Create ring object
 		OBJECT *newObject = new OBJECT(&gLevel->objectList, &ObjRing);
@@ -93,8 +97,8 @@ void ObjRingSpawner(OBJECT *object)
 		newObject->y.pos = yPos;
 		
 		//Get next position
-		xPos += posData[(object->subtype & 0xF0) >> 4][0];
-		yPos += posData[(object->subtype & 0xF0) >> 4][1];
+		xPos += posData[object->subtype >> 4][0];
+		yPos += posData[object->subtype >> 4][1];
 	}
 	
 	//Delete us

@@ -38,6 +38,7 @@ SOURCES = \
 	Input \
 	Audio \
 	Audio_stb_vorbis \
+	Audio_miniaudio \
 	MathUtil \
 	Fade \
 	Mappings \
@@ -63,8 +64,11 @@ SOURCES = \
 	Objects/BouncingRing \
 	Objects/Explosion \
 	Objects/Motobug \
+	Objects/Chopper \
 	Objects/GHZPlatform \
 	Objects/GHZEdgeWall \
+	Objects/SwingingPlatform \
+	Objects/PurpleRock \
 	Objects/Monitor \
 
 #What to compile

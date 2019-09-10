@@ -38,7 +38,6 @@ void ObjBridge(OBJECT *object)
 	{
 		//S16
 		SCRATCHS16_DEPRESS_POSITION = 0,
-		SCRATCHS16_DEPRESS_FORCE = 1,
 	};
 	
 	switch (object->routine)
@@ -52,8 +51,7 @@ void ObjBridge(OBJECT *object)
 			object->widthPixels = 0x80;
 			
 			//Get our type properties
-			int *subtypePointer = &object->subtype;
-			int subtype = *subtypePointer;
+			int subtype = object->subtype;
 			int bridgeRadius = (subtype / 2) * 16;
 			int16_t bridgeLeft = object->x.pos - bridgeRadius;
 			
@@ -61,7 +59,6 @@ void ObjBridge(OBJECT *object)
 			for (int i = 0; i < subtype; i++)
 			{
 				OBJECT *newSegment = new OBJECT(&object->children, &ObjBridgeSegment);
-				newSegment->parent = (void*)object;
 				newSegment->x.pos = bridgeLeft + 16 * i;
 				newSegment->y.pos = object->y.pos;
 			}
@@ -83,7 +80,6 @@ void ObjBridge(OBJECT *object)
 			
 			//Get our depression value
 			int depressCurrentPosition = 0;
-			int depressCurrentForce = 0;
 			int depressCurrentPlayers = 0;
 			
 			//Check players on the bridge
@@ -100,8 +96,20 @@ void ObjBridge(OBJECT *object)
 					if (player->status.shouldNotFall && player->interact == (void*)child)
 					{
 						//Depress at this log
-						depressCurrentPosition += log;
-						depressCurrentForce += depressForce[log];
+						if (depressCurrentPlayers == 0)
+						{
+							//We're the first player to be standing on the bridge
+							depressCurrentPosition = log;
+						}
+						else
+						{
+							//Move position towards us if there's already another player standing on the bridge
+							if (log < depressCurrentPosition)
+								depressCurrentPosition--;
+							else if (log > depressCurrentPosition)
+								depressCurrentPosition++;
+						}
+						
 						depressCurrentPlayers++;
 					}
 					
@@ -118,8 +126,7 @@ void ObjBridge(OBJECT *object)
 					object->angle += 4;
 				
 				//Update our position and force
-				object->scratchS16[SCRATCHS16_DEPRESS_POSITION] = depressCurrentPosition / depressCurrentPlayers;
-				object->scratchS16[SCRATCHS16_DEPRESS_FORCE] = depressCurrentForce / depressCurrentPlayers;
+				object->scratchS16[SCRATCHS16_DEPRESS_POSITION] = depressCurrentPosition;
 			}
 			else
 			{
@@ -146,7 +153,7 @@ void ObjBridge(OBJECT *object)
 				GetSine(object->angle * angle / 0x40, &depress, NULL);
 				
 				//Set our depression position
-				child->y.pos = object->y.pos + (depress * object->scratchS16[SCRATCHS16_DEPRESS_FORCE] / 0x100);
+				child->y.pos = object->y.pos + (depress * depressForce[depressPosition] / 0x100);
 				child->PlatformObject(8, 8, child->x.pos);
 				
 				//Increment our log index

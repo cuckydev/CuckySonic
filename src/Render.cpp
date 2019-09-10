@@ -59,37 +59,18 @@ TEXTURE::TEXTURE(TEXTURE **linkedList, const char *path)
 	}
 	
 	//Allocate texture data
-	texture = (uint8_t*)malloc(bitmap->w * bitmap->h);
-	textureXFlip = (uint8_t*)malloc(bitmap->w * bitmap->h);
-	textureYFlip = (uint8_t*)malloc(bitmap->w * bitmap->h);
-	textureXYFlip = (uint8_t*)malloc(bitmap->w * bitmap->h);
+	texture = (uint8_t*)malloc(bitmap->pitch * bitmap->h);
 	
-	if (!(texture != NULL && textureXFlip != NULL && textureYFlip != NULL && textureXYFlip != NULL))
+	if (texture == NULL)
 	{
 		SDL_FreeSurface(bitmap);
-		
-		free(texture); //This frees any buffers that successfully allocated
-		free(textureXFlip);
-		free(textureYFlip);
-		free(textureXYFlip);
-		
 		fail = "Failed to allocate texture buffer";
 		return;
 	}
 	
 	//Copy our data
-	for (int x = 0; x < bitmap->w; x++)
-	{
-		for (int y = 0; y < bitmap->h; y++)
-		{
-			texture[x + y * bitmap->w] = ((uint8_t*)bitmap->pixels)[x + y * bitmap->pitch];
-			textureXFlip[x + y * bitmap->w] = ((uint8_t*)bitmap->pixels)[(bitmap->w - x - 1) + y * bitmap->pitch];
-			textureYFlip[x + y * bitmap->w] = ((uint8_t*)bitmap->pixels)[x + (bitmap->h - y - 1) * bitmap->pitch];
-			textureXYFlip[x + y * bitmap->w] = ((uint8_t*)bitmap->pixels)[(bitmap->w - x - 1) + (bitmap->h - y - 1) * bitmap->pitch];
-		}
-	}
-	
-	width = bitmap->w;
+	memcpy(texture, bitmap->pixels, bitmap->pitch * bitmap->h);
+	width = bitmap->pitch;
 	height = bitmap->h;
 	
 	//Free bitmap surface
@@ -113,33 +94,15 @@ TEXTURE::TEXTURE(TEXTURE **linkedList, uint8_t *data, int dWidth, int dHeight)
 	
 	//Allocate texture data
 	texture = (uint8_t*)malloc(dWidth * dHeight);
-	textureXFlip = (uint8_t*)malloc(dWidth * dHeight);
-	textureYFlip = (uint8_t*)malloc(dWidth * dHeight);
-	textureXYFlip = (uint8_t*)malloc(dWidth * dHeight);
 	
-	if (!(texture != NULL && textureXFlip != NULL && textureYFlip != NULL && textureXYFlip != NULL))
+	if (texture == NULL)
 	{
-		free(texture); //This frees any buffers that successfully allocated
-		free(textureXFlip);
-		free(textureYFlip);
-		free(textureXYFlip);
-		
 		fail = "Failed to allocate texture buffer";
 		return;
 	}
 	
 	//Copy our data
-	for (int x = 0; x < dWidth; x++)
-	{
-		for (int y = 0; y < dHeight; y++)
-		{
-			texture[x + y * dWidth] = data[x + y * dWidth];
-			textureXFlip[x + y * dWidth] = data[(dWidth - x - 1) + y * dWidth];
-			textureYFlip[x + y * dWidth] = data[x + (dHeight - y - 1) * dWidth];
-			textureXYFlip[x + y * dWidth] = data[(dWidth - x - 1) + (dHeight - y - 1) * dWidth];
-		}
-	}
-	
+	memcpy(texture, data, dWidth * dHeight);
 	width = dWidth;
 	height = dHeight;
 	
@@ -158,10 +121,6 @@ TEXTURE::~TEXTURE()
 {
 	//Free data
 	free(texture);
-	free(textureXFlip);
-	free(textureYFlip);
-	free(textureXYFlip);
-	
 	if (loadedPalette)
 		delete loadedPalette;
 }
@@ -186,17 +145,27 @@ void TEXTURE::Draw(int layer, PALETTE *palette, const SDL_Rect *src, int x, int 
 	if (x < 0)
 	{
 		clipL = -x;
+		
+		//Clip destination rect
 		gSoftwareBuffer->queueEntry[layer]->dest.x += clipL;
 		gSoftwareBuffer->queueEntry[layer]->dest.w -= clipL;
-		gSoftwareBuffer->queueEntry[layer]->texture.srcX += clipL;
+		
+		//Clip source, but only if not flipped
+		if (!xFlip)
+			gSoftwareBuffer->queueEntry[layer]->texture.srcX += clipL;
 	}
 	
 	if (y < 0)
 	{
 		clipT = -y;
+		
+		//Clip destination rect
 		gSoftwareBuffer->queueEntry[layer]->dest.y += clipT;
 		gSoftwareBuffer->queueEntry[layer]->dest.h -= clipT;
-		gSoftwareBuffer->queueEntry[layer]->texture.srcY += clipT;
+		
+		//Clip source, but only if not flipped
+		if (!yFlip)
+			gSoftwareBuffer->queueEntry[layer]->texture.srcY += clipT;
 	}
 	
 	//Clip right and bottom
@@ -205,13 +174,25 @@ void TEXTURE::Draw(int layer, PALETTE *palette, const SDL_Rect *src, int x, int 
 	if (gSoftwareBuffer->queueEntry[layer]->dest.x > (gSoftwareBuffer->width - gSoftwareBuffer->queueEntry[layer]->dest.w))
 	{
 		clipR = gSoftwareBuffer->queueEntry[layer]->dest.x - (gSoftwareBuffer->width - gSoftwareBuffer->queueEntry[layer]->dest.w);
+		
+		//Clip destination rect
 		gSoftwareBuffer->queueEntry[layer]->dest.w -= clipR;
+		
+		//Clip source, but only if flipped
+		if (xFlip)
+			gSoftwareBuffer->queueEntry[layer]->texture.srcX += clipR;
 	}
 	
 	if (gSoftwareBuffer->queueEntry[layer]->dest.y > (gSoftwareBuffer->height - gSoftwareBuffer->queueEntry[layer]->dest.h))
 	{
 		clipB = gSoftwareBuffer->queueEntry[layer]->dest.y - (gSoftwareBuffer->height - gSoftwareBuffer->queueEntry[layer]->dest.h);
+		
+		//Clip destination rect
 		gSoftwareBuffer->queueEntry[layer]->dest.h -= clipB;
+		
+		//Clip source, but only if flipped
+		if (yFlip)
+			gSoftwareBuffer->queueEntry[layer]->texture.srcY += clipB;
 	}
 	
 	//Set palette and texture references
@@ -219,29 +200,8 @@ void TEXTURE::Draw(int layer, PALETTE *palette, const SDL_Rect *src, int x, int 
 	gSoftwareBuffer->queueEntry[layer]->texture.texture = this;
 	
 	//Flipping
-	if (xFlip || yFlip)
-	{
-		if (xFlip && yFlip)
-		{
-			gSoftwareBuffer->queueEntry[layer]->texture.srcBuffer = textureXYFlip;
-			gSoftwareBuffer->queueEntry[layer]->texture.srcX = width - (gSoftwareBuffer->queueEntry[layer]->texture.srcX + gSoftwareBuffer->queueEntry[layer]->dest.w) - (clipR - clipL);
-			gSoftwareBuffer->queueEntry[layer]->texture.srcY = height - (gSoftwareBuffer->queueEntry[layer]->texture.srcY + gSoftwareBuffer->queueEntry[layer]->dest.h) - (clipB - clipT);
-		}
-		else if (xFlip)
-		{
-			gSoftwareBuffer->queueEntry[layer]->texture.srcBuffer = textureXFlip;
-			gSoftwareBuffer->queueEntry[layer]->texture.srcX = width - (gSoftwareBuffer->queueEntry[layer]->texture.srcX + gSoftwareBuffer->queueEntry[layer]->dest.w) - (clipR - clipL);
-		}
-		else if (yFlip)
-		{
-			gSoftwareBuffer->queueEntry[layer]->texture.srcBuffer = textureYFlip;
-			gSoftwareBuffer->queueEntry[layer]->texture.srcY = height - (gSoftwareBuffer->queueEntry[layer]->texture.srcY + gSoftwareBuffer->queueEntry[layer]->dest.h) - (clipB - clipT);
-		}
-	}
-	else
-	{
-		gSoftwareBuffer->queueEntry[layer]->texture.srcBuffer = texture;
-	}
+	gSoftwareBuffer->queueEntry[layer]->texture.xFlip = xFlip;
+	gSoftwareBuffer->queueEntry[layer]->texture.yFlip = yFlip;
 	
 	//Push forward in queue
 	gSoftwareBuffer->queueEntry[layer]++;
@@ -389,23 +349,42 @@ void SOFTWAREBUFFER::DrawQuad(int layer, SDL_Rect *quad, PALCOLOUR *colour)
 			switch (entry->type)	\
 			{	\
 				case RENDERQUEUE_TEXTURE:	\
+				{	\
+					int finc, fpitch;	\
 					fpx = entry->texture.srcX + entry->texture.srcY * entry->texture.texture->width;	\
 					dpx = entry->dest.x + entry->dest.y * width;	\
-						\
+					if (entry->texture.yFlip)	\
+					{	\
+						fpx += (entry->texture.texture->width * (entry->dest.h - 1));	\
+						fpitch = -(entry->texture.texture->width + entry->dest.w);	\
+					}	\
+					else	\
+					{	\
+						fpitch = entry->texture.texture->width - entry->dest.w;	\
+					}	\
+					if (entry->texture.xFlip)	\
+					{	\
+						fpx += entry->dest.w - 1;	\
+						fpitch += entry->dest.w * 2;	\
+					}	\
+					finc = entry->texture.xFlip ? -1 : 1;	\
 					for (int fy = entry->texture.srcY; fy < entry->texture.srcY + entry->dest.h; fy++)	\
 					{	\
 						for (int fx = entry->texture.srcX; fx < entry->texture.srcX + entry->dest.w; fx++)	\
 						{	\
-							const uint8_t index = entry->texture.srcBuffer[fpx++];	\
+							const uint8_t index = entry->texture.texture->texture[fpx];	\
+							fpx += finc;	\
 							if (index)	\
 								macro(writeBuffer, bpp, dpx, entry->texture.palette->colour[index].colour);	\
 							dpx++;	\
 						}	\
-						fpx += entry->texture.texture->width - entry->dest.w;	\
+						fpx += fpitch;	\
 						dpx += width - entry->dest.w;	\
 					}	\
 					break;	\
+				}	\
 				case RENDERQUEUE_SOLID:	\
+				{	\
 					dpx = entry->dest.x + entry->dest.y * width;	\
 						\
 					for (int fy = entry->dest.y; fy < entry->dest.y + entry->dest.h; fy++)	\
@@ -418,6 +397,7 @@ void SOFTWAREBUFFER::DrawQuad(int layer, SDL_Rect *quad, PALCOLOUR *colour)
 						dpx += width - entry->dest.w;	\
 					}	\
 					break;	\
+				}	\
 				default:	\
 					break;	\
 			}	\

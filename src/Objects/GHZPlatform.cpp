@@ -117,6 +117,13 @@ void ObjGHZPlatform_Move(OBJECT *object)
 				object->routine = 3;
 			break;
 		}
+		case 0xA: //Big platform
+		{
+			//Move up and down
+			object->scratchS32[SCRATCHS32_Y] = (((object->scratchS32[SCRATCHS32_ORIG_Y] >> 16) + (object->angle - 0x40) / 2) << 16) | (object->scratchS32[SCRATCHS32_Y] & 0x0000FFFF);
+			object->angle = (gLevel->oscillate[6][0] >> 8);
+			break;
+		}
 	}
 }
 
@@ -161,12 +168,9 @@ void ObjGHZPlatform(OBJECT *object)
 			object->scratchS16[SCRATCHS16_SPAWN_Y] = object->y.pos;
 			object->scratchU8[SCRATCHU8_SPAWN_TYPE] = object->subtype;
 			
-			//Set our frame and size for the big platform
+			//Set our frame for the big platform
 			if (object->subtype == 10)
-			{
 				object->mappingFrame = 1;
-				object->widthPixels = 64;
-			}
 	//Fallthrough
 		case 1:
 		{

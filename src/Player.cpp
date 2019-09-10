@@ -2346,7 +2346,7 @@ void PLAYER::LevelBound()
 {
 	//Get our next position and boundaries
 	#ifdef FIX_HORIZONTAL_WRAP
-		#define lbType int32_t
+		#define lbType int16_t
 	#else
 		#define lbType uint16_t
 	#endif
@@ -3335,6 +3335,12 @@ void PLAYER::Update()
 	//Restart if start + a
 	if (gController[controller].press.start && gController[controller].held.a)
 		gLevel->SetFade(false, false);
+	if (gController[controller].press.start && gController[controller].held.b)
+	{
+		gLevel->SetFade(false, false);
+		gGameLoadLevel++;
+		gGameLoadLevel %= LEVELID_MAX;
+	}
 }
 
 //Draw our player
@@ -3416,14 +3422,21 @@ void PLAYER::DrawToScreen()
 //Debug mode
 void PLAYER::RestoreStateDebug()
 {
+	//Reset animation and subpixel position
 	anim = PLAYERANIMATION_WALK;
 	x.sub = 0;
 	y.sub = 0;
+	
+	//Clear other state stuff
 	memset(&objectControl, 0, sizeof(objectControl));
 	spindashing = false;
+	
+	//Clear speeds and inertia
 	xVel = 0;
 	yVel = 0;
 	inertia = 0;
+	
+	//Clear our status and return to the control routine
 	memset(&status, 0, sizeof(status));
 	routine = PLAYERROUTINE_CONTROL;
 }

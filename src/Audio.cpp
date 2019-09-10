@@ -298,6 +298,12 @@ void SOUND::Mix(float *stream, int samples)
 	#include <stringapiset.h>
 #endif
 
+#define MINIAUDIO_IMPLEMENTATION
+#define MA_NO_DECODING
+#define MA_NO_DEVICE_IO
+#include "Audio_miniaudio.cpp"
+#undef PlaySound
+
 //Constructor and destructor
 MUSIC::MUSIC(MUSICDEFINITION *ourDefinition)
 {

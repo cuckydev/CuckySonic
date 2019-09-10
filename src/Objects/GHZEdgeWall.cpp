@@ -102,7 +102,8 @@ void ObjGHZEdgeWall_Solid_Individual(PLAYER *player, int i, OBJECT *object, int1
 		//No collision, clear pushing flags
 		if (object->playerContact[i].pushing)
 		{
-			player->anim = PLAYERANIMATION_RUN; //wrong animation again
+			if (player->anim != PLAYERANIMATION_ROLL)
+				player->anim = PLAYERANIMATION_RUN; //wrong animation again
 			object->playerContact[i].pushing = false;
 			player->status.pushing = false;
 		}
