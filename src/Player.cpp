@@ -3342,7 +3342,7 @@ void PLAYER::Update()
 		gGameLoadLevel %= LEVELID_MAX;
 	}
 	
-	if (gController[controller].held.start && gController[controller].held.c)
+	if (gController[controller].press.start && gController[controller].held.c)
 	{
 		PlayMusic("SpeedShoes");
 		speedShoesTime = 150;

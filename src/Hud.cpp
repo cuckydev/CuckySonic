@@ -29,7 +29,7 @@ void HUD::DrawCharacter(int xPos, int yPos, int srcX)
 	texture->Draw(LEVEL_RENDERLAYER_HUD, texture->loadedPalette, &src, xPos, yPos, false, false);
 }
 
-void HUD::DrawNumber(int xPos, int yPos, int number, int forceDigits)
+void HUD::DrawNumber(int xPos, int yPos, int number, int forceDigits, bool fromRight)
 {
 	int offset = 0;
 	int exponent = 1;
@@ -38,7 +38,11 @@ void HUD::DrawNumber(int xPos, int yPos, int number, int forceDigits)
 	int numberDigit = number;
 	while ((numberDigit /= 10) != 0)
 	{
-		xPos -= 8;
+		//Increment position if drawing from right
+		if (fromRight)
+			xPos -= 8;
+		
+		//Increment digit
 		offset++;
 		exponent *= 10;
 	}
@@ -46,7 +50,11 @@ void HUD::DrawNumber(int xPos, int yPos, int number, int forceDigits)
 	//Include forced digits
 	while (offset < forceDigits)
 	{
-		xPos -= 8;
+		//Increment position if drawing from right
+		if (fromRight)
+			xPos -= 8;
+		
+		//Increment digit
 		offset++;
 		exponent *= 10;
 	}
@@ -102,13 +110,17 @@ void HUD::Draw()
 	DrawElement(16, 40, 2, ringAlt ? 1 : 0);
 	
 	//Draw our score and ring values
-	DrawNumber(112, 8, gScore, 0);
-	DrawNumber(88, 40, gRings, 0);
+	DrawNumber(112, 8, gScore, 0, true);
+	DrawNumber(88, 40, gRings, 0, true);
 	
 	//Draw time
-	DrawNumber(112, 24, (gTime * 100 / 60) % 100, 1); //Milliseconds
+	DrawNumber(112, 24, (gTime * 100 / 60) % 100, 1, true); //Milliseconds
 	DrawCharacter(112 - 16, 24, 11); // "
-	DrawNumber(112 - 24, 24, (gTime / 60) % 60, 1); //Seconds
+	DrawNumber(112 - 24, 24, (gTime / 60) % 60, 1, true); //Seconds
 	DrawCharacter(112 - 40, 24, 10); // '
-	DrawNumber(112 - 48, 24, gTime / 60 / 60, 0); //Minutes
+	DrawNumber(112 - 48, 24, gTime / 60 / 60, 0, true); //Minutes
+	
+	//Draw lives
+	DrawElement(16, SCREEN_HEIGHT - 24, 3, 0);
+	DrawNumber(40, SCREEN_HEIGHT - 24 + 2, gLives, 0, false);
 }
