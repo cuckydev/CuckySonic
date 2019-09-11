@@ -292,6 +292,8 @@ void SOUND::Mix(float *stream, int samples)
 MUSIC::MUSIC(const char *name)
 {
 	memset(this, 0, sizeof(MUSIC));
+	
+	source = name;
 	LOG(("Loading music file from %s... ", name));
 	
 	//Get our paths
@@ -317,9 +319,6 @@ MUSIC::MUSIC(const char *name)
 	if (fp == NULL)
 	{
 		Error(fail = "Failed to open the given file");
-		
-		//Resume audio device
-		SDL_UnlockAudioDevice(audioDevice);
 		return;
 	}
 	
@@ -332,28 +331,32 @@ MUSIC::MUSIC(const char *name)
 		char error[0x40];
 		sprintf(error, "Error: %d", error);
 		Warn(error);
-		
-		//Resume audio device
-		SDL_UnlockAudioDevice(audioDevice);
 		return;
 	}
-	
-	//Read metadata file
-	SDL_RWops *metafp = SDL_RWFromFile(metaPath, "rb");
-	loopStart = (int64_t)SDL_ReadBE64(metafp);
-	SDL_RWclose(metafp);
 	
 	//Get information from vorbis file
 	stb_vorbis_info info = stb_vorbis_get_info(file);
 	frequency = info.sample_rate;
 	channels = info.channels;
 	
+	//Read metadata file
+	SDL_RWops *metafp = SDL_RWFromFile(metaPath, "rb");
+	if (metafp == NULL)
+	{
+		Error(fail = "Failed to open the meta file");
+		stb_vorbis_close(file);
+		return;
+	}
+	
+	loopStart = (int64_t)SDL_ReadBE64(metafp);
+	SDL_RWclose(metafp);
+	
 	//Initialize the resampler
 	const ma_pcm_converter_config config = ma_pcm_converter_config_init(ma_format_f32, channels, frequency, ma_format_f32, 2, AUDIO_FREQUENCY, MusicReadSamples, this);
 	ma_pcm_converter_init(&config, &resampler);
 	
 	//Initialize other properties
-	volume = 1.0f;
+	ResetProperties();
 	
 	LOG(("Success!\n"));
 }
@@ -368,9 +371,6 @@ MUSIC::~MUSIC()
 //Playback functions
 void MUSIC::Play(int position)
 {
-	//Wait for audio device to be finished and lock it
-	SDL_LockAudioDevice(audioDevice);
-	
 	//Play at the given position
 	internalPosition = position;
 	playing = true;
@@ -380,53 +380,34 @@ void MUSIC::Play(int position)
 	{
 		Warn("Failed to play the music at given position");
 		playing = false;
-		
-		//Resume audio device
-		SDL_UnlockAudioDevice(audioDevice);
 		return;
 	}
-	
-	//Resume audio device
-	SDL_UnlockAudioDevice(audioDevice);
 }
 
 int MUSIC::Pause()
 {
-	//Wait for audio device to be finished and lock it
-	SDL_LockAudioDevice(audioDevice);
-	
 	//Pause and get the position we're at
 	int position = internalPosition;
 	playing = false;
-	
-	//Resume audio device
-	SDL_UnlockAudioDevice(audioDevice);
 	return position;
 }
 
 void MUSIC::SetVolume(float setVolume)
 {
-	//Wait for audio device to be finished and lock it
-	SDL_LockAudioDevice(audioDevice);
-	
 	//Set volume
 	volume = setVolume;
-	
-	//Resume audio device
-	SDL_UnlockAudioDevice(audioDevice);
 }
 
 float MUSIC::GetVolume()
 {
-	//Wait for audio device to be finished and lock it
-	SDL_LockAudioDevice(audioDevice);
-	
-	//Set volume
-	float getVolume = volume;
-	
-	//Resume audio device
-	SDL_UnlockAudioDevice(audioDevice);
-	return getVolume;
+	//Return volume
+	return volume;
+}
+
+void MUSIC::ResetProperties()
+{
+	//Reset other properties
+	volume = 1.0f;
 }
 
 //Mixer functions
@@ -491,28 +472,34 @@ const char *gCurrentMusic = NULL;
 
 int LoadMusicThreadFunction(void *dummy)
 {
+	//Wait for audio device to be finished and lock it
+	SDL_LockAudioDevice(audioDevice);
+	
 	//Unload current song
-	if (internalMusic != NULL)
+	if (internalMusic != NULL && gCurrentMusic != internalMusic->source)
+	{
 		delete internalMusic;
+		internalMusic = NULL;
+	}
 	
 	//Load new song (if not null)
 	if (gCurrentMusic != NULL)
 	{
-		internalMusic = new MUSIC((const char*)gCurrentMusic);
+		if (internalMusic == NULL)
+			internalMusic = new MUSIC((const char*)gCurrentMusic);
+		internalMusic->ResetProperties();
 		internalMusic->Play(0);
 	}
 	
+	//Resume audio device
+	SDL_UnlockAudioDevice(audioDevice);
 	return (loadMusicThread = NULL) == NULL;
 }
 
 void PlayMusic(const char *name)
 {
 	//Wait for song to have already finished loading
-	if (loadMusicThread)
-	{
-		SDL_WaitThread(loadMusicThread, NULL);
-		loadMusicThread = NULL;
-	}
+	SDL_WaitThread(loadMusicThread, NULL);
 	
 	//Load new song in a separate thread
 	gCurrentMusic = name;
@@ -522,11 +509,7 @@ void PlayMusic(const char *name)
 int PauseMusic()
 {
 	//Wait for song to have already finished loading
-	if (loadMusicThread)
-	{
-		SDL_WaitThread(loadMusicThread, NULL);
-		loadMusicThread = NULL;
-	}
+	SDL_WaitThread(loadMusicThread, NULL);
 	
 	//Pause and return current position
 	if (internalMusic != NULL)
@@ -537,38 +520,51 @@ int PauseMusic()
 void ResumeMusic(int position)
 {
 	//Wait for song to have already finished loading
-	if (loadMusicThread)
-	{
-		SDL_WaitThread(loadMusicThread, NULL);
-		loadMusicThread = NULL;
-	}
+	SDL_WaitThread(loadMusicThread, NULL);
+	
+	//Wait for audio device to be finished and lock it
+	SDL_LockAudioDevice(audioDevice);
 	
 	//Resume at given position
 	if (internalMusic != NULL)
 		internalMusic->Play(position);
+	
+	//Resume audio device
+	SDL_UnlockAudioDevice(audioDevice);
 }
 
 void SetMusicVolume(float volume)
 {
-	//If song is still loading, don't modify
-	if (loadMusicThread)
-		return;
+	//Wait for song to have already finished loading
+	SDL_WaitThread(loadMusicThread, NULL);
+	
+	//Wait for audio device to be finished and lock it
+	SDL_LockAudioDevice(audioDevice);
 	
 	//Set the volume
 	if (internalMusic != NULL)
 		internalMusic->SetVolume(volume);
+	
+	//Resume audio device
+	SDL_UnlockAudioDevice(audioDevice);
 }
 
 float GetMusicVolume()
 {
-	//If song is still loading, return default value
-	if (loadMusicThread)
-		return 1.0;
+	//Wait for song to have already finished loading
+	SDL_WaitThread(loadMusicThread, NULL);
+	
+	//Wait for audio device to be finished and lock it
+	SDL_LockAudioDevice(audioDevice);
 	
 	//Get and return the volume
+	float volume = 1.0f;
 	if (internalMusic != NULL)
-		return internalMusic->GetVolume();
-	return 1.0f;
+		volume = internalMusic->GetVolume();
+	
+	//Resume audio device
+	SDL_UnlockAudioDevice(audioDevice);
+	return volume;
 }
 
 //Callback function
@@ -581,7 +577,7 @@ void AudioCallback(void *userdata, uint8_t *stream, int length)
 	int samples = length / (2 * sizeof(float));
 	
 	//Mix music into the buffer or clear the buffer
-	if (loadMusicThread == NULL && internalMusic != NULL && internalMusic->playing)
+	if (internalMusic != NULL && internalMusic->playing)
 	{
 		//This will clear the stream with 0.0f
 		internalMusic->Mix((float*)stream, samples);

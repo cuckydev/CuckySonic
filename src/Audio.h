@@ -124,7 +124,9 @@ class MUSIC
 		//miniaudio resampler
 		ma_pcm_converter resampler;
 		
-		//Song data
+		//Music data
+		const char *source;
+		
 		int64_t loopStart;
 		
 		bool playing;
@@ -140,6 +142,8 @@ class MUSIC
 		int Pause();
 		void SetVolume(float setVolume);
 		float GetVolume();
+		
+		void ResetProperties();
 		
 		void Loop();
 		ma_uint32 ReadSamplesToBuffer(float *buffer, int samples);

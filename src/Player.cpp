@@ -3341,6 +3341,16 @@ void PLAYER::Update()
 		gGameLoadLevel++;
 		gGameLoadLevel %= LEVELID_MAX;
 	}
+	
+	if (gController[controller].held.start && gController[controller].held.c)
+	{
+		PlayMusic("SpeedShoes");
+		speedShoesTime = 150;
+		item.hasSpeedShoes = true;
+		top = 0xC00;
+		acceleration = 0x18;
+		deceleration = 0x80;
+	}
 }
 
 //Draw our player
