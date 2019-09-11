@@ -376,7 +376,7 @@ void MUSIC::Play(int position)
 	SDL_LockAudioDevice(audioDevice);
 	
 	//Play at the given position
-	internalPosition = (double)position;
+	internalPosition = position;
 	playing = true;
 	
 	//Seek within the given file
@@ -400,7 +400,7 @@ int MUSIC::Pause()
 	SDL_LockAudioDevice(audioDevice);
 	
 	//Pause and get the position we're at
-	int position = (int)internalPosition;
+	int position = internalPosition;
 	playing = false;
 	
 	//Resume audio device
@@ -436,13 +436,9 @@ float MUSIC::GetVolume()
 //Mixer functions
 void MUSIC::Loop()
 {
-	//Seek backwards definition->loopLength frames
+	//Seek back to definition->loopStart
 	if (stb_vorbis_seek_frame(file, (int)(internalPosition = definition->loopStart)) < 0)
-	{
-		Warn("Failed to play the music at given position");
 		playing = false;
-		return;
-	}
 }
 
 ma_uint32 MUSIC::ReadSamplesToBuffer(float *buffer, int samples)
@@ -451,7 +447,7 @@ ma_uint32 MUSIC::ReadSamplesToBuffer(float *buffer, int samples)
 	float *bufferPointer = &(*buffer);
 	int samplesRead = 0;
 	
-	while (samplesRead < samples)
+	while (playing && samplesRead < samples)
 	{
 		//Read data
 		int thisRead = stb_vorbis_get_samples_float_interleaved(file, channels, bufferPointer, (samples - samplesRead) * channels);
@@ -459,27 +455,19 @@ ma_uint32 MUSIC::ReadSamplesToBuffer(float *buffer, int samples)
 		//Move through file and buffer
 		bufferPointer += thisRead * channels;
 		samplesRead += thisRead;
-		internalPosition += (double)thisRead;
+		internalPosition += thisRead;
 		
 		if (thisRead == 0)
 		{
 			if (definition->loopStart < 0)
-			{
-				//Doesn't loop
 				playing = false;
-				break;
-			}
 			else
-			{
-				//Loop back
 				Loop();
-			}
 		}
 	}
 	
-	while (samplesRead++ < samples)
-		for (int i = 0; i < channels; i++)
-			*bufferPointer++ = 0.0f;
+	for (; samplesRead < samples * channels; samplesRead++)
+		*bufferPointer++ = 0.0f;
 	
 	return samplesRead;
 }

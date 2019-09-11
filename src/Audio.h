@@ -145,7 +145,7 @@ class MUSIC
 		//Song data
 		MUSICDEFINITION *definition;
 		bool playing;
-		double internalPosition;
+		int internalPosition;
 		
 		float volume;
 	
