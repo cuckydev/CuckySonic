@@ -78,7 +78,7 @@ struct LEVELTABLE
 	const char *artReferencePath;		//For the level's art
 	
 	//Music
-	MUSICID music;
+	const char *music;
 	
 	//Object function list
 	OBJECTFUNCTION *objectFunctionList;
@@ -159,7 +159,7 @@ class LEVEL
 		int act;
 		
 		//Level music
-		MUSICID musicId;
+		const char *music;
 		
 		//Game update stuff
 		int frameCounter; //Frames the level has been loaded

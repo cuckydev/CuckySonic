@@ -3354,8 +3354,8 @@ void PLAYER::Display()
 	if (item.isInvincible && invincibilityTime != 0 && (gLevel->frameCounter & 0x7) == 0 && -invincibilityTime == 0)
 	{
 		//Resume music
-		//if (gCurrentMusic == MUSICID_INVINCIBILITY)
-			PlayMusic(gLevel->musicId);
+		if (gCurrentMusic == "Invincibility")
+			PlayMusic(gLevel->music);
 		
 		//Lose invincibility
 		item.isInvincible = false;
@@ -3365,8 +3365,8 @@ void PLAYER::Display()
 	if (item.hasSpeedShoes && speedShoesTime != 0 && (gLevel->frameCounter & 0x7) == 0 && --speedShoesTime == 0)
 	{
 		//Resume music
-		if (gCurrentMusic == MUSICID_SPEED_SHOES)
-			PlayMusic(gLevel->musicId);
+		if (gCurrentMusic == "SpeedShoes")
+			PlayMusic(gLevel->music);
 		
 		//Lose speed shoes
 		item.hasSpeedShoes = false;

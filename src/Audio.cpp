@@ -10,16 +10,6 @@
 
 SDL_AudioDeviceID audioDevice;
 
-//Music definitions
-MUSICDEFINITION musicDefinition[MUSICID_MAX] = {
-	{NULL, 0}, //MUSICID_NULL
-	{"data/Audio/Music/Title.ogg", -1},
-	{"data/Audio/Music/Menu.ogg", 0},
-	{"data/Audio/Music/SpeedShoes.ogg", -1},
-	{"data/Audio/Music/GHZ.ogg", 635083},
-	{"data/Audio/Music/EHZ.ogg", 153816},
-};
-
 //Sound effects
 SOUND *soundEffects[SOUNDID_MAX];
 SOUNDDEFINITION soundDefinition[SOUNDID_MAX] = {
@@ -299,27 +289,28 @@ void SOUND::Mix(float *stream, int samples)
 #endif
 
 //Constructor and destructor
-MUSIC::MUSIC(MUSICDEFINITION *ourDefinition)
+MUSIC::MUSIC(const char *name)
 {
 	memset(this, 0, sizeof(MUSIC));
-	definition = ourDefinition;
+	LOG(("Loading music file from %s... ", name));
 	
-	LOG(("Loading music file from %s... ", definition->path));
+	//Get our paths
+	GET_GLOBAL_PATH(basePath, "data/Audio/Music/");
+	GET_APPEND_PATH(musicPath, basePath, name);
+	
+	GET_APPEND_PATH(oggPath, musicPath, ".ogg");
+	GET_APPEND_PATH(metaPath, musicPath, ".mmt");
 	
 	#ifdef WINDOWS
-		//Open file (Windows only UTF-16 wchar bullshit)
-		GET_GLOBAL_PATH(musicPath, definition->path);
-		
 		//Convert to UTF-16
 		wchar_t wcharBuffer[0x200];
-		MultiByteToWideChar(CP_UTF8, 0, musicPath, -1, wcharBuffer, 0x200);
+		MultiByteToWideChar(CP_UTF8, 0, oggPath, -1, wcharBuffer, 0x200);
 		
 		//Open the file with our newly converted path
 		FILE *fp = _wfopen(wcharBuffer, L"rb");
 	#else
 		//Open file
-		GET_GLOBAL_PATH(musicPath, definition->path);
-		FILE *fp = fopen(musicPath, "rb");
+		FILE *fp = fopen(oggPath, "rb");
 	#endif
 	
 	//If the file failed to open...
@@ -347,7 +338,12 @@ MUSIC::MUSIC(MUSICDEFINITION *ourDefinition)
 		return;
 	}
 	
-	//Get information from file
+	//Read metadata file
+	SDL_RWops *metafp = SDL_RWFromFile(metaPath, "rb");
+	loopStart = (int64_t)SDL_ReadBE64(metafp);
+	SDL_RWclose(metafp);
+	
+	//Get information from vorbis file
 	stb_vorbis_info info = stb_vorbis_get_info(file);
 	frequency = info.sample_rate;
 	channels = info.channels;
@@ -437,7 +433,7 @@ float MUSIC::GetVolume()
 void MUSIC::Loop()
 {
 	//Seek back to definition->loopStart
-	if (stb_vorbis_seek_frame(file, (int)(internalPosition = definition->loopStart)) < 0)
+	if (stb_vorbis_seek_frame(file, (int)(internalPosition = loopStart)) < 0)
 		playing = false;
 }
 
@@ -459,7 +455,7 @@ ma_uint32 MUSIC::ReadSamplesToBuffer(float *buffer, int samples)
 		
 		if (thisRead == 0)
 		{
-			if (definition->loopStart < 0)
+			if (loopStart < 0)
 				playing = false;
 			else
 				Loop();
@@ -489,27 +485,27 @@ ma_uint32 MusicReadSamples(ma_pcm_converter *dsp, void *buffer, ma_uint32 reques
 }
 
 //Music functions
-MUSIC *currentMusic;
-SDL_Thread *loadMusicThread;
-MUSICID gCurrentMusic;
+MUSIC *internalMusic = NULL;
+SDL_Thread *loadMusicThread = NULL;
+const char *gCurrentMusic = NULL;
 
-int LoadMusicThreadFunction(void *ptr)
+int LoadMusicThreadFunction(void *dummy)
 {
 	//Unload current song
-	if (currentMusic != NULL)
-		delete currentMusic;
+	if (internalMusic != NULL)
+		delete internalMusic;
 	
 	//Load new song (if not null)
-	if (gCurrentMusic != MUSICID_NULL)
+	if (gCurrentMusic != NULL)
 	{
-		currentMusic = new MUSIC(&musicDefinition[gCurrentMusic]);
-		currentMusic->Play(0);
+		internalMusic = new MUSIC((const char*)gCurrentMusic);
+		internalMusic->Play(0);
 	}
 	
 	return (loadMusicThread = NULL) == NULL;
 }
 
-void PlayMusic(MUSICID music)
+void PlayMusic(const char *name)
 {
 	//Wait for song to have already finished loading
 	if (loadMusicThread)
@@ -519,7 +515,7 @@ void PlayMusic(MUSICID music)
 	}
 	
 	//Load new song in a separate thread
-	gCurrentMusic = music;
+	gCurrentMusic = name;
 	loadMusicThread = SDL_CreateThread(LoadMusicThreadFunction, "LoadMusicThread", NULL);
 }
 
@@ -533,8 +529,8 @@ int PauseMusic()
 	}
 	
 	//Pause and return current position
-	if (currentMusic != NULL)
-		return currentMusic->Pause();
+	if (internalMusic != NULL)
+		return internalMusic->Pause();
 	return -1;
 }
 
@@ -548,8 +544,8 @@ void ResumeMusic(int position)
 	}
 	
 	//Resume at given position
-	if (currentMusic != NULL)
-		currentMusic->Play(position);
+	if (internalMusic != NULL)
+		internalMusic->Play(position);
 }
 
 void SetMusicVolume(float volume)
@@ -559,8 +555,8 @@ void SetMusicVolume(float volume)
 		return;
 	
 	//Set the volume
-	if (currentMusic != NULL)
-		currentMusic->SetVolume(volume);
+	if (internalMusic != NULL)
+		internalMusic->SetVolume(volume);
 }
 
 float GetMusicVolume()
@@ -570,8 +566,8 @@ float GetMusicVolume()
 		return 1.0;
 	
 	//Get and return the volume
-	if (currentMusic != NULL)
-		return currentMusic->GetVolume();
+	if (internalMusic != NULL)
+		return internalMusic->GetVolume();
 	return 1.0f;
 }
 
@@ -585,10 +581,10 @@ void AudioCallback(void *userdata, uint8_t *stream, int length)
 	int samples = length / (2 * sizeof(float));
 	
 	//Mix music into the buffer or clear the buffer
-	if (loadMusicThread == NULL && currentMusic != NULL && currentMusic->playing)
+	if (loadMusicThread == NULL && internalMusic != NULL && internalMusic->playing)
 	{
 		//This will clear the stream with 0.0f
-		currentMusic->Mix((float*)stream, samples);
+		internalMusic->Mix((float*)stream, samples);
 	}
 	else
 	{
@@ -734,13 +730,13 @@ void QuitAudio()
 	}
 	
 	//Unload current song
-	if (currentMusic != NULL)
+	if (internalMusic != NULL)
 	{
 		//Wait for audio device to be finished and lock it
 		SDL_LockAudioDevice(audioDevice);
 		
-		MUSIC *rememberMusic = currentMusic;
-		currentMusic = NULL;
+		MUSIC *rememberMusic = internalMusic;
+		internalMusic = NULL;
 		
 		//Resume audio device then delete original music
 		SDL_UnlockAudioDevice(audioDevice);

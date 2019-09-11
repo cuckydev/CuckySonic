@@ -117,9 +117,8 @@ bool GM_Title(bool *noError)
 	FillPaletteBlack(titleTexture->loadedPalette);
 	FillPaletteBlack(backgroundTexture->loadedPalette);
 	
-	//Play title song (silent)
-	PlayMusic(MUSICID_TITLE);
-	SetMusicVolume(0.0f);
+	//Play title song
+	PlayMusic("Title");
 	
 	//Our loop
 	bool noExit = true;
@@ -138,9 +137,6 @@ bool GM_Title(bool *noError)
 			//Fade asset sheet palette in
 			PaletteFadeInFromBlack(titleTexture->loadedPalette);
 			PaletteFadeInFromBlack(backgroundTexture->loadedPalette);
-			
-			//Fade music in
-			SetMusicVolume(min(GetMusicVolume() + (1.0f / 24.0f), 1.0f));
 		}
 		else
 		{
@@ -282,7 +278,7 @@ bool GM_Title(bool *noError)
 		
 		//Switch to menu music after a few seconds
 		if (selected == false && frame == (17 * 60))
-			PlayMusic(MUSICID_MENU);
+			PlayMusic("Menu");
 	}
 	
 	//Unload our textures

@@ -4,18 +4,6 @@
 #define AUDIO_FREQUENCY 44100
 #define AUDIO_SAMPLES	0x200
 
-//Music ids
-enum MUSICID
-{
-	MUSICID_NULL,
-	MUSICID_TITLE,
-	MUSICID_MENU,
-	MUSICID_SPEED_SHOES,
-	MUSICID_GHZ,
-	MUSICID_EHZ,
-	MUSICID_MAX,
-};
-
 //Sound ids
 enum SOUNDID
 {
@@ -69,12 +57,6 @@ enum SOUNDCHANNEL
 	SOUNDCHANNEL_FM4,
 	SOUNDCHANNEL_FM5,
 	SOUNDCHANNEL_DAC,
-};
-
-struct MUSICDEFINITION
-{
-	const char *path;
-	int loopStart;	//How many samples the looping part lasts
 };
 
 struct SOUNDDEFINITION
@@ -143,14 +125,15 @@ class MUSIC
 		ma_pcm_converter resampler;
 		
 		//Song data
-		MUSICDEFINITION *definition;
+		int64_t loopStart;
+		
 		bool playing;
 		int internalPosition;
 		
 		float volume;
 	
 	public:
-		MUSIC(MUSICDEFINITION *ourDefinition);
+		MUSIC(const char *name);
 		~MUSIC();
 		
 		void Play(int position);
@@ -166,9 +149,9 @@ class MUSIC
 ma_uint32 MusicReadSamples(ma_pcm_converter *dsp, void *buffer, ma_uint32 requestFrames, void *musicPointer);
 
 //Music functions
-extern MUSICID gCurrentMusic;
+extern const char *gCurrentMusic;
 
-void PlayMusic(MUSICID music);
+void PlayMusic(const char *name);
 int PauseMusic();
 void ResumeMusic(int position);
 void SetMusicVolume(float volume);
