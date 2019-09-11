@@ -64,6 +64,8 @@ TEXTURE::TEXTURE(TEXTURE **linkedList, const char *path)
 	if (texture == NULL)
 	{
 		SDL_FreeSurface(bitmap);
+		delete loadedPalette;
+		
 		fail = "Failed to allocate texture buffer";
 		return;
 	}
@@ -352,7 +354,7 @@ void SOFTWAREBUFFER::DrawQuad(int layer, SDL_Rect *quad, PALCOLOUR *colour)
 				{	\
 					int finc, fpitch;	\
 					fpx = entry->texture.srcX + entry->texture.srcY * entry->texture.texture->width;	\
-					dpx = entry->dest.x + entry->dest.y * width;	\
+					dpx = entry->dest.x + entry->dest.y * writePitch;	\
 					if (entry->texture.yFlip)	\
 					{	\
 						fpx += (entry->texture.texture->width * (entry->dest.h - 1));	\
@@ -379,13 +381,13 @@ void SOFTWAREBUFFER::DrawQuad(int layer, SDL_Rect *quad, PALCOLOUR *colour)
 							dpx++;	\
 						}	\
 						fpx += fpitch;	\
-						dpx += width - entry->dest.w;	\
+						dpx += writePitch - entry->dest.w;	\
 					}	\
 					break;	\
 				}	\
 				case RENDERQUEUE_SOLID:	\
 				{	\
-					dpx = entry->dest.x + entry->dest.y * width;	\
+					dpx = entry->dest.x + entry->dest.y * writePitch;	\
 						\
 					for (int fy = entry->dest.y; fy < entry->dest.y + entry->dest.h; fy++)	\
 					{	\
@@ -394,7 +396,7 @@ void SOFTWAREBUFFER::DrawQuad(int layer, SDL_Rect *quad, PALCOLOUR *colour)
 							macro(writeBuffer, bpp, dpx, entry->solid.colour->colour);	\
 							dpx++;	\
 						}	\
-						dpx += width - entry->dest.w;	\
+						dpx += writePitch - entry->dest.w;	\
 					}	\
 					break;	\
 				}	\
@@ -415,6 +417,8 @@ bool SOFTWAREBUFFER::RenderToScreen(PALCOLOUR *backgroundColour)
 	
 	//Render to our buffer
 	const uint8_t bpp = format->BytesPerPixel;
+	writePitch /= bpp;
+	
 	int fpx, dpx;
 	
 	switch (bpp)

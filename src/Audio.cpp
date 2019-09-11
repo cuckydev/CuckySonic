@@ -292,17 +292,11 @@ void SOUND::Mix(float *stream, int samples)
 	}
 }
 
-//Music class (using stb_vorbis backend)
+//Music class (using stb_vorbis and miniaudio)
 #ifdef WINDOWS //Include Windows stuff, required for opening the files with UTF-16 paths
 	#include <wchar.h>
 	#include <stringapiset.h>
 #endif
-
-#define MINIAUDIO_IMPLEMENTATION
-#define MA_NO_DECODING
-#define MA_NO_DEVICE_IO
-#include "Audio_miniaudio.cpp"
-#undef PlaySound
 
 //Constructor and destructor
 MUSIC::MUSIC(MUSICDEFINITION *ourDefinition)
@@ -355,7 +349,12 @@ MUSIC::MUSIC(MUSICDEFINITION *ourDefinition)
 	
 	//Get information from file
 	stb_vorbis_info info = stb_vorbis_get_info(file);
+	frequency = info.sample_rate;
 	channels = info.channels;
+	
+	//Initialize the resampler
+	const ma_pcm_converter_config config = ma_pcm_converter_config_init(ma_format_f32, channels, frequency, ma_format_f32, 2, AUDIO_FREQUENCY, MusicReadSamples, this);
+	ma_pcm_converter_init(&config, &resampler);
 	
 	//Initialize other properties
 	volume = 1.0f;
@@ -446,12 +445,10 @@ void MUSIC::Loop()
 	}
 }
 
-void MUSIC::Mix(float *stream, int samples)
+ma_uint32 MUSIC::ReadSamplesToBuffer(float *buffer, int samples)
 {
 	//Read the given amount of samples
-	float buffer[AUDIO_SAMPLES * 2];
 	float *bufferPointer = &(*buffer);
-	
 	int samplesRead = 0;
 	
 	while (samplesRead < samples)
@@ -460,7 +457,7 @@ void MUSIC::Mix(float *stream, int samples)
 		int thisRead = stb_vorbis_get_samples_float_interleaved(file, channels, bufferPointer, (samples - samplesRead) * channels);
 		
 		//Move through file and buffer
-		bufferPointer += thisRead * 2;
+		bufferPointer += thisRead * channels;
 		samplesRead += thisRead;
 		internalPosition += (double)thisRead;
 		
@@ -480,22 +477,27 @@ void MUSIC::Mix(float *stream, int samples)
 		}
 	}
 	
-	//Copy the buffer into our stream
-	bufferPointer = &(*buffer);
+	while (samplesRead++ < samples)
+		for (int i = 0; i < channels; i++)
+			*bufferPointer++ = 0.0f;
 	
-	for (int i = 0; i < samples; i++)
-	{
-		if (i < samplesRead)
-		{
-			*stream++ = (*bufferPointer++) * volume;
-			*stream++ = (*bufferPointer++) * volume;
-		}
-		else
-		{
-			*stream++ = 0.0f;
-			*stream++ = 0.0f;
-		}
-	}
+	return samplesRead;
+}
+
+void MUSIC::Mix(float *stream, int samples)
+{
+	//Read the samples and convert to native format
+	ma_pcm_converter_read(&resampler, stream, samples);
+	
+	//Apply volume
+	for (int i = 0; i < samples * 2; i++)
+		*stream++ *= volume;
+}
+
+ma_uint32 MusicReadSamples(ma_pcm_converter *dsp, void *buffer, ma_uint32 requestFrames, void *musicPointer)
+{
+	MUSIC *music = (MUSIC*)musicPointer;
+	return music->ReadSamplesToBuffer((float*)buffer, requestFrames);
 }
 
 //Music functions
@@ -594,14 +596,15 @@ void AudioCallback(void *userdata, uint8_t *stream, int length)
 	//Get our buffer to render to
 	int samples = length / (2 * sizeof(float));
 	
+	//Mix music into the buffer or clear the buffer
 	if (loadMusicThread == NULL && currentMusic != NULL && currentMusic->playing)
 	{
-		//Mix the music into the buffer, we don't need to clear the buffer here because the music sets the buffer, rather than add onto it
+		//This will clear the stream with 0.0f
 		currentMusic->Mix((float*)stream, samples);
 	}
 	else
 	{
-		//Clear the buffer (NOTE: I would memset the buffer to 0, but that'll break on FPUs that don't use the IEEE-754 standard)
+		//Clear the stream with 0.0f
 		float *buffer = (float*)stream;
 		for (int i = 0; i < samples * 2; i++)
 			*buffer++ = 0.0f;

@@ -123,9 +123,10 @@ class SOUND
 		void Mix(float *stream, int samples);
 };
 
-//Music class (using stb_vorbis backend)
+//Music class (using stb_vorbis and miniaudio)
 #define STB_VORBIS_HEADER_ONLY
 #include "Audio_stb_vorbis.cpp"
+#include "Audio_miniaudio.h"
 
 class MUSIC
 {
@@ -135,7 +136,11 @@ class MUSIC
 		
 		//stb_vorbis decoder
 		stb_vorbis *file;
+		double frequency;
 		int channels;
+		
+		//miniaudio resampler
+		ma_pcm_converter resampler;
 		
 		//Song data
 		MUSICDEFINITION *definition;
@@ -154,8 +159,11 @@ class MUSIC
 		float GetVolume();
 		
 		void Loop();
+		ma_uint32 ReadSamplesToBuffer(float *buffer, int samples);
 		void Mix(float *stream, int samples);
 };
+
+ma_uint32 MusicReadSamples(ma_pcm_converter *dsp, void *buffer, ma_uint32 requestFrames, void *musicPointer);
 
 //Music functions
 extern MUSICID gCurrentMusic;
