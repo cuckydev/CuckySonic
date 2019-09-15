@@ -247,7 +247,7 @@ void RegenPaletteColour(PALCOLOUR *palColour)
 SOFTWAREBUFFER::SOFTWAREBUFFER(uint32_t bufFormat, int bufWidth, int bufHeight)
 {
 	//Set our properties
-	fail = NULL;
+	memset(this, 0, sizeof(SOFTWAREBUFFER));
 	
 	format = SDL_AllocFormat(bufFormat);
 	width = bufWidth;
@@ -337,16 +337,16 @@ void SOFTWAREBUFFER::DrawQuad(int layer, SDL_Rect *quad, PALCOLOUR *colour)
 }
 
 //Render the software buffer to the screen
+/*
 #define SBRTSD(macro)	\
 	if (backgroundColour != NULL)	\
 	{	\
 		for (int px = 0; px < width * height; px++)	\
 			macro(writeBuffer, bpp, px, backgroundColour->colour);	\
 	}	\
-		\
 	for (int i = 0; i < RENDERLAYERS; i++)	\
 	{	\
-		for (RENDERQUEUE *entry = queueEntry[i] - 1; entry >= queue[i]; entry--)	\
+		for (RENDERQUEUE *entry = queue[i]; entry < queueEntry[i]; entry++)	\
 		{	\
 			switch (entry->type)	\
 			{	\
@@ -376,8 +376,11 @@ void SOFTWAREBUFFER::DrawQuad(int layer, SDL_Rect *quad, PALCOLOUR *colour)
 						{	\
 							const uint8_t index = entry->texture.texture->texture[fpx];	\
 							fpx += finc;	\
-							if (index)	\
+							if (index != 0 && drawnPixel[dpx] == false)	\
+							{	\
 								macro(writeBuffer, bpp, dpx, entry->texture.palette->colour[index].colour);	\
+								drawnPixel[dpx] = true;	\
+							}	\
 							dpx++;	\
 						}	\
 						fpx += fpitch;	\
@@ -393,7 +396,11 @@ void SOFTWAREBUFFER::DrawQuad(int layer, SDL_Rect *quad, PALCOLOUR *colour)
 					{	\
 						for (int fx = entry->dest.x; fx < entry->dest.x + entry->dest.w; fx++)	\
 						{	\
-							macro(writeBuffer, bpp, dpx, entry->solid.colour->colour);	\
+							if (drawnPixel[dpx] == false)	\
+							{	\
+								macro(writeBuffer, bpp, dpx, entry->solid.colour->colour);	\
+								drawnPixel[dpx] = true;	\
+							}	\
 							dpx++;	\
 						}	\
 						dpx += writePitch - entry->dest.w;	\
@@ -406,7 +413,153 @@ void SOFTWAREBUFFER::DrawQuad(int layer, SDL_Rect *quad, PALCOLOUR *colour)
 		}	\
 		queueEntry[i] = queue[i];	\
 	}
+*/
 
+//Set pixel functions (various byte sizes)
+void SetPixel_8BPP(uint8_t *buffer, uint32_t value)
+{
+	*((uint8_t*)buffer) = value;
+}
+
+void SetPixel_16BPP(uint8_t *buffer, uint32_t value)
+{
+	*((uint16_t*)buffer) = value;
+}
+
+void SetPixel_24BPP(uint8_t *buffer, uint32_t value)
+{
+	#if (SDL_BYTEORDER == SDL_BIGENDIAN)
+		uint8_t *valPtr = ((uint8_t*)&value) + 1;
+	//   v
+	// 0|123|
+	#else
+		uint8_t *valPtr = ((uint8_t*)&value);
+	//  v
+	// |321|0
+	#endif
+	
+	*buffer++ = *valPtr++;
+	*buffer++ = *valPtr++;
+	*buffer++ = *valPtr++;
+}
+
+void SetPixel_32BPP(uint8_t *buffer, uint32_t value)
+{
+	*((uint32_t*)buffer) = value;
+}
+
+//Pixel function array
+const PIXELFUNCTION pixelFunctions[4] = {&SetPixel_8BPP, &SetPixel_16BPP, &SetPixel_24BPP, &SetPixel_32BPP};
+
+//Secondary render function
+void SOFTWAREBUFFER::RenderToBuffer(PIXELFUNCTION pixelFunction, uint8_t bpp, PALCOLOUR *backgroundColour, uint8_t *buffer, int pitch)
+{
+	//Clear to the given background colour
+	if (backgroundColour != NULL)
+	{
+		for (int px = 0; px < width * height; px++)
+			pixelFunction(buffer + px * bpp, backgroundColour->colour);
+	}
+	
+	//Render all of our render entries
+	for (int i = 0; i < RENDERLAYERS; i++)
+	{
+		for (RENDERQUEUE *entry = queue[i]; entry < queueEntry[i]; entry++)
+		{
+			switch (entry->type)
+			{
+				case RENDERQUEUE_TEXTURE:
+				{
+					//Get how to render the texture according to our x and y flipping
+					int finc, fpitch;
+					uint8_t *fpx = &entry->texture.texture->texture[entry->texture.srcX + entry->texture.srcY * entry->texture.texture->width];
+					int dpx = entry->dest.x + entry->dest.y * pitch;
+					
+					//Vertical flip
+					if (entry->texture.yFlip)
+					{
+						//Start at bottom and move upwards
+						fpx += (entry->texture.texture->width * (entry->dest.h - 1));
+						fpitch = -(entry->texture.texture->width + entry->dest.w);
+					}
+					else
+					{
+						//Move downwards
+						fpitch = entry->texture.texture->width - entry->dest.w;
+					}
+					
+					//Horizontal flip
+					if (entry->texture.xFlip)
+					{
+						//Start at the right side of the texture
+						fpx += entry->dest.w - 1;
+						
+						//Increment backwards and start at the right side of the texture
+						finc = -1;
+						fpitch += entry->dest.w * 2;
+					}
+					else
+					{
+						//Increment forwards
+						finc = 1;
+					}
+					
+					for (int fy = entry->texture.srcY; fy < entry->texture.srcY + entry->dest.h; fy++)
+					{
+						for (int fx = entry->texture.srcX; fx < entry->texture.srcX + entry->dest.w; fx++)
+						{
+							//Render to the buffer
+							if (*fpx != 0 && drawnPixel[dpx] == false)
+							{
+								pixelFunction(buffer + (dpx * bpp), entry->texture.palette->colour[*fpx].colour);
+								drawnPixel[dpx] = true;
+							}
+							
+							//Render to the next pixel
+							fpx += finc;
+							dpx++;
+						}
+						
+						//Proceed to the next line
+						fpx += fpitch;
+						dpx += pitch - entry->dest.w;
+					}
+					break;
+				}
+				case RENDERQUEUE_SOLID:
+				{
+					int dpx = entry->dest.x + entry->dest.y * pitch;
+					
+					for (int fy = entry->dest.y; fy < entry->dest.y + entry->dest.h; fy++)
+					{
+						for (int fx = entry->dest.x; fx < entry->dest.x + entry->dest.w; fx++)
+						{
+							//Render to the buffer
+							if (drawnPixel[dpx] == false)
+							{
+								pixelFunction(buffer + (dpx * bpp), entry->solid.colour->colour);
+								drawnPixel[dpx] = true;
+							}
+							
+							//Render to the next pixel
+							dpx++;
+						}
+						
+						//Proceed to the next line
+						dpx += pitch - entry->dest.w;
+					}
+					
+					break;
+				}
+			}
+		}
+		
+		//Reset this layer to the beginning
+		queueEntry[i] = queue[i];
+	}
+}
+
+//Main render function
 bool SOFTWAREBUFFER::RenderToScreen(PALCOLOUR *backgroundColour)
 {
 	//Lock texture
@@ -415,29 +568,17 @@ bool SOFTWAREBUFFER::RenderToScreen(PALCOLOUR *backgroundColour)
 	if (SDL_LockTexture(texture, NULL, &writeBuffer, &writePitch) < 0)
 		return Error(SDL_GetError());
 	
+	//Allocate pixel drawn buffer (I know this seems like the stupidest place to put this, but we can't do it before, since we don't have access to the pitch then)
+	if (drawnPixel == NULL)
+		drawnPixel = (bool*)malloc(writePitch * height * sizeof(bool));
+	
 	//Render to our buffer
 	const uint8_t bpp = format->BytesPerPixel;
-	writePitch /= bpp;
+	writePitch /= bpp; //This converts our pitch into pixels rather than bytes
 	
-	int fpx, dpx;
-	
-	switch (bpp)
-	{
-		case 1:
-			SBRTSD(SET_BUFFER_PIXEL1);
-			break;
-		case 2:
-			SBRTSD(SET_BUFFER_PIXEL2);
-			break;
-		case 3:
-			SBRTSD(SET_BUFFER_PIXEL3);
-			break;
-		case 4:
-			SBRTSD(SET_BUFFER_PIXEL4);
-			break;
-		default:
-			break;
-	}
+	PIXELFUNCTION pixelFunction = pixelFunctions[bpp - 1];
+	memset(drawnPixel, 0, writePitch * height);
+	RenderToBuffer(pixelFunction, bpp, backgroundColour, (uint8_t*)writeBuffer, writePitch);
 	
 	//Unlock
 	SDL_UnlockTexture(texture);

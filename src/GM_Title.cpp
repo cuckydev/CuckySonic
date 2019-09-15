@@ -10,16 +10,17 @@
 #include "MathUtil.h"
 #include "Input.h"
 #include "Audio.h"
+#include "BackgroundScroll.h"
 
 //Title constants
 enum TITLE_LAYERS
 {
-	TITLELAYER_BACKGROUND,
-	TITLELAYER_EMBLEM,
-	TITLELAYER_SONIC,
-	TITLELAYER_SONIC_HAND,
-	TITLELAYER_BANNER,
 	TITLELAYER_MENU,
+	TITLELAYER_BANNER,
+	TITLELAYER_SONIC_HAND,
+	TITLELAYER_SONIC,
+	TITLELAYER_EMBLEM,
+	TITLELAYER_BACKGROUND,
 };
 
 //Emblem and banner
@@ -108,6 +109,10 @@ bool GM_Title(bool *noError)
 	if (backgroundTexture->fail != NULL)
 		return (*noError = false);
 	
+	BACKGROUNDSCROLL *backgroundScroll = new BACKGROUNDSCROLL("data/Title.bsc", backgroundTexture);
+	if (backgroundScroll->fail != NULL)
+		return (*noError = false);
+	
 	int backgroundX = 0;
 	
 	//Selection state
@@ -117,8 +122,10 @@ bool GM_Title(bool *noError)
 	FillPaletteBlack(titleTexture->loadedPalette);
 	FillPaletteBlack(backgroundTexture->loadedPalette);
 	
-	//Play title song
-	PlayMusic("Title");
+	//Handle music
+	const MUSICSPEC titleSpec = {"Title", 0, 1.0f};
+	const MUSICSPEC menuSpec = {"Menu", 0, 1.0f};
+	PlayMusic(titleSpec);
 	
 	//Our loop
 	bool noExit = true;
@@ -150,44 +157,15 @@ bool GM_Title(bool *noError)
 		}
 		
 		//Draw background
-		uint16_t backgroundScroll[256];
+		backgroundScroll->GetScroll(backgroundX, 0, NULL, NULL);
 		
-		//Get our background's scroll
-		uint16_t *arrValue = backgroundScroll;
-		
-		int scrollBG1 = backgroundX / 16;
-		int scrollBG2 = backgroundX / 24;
-		
-		//Clouds
-		for (int i = 0; i < 32; i++)
-			*arrValue++ = scrollBG2;
-		
-		//Sky
-		for (int i = 0; i < 64; i++)
-			*arrValue++ = 0;
-		
-		//Mountains
-		for (int i = 0; i < 64; i++)
-			*arrValue++ = scrollBG1;
-		
-		//Water
-		int32_t delta = (((backgroundX - scrollBG1) * 0x100) / 96) * 0x100;
-		uint32_t accumulate = scrollBG1 * 0x10000;
-
-		for (int i = 0; i < 96; i++)
+		//Draw each line
+		SDL_Rect backSrc = {0, 0, backgroundTexture->width, 1};
+		for (int i = 0; i < min(SCREEN_HEIGHT, backgroundTexture->height); i++)
 		{
-			*arrValue++ = accumulate / 0x10000;
-			accumulate += delta;
-		}
-		
-		//Draw each scanline
-		for (int i = 0; i < backgroundTexture->height; i++)
-		{
-			for (int x = -(backgroundScroll[i] % backgroundTexture->width); x < SCREEN_WIDTH; x += backgroundTexture->width)
-			{
-				SDL_Rect backSrc = {0, i, backgroundTexture->width, 1};
-				backgroundTexture->Draw(TITLELAYER_BACKGROUND, backgroundTexture->loadedPalette, &backSrc, x, i, false, false);
-			}
+			for (int x = -(backgroundScroll->scrollArray[i] % backgroundTexture->width); x < SCREEN_WIDTH; x += backgroundTexture->width)
+				backgroundTexture->Draw(LEVEL_RENDERLAYER_BACKGROUND, backgroundTexture->loadedPalette, &backSrc, x, i, false, false);
+			backSrc.y++;
 		}
 		
 		//Move title screen at beginning
@@ -278,10 +256,11 @@ bool GM_Title(bool *noError)
 		
 		//Switch to menu music after a few seconds
 		if (selected == false && frame == (17 * 60))
-			PlayMusic("Menu");
+			PlayMusic(menuSpec);
 	}
 	
 	//Unload our textures
+	delete backgroundScroll;
 	delete backgroundTexture;
 	delete titleTexture;
 	

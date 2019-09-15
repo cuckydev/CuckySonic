@@ -8,16 +8,8 @@
 #define SCREEN_HEIGHT	240
 #define SCREEN_SCALE	2
 
-//Set pixel macro
-#define SET_BUFFER_PIXEL1(buffer, bytes, pixel, value)	{ ((uint8_t*)buffer)[pixel] = value; }
-
-#define SET_BUFFER_PIXEL2(buffer, bytes, pixel, value)	{ ((uint16_t*)buffer)[pixel] = value; }
-
-#define SET_BUFFER_PIXEL3(buffer, bytes, pixel, value)	{ ((uint8_t*)buffer)[pixel * 3 + 0] = ((uint8_t*)&value)[0];	\
-														((uint8_t*)buffer)[pixel * 3 + 1] = ((uint8_t*)&value)[1];	\
-														((uint8_t*)buffer)[pixel * 3 + 2] = ((uint8_t*)&value)[2]; }
-														
-#define SET_BUFFER_PIXEL4(buffer, bytes, pixel, value)	{ ((uint32_t*)buffer)[pixel] = value; }
+//Pixel function
+typedef void (*PIXELFUNCTION)(uint8_t*, uint32_t);
 	
 //Palette line
 struct PALCOLOUR
@@ -110,7 +102,8 @@ class SOFTWAREBUFFER
 		RENDERQUEUE queue[RENDERLAYERS][RENDERQUEUE_LENGTH];
 		RENDERQUEUE *queueEntry[RENDERLAYERS];
 		
-		//Dimensions
+		//Dimensions and pixel drawn buffer
+		bool *drawnPixel;
 		int width;
 		int height;
 		
@@ -129,6 +122,7 @@ class SOFTWAREBUFFER
 		void DrawPoint(int layer, int x, int y, PALCOLOUR *colour);
 		void DrawQuad(int layer, SDL_Rect *quad, PALCOLOUR *colour);
 		
+		void RenderToBuffer(PIXELFUNCTION pixelFunction, uint8_t bpp, PALCOLOUR *backgroundColour, uint8_t *buffer, int pitch);
 		bool RenderToScreen(PALCOLOUR *backgroundColour);
 };
 

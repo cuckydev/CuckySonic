@@ -1,5 +1,6 @@
 #pragma once
 #include <stdint.h>
+#include "BackgroundScroll.h"
 #include "Render.h"
 #include "Player.h"
 #include "Object.h"
@@ -20,13 +21,13 @@ typedef void (*OBJECTFUNCTION)(OBJECT*);
 #define OBJECT_LAYERS 8
 enum LEVEL_RENDERLAYER
 {
-	LEVEL_RENDERLAYER_BACKGROUND,
-	LEVEL_RENDERLAYER_FOREGROUND_LOW,
-	LEVEL_RENDERLAYER_OBJECT_0,
-	LEVEL_RENDERLAYER_FOREGROUND_HIGH = LEVEL_RENDERLAYER_OBJECT_0 + OBJECT_LAYERS,
-	LEVEL_RENDERLAYER_OBJECT_HIGH_0,
-	LEVEL_RENDERLAYER_HUD = LEVEL_RENDERLAYER_OBJECT_HIGH_0 + OBJECT_LAYERS,
 	LEVEL_RENDERLAYER_TITLECARD,
+	LEVEL_RENDERLAYER_HUD,
+	LEVEL_RENDERLAYER_OBJECT_HIGH_0,
+	LEVEL_RENDERLAYER_FOREGROUND_HIGH = LEVEL_RENDERLAYER_OBJECT_HIGH_0 + OBJECT_LAYERS,
+	LEVEL_RENDERLAYER_OBJECT_LOW_0,
+	LEVEL_RENDERLAYER_FOREGROUND_LOW = LEVEL_RENDERLAYER_OBJECT_LOW_0 + OBJECT_LAYERS,
+	LEVEL_RENDERLAYER_BACKGROUND,
 };
 
 //Level formats
@@ -160,6 +161,9 @@ class LEVEL
 		
 		//Level music
 		const char *music;
+		const char *currentMusic;
+		
+		int musicResumePoint;
 		
 		//Game update stuff
 		int frameCounter; //Frames the level has been loaded
@@ -176,7 +180,7 @@ class LEVEL
 		TEXTURE *tileTexture;
 		
 		TEXTURE *backgroundTexture;
-		uint16_t *backgroundScroll;
+		BACKGROUNDSCROLL *backgroundScroll;
 		
 		PALETTECYCLE palCycle[PALETTE_CYCLES];
 		
@@ -239,12 +243,14 @@ class LEVEL
 		void DynamicEvents();
 		
 		TEXTURE *GetObjectTexture(const char *path);
-		TEXTURE *GetObjectTexture(uint8_t *data, int dWidth, int dHeight); //just in case
-		
 		MAPPINGS *GetObjectMappings(const char *path);
 		
+		LEVEL_RENDERLAYER GetObjectLayer(bool highPriority, int priority);
+		
 		void PaletteUpdate();
-		void GetBackgroundScroll(bool updateScroll, uint16_t *array, int16_t *cameraX, int16_t *cameraY);
+		
+		void PlayJingle(MUSICSPEC newMusic);
+		void ChangeMusic(MUSICSPEC newMusic);
 		
 		void OscillatoryInit();
 		void OscillatoryUpdate();

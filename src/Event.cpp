@@ -7,8 +7,6 @@ bool HandleEvents()
 	bool noExit = true;
 	bool focusYield = false;
 	
-	int musicPoint = -1;
-	
 	while (SDL_PollEvent(NULL) || (focusYield && noExit))
 	{
 		//Wait for next event (instantaneous if focus gained, just polling then stopping when done)
@@ -27,18 +25,15 @@ bool HandleEvents()
 					case SDL_WINDOWEVENT_FOCUS_GAINED: //Window focused
 						//Unyield game
 						focusYield = false;
-						
-						//Resume music
-						if (musicPoint >= 0)
-							ResumeMusic(musicPoint);
+						YieldAudio(false);
 						break;
 					case SDL_WINDOWEVENT_FOCUS_LOST: //Window unfocused
 						//Yield game until refocused
 						focusYield = true;
+						YieldAudio(true);
 						
-						//Clear controller input and pause music
+						//Clear controller input
 						ClearControllerInput();
-						musicPoint = PauseMusic();
 						break;
 					default:
 						break;

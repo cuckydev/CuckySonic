@@ -184,7 +184,7 @@ void ObjBouncingRing(OBJECT *object)
 			object->priority = 1;
 			
 			//Collect the ring
-			CollectRing();
+			AddToRings(1);
 	//Fallthrough
 		case 3: //Sparkling
 			object->Animate(animationList);

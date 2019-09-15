@@ -6,8 +6,6 @@ void GHZ_PaletteCycle(LEVEL *lvl)
 	(void)lvl;
 }
 
-const uint32_t ghzCloudScroll[] = {0x10000, 0xC000, 0x8000};
-
 void GHZ_BackgroundScroll(bool updateScroll, uint16_t *array, int16_t *cameraX, int16_t *cameraY)
 {
 	uint16_t *arrValue = array;

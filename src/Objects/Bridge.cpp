@@ -154,6 +154,8 @@ void ObjBridge(OBJECT *object)
 				
 				//Set our depression position
 				child->y.pos = object->y.pos + (depress * depressForce[depressPosition] / 0x100);
+				
+				//Act as a solid
 				child->PlatformObject(8, 8, child->x.pos);
 				
 				//Increment our log index

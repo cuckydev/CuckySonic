@@ -29,13 +29,13 @@ void HUD::DrawCharacter(int xPos, int yPos, int srcX)
 	texture->Draw(LEVEL_RENDERLAYER_HUD, texture->loadedPalette, &src, xPos, yPos, false, false);
 }
 
-void HUD::DrawNumber(int xPos, int yPos, int number, int forceDigits, bool fromRight)
+void HUD::DrawNumber(int xPos, int yPos, int number, unsigned int forceDigits, bool fromRight)
 {
 	int offset = 0;
-	int exponent = 1;
+	unsigned int exponent = 1;
 	
 	//Get how many digits we're using
-	int numberDigit = number;
+	unsigned int numberDigit = number;
 	while ((numberDigit /= 10) != 0)
 	{
 		//Increment position if drawing from right
@@ -122,5 +122,5 @@ void HUD::Draw()
 	
 	//Draw lives
 	DrawElement(16, SCREEN_HEIGHT - 24, 3, 0);
-	DrawNumber(40, SCREEN_HEIGHT - 24 + 2, gLives, 0, false);
+	DrawNumber(44, SCREEN_HEIGHT - 24 + 2, gLives, 0, false);
 }

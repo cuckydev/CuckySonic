@@ -2137,6 +2137,8 @@ void PLAYER::DeadCheckRespawn()
 	//Enter respawn state
 	routine = PLAYERROUTINE_RESET_LEVEL;
 	restartCountdown = 60;
+	
+	gLives--;
 }
 
 void PLAYER::HurtStop()
@@ -3342,11 +3344,17 @@ void PLAYER::Update()
 		gGameLoadLevel %= LEVELID_MAX;
 	}
 	
+	if (gController[controller].held.start && gController[controller].held.a)
+		AddToRings(1);
+	
 	if (gController[controller].press.start && gController[controller].held.c)
 	{
-		PlayMusic("SpeedShoes");
+		MUSICSPEC speedShoesSpec = {"SpeedShoes", 0, GetMusicVolume()};
+		gLevel->ChangeMusic(speedShoesSpec);
+		
 		speedShoesTime = 150;
 		item.hasSpeedShoes = true;
+		
 		top = 0xC00;
 		acceleration = 0x18;
 		deceleration = 0x80;
@@ -3360,12 +3368,14 @@ void PLAYER::Display()
 	if (invulnerabilityTime == 0 || (--invulnerabilityTime & 0x4) != 0)
 		Draw();
 	
+	const MUSICSPEC levelResumeSpec = {gLevel->music, 0, 0.0f};
+	
 	//Handle invincibility (every 8 frames)
-	if (item.isInvincible && invincibilityTime != 0 && (gLevel->frameCounter & 0x7) == 0 && -invincibilityTime == 0)
+	if (item.isInvincible && invincibilityTime != 0 && (gLevel->frameCounter & 0x7) == 0 && --invincibilityTime == 0)
 	{
 		//Resume music
-		if (gCurrentMusic == "Invincibility")
-			PlayMusic(gLevel->music);
+		if (follow == NULL && !strcmp(gLevel->currentMusic, "Invincibility"))
+			gLevel->ChangeMusic(levelResumeSpec);
 		
 		//Lose invincibility
 		item.isInvincible = false;
@@ -3375,8 +3385,8 @@ void PLAYER::Display()
 	if (item.hasSpeedShoes && speedShoesTime != 0 && (gLevel->frameCounter & 0x7) == 0 && --speedShoesTime == 0)
 	{
 		//Resume music
-		if (gCurrentMusic == "SpeedShoes")
-			PlayMusic(gLevel->music);
+		if (follow == NULL && !strcmp(gLevel->currentMusic, "SpeedShoes"))
+			gLevel->ChangeMusic(levelResumeSpec);
 		
 		//Lose speed shoes
 		item.hasSpeedShoes = false;
@@ -3424,7 +3434,7 @@ void PLAYER::DrawToScreen()
 			
 			int alignX = renderFlags.alignPlane ? gLevel->camera->x : 0;
 			int alignY = renderFlags.alignPlane ? gLevel->camera->y : 0;
-			texture->Draw((highPriority ? LEVEL_RENDERLAYER_OBJECT_HIGH_0 : LEVEL_RENDERLAYER_OBJECT_0) + ((OBJECT_LAYERS - 1) - priority), texture->loadedPalette, mapRect, x.pos - origX - alignX, y.pos - origY - alignY, renderFlags.xFlip, renderFlags.yFlip);
+			texture->Draw(gLevel->GetObjectLayer(highPriority, priority), texture->loadedPalette, mapRect, x.pos - origX - alignX, y.pos - origY - alignY, renderFlags.xFlip, renderFlags.yFlip);
 		}
 	}
 }
@@ -3538,14 +3548,7 @@ void PLAYER::DebugMode()
 //Object interaction functions
 bool PLAYER::TouchResponseObject(void *objPointer)
 {
-	//Iterate through children first
-	OBJECT *object = (OBJECT*)objPointer;
-	for (OBJECT *obj = object->children; obj != NULL; obj = obj->next)
-	{
-		if (TouchResponseObject((void*)obj))
-			return true;
-	}
-	
+	//Get our collision hitbox
 	int16_t playerLeft, playerTop, playerWidth, playerHeight;
 	
 	/* https://www.youtube.com/watch?v=32Hp1LW08Yc
@@ -3597,6 +3600,8 @@ bool PLAYER::TouchResponseObject(void *objPointer)
 	*/
 	
 	//Check object
+	OBJECT* const object = (OBJECT* const)objPointer;
+	
 	if (object->collisionType != COLLISIONTYPE_NULL)
 	{
 		//Check if our hitboxes are colliding
@@ -3626,7 +3631,7 @@ bool PLAYER::TouchResponseObject(void *objPointer)
 							if (((GetAtan(x.pos - object->x.pos, y.pos - object->y.pos) + 0x20) & 0xFF) < 0x40)
 								return object->Hurt(this);
 							
-							//Hurt us
+							//Otherwise, hurt us
 							return CheckHurt(objPointer);
 						case CHARACTERTYPE_KNUCKLES:
 							//If gliding or sliding after gliding, hurt the object
@@ -3636,6 +3641,7 @@ bool PLAYER::TouchResponseObject(void *objPointer)
 							//Otherwise, hurt us
 							return CheckHurt(objPointer);
 						default:
+							//No special abilities, hurt us
 							return CheckHurt(objPointer);
 					}
 					break;
@@ -3654,7 +3660,13 @@ bool PLAYER::TouchResponseObject(void *objPointer)
 		}
 	}
 	
-	//Object and player haven't made contact
+	//Iterate through children, we haven't hit the parent
+	for (OBJECT *obj = object->children; obj != NULL; obj = obj->next)
+	{
+		if (TouchResponseObject((void*)obj))
+			return true;
+	}
+	
 	return false;
 }
 
@@ -3664,7 +3676,7 @@ void PLAYER::TouchResponse()
 	for (OBJECT *obj = gLevel->objectList; obj != NULL; obj = obj->next)
 	{
 		if (TouchResponseObject((void*)obj))
-			return;
+			return; //The original games return once touching an object
 	}
 }
 
@@ -3691,7 +3703,7 @@ void PLAYER::AttachToObject(void *object, bool *standingBit)
 
 void PLAYER::MoveOnPlatform(void *platform, int16_t height, int16_t lastXPos)
 {
-	OBJECT *platformObject = (OBJECT*)platform;
+	OBJECT* const platformObject = (OBJECT* const)platform;
 	int top = platformObject->y.pos - height;
 	
 	//Check if we're in an intangible state

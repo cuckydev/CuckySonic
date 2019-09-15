@@ -25,7 +25,7 @@ void ObjPurpleRock(OBJECT *object)
 	//Fallthrough
 		case 1:
 		{
-			object->SolidObject(27, 16, object->x.pos);
+			object->SolidObject(27, 16, (object->xPosLong - object->xVel * 0x100) / 0x10000);
 			object->Draw();
 			break;
 		}

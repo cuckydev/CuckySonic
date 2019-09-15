@@ -18,8 +18,10 @@ extern bool gDebugEnabled;
 
 //Score, time, rings, and lives
 extern unsigned int gScore;
+extern unsigned int gNextScoreReward;
 extern unsigned int gTime;
 extern unsigned int gRings;
+extern unsigned int gNextRingReward;
 extern unsigned int gLives;
 
 //Gamemode and level state
@@ -31,7 +33,9 @@ extern int gGameLoadCharacter;
 
 //Generic game functions
 void AddToScore(unsigned int score);
-void CollectRing();
+void AddToRings(unsigned int rings);
+void AddToLives(unsigned int lives);
+void InitializeScores();
 
 //Game loop function
 bool EnterGameLoop();

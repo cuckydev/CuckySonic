@@ -455,20 +455,17 @@ bool LEVEL::LoadArt(LEVELTABLE *tableEntry)
 			GET_APPEND_PATH(backPath, tableEntry->artReferencePath, ".background.bmp");
 			
 			backgroundTexture = new TEXTURE(NULL, backPath);
-			if (backgroundTexture == NULL || backgroundTexture->fail)
+			if (backgroundTexture->fail)
 			{
 				Error(fail = backgroundTexture->fail);
 				return true;
 			}
 			
-			//Allocate background scroll array
-			backgroundScroll = (uint16_t*)malloc(sizeof(uint16_t) * backgroundTexture->height);
-			
 			//Load our foreground tilemap
 			GET_APPEND_PATH(artPath, tableEntry->artReferencePath, ".foreground.bmp");
 			
 			tileTexture = new TEXTURE(NULL, artPath);
-			if (tileTexture == NULL || tileTexture->fail)
+			if (tileTexture->fail)
 			{
 				Error(fail = tileTexture->fail);
 				return true;
@@ -477,6 +474,16 @@ bool LEVEL::LoadArt(LEVELTABLE *tableEntry)
 		default:
 			Error(fail = "Unimplemented art format");
 			return true;
+	}
+	
+	//Load background scroll
+	GET_APPEND_PATH(scrollPath, tableEntry->artReferencePath, ".bsc");
+	
+	backgroundScroll = new BACKGROUNDSCROLL(scrollPath, backgroundTexture);
+	if (backgroundScroll->fail)
+	{
+		Error(fail = backgroundScroll->fail);
+		return true;
 	}
 	
 	LOG(("Success!\n"));
@@ -497,6 +504,8 @@ void LEVEL::UnloadAll()
 		delete tileTexture;
 	if (backgroundTexture != NULL)
 		delete backgroundTexture;
+	if (backgroundScroll != NULL)
+		delete backgroundScroll;
 	
 	//Unload players, objects, and camera
 	for (PLAYER *player = playerList; player != NULL;)
@@ -637,11 +646,11 @@ LEVEL::LEVEL(int id, int players, const char **playerPaths)
 	updateStage = true;
 	
 	//Play music
-	PlayMusic(music = tableEntry->music);
+	const MUSICSPEC levelSpec = {currentMusic = music = tableEntry->music, 0, 1.0f};
+	PlayMusic(levelSpec);
 	
-	//Clear time and rings
-	gTime = 0;
-	gRings = 0;
+	//Initialize scores
+	InitializeScores();
 	
 	LOG(("Success!\n"));
 }
@@ -688,45 +697,17 @@ bool LEVEL::UpdateFade()
 {
 	bool finished = true;
 	
-	if (isFadingIn)
-	{
-		//Fade out all of our known palettes
-		if (specialFade)
-		{
-			finished = PaletteFadeInFromWhite(tileTexture->loadedPalette) ? finished : false;
-			finished = PaletteFadeInFromWhite(backgroundTexture->loadedPalette) ? finished : false;
-			for (TEXTURE *texture = objTextureCache; texture != NULL; texture = texture->next)
-				finished = PaletteFadeInFromWhite(texture->loadedPalette) ? finished : false;
-		}
-		else
-		{
-			finished = PaletteFadeInFromBlack(tileTexture->loadedPalette) ? finished : false;
-			finished = PaletteFadeInFromBlack(backgroundTexture->loadedPalette) ? finished : false;
-			for (TEXTURE *texture = objTextureCache; texture != NULL; texture = texture->next)
-				finished = PaletteFadeInFromBlack(texture->loadedPalette) ? finished : false;
-		}
-	}
-	else
-	{
-		//Fade out all of our known palettes
-		if (specialFade)
-		{
-			finished = PaletteFadeOutToWhite(tileTexture->loadedPalette) ? finished : false;
-			finished = PaletteFadeOutToWhite(backgroundTexture->loadedPalette) ? finished : false;
-			for (TEXTURE *texture = objTextureCache; texture != NULL; texture = texture->next)
-				finished = PaletteFadeOutToWhite(texture->loadedPalette) ? finished : false;
-		}
-		else
-		{
-			finished = PaletteFadeOutToBlack(tileTexture->loadedPalette) ? finished : false;
-			finished = PaletteFadeOutToBlack(backgroundTexture->loadedPalette) ? finished : false;
-			for (TEXTURE *texture = objTextureCache; texture != NULL; texture = texture->next)
-				finished = PaletteFadeOutToBlack(texture->loadedPalette) ? finished : false;
-		}
-		
-		//Fade the music out
+	bool (*function)(PALETTE *palette) = (isFadingIn ? (specialFade ? &PaletteFadeInFromWhite : &PaletteFadeInFromBlack) : (specialFade ? &PaletteFadeOutToWhite : &PaletteFadeOutToBlack));
+	
+	//Fade all palettes
+	finished = function(tileTexture->loadedPalette) ? finished : false;
+	finished = function(backgroundTexture->loadedPalette) ? finished : false;
+	for (TEXTURE *texture = objTextureCache; texture != NULL; texture = texture->next)
+		finished = function(texture->loadedPalette) ? finished : false;
+	
+	//Fade music out
+	if (!isFadingIn)
 		SetMusicVolume(max(GetMusicVolume() - (1.0f / 32.0f), 0.0f));
-	}
 	
 	return finished;
 }
@@ -814,7 +795,7 @@ void LEVEL::DynamicEvents()
 	}
 }
 
-//Texture cache
+//Texture cache and mappings cache
 TEXTURE* LEVEL::GetObjectTexture(const char *path)
 {
 	for (TEXTURE *texture = objTextureCache; texture != NULL; texture = texture->next)
@@ -826,18 +807,6 @@ TEXTURE* LEVEL::GetObjectTexture(const char *path)
 	return new TEXTURE(&objTextureCache, path);
 }
 
-TEXTURE* LEVEL::GetObjectTexture(uint8_t *data, int dWidth, int dHeight)
-{
-	for (TEXTURE *texture = objTextureCache; texture != NULL; texture = texture->next)
-	{
-		if (texture->width == dWidth && texture->height == dHeight && !memcmp(texture->texture, data, dWidth * dHeight))
-			return texture;
-	}
-	
-	return new TEXTURE(&objTextureCache, data, dWidth, dHeight);
-}
-
-//Mappings cache
 MAPPINGS* LEVEL::GetObjectMappings(const char *path)
 {
 	for (MAPPINGS *mappings = objMappingsCache; mappings != NULL; mappings = mappings->next)
@@ -847,6 +816,11 @@ MAPPINGS* LEVEL::GetObjectMappings(const char *path)
 	}
 	
 	return new MAPPINGS(&objMappingsCache, path);
+}
+
+LEVEL_RENDERLAYER LEVEL::GetObjectLayer(bool highPriority, int priority)
+{
+	return (LEVEL_RENDERLAYER)(highPriority ? (LEVEL_RENDERLAYER_OBJECT_HIGH_0 + priority) : (LEVEL_RENDERLAYER_OBJECT_LOW_0 + priority));
 }
 
 //Palette update and background scroll
@@ -867,17 +841,35 @@ void LEVEL::PaletteUpdate()
 	}
 }
 
-void LEVEL::GetBackgroundScroll(bool updateScroll, uint16_t *array, int16_t *cameraX, int16_t *cameraY)
+//Change music functions
+void LEVEL::PlayJingle(MUSICSPEC newMusic)
 {
-	switch (zone)
+	//If currently playing the stage's song, remember our resume point
+	if (!strcmp(currentMusic, music))
+		musicResumePoint = GetMusicPosition();
+	
+	//Play music without overlapping our music variables
+	PlayMusic(newMusic);
+}
+
+void LEVEL::ChangeMusic(MUSICSPEC newMusic)
+{
+	//If currently playing the stage's song, remember our resume point
+	if (!strcmp(currentMusic, music))
+		musicResumePoint = GetMusicPosition();
+	
+	if (strcmp(gMusicSpec.name, "ExtraLifeJingle")) //Do not overlap jingles
 	{
-		case ZONEID_GHZ: //Green Hill Zone
-			GHZ_BackgroundScroll(updateScroll, array, cameraX, cameraY);
-			break;
-		case ZONEID_EHZ: //Emerald Hill Zone
-			EHZ_BackgroundScroll(updateScroll, array, cameraX, cameraY);
-			break;
+		//If our new song is the stage's song, play at the resume point
+		if (!strcmp(newMusic.name, music))
+			newMusic.initialPosition = musicResumePoint;
+		
+		//Play our new music
+		PlayMusic(newMusic);
 	}
+	
+	//Set this as our current song
+	currentMusic = newMusic.name;
 }
 
 //Oscillatory Update
@@ -969,6 +961,21 @@ void LEVEL::OscillatoryUpdate()
 //Level update and draw
 bool LEVEL::Update(bool checkTitleCard)
 {
+	//Update music (1-up jingle, fading in)
+	if (IsMusicPlaying() == false && !strcmp(gMusicSpec.name, "ExtraLifeJingle"))
+	{
+		//Get which song to play and the resume point
+		MUSICSPEC resumeSpec = {currentMusic, !strcmp(currentMusic, music) ? musicResumePoint : 0, 0.0f};
+		
+		//Play song
+		PlayMusic(resumeSpec);
+	}
+	else if (!fading)
+	{
+		SetMusicVolume(min(GetMusicVolume() + (1.0f / 180.0f), 1.0f));
+		musicResumePoint = GetMusicPosition();
+	}
+	
 	//Update title card
 	if (checkTitleCard)
 	{
@@ -1037,22 +1044,22 @@ bool LEVEL::Update(bool checkTitleCard)
 void LEVEL::Draw()
 {
 	//Draw background
-	if (backgroundTexture != NULL && camera != NULL)
+	if (backgroundTexture != NULL && backgroundScroll != NULL && camera != NULL)
 	{
 		//Get our background scroll
-		int16_t backX = camera->x;
-		int16_t backY = camera->y;
-		
-		GetBackgroundScroll(updateStage, backgroundScroll, &backX, &backY);
+		int16_t backX, backY;
+		backgroundScroll->GetScroll(camera->x, camera->y, &backX, &backY);
 		
 		//Draw each line
-		for (int i = 0; i < backgroundTexture->height; i++)
+		int upperLine = max(backY, 0);
+		int lowerLine = min(backY + SCREEN_HEIGHT, backgroundTexture->height);
+		
+		SDL_Rect backSrc = {0, upperLine, backgroundTexture->width, 1};
+		for (int i = upperLine; i < lowerLine; i++)
 		{
-			for (int x = -(backgroundScroll[i] % backgroundTexture->width); x < SCREEN_WIDTH; x += backgroundTexture->width)
-			{
-				SDL_Rect backSrc = {0, i, backgroundTexture->width, 1};
-				backgroundTexture->Draw(LEVEL_RENDERLAYER_BACKGROUND, backgroundTexture->loadedPalette, &backSrc, x, -backY + i, false, false);
-			}
+			for (int x = -((backgroundScroll->scrollArray[i] + backX) % backgroundTexture->width); x < SCREEN_WIDTH; x += backgroundTexture->width)
+				backgroundTexture->Draw(LEVEL_RENDERLAYER_BACKGROUND, backgroundTexture->loadedPalette, &backSrc, x, i - backY, false, false);
+			backSrc.y++;
 		}
 	}
 	
@@ -1061,12 +1068,12 @@ void LEVEL::Draw()
 	{
 		int cLeft = max(camera->x / 16, 0);
 		int cTop = max(camera->y / 16, 0);
-		int cRight = min((camera->x + SCREEN_WIDTH) / 16, gLevel->layout.width - 1);
-		int cBottom = min((camera->y + SCREEN_HEIGHT) / 16, gLevel->layout.height - 1);
+		int cRight = min((camera->x + SCREEN_WIDTH + 15) / 16, gLevel->layout.width - 1);
+		int cBottom = min((camera->y + SCREEN_HEIGHT + 15) / 16, gLevel->layout.height - 1);
 		
-		for (int ty = cTop; ty <= cBottom; ty++)
+		for (int ty = cTop; ty < cBottom; ty++)
 		{
-			for (int tx = cLeft; tx <= cRight; tx++)
+			for (int tx = cLeft; tx < cRight; tx++)
 			{
 				//Get tile
 				TILE *tile = &layout.foreground[ty * layout.width + tx];
@@ -1075,8 +1082,8 @@ void LEVEL::Draw()
 					continue;
 				
 				//Draw tile
-				SDL_Rect backSrc = {0, 16 * tile->tile, 16, 16};
-				SDL_Rect frontSrc = {16, 16 * tile->tile, 16, 16};
+				SDL_Rect backSrc = {0, tile->tile * 16, 16, 16};
+				SDL_Rect frontSrc = {16, tile->tile * 16, 16, 16};
 				tileTexture->Draw(LEVEL_RENDERLAYER_FOREGROUND_LOW, tileTexture->loadedPalette, &backSrc, tx * 16 - camera->x, ty * 16 - camera->y, tile->xFlip, tile->yFlip);
 				tileTexture->Draw(LEVEL_RENDERLAYER_FOREGROUND_HIGH, tileTexture->loadedPalette, &frontSrc, tx * 16 - camera->x, ty * 16 - camera->y, tile->xFlip, tile->yFlip);
 			}

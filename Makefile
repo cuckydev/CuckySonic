@@ -44,6 +44,7 @@ SOURCES = \
 	Mappings \
 	Level \
 	LevelCollision \
+	BackgroundScroll \
 	Game \
 	GM_Splash \
 	GM_Title \

@@ -1,11 +1,15 @@
-#include "SDL_messagebox.h"
 #include <stdlib.h>
 #include <time.h>
+#include "SDL_messagebox.h"
+#include "Audio.h"
 
 bool Error(const char *error)
 {
 	//Print to the console
 	printf("Error: %s\n", error);
+	
+	//Yield audio
+	YieldAudio(true);
 	
 	//Define message box
 	const SDL_MessageBoxButtonData msgButtons[] = {

@@ -248,6 +248,7 @@ void OBJECT::ExitPlatform(PLAYER *player, int i)
 {
 	player->status.shouldNotFall = false;
 	playerContact[i].standing = false;
+	player->status.inAir = true;
 }
 
 //Solid object and its variants
@@ -463,7 +464,7 @@ bool OBJECT::Update()
 	if (function != NULL)
 		function(this);
 	
-	//If there was an error RETURN TREUE NOOOOO
+	//Check if any of our assets failed to load
 	if (texture != NULL && texture->fail != NULL)
 		return Error(texture->fail);
 	if (mappings != NULL && mappings->fail != NULL)
@@ -503,7 +504,7 @@ void OBJECT::DrawToScreen()
 		
 		int alignX = renderFlags.alignPlane ? gLevel->camera->x : 0;
 		int alignY = renderFlags.alignPlane ? gLevel->camera->y : 0;
-		texture->Draw((highPriority ? LEVEL_RENDERLAYER_OBJECT_HIGH_0 : LEVEL_RENDERLAYER_OBJECT_0) + ((OBJECT_LAYERS - 1) - priority), texture->loadedPalette, mapRect, x.pos - origX - alignX, y.pos - origY - alignY, renderFlags.xFlip, renderFlags.yFlip);
+		texture->Draw(gLevel->GetObjectLayer(highPriority, priority), texture->loadedPalette, mapRect, x.pos - origX - alignX, y.pos - origY - alignY, renderFlags.xFlip, renderFlags.yFlip);
 	}
 }
 

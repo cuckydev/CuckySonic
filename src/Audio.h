@@ -140,10 +140,6 @@ class MUSIC
 		
 		void Play(int position);
 		int Pause();
-		void SetVolume(float setVolume);
-		float GetVolume();
-		
-		void ResetProperties();
 		
 		void Loop();
 		ma_uint32 ReadSamplesToBuffer(float *buffer, int samples);
@@ -152,19 +148,35 @@ class MUSIC
 
 ma_uint32 MusicReadSamples(ma_pcm_converter *dsp, void *buffer, ma_uint32 requestFrames, void *musicPointer);
 
-//Music functions
-extern const char *gCurrentMusic;
+//Music spec
+struct MUSICSPEC
+{
+	const char *name;
+	int initialPosition;
+	float initialVolume;
+};
 
-void PlayMusic(const char *name);
+extern MUSICSPEC gMusicSpec;
+
+//Music functions
+void PlayMusic(const MUSICSPEC musicSpec);
 int PauseMusic();
-void ResumeMusic(int position);
+
 void SetMusicVolume(float volume);
 float GetMusicVolume();
+
+int GetMusicPosition();
+
+bool IsMusicPlaying();
 
 //Sound functions
 void PlaySound(SOUNDID id);
 void StopSound(SOUNDID id);
 
 //Audio subsystem functions
+extern bool gAudioYield;
+
+void YieldAudio(bool yield);
+
 bool InitializeAudio();
 void QuitAudio();

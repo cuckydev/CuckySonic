@@ -349,14 +349,12 @@ MUSIC::MUSIC(const char *name)
 	}
 	
 	loopStart = (int64_t)SDL_ReadBE64(metafp);
+	
 	SDL_RWclose(metafp);
 	
 	//Initialize the resampler
 	const ma_pcm_converter_config config = ma_pcm_converter_config_init(ma_format_f32, channels, frequency, ma_format_f32, 2, AUDIO_FREQUENCY, MusicReadSamples, this);
 	ma_pcm_converter_init(&config, &resampler);
-	
-	//Initialize other properties
-	ResetProperties();
 	
 	LOG(("Success!\n"));
 }
@@ -377,11 +375,7 @@ void MUSIC::Play(int position)
 	
 	//Seek within the given file
 	if (stb_vorbis_seek_frame(file, position) < 0)
-	{
-		Warn("Failed to play the music at given position");
-		playing = false;
-		return;
-	}
+		stb_vorbis_seek_frame(file, 0); //Seek to the beginning if failed
 }
 
 int MUSIC::Pause()
@@ -391,30 +385,12 @@ int MUSIC::Pause()
 	return internalPosition;
 }
 
-void MUSIC::SetVolume(float setVolume)
-{
-	//Set volume
-	volume = setVolume;
-}
-
-float MUSIC::GetVolume()
-{
-	//Return volume
-	return volume;
-}
-
-void MUSIC::ResetProperties()
-{
-	//Reset other properties
-	volume = 1.0f;
-}
-
 //Mixer functions
 void MUSIC::Loop()
 {
 	//Seek back to definition->loopStart
 	if (stb_vorbis_seek_frame(file, (int)(internalPosition = loopStart)) < 0)
-		playing = false;
+		stb_vorbis_seek_frame(file, 0); //Seek to the beginning if failed
 }
 
 ma_uint32 MUSIC::ReadSamplesToBuffer(float *buffer, int samples)
@@ -467,31 +443,34 @@ ma_uint32 MusicReadSamples(ma_pcm_converter *dsp, void *buffer, ma_uint32 reques
 //Music functions
 MUSIC *internalMusic = NULL;
 SDL_Thread *loadMusicThread = NULL;
-const char *gCurrentMusic = NULL;
+MUSICSPEC gMusicSpec;
 
 int LoadMusicThreadFunction(void *dummy)
 {
 	//Unload current song
-	if (internalMusic != NULL && gCurrentMusic != internalMusic->source)
+	if (internalMusic != NULL && gMusicSpec.name != internalMusic->source)
 	{
 		delete internalMusic;
 		internalMusic = NULL;
 	}
 	
 	//Load new song (if not null)
-	if (gCurrentMusic != NULL)
+	if (gMusicSpec.name != NULL)
 	{
+		//If not reloading, initialize our internal music
 		if (internalMusic == NULL)
-			internalMusic = new MUSIC((const char*)gCurrentMusic);
-		internalMusic->ResetProperties();
-		internalMusic->Play(0);
+			internalMusic = new MUSIC(gMusicSpec.name);
+		
+		//Play our music using the given specifications
+		internalMusic->volume = gMusicSpec.initialVolume;
+		internalMusic->Play(gMusicSpec.initialPosition);
 	}
 	
 	loadMusicThread = NULL;
 	return 0;
 }
 
-void PlayMusic(const char *name)
+void PlayMusic(const MUSICSPEC musicSpec)
 {
 	//Wait for audio device to be finished and lock it
 	SDL_LockAudioDevice(audioDevice);
@@ -500,8 +479,8 @@ void PlayMusic(const char *name)
 	SDL_WaitThread(loadMusicThread, NULL);
 	loadMusicThread = NULL;
 	
-	//Load new song in a separate thread
-	gCurrentMusic = name;
+	//Load new song using the specifications in a separate thread
+	gMusicSpec = musicSpec;
 	loadMusicThread = SDL_CreateThread(LoadMusicThreadFunction, "LoadMusicThread", NULL);
 	
 	//Resume audio device
@@ -510,70 +489,121 @@ void PlayMusic(const char *name)
 
 int PauseMusic()
 {
-	//Wait for song to have already finished loading
-	SDL_WaitThread(loadMusicThread, NULL);
-	loadMusicThread = NULL;
+	int position = gMusicSpec.initialPosition;
 	
-	//Pause and return current position
-	if (internalMusic != NULL)
-		return internalMusic->Pause();
-	return -1;
-}
-
-void ResumeMusic(int position)
-{
-	//Wait for song to have already finished loading
-	SDL_WaitThread(loadMusicThread, NULL);
-	loadMusicThread = NULL;
+	if (loadMusicThread == NULL)
+	{
+		//Wait for audio device to be finished and lock it
+		SDL_LockAudioDevice(audioDevice);
+		
+		//Set the volume
+		if (internalMusic != NULL)
+			position = internalMusic->Pause();
+		else
+			position = -1;
+		
+		//Resume audio device
+		SDL_UnlockAudioDevice(audioDevice);
+	}
 	
-	//Wait for audio device to be finished and lock it
-	SDL_LockAudioDevice(audioDevice);
-	
-	//Resume at given position
-	if (internalMusic != NULL)
-		internalMusic->Play(position);
-	
-	//Resume audio device
-	SDL_UnlockAudioDevice(audioDevice);
+	return position;
 }
 
 void SetMusicVolume(float volume)
 {
-	//Wait for song to have already finished loading
-	SDL_WaitThread(loadMusicThread, NULL);
-	loadMusicThread = NULL;
-	
-	//Wait for audio device to be finished and lock it
-	SDL_LockAudioDevice(audioDevice);
-	
-	//Set the volume
-	if (internalMusic != NULL)
-		internalMusic->SetVolume(volume);
-	
-	//Resume audio device
-	SDL_UnlockAudioDevice(audioDevice);
+	if (loadMusicThread == NULL)
+	{
+		//Wait for audio device to be finished and lock it
+		SDL_LockAudioDevice(audioDevice);
+		
+		//Set the volume
+		if (internalMusic != NULL)
+			internalMusic->volume = volume;
+		
+		//Resume audio device
+		SDL_UnlockAudioDevice(audioDevice);
+	}
 }
 
 float GetMusicVolume()
 {
-	//Wait for song to have already finished loading
-	SDL_WaitThread(loadMusicThread, NULL);
-	loadMusicThread = NULL;
+	float volume = gMusicSpec.initialVolume;
 	
-	//Wait for audio device to be finished and lock it
-	SDL_LockAudioDevice(audioDevice);
+	if (loadMusicThread == NULL)
+	{
+		//Wait for audio device to be finished and lock it
+		SDL_LockAudioDevice(audioDevice);
+		
+		//Set the volume
+		if (internalMusic != NULL)
+			volume = internalMusic->volume;
+		
+		//Resume audio device
+		SDL_UnlockAudioDevice(audioDevice);
+	}
 	
-	//Get and return the volume
-	float volume = 1.0f;
-	if (internalMusic != NULL)
-		volume = internalMusic->GetVolume();
-	
-	//Resume audio device
-	SDL_UnlockAudioDevice(audioDevice);
 	return volume;
 }
 
+int GetMusicPosition()
+{
+	int position = gMusicSpec.initialPosition;
+	
+	if (loadMusicThread == NULL)
+	{
+		//Wait for audio device to be finished and lock it
+		SDL_LockAudioDevice(audioDevice);
+		
+		//Set the volume
+		if (internalMusic != NULL)
+			position = internalMusic->internalPosition;
+		else
+			position = 0;
+		
+		//Resume audio device
+		SDL_UnlockAudioDevice(audioDevice);
+	}
+	
+	return position;
+}
+
+bool IsMusicPlaying()
+{
+	bool playing = true;
+	
+	if (loadMusicThread == NULL)
+	{
+		//Wait for audio device to be finished and lock it
+		SDL_LockAudioDevice(audioDevice);
+		
+		//Set the volume
+		if (internalMusic != NULL)
+			playing = internalMusic->playing;
+		else
+			playing = false;
+		
+		//Resume audio device
+		SDL_UnlockAudioDevice(audioDevice);
+	}
+	
+	return playing;
+}
+
 //Callback function
+bool gAudioYield = false;
+
+void YieldAudio(bool yield)
+{
+	//Wait for audio device to be finished and lock it
+	SDL_LockAudioDevice(audioDevice);
+	
+	//Set yield
+	gAudioYield = yield;
+	
+	//Resume audio device
+	SDL_UnlockAudioDevice(audioDevice);
+}
+
 void AudioCallback(void *userdata, uint8_t *stream, int length)
 {
 	//We aren't using userdata, this prevents the warning
@@ -581,6 +611,16 @@ void AudioCallback(void *userdata, uint8_t *stream, int length)
 	
 	//Get our buffer to render to
 	int samples = length / (2 * sizeof(float));
+	
+	//If window is unfocused, don't mix anything, pause audio
+	if (gAudioYield)
+	{
+		//Clear the stream with 0.0f
+		float *buffer = (float*)stream;
+		for (int i = 0; i < samples * 2; i++)
+			*buffer++ = 0.0f;
+		return;
+	}
 	
 	//Mix music into the buffer or clear the buffer
 	if (loadMusicThread == NULL && internalMusic != NULL && internalMusic->playing)

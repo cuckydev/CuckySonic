@@ -4,6 +4,7 @@
 #include "Mappings.h"
 #include "LevelCollision.h"
 #include "GameConstants.h"
+#include "CommonMacros.h"
 #include "Player.h"
 
 #define SCRATCH_ENTRIES 0x20
@@ -53,51 +54,8 @@ class OBJECT
 		TEXTURE *texture;
 		MAPPINGS *mappings;
 		
-		#if SDL_BYTEORDER == SDL_BIGENDIAN
-			//X-position (big endian)
-			union
-			{
-				struct
-				{
-					int16_t xPos;
-					uint16_t xSub;
-				};
-				int32_t xPosLong;
-			};
-			
-			//Y-position (big endian)
-			union
-			{
-				struct
-				{
-					int16_t yPos;
-					uint16_t ySub;
-				};
-				int32_t yPosLong;
-			};
-		#else
-			//X-position (little endian)
-			union
-			{
-				struct
-				{
-					uint16_t sub;
-					int16_t pos;
-				} x;
-				int32_t xPosLong;
-			};
-			
-			//Y-position (little endian)
-			union
-			{
-				struct
-				{
-					uint16_t sub;
-					int16_t pos;
-				} y;
-				int32_t yPosLong;
-			};
-		#endif
+		POSDEF(x)
+		POSDEF(y)
 		
 		//Speeds
 		int16_t xVel;		//Global X-velocity
