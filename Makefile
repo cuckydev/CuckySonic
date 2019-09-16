@@ -34,6 +34,7 @@ SOURCES = \
 	Error \
 	Path \
 	Render \
+	Render_Blit \
 	Event \
 	Input \
 	Audio \

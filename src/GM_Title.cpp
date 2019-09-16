@@ -77,7 +77,7 @@ bool GM_Title(bool *noError)
 	//Load our title sheet
 	TEXTURE *titleTexture = new TEXTURE(NULL, "data/Title.bmp");
 	if (titleTexture->fail != NULL)
-		return (*noError = false);
+		return (*noError = !Error(titleTexture->fail));
 	
 	//Emblem and banner positions
 	const int emblemX = (SCREEN_WIDTH - titleEmblem.w) / 2;
@@ -107,11 +107,11 @@ bool GM_Title(bool *noError)
 	//Background
 	TEXTURE *backgroundTexture = new TEXTURE(NULL, "data/TitleBackground.bmp");
 	if (backgroundTexture->fail != NULL)
-		return (*noError = false);
+		return (*noError = !Error(backgroundTexture->fail));
 	
 	BACKGROUNDSCROLL *backgroundScroll = new BACKGROUNDSCROLL("data/Title.bsc", backgroundTexture);
 	if (backgroundScroll->fail != NULL)
-		return (*noError = false);
+		return (*noError = !Error(backgroundScroll->fail));
 	
 	int backgroundX = 0;
 	

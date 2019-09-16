@@ -266,7 +266,7 @@ OBJECT_SOLIDTOUCH OBJECT::SolidObject(int16_t width, int16_t height, int16_t las
 		if (playerContact[i].standing)
 		{
 			//Check if we're to exit the top of the object
-			int16_t xDiff = (player->x.pos - x.pos) + width;
+			int16_t xDiff = (player->x.pos - lastXPos) + width;
 			if (player->status.inAir || xDiff < 0 || xDiff >= width * 2)
 			{
 				//Exit top as platform, then check next player

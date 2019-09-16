@@ -103,7 +103,6 @@ class SOFTWAREBUFFER
 		RENDERQUEUE *queueEntry[RENDERLAYERS];
 		
 		//Dimensions and pixel drawn buffer
-		bool *drawnPixel;
 		int width;
 		int height;
 		
@@ -122,7 +121,10 @@ class SOFTWAREBUFFER
 		void DrawPoint(int layer, int x, int y, PALCOLOUR *colour);
 		void DrawQuad(int layer, SDL_Rect *quad, PALCOLOUR *colour);
 		
-		void RenderToBuffer(PIXELFUNCTION pixelFunction, uint8_t bpp, PALCOLOUR *backgroundColour, uint8_t *buffer, int pitch);
+		void Blit8 (PALCOLOUR *backgroundColour, uint8_t  *buffer, int pitch);
+		void Blit16(PALCOLOUR *backgroundColour, uint16_t *buffer, int pitch);
+		void Blit32(PALCOLOUR *backgroundColour, uint32_t *buffer, int pitch);
+		
 		bool RenderToScreen(PALCOLOUR *backgroundColour);
 };
 

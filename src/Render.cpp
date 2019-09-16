@@ -50,13 +50,11 @@ TEXTURE::TEXTURE(TEXTURE **linkedList, const char *path)
 		return;
 	}
 	
-	for (int i = 0; i < 0x100; i++)
-	{
-		if (bitmap->format->palette->ncolors)
-			SetPaletteColour(&loadedPalette->colour[i], bitmap->format->palette->colors[i].r, bitmap->format->palette->colors[i].g, bitmap->format->palette->colors[i].b);
-		else
-			SetPaletteColour(&loadedPalette->colour[i], 0, 0, 0);
-	}
+	int i;
+	for (i = 0; i < bitmap->format->palette->ncolors; i++)
+		SetPaletteColour(&loadedPalette->colour[i], bitmap->format->palette->colors[i].r, bitmap->format->palette->colors[i].g, bitmap->format->palette->colors[i].b);
+	for (; i < 0x100; i++)
+		SetPaletteColour(&loadedPalette->colour[i], 0, 0, 0);
 	
 	//Allocate texture data
 	texture = (uint8_t*)malloc(bitmap->pitch * bitmap->h);
@@ -129,73 +127,51 @@ TEXTURE::~TEXTURE()
 
 void TEXTURE::Draw(int layer, PALETTE *palette, const SDL_Rect *src, int x, int y, bool xFlip, bool yFlip)
 {
-	//Check if this is in view bounds (if not, just return, no point in clogging the queue with stuff that will not be rendered)
-	if (x <= -src->w || x >= gSoftwareBuffer->width)
-		return;
-	if (y <= -src->h || y >= gSoftwareBuffer->height)
-		return;
+	//Get the source rect to use (NULL = entire texture)
+	SDL_Rect newSrc;
+	if (src != NULL)
+		newSrc = *src;
+	else
+		newSrc = {0, 0, width, height};
 	
-	//Set the member of the render queue
-	gSoftwareBuffer->queueEntry[layer]->type = RENDERQUEUE_TEXTURE;
-	gSoftwareBuffer->queueEntry[layer]->dest = {x, y, src->w, src->h};
-	gSoftwareBuffer->queueEntry[layer]->texture.srcX = src->x;
-	gSoftwareBuffer->queueEntry[layer]->texture.srcY = src->y;
-	
-	//Clip top & left
-	int clipL = 0, clipT = 0;
-	
+	//Clip to the destination
 	if (x < 0)
 	{
-		clipL = -x;
-		
-		//Clip destination rect
-		gSoftwareBuffer->queueEntry[layer]->dest.x += clipL;
-		gSoftwareBuffer->queueEntry[layer]->dest.w -= clipL;
-		
-		//Clip source, but only if not flipped
 		if (!xFlip)
-			gSoftwareBuffer->queueEntry[layer]->texture.srcX += clipL;
+			newSrc.x -= x;
+		newSrc.w += x;
+		x -= x;
+	}
+	
+	int dx = x + newSrc.w - gSoftwareBuffer->width;
+	if (dx > 0)
+	{
+		if (xFlip)
+			newSrc.x += dx;
+		newSrc.w -= dx;
 	}
 	
 	if (y < 0)
 	{
-		clipT = -y;
-		
-		//Clip destination rect
-		gSoftwareBuffer->queueEntry[layer]->dest.y += clipT;
-		gSoftwareBuffer->queueEntry[layer]->dest.h -= clipT;
-		
-		//Clip source, but only if not flipped
 		if (!yFlip)
-			gSoftwareBuffer->queueEntry[layer]->texture.srcY += clipT;
+			newSrc.y -= y;
+		newSrc.h += y;
+		y -= y;
 	}
 	
-	//Clip right and bottom
-	int clipR = 0, clipB = 0;
-	
-	if (gSoftwareBuffer->queueEntry[layer]->dest.x > (gSoftwareBuffer->width - gSoftwareBuffer->queueEntry[layer]->dest.w))
+	int dy = y + newSrc.h - gSoftwareBuffer->height;
+	if (dy > 0)
 	{
-		clipR = gSoftwareBuffer->queueEntry[layer]->dest.x - (gSoftwareBuffer->width - gSoftwareBuffer->queueEntry[layer]->dest.w);
-		
-		//Clip destination rect
-		gSoftwareBuffer->queueEntry[layer]->dest.w -= clipR;
-		
-		//Clip source, but only if flipped
-		if (xFlip)
-			gSoftwareBuffer->queueEntry[layer]->texture.srcX += clipR;
-	}
-	
-	if (gSoftwareBuffer->queueEntry[layer]->dest.y > (gSoftwareBuffer->height - gSoftwareBuffer->queueEntry[layer]->dest.h))
-	{
-		clipB = gSoftwareBuffer->queueEntry[layer]->dest.y - (gSoftwareBuffer->height - gSoftwareBuffer->queueEntry[layer]->dest.h);
-		
-		//Clip destination rect
-		gSoftwareBuffer->queueEntry[layer]->dest.h -= clipB;
-		
-		//Clip source, but only if flipped
 		if (yFlip)
-			gSoftwareBuffer->queueEntry[layer]->texture.srcY += clipB;
+			newSrc.y += dy;
+		newSrc.h -= dy;
 	}
+	
+	//Set the member of the render queue
+	gSoftwareBuffer->queueEntry[layer]->type = RENDERQUEUE_TEXTURE;
+	gSoftwareBuffer->queueEntry[layer]->dest = {x, y, newSrc.w, newSrc.h};
+	gSoftwareBuffer->queueEntry[layer]->texture.srcX = newSrc.x;
+	gSoftwareBuffer->queueEntry[layer]->texture.srcY = newSrc.y;
 	
 	//Set palette and texture references
 	gSoftwareBuffer->queueEntry[layer]->texture.palette = palette;
@@ -300,12 +276,6 @@ void SOFTWAREBUFFER::DrawPoint(int layer, int x, int y, PALCOLOUR *colour)
 
 void SOFTWAREBUFFER::DrawQuad(int layer, SDL_Rect *quad, PALCOLOUR *colour)
 {
-	//Check if this is in view bounds (if not, just return, no point in clogging the queue with stuff that will not be rendered)
-	if (quad->x <= -quad->w || quad->x >= width)
-		return;
-	if (quad->y <= -quad->h || quad->y >= height)
-		return;
-	
 	//Set the member of the render queue
 	queueEntry[layer]->type = RENDERQUEUE_SOLID;
 	queueEntry[layer]->dest = *quad;
@@ -329,6 +299,10 @@ void SOFTWAREBUFFER::DrawQuad(int layer, SDL_Rect *quad, PALCOLOUR *colour)
 	if (queueEntry[layer]->dest.y > (height - queueEntry[layer]->dest.h))
 		queueEntry[layer]->dest.h -= queueEntry[layer]->dest.y - (height - queueEntry[layer]->dest.h);
 	
+	//Quit if clipped off-screen
+	if (queueEntry[layer]->dest.w <= 0 || queueEntry[layer]->dest.h <= 0)
+		return;
+	
 	//Set colour reference
 	queueEntry[layer]->solid.colour = colour;
 	
@@ -336,230 +310,7 @@ void SOFTWAREBUFFER::DrawQuad(int layer, SDL_Rect *quad, PALCOLOUR *colour)
 	queueEntry[layer]++;
 }
 
-//Render the software buffer to the screen
-/*
-#define SBRTSD(macro)	\
-	if (backgroundColour != NULL)	\
-	{	\
-		for (int px = 0; px < width * height; px++)	\
-			macro(writeBuffer, bpp, px, backgroundColour->colour);	\
-	}	\
-	for (int i = 0; i < RENDERLAYERS; i++)	\
-	{	\
-		for (RENDERQUEUE *entry = queue[i]; entry < queueEntry[i]; entry++)	\
-		{	\
-			switch (entry->type)	\
-			{	\
-				case RENDERQUEUE_TEXTURE:	\
-				{	\
-					int finc, fpitch;	\
-					fpx = entry->texture.srcX + entry->texture.srcY * entry->texture.texture->width;	\
-					dpx = entry->dest.x + entry->dest.y * writePitch;	\
-					if (entry->texture.yFlip)	\
-					{	\
-						fpx += (entry->texture.texture->width * (entry->dest.h - 1));	\
-						fpitch = -(entry->texture.texture->width + entry->dest.w);	\
-					}	\
-					else	\
-					{	\
-						fpitch = entry->texture.texture->width - entry->dest.w;	\
-					}	\
-					if (entry->texture.xFlip)	\
-					{	\
-						fpx += entry->dest.w - 1;	\
-						fpitch += entry->dest.w * 2;	\
-					}	\
-					finc = entry->texture.xFlip ? -1 : 1;	\
-					for (int fy = entry->texture.srcY; fy < entry->texture.srcY + entry->dest.h; fy++)	\
-					{	\
-						for (int fx = entry->texture.srcX; fx < entry->texture.srcX + entry->dest.w; fx++)	\
-						{	\
-							const uint8_t index = entry->texture.texture->texture[fpx];	\
-							fpx += finc;	\
-							if (index != 0 && drawnPixel[dpx] == false)	\
-							{	\
-								macro(writeBuffer, bpp, dpx, entry->texture.palette->colour[index].colour);	\
-								drawnPixel[dpx] = true;	\
-							}	\
-							dpx++;	\
-						}	\
-						fpx += fpitch;	\
-						dpx += writePitch - entry->dest.w;	\
-					}	\
-					break;	\
-				}	\
-				case RENDERQUEUE_SOLID:	\
-				{	\
-					dpx = entry->dest.x + entry->dest.y * writePitch;	\
-						\
-					for (int fy = entry->dest.y; fy < entry->dest.y + entry->dest.h; fy++)	\
-					{	\
-						for (int fx = entry->dest.x; fx < entry->dest.x + entry->dest.w; fx++)	\
-						{	\
-							if (drawnPixel[dpx] == false)	\
-							{	\
-								macro(writeBuffer, bpp, dpx, entry->solid.colour->colour);	\
-								drawnPixel[dpx] = true;	\
-							}	\
-							dpx++;	\
-						}	\
-						dpx += writePitch - entry->dest.w;	\
-					}	\
-					break;	\
-				}	\
-				default:	\
-					break;	\
-			}	\
-		}	\
-		queueEntry[i] = queue[i];	\
-	}
-*/
-
-//Set pixel functions (various byte sizes)
-void SetPixel_8BPP(uint8_t *buffer, uint32_t value)
-{
-	*((uint8_t*)buffer) = value;
-}
-
-void SetPixel_16BPP(uint8_t *buffer, uint32_t value)
-{
-	*((uint16_t*)buffer) = value;
-}
-
-void SetPixel_24BPP(uint8_t *buffer, uint32_t value)
-{
-	#if (SDL_BYTEORDER == SDL_BIGENDIAN)
-		uint8_t *valPtr = ((uint8_t*)&value) + 1;
-	//   v
-	// 0|123|
-	#else
-		uint8_t *valPtr = ((uint8_t*)&value);
-	//  v
-	// |321|0
-	#endif
-	
-	*buffer++ = *valPtr++;
-	*buffer++ = *valPtr++;
-	*buffer++ = *valPtr++;
-}
-
-void SetPixel_32BPP(uint8_t *buffer, uint32_t value)
-{
-	*((uint32_t*)buffer) = value;
-}
-
-//Pixel function array
-const PIXELFUNCTION pixelFunctions[4] = {&SetPixel_8BPP, &SetPixel_16BPP, &SetPixel_24BPP, &SetPixel_32BPP};
-
-//Secondary render function
-void SOFTWAREBUFFER::RenderToBuffer(PIXELFUNCTION pixelFunction, uint8_t bpp, PALCOLOUR *backgroundColour, uint8_t *buffer, int pitch)
-{
-	//Clear to the given background colour
-	if (backgroundColour != NULL)
-	{
-		for (int px = 0; px < width * height; px++)
-			pixelFunction(buffer + px * bpp, backgroundColour->colour);
-	}
-	
-	//Render all of our render entries
-	for (int i = 0; i < RENDERLAYERS; i++)
-	{
-		for (RENDERQUEUE *entry = queue[i]; entry < queueEntry[i]; entry++)
-		{
-			switch (entry->type)
-			{
-				case RENDERQUEUE_TEXTURE:
-				{
-					//Get how to render the texture according to our x and y flipping
-					int finc, fpitch;
-					uint8_t *fpx = &entry->texture.texture->texture[entry->texture.srcX + entry->texture.srcY * entry->texture.texture->width];
-					int dpx = entry->dest.x + entry->dest.y * pitch;
-					
-					//Vertical flip
-					if (entry->texture.yFlip)
-					{
-						//Start at bottom and move upwards
-						fpx += (entry->texture.texture->width * (entry->dest.h - 1));
-						fpitch = -(entry->texture.texture->width + entry->dest.w);
-					}
-					else
-					{
-						//Move downwards
-						fpitch = entry->texture.texture->width - entry->dest.w;
-					}
-					
-					//Horizontal flip
-					if (entry->texture.xFlip)
-					{
-						//Start at the right side of the texture
-						fpx += entry->dest.w - 1;
-						
-						//Increment backwards and start at the right side of the texture
-						finc = -1;
-						fpitch += entry->dest.w * 2;
-					}
-					else
-					{
-						//Increment forwards
-						finc = 1;
-					}
-					
-					for (int fy = entry->texture.srcY; fy < entry->texture.srcY + entry->dest.h; fy++)
-					{
-						for (int fx = entry->texture.srcX; fx < entry->texture.srcX + entry->dest.w; fx++)
-						{
-							//Render to the buffer
-							if (*fpx != 0 && drawnPixel[dpx] == false)
-							{
-								pixelFunction(buffer + (dpx * bpp), entry->texture.palette->colour[*fpx].colour);
-								drawnPixel[dpx] = true;
-							}
-							
-							//Render to the next pixel
-							fpx += finc;
-							dpx++;
-						}
-						
-						//Proceed to the next line
-						fpx += fpitch;
-						dpx += pitch - entry->dest.w;
-					}
-					break;
-				}
-				case RENDERQUEUE_SOLID:
-				{
-					int dpx = entry->dest.x + entry->dest.y * pitch;
-					
-					for (int fy = entry->dest.y; fy < entry->dest.y + entry->dest.h; fy++)
-					{
-						for (int fx = entry->dest.x; fx < entry->dest.x + entry->dest.w; fx++)
-						{
-							//Render to the buffer
-							if (drawnPixel[dpx] == false)
-							{
-								pixelFunction(buffer + (dpx * bpp), entry->solid.colour->colour);
-								drawnPixel[dpx] = true;
-							}
-							
-							//Render to the next pixel
-							dpx++;
-						}
-						
-						//Proceed to the next line
-						dpx += pitch - entry->dest.w;
-					}
-					
-					break;
-				}
-			}
-		}
-		
-		//Reset this layer to the beginning
-		queueEntry[i] = queue[i];
-	}
-}
-
-//Main render function
+//Primary render function
 bool SOFTWAREBUFFER::RenderToScreen(PALCOLOUR *backgroundColour)
 {
 	//Lock texture
@@ -568,17 +319,23 @@ bool SOFTWAREBUFFER::RenderToScreen(PALCOLOUR *backgroundColour)
 	if (SDL_LockTexture(texture, NULL, &writeBuffer, &writePitch) < 0)
 		return Error(SDL_GetError());
 	
-	//Allocate pixel drawn buffer (I know this seems like the stupidest place to put this, but we can't do it before, since we don't have access to the pitch then)
-	if (drawnPixel == NULL)
-		drawnPixel = (bool*)malloc(writePitch * height * sizeof(bool));
-	
 	//Render to our buffer
 	const uint8_t bpp = format->BytesPerPixel;
-	writePitch /= bpp; //This converts our pitch into pixels rather than bytes
 	
-	PIXELFUNCTION pixelFunction = pixelFunctions[bpp - 1];
-	memset(drawnPixel, 0, writePitch * height);
-	RenderToBuffer(pixelFunction, bpp, backgroundColour, (uint8_t*)writeBuffer, writePitch);
+	switch (bpp)
+	{
+		case 1:
+			//Blit8 (backgroundColour,  (uint8_t*)writeBuffer, writePitch / 1);
+			break;
+		case 2:
+			//Blit16(backgroundColour, (uint16_t*)writeBuffer, writePitch / 2);
+			break;
+		case 4:
+			Blit32(backgroundColour, (uint32_t*)writeBuffer, writePitch / 4);
+			break;
+		default:
+			return Error("Unsupported BPP");
+	}
 	
 	//Unlock
 	SDL_UnlockTexture(texture);

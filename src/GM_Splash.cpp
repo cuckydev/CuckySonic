@@ -17,7 +17,7 @@ bool GM_Splash(bool *noError)
 	//Load our splash image
 	TEXTURE *splashTexture = new TEXTURE(NULL, "data/Splash.bmp");
 	if (splashTexture->fail != NULL)
-		return (*noError = false);
+		return (*noError = !Error(splashTexture->fail));
 	
 	//Make our palette white for fade-in
 	FillPaletteWhite(splashTexture->loadedPalette);
