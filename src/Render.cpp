@@ -12,6 +12,8 @@ SDL_Window *gWindow;
 SDL_Renderer *gRenderer;
 SOFTWAREBUFFER *gSoftwareBuffer;
 
+SDL_PixelFormat *gNativeFormat;
+
 //VSync / framerate limiter
 unsigned int vsyncMultiple = 0;
 const long double framerateMilliseconds = (1000.0 / FRAMERATE);
@@ -125,71 +127,11 @@ TEXTURE::~TEXTURE()
 		delete loadedPalette;
 }
 
-void TEXTURE::Draw(int layer, PALETTE *palette, const SDL_Rect *src, int x, int y, bool xFlip, bool yFlip)
-{
-	//Get the source rect to use (NULL = entire texture)
-	SDL_Rect newSrc;
-	if (src != NULL)
-		newSrc = *src;
-	else
-		newSrc = {0, 0, width, height};
-	
-	//Clip to the destination
-	if (x < 0)
-	{
-		if (!xFlip)
-			newSrc.x -= x;
-		newSrc.w += x;
-		x -= x;
-	}
-	
-	int dx = x + newSrc.w - gSoftwareBuffer->width;
-	if (dx > 0)
-	{
-		if (xFlip)
-			newSrc.x += dx;
-		newSrc.w -= dx;
-	}
-	
-	if (y < 0)
-	{
-		if (!yFlip)
-			newSrc.y -= y;
-		newSrc.h += y;
-		y -= y;
-	}
-	
-	int dy = y + newSrc.h - gSoftwareBuffer->height;
-	if (dy > 0)
-	{
-		if (yFlip)
-			newSrc.y += dy;
-		newSrc.h -= dy;
-	}
-	
-	//Set the member of the render queue
-	gSoftwareBuffer->queueEntry[layer]->type = RENDERQUEUE_TEXTURE;
-	gSoftwareBuffer->queueEntry[layer]->dest = {x, y, newSrc.w, newSrc.h};
-	gSoftwareBuffer->queueEntry[layer]->texture.srcX = newSrc.x;
-	gSoftwareBuffer->queueEntry[layer]->texture.srcY = newSrc.y;
-	
-	//Set palette and texture references
-	gSoftwareBuffer->queueEntry[layer]->texture.palette = palette;
-	gSoftwareBuffer->queueEntry[layer]->texture.texture = this;
-	
-	//Flipping
-	gSoftwareBuffer->queueEntry[layer]->texture.xFlip = xFlip;
-	gSoftwareBuffer->queueEntry[layer]->texture.yFlip = yFlip;
-	
-	//Push forward in queue
-	gSoftwareBuffer->queueEntry[layer]++;
-}
-
 //Palette functions
 void SetPaletteColour(PALCOLOUR *palColour, uint8_t r, uint8_t g, uint8_t b)
 {
 	//Set formatted colour
-	palColour->colour = gSoftwareBuffer->RGB(r, g, b);
+	palColour->colour = SDL_MapRGB(gNativeFormat, r, g, b);
 	
 	//Set colours
 	palColour->r = r;
@@ -205,7 +147,7 @@ void SetPaletteColour(PALCOLOUR *palColour, uint8_t r, uint8_t g, uint8_t b)
 void ModifyPaletteColour(PALCOLOUR *palColour, uint8_t r, uint8_t g, uint8_t b)
 {
 	//Set formatted colour
-	palColour->colour = gSoftwareBuffer->RGB(r, g, b);
+	palColour->colour = SDL_MapRGB(gNativeFormat, r, g, b);
 	
 	//Set colours
 	palColour->r = r;
@@ -216,16 +158,14 @@ void ModifyPaletteColour(PALCOLOUR *palColour, uint8_t r, uint8_t g, uint8_t b)
 void RegenPaletteColour(PALCOLOUR *palColour)
 {
 	//Set formatted colour
-	palColour->colour = gSoftwareBuffer->RGB(palColour->r, palColour->g, palColour->b);
+	palColour->colour = SDL_MapRGB(gNativeFormat, palColour->r, palColour->g, palColour->b);
 }
 
 //Software buffer class
-SOFTWAREBUFFER::SOFTWAREBUFFER(uint32_t bufFormat, int bufWidth, int bufHeight)
+SOFTWAREBUFFER::SOFTWAREBUFFER(int bufWidth, int bufHeight)
 {
 	//Set our properties
 	memset(this, 0, sizeof(SOFTWAREBUFFER));
-	
-	format = SDL_AllocFormat(bufFormat);
 	width = bufWidth;
 	height = bufHeight;
 	
@@ -233,8 +173,8 @@ SOFTWAREBUFFER::SOFTWAREBUFFER(uint32_t bufFormat, int bufWidth, int bufHeight)
 	for (int i = 0; i < RENDERLAYERS; i++)
 		queueEntry[i] = queue[i];
 	
-	//Allocate our framebuffer stuff
-	if ((texture = SDL_CreateTexture(gRenderer, format->format, SDL_TEXTUREACCESS_STREAMING, width, height)) == NULL)
+	//Create the render texture
+	if ((texture = SDL_CreateTexture(gRenderer, gNativeFormat->format, SDL_TEXTUREACCESS_STREAMING, width, height)) == NULL)
 	{
 		fail = SDL_GetError();
 		return;
@@ -243,18 +183,11 @@ SOFTWAREBUFFER::SOFTWAREBUFFER(uint32_t bufFormat, int bufWidth, int bufHeight)
 
 SOFTWAREBUFFER::~SOFTWAREBUFFER()
 {
-	//Free our framebuffer stuff
+	//Free our render texture
 	SDL_DestroyTexture(texture);
-	SDL_FreeFormat(format);
 }
 
-//Colour format function
-inline uint32_t SOFTWAREBUFFER::RGB(uint8_t r, uint8_t g, uint8_t b)
-{
-	return SDL_MapRGB(format, r, g, b);
-}
-
-//Drawing functions (no-class)
+//Drawing functions
 void SOFTWAREBUFFER::DrawPoint(int layer, int x, int y, PALCOLOUR *colour)
 {
 	//Check if this is in view bounds (if not, just return, no point in clogging the queue with stuff that will not be rendered)
@@ -274,7 +207,7 @@ void SOFTWAREBUFFER::DrawPoint(int layer, int x, int y, PALCOLOUR *colour)
 	queueEntry[layer]++;
 }
 
-void SOFTWAREBUFFER::DrawQuad(int layer, SDL_Rect *quad, PALCOLOUR *colour)
+void SOFTWAREBUFFER::DrawQuad(int layer, const SDL_Rect *quad, PALCOLOUR *colour)
 {
 	//Set the member of the render queue
 	queueEntry[layer]->type = RENDERQUEUE_SOLID;
@@ -310,6 +243,66 @@ void SOFTWAREBUFFER::DrawQuad(int layer, SDL_Rect *quad, PALCOLOUR *colour)
 	queueEntry[layer]++;
 }
 
+void SOFTWAREBUFFER::DrawTexture(TEXTURE *texture, PALETTE *palette, const SDL_Rect *src, int layer, int x, int y, bool xFlip, bool yFlip)
+{
+	//Get the source rect to use (NULL = entire texture)
+	SDL_Rect newSrc;
+	if (src != NULL)
+		newSrc = *src;
+	else
+		newSrc = {0, 0, texture->width, texture->height};
+	
+	//Clip to the destination
+	if (x < 0)
+	{
+		if (!xFlip)
+			newSrc.x -= x;
+		newSrc.w += x;
+		x -= x;
+	}
+	
+	int dx = x + newSrc.w - width;
+	if (dx > 0)
+	{
+		if (xFlip)
+			newSrc.x += dx;
+		newSrc.w -= dx;
+	}
+	
+	if (y < 0)
+	{
+		if (!yFlip)
+			newSrc.y -= y;
+		newSrc.h += y;
+		y -= y;
+	}
+	
+	int dy = y + newSrc.h - height;
+	if (dy > 0)
+	{
+		if (yFlip)
+			newSrc.y += dy;
+		newSrc.h -= dy;
+	}
+	
+	//Set the member of the render queue
+	queueEntry[layer]->type = RENDERQUEUE_TEXTURE;
+	queueEntry[layer]->dest = {x, y, newSrc.w, newSrc.h};
+	queueEntry[layer]->texture.srcX = newSrc.x;
+	queueEntry[layer]->texture.srcY = newSrc.y;
+	
+	//Set palette and texture references
+	queueEntry[layer]->texture.palette = palette;
+	queueEntry[layer]->texture.texture = texture;
+	
+	//Flipping
+	queueEntry[layer]->texture.xFlip = xFlip;
+	queueEntry[layer]->texture.yFlip = yFlip;
+	
+	//Push forward in queue
+	queueEntry[layer]++;
+}
+
 //Primary render function
 bool SOFTWAREBUFFER::RenderToScreen(PALCOLOUR *backgroundColour)
 {
@@ -320,15 +313,15 @@ bool SOFTWAREBUFFER::RenderToScreen(PALCOLOUR *backgroundColour)
 		return Error(SDL_GetError());
 	
 	//Render to our buffer
-	const uint8_t bpp = format->BytesPerPixel;
+	const uint8_t bpp = gNativeFormat->BytesPerPixel;
 	
 	switch (bpp)
 	{
 		case 1:
-			//Blit8 (backgroundColour,  (uint8_t*)writeBuffer, writePitch / 1);
+			Blit8 (backgroundColour,  (uint8_t*)writeBuffer, writePitch / 1);
 			break;
 		case 2:
-			//Blit16(backgroundColour, (uint16_t*)writeBuffer, writePitch / 2);
+			Blit16(backgroundColour, (uint16_t*)writeBuffer, writePitch / 2);
 			break;
 		case 4:
 			Blit32(backgroundColour, (uint32_t*)writeBuffer, writePitch / 4);
@@ -400,8 +393,11 @@ bool InitializeRender()
 	if ((gRenderer = SDL_CreateRenderer(gWindow, -1, SDL_RENDERER_ACCELERATED | (vsyncMultiple > 0 ? SDL_RENDERER_PRESENTVSYNC : 0))) == NULL)
 		return Error(SDL_GetError());
 	
+	//Get our window's pixel format
+	gNativeFormat = SDL_AllocFormat(SDL_GetWindowPixelFormat(gWindow));
+	
 	//Create our software buffer
-	gSoftwareBuffer = new SOFTWAREBUFFER(SDL_GetWindowPixelFormat(gWindow), SCREEN_WIDTH, SCREEN_HEIGHT);
+	gSoftwareBuffer = new SOFTWAREBUFFER(SCREEN_WIDTH, SCREEN_HEIGHT);
 	if (gSoftwareBuffer->fail)
 		return Error(gSoftwareBuffer->fail);
 	
@@ -419,6 +415,8 @@ void QuitRender()
 	
 	SDL_DestroyRenderer(gRenderer);	//no-op
 	SDL_DestroyWindow(gWindow);
+	
+	SDL_FreeFormat(gNativeFormat);
 	
 	LOG(("Success!\n"));
 }

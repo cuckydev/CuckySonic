@@ -54,8 +54,6 @@ class TEXTURE
 		TEXTURE(TEXTURE **linkedList, const char *path);
 		TEXTURE(TEXTURE **linkedList, uint8_t *data, int dWidth, int dHeight);
 		~TEXTURE();
-		
-		void Draw(int layer, PALETTE *palette, const SDL_Rect *src, int x, int y, bool xFlip, bool yFlip);
 };
 	
 //Render queue structure
@@ -95,9 +93,6 @@ struct RENDERQUEUE
 class SOFTWAREBUFFER
 {
 	public:
-		//Our framebuffer specifications
-		SDL_PixelFormat *format;
-		
 		//Render queue
 		RENDERQUEUE queue[RENDERLAYERS][RENDERQUEUE_LENGTH];
 		RENDERQUEUE *queueEntry[RENDERLAYERS];
@@ -113,13 +108,12 @@ class SOFTWAREBUFFER
 		SDL_Texture *texture;
 		
 	public:
-		SOFTWAREBUFFER(uint32_t bufFormat, int bufWidth, int bufHeight);
+		SOFTWAREBUFFER(int bufWidth, int bufHeight);
 		~SOFTWAREBUFFER();
 		
-		inline uint32_t RGB(uint8_t r, uint8_t g, uint8_t b);
-		
 		void DrawPoint(int layer, int x, int y, PALCOLOUR *colour);
-		void DrawQuad(int layer, SDL_Rect *quad, PALCOLOUR *colour);
+		void DrawQuad(int layer, const SDL_Rect *quad, PALCOLOUR *colour);
+		void DrawTexture(TEXTURE *texture, PALETTE *palette, const SDL_Rect *src, int layer, int x, int y, bool xFlip, bool yFlip);
 		
 		void Blit8 (PALCOLOUR *backgroundColour, uint8_t  *buffer, int pitch);
 		void Blit16(PALCOLOUR *backgroundColour, uint16_t *buffer, int pitch);
@@ -132,6 +126,8 @@ class SOFTWAREBUFFER
 extern SDL_Window *gWindow;
 extern SDL_Renderer *gRenderer;
 extern SOFTWAREBUFFER *gSoftwareBuffer;
+
+extern SDL_PixelFormat *gNativeFormat;
 
 bool InitializeRender();
 void QuitRender();

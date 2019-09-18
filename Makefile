@@ -50,6 +50,7 @@ SOURCES = \
 	GM_Splash \
 	GM_Title \
 	GM_Game \
+	GM_SpecialStage \
 	Player \
 	Object \
 	Camera \

@@ -86,7 +86,7 @@ bool GM_Splash(bool *noError)
 			
 			//Draw
 			SDL_Rect src = {0, splashTexture->height - 16, splashTexture->width, 16};
-			splashTexture->Draw(0, splashTexture->loadedPalette, &src, debugTextX - splashTexture->width, SCREEN_HEIGHT - 16, false, false);
+			gSoftwareBuffer->DrawTexture(splashTexture, splashTexture->loadedPalette, &src, 0, debugTextX - splashTexture->width, SCREEN_HEIGHT - 16, false, false);
 		}
 		
 		//Render our splash texture
@@ -96,14 +96,14 @@ bool GM_Splash(bool *noError)
 		{
 			//Get our draw offset
 			int16_t sin;
-			GetSine((line & 0xFE) + frame, &sin, NULL);
+			GetSine((line & ~1) + frame, &sin, NULL);
 			
 			int xOff = (sin * 2) * (frame < SPLASH_WARP ? (SPLASH_WARP - frame) : 0) / SPLASH_WARP;
 			if (line & 0x1)
 				xOff = -xOff;
 			
 			//Draw this line
-			splashTexture->Draw(0, splashTexture->loadedPalette, &src, (SCREEN_WIDTH - splashTexture->width) / 2 + xOff, (SCREEN_HEIGHT - (splashTexture->height - 16)) / 2 + line, false, false);
+			gSoftwareBuffer->DrawTexture(splashTexture, splashTexture->loadedPalette, &src, 0, (SCREEN_WIDTH - splashTexture->width) / 2 + xOff, (SCREEN_HEIGHT - (splashTexture->height - 16)) / 2 + line, false, false);
 			src.y++;
 		}
 		

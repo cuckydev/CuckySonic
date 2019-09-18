@@ -54,6 +54,7 @@ class OBJECT
 		TEXTURE *texture;
 		MAPPINGS *mappings;
 		
+		//Position
 		POSDEF(x)
 		POSDEF(y)
 		

@@ -89,9 +89,7 @@ bool GM_Game(bool *noError)
 			break;
 	}
 	
-	//Unload level
+	//Unload level and exit
 	delete gLevel;
-	
-	//Exit
 	return noExit;
 }

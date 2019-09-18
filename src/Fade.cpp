@@ -184,7 +184,7 @@ bool FadeOutToWhite(PALCOLOUR *palColour)
 	{
 		int16_t nextR = palColour->r + 0x22;
 		
-		if (nextR <= 0xFF)
+		if (nextR >= 0xFF)
 		{
 			palColour->r = 0xFF;
 			RegenPaletteColour(palColour);
@@ -202,7 +202,7 @@ bool FadeOutToWhite(PALCOLOUR *palColour)
 	{
 		int16_t nextG = palColour->g + 0x22;
 		
-		if (nextG <= 0xFF)
+		if (nextG >= 0xFF)
 		{
 			palColour->g = 0xFF;
 			RegenPaletteColour(palColour);
@@ -220,7 +220,7 @@ bool FadeOutToWhite(PALCOLOUR *palColour)
 	{
 		int16_t nextB = palColour->b + 0x22;
 		
-		if (nextB <= 0xFF)
+		if (nextB >= 0xFF)
 		{
 			palColour->b = 0xFF;
 			RegenPaletteColour(palColour);

@@ -6,6 +6,7 @@
 //Constructor and deconstructor
 HUD::HUD()
 {
+	//Clear memory
 	memset(this, 0, sizeof(HUD));
 	
 	//Load texture
@@ -19,6 +20,7 @@ HUD::HUD()
 
 HUD::~HUD()
 {
+	//`texture` is freed in gLevel destructor
 	return;
 }
 
@@ -26,7 +28,7 @@ HUD::~HUD()
 void HUD::DrawCharacter(int xPos, int yPos, int srcX)
 {
 	SDL_Rect src = {192 + srcX * 8, 0, 8, 16};
-	texture->Draw(LEVEL_RENDERLAYER_HUD, texture->loadedPalette, &src, xPos, yPos, false, false);
+	gSoftwareBuffer->DrawTexture(texture, texture->loadedPalette, &src, LEVEL_RENDERLAYER_HUD, xPos, yPos, false, false);
 }
 
 void HUD::DrawNumber(int xPos, int yPos, int number, unsigned int forceDigits, bool fromRight)
@@ -85,7 +87,7 @@ void HUD::DrawNumber(int xPos, int yPos, int number, unsigned int forceDigits, b
 void HUD::DrawElement(int xPos, int yPos, int srcX, int srcY)
 {
 	SDL_Rect src = {srcX * 48, srcY * 16, 48, 16};
-	texture->Draw(LEVEL_RENDERLAYER_HUD, texture->loadedPalette, &src, xPos, yPos, false, false);
+	gSoftwareBuffer->DrawTexture(texture, texture->loadedPalette, &src, LEVEL_RENDERLAYER_HUD, xPos, yPos, false, false);
 }
 
 //Core draw function

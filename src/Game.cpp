@@ -119,7 +119,7 @@ bool EnterGameLoop()
 	bool noExit = true;
 	bool noError = true;
 	
-	while (noExit)
+	while (noExit && noError)
 	{
 		switch (gGameMode)
 		{
@@ -132,6 +132,9 @@ bool EnterGameLoop()
 			case GAMEMODE_DEMO:
 			case GAMEMODE_GAME:
 				noExit = GM_Game(&noError);
+				break;
+			case GAMEMODE_SPECIALSTAGE:
+				noExit = GM_SpecialStage(&noError);
 				break;
 			default:
 				noExit = false;

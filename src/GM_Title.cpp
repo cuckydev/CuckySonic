@@ -60,13 +60,11 @@ const int sonicHandAnim[14] = {0, 0, 0, 0, 0, 0, 1, 1, 1, 2, 2, 2, 1, 1};
 //Text render function
 void DrawText(TEXTURE *tex, const char *text, int x, int y)
 {
-	const char *current;
 	int dx = x;
-	
-	for (current = text; *current != 0; current++)
+	for (const char *current = text; *current != 0; current++)
 	{
 		SDL_Rect thisCharRect = {((*current - 0x20) % 0x20) * 8, 234 + ((*current - 0x20) / 0x20) * 8, 8, 8};
-		tex->Draw(TITLELAYER_MENU, tex->loadedPalette, &thisCharRect, dx, y, false, false);
+		gSoftwareBuffer->DrawTexture(tex, tex->loadedPalette, &thisCharRect, TITLELAYER_MENU, dx, y, false, false);
 		dx += 8;
 	}
 }
@@ -87,7 +85,7 @@ bool GM_Title(bool *noError)
 	
 	//Title state
 	int titleYShift = SCREEN_HEIGHT * 0x100;
-	int titleYSpeed = -std::sqrt(2 * 0x80 * (SCREEN_HEIGHT + 32) * 0x100);
+	int titleYSpeed = -0x107E;
 	int titleYGoal = 0;
 	int frame = 0;
 	
@@ -164,7 +162,7 @@ bool GM_Title(bool *noError)
 		for (int i = 0; i < min(SCREEN_HEIGHT, backgroundTexture->height); i++)
 		{
 			for (int x = -(backgroundScroll->scrollArray[i] % backgroundTexture->width); x < SCREEN_WIDTH; x += backgroundTexture->width)
-				backgroundTexture->Draw(LEVEL_RENDERLAYER_BACKGROUND, backgroundTexture->loadedPalette, &backSrc, x, i, false, false);
+				gSoftwareBuffer->DrawTexture(backgroundTexture, backgroundTexture->loadedPalette, &backSrc, LEVEL_RENDERLAYER_BACKGROUND, x, i, false, false);
 			backSrc.y++;
 		}
 		
@@ -181,8 +179,8 @@ bool GM_Title(bool *noError)
 		}
 		
 		//Render title screen banner and emblem
-		titleTexture->Draw(TITLELAYER_EMBLEM, titleTexture->loadedPalette, &titleEmblem, emblemX, emblemY + titleYShift / 0x100, false, false);
-		titleTexture->Draw(TITLELAYER_BANNER, titleTexture->loadedPalette, &titleBanner, bannerX, bannerY + titleYShift / 0x100, false, false);
+		gSoftwareBuffer->DrawTexture(titleTexture, titleTexture->loadedPalette, &titleEmblem, TITLELAYER_EMBLEM, emblemX, emblemY + titleYShift / 0x100, false, false);
+		gSoftwareBuffer->DrawTexture(titleTexture, titleTexture->loadedPalette, &titleBanner, TITLELAYER_BANNER, bannerX, bannerY + titleYShift / 0x100, false, false);
 		
 		if (sonicTime-- <= 0)
 		{
@@ -221,7 +219,7 @@ bool GM_Title(bool *noError)
 			{
 				if (bottomY > clipY)
 					bodyRect.h -= (bottomY - clipY);
-				titleTexture->Draw(TITLELAYER_SONIC, titleTexture->loadedPalette, &bodyRect, midX - 40, topY + titleYShift / 0x100, false, false);
+				gSoftwareBuffer->DrawTexture(titleTexture, titleTexture->loadedPalette, &bodyRect, TITLELAYER_SONIC, midX - 40, topY + titleYShift / 0x100, false, false);
 			}
 			
 			//If animation is complete
@@ -229,7 +227,7 @@ bool GM_Title(bool *noError)
 			{
 				//Draw Sonic's hand
 				int frame = sonicHandAnim[sonicHandFrame];
-				titleTexture->Draw(TITLELAYER_SONIC_HAND, titleTexture->loadedPalette, &titleSonicHand[frame].framerect, midX + 20 - titleSonicHand[frame].jointPos.x, topY + 72 - titleSonicHand[frame].jointPos.y + titleYShift / 0x100, false, false);
+				gSoftwareBuffer->DrawTexture(titleTexture, titleTexture->loadedPalette, &titleSonicHand[frame].framerect, TITLELAYER_SONIC_HAND, midX + 20 - titleSonicHand[frame].jointPos.x, topY + 72 - titleSonicHand[frame].jointPos.y + titleYShift / 0x100, false, false);
 				
 				//Update frame
 				if (sonicHandFrame + 1 < 14)

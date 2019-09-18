@@ -40,10 +40,9 @@ void ObjBouncingRing_Routine0(OBJECT *object)
 		int16_t angleSpeed = 0x288;
 	};
 	
+	PLAYER *parentPlayer = (PLAYER*)object->parent;
+	
 	int16_t xVel, yVel;
-	
-	object->deleteFlag = true; //Delete us, we're just the spawner (not how the original does it, but the original is kind of... eehhhh)
-	
 	for (int i = 0; i < *rings; i++)
 	{
 		//Create the ring object
@@ -67,6 +66,7 @@ void ObjBouncingRing_Routine0(OBJECT *object)
 		ring->touchHeight = 6;
 		ring->scratchU8[0] = 0xFF; //Ring_spill_anim_counter
 		ring->scratchU16[1] = 0x00; //Ring_spill_anim_accum
+		ring->parent = object->parent;
 		
 		//Get the ring's velocity
 		if (angleSpeed >= 0)
@@ -97,9 +97,10 @@ void ObjBouncingRing_Routine0(OBJECT *object)
 		angleSpeed = -angleSpeed;
 	}
 	
-	//Clear our rings
+	//Clear our rings and delete the spawner
 	PlaySound(SOUNDID_RING_LOSS);
 	*rings = 0;
+	object->deleteFlag = true;
 }
 
 void ObjBouncingRing(OBJECT *object)
@@ -107,15 +108,33 @@ void ObjBouncingRing(OBJECT *object)
 	switch (object->routine)
 	{
 		case 0:
+		{
 			ObjBouncingRing_Routine0(object);
 			break;
+		}
 		case 1:
+		{
 			//Move and fall
-			object->Move();
-			object->yVel += 0x18;
+			PLAYER *parentPlayer = (PLAYER*)object->parent;
+			object->xPosLong += object->xVel * 0x100;
+			
+			if (parentPlayer->status.reverseGravity)
+			{
+				object->yPosLong -= object->yVel * 0x100;
+				object->yVel -= 0x18;
+			}
+			else
+			{
+				object->yPosLong += object->yVel * 0x100;
+				object->yVel += 0x18;
+			}
 			
 			//Check for collision with the floor or ceiling
-			if (object->yVel >= 0)
+			int16_t checkVel = object->yVel;
+			if (parentPlayer->status.reverseGravity)
+				checkVel = -checkVel;
+			
+			if (checkVel >= 0)
 			{
 				int16_t distance = FindFloor(object->x.pos, object->y.pos + object->yRadius, COLLISIONLAYER_NORMAL_TOP, false, NULL);
 				
@@ -175,7 +194,9 @@ void ObjBouncingRing(OBJECT *object)
 			else
 				object->Draw();
 			break;
+		}
 		case 2: //Touched player, collect a ring
+		{
 			//Increment routine
 			object->routine++;
 			
@@ -185,13 +206,18 @@ void ObjBouncingRing(OBJECT *object)
 			
 			//Collect the ring
 			AddToRings(1);
+		}
 	//Fallthrough
 		case 3: //Sparkling
+		{
 			object->Animate(animationList);
 			object->Draw();
 			break;
+		}
 		case 4: //Deleting after sparkle
+		{
 			object->deleteFlag = true;
 			break;
+		}
 	}
 }

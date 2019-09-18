@@ -565,13 +565,8 @@ LEVEL::LEVEL(int id, int players, const char **playerPaths)
 	//Set us as the global level
 	gLevel = this;
 	
-	//Get our level table entry
-	if (id < 0)
-		Error(fail = "Invalid level ID given");
-	
-	LEVELTABLE *tableEntry = &gLevelTable[levelId = (LEVELID)id];
-	
 	//Copy zone and act id
+	LEVELTABLE *tableEntry = &gLevelTable[levelId = (LEVELID)id];
 	zone = tableEntry->zone;
 	act = tableEntry->act;
 	
@@ -612,16 +607,10 @@ LEVEL::LEVEL(int id, int players, const char **playerPaths)
 	
 	//Create our camera
 	camera = new CAMERA(playerList);
-	if (camera == NULL)
-	{
-		Error(fail = "Failed to create our camera");
-		UnloadAll();
-		return;
-	}
 	
 	//Title-card
 	titleCard = new TITLECARD(tableEntry->name, tableEntry->subtitle);
-	if (titleCard == NULL || titleCard->fail)
+	if (titleCard->fail)
 	{
 		fail = titleCard->fail;
 		UnloadAll();
@@ -632,7 +621,7 @@ LEVEL::LEVEL(int id, int players, const char **playerPaths)
 	
 	//HUD
 	hud = new HUD();
-	if (hud == NULL || hud->fail)
+	if (hud->fail)
 	{
 		fail = hud->fail;
 		UnloadAll();
@@ -676,20 +665,11 @@ void LEVEL::SetFade(bool fadeIn, bool isSpecial)
 	//Set our palettes accordingly
 	if (fadeIn)
 	{
-		if (isSpecial)
-		{
-			FillPaletteWhite(tileTexture->loadedPalette);
-			FillPaletteWhite(backgroundTexture->loadedPalette);
-			for (TEXTURE *texture = objTextureCache; texture != NULL; texture = texture->next)
-				FillPaletteWhite(texture->loadedPalette);
-		}
-		else
-		{
-			FillPaletteBlack(tileTexture->loadedPalette);
-			FillPaletteBlack(backgroundTexture->loadedPalette);
-			for (TEXTURE *texture = objTextureCache; texture != NULL; texture = texture->next)
-				FillPaletteBlack(texture->loadedPalette);
-		}
+		void (*function)(PALETTE *palette) = (specialFade ? &FillPaletteWhite : &FillPaletteBlack);
+		function(tileTexture->loadedPalette);
+		function(backgroundTexture->loadedPalette);
+		for (TEXTURE *texture = objTextureCache; texture != NULL; texture = texture->next)
+			function(texture->loadedPalette);
 	}
 }
 
@@ -1058,7 +1038,7 @@ void LEVEL::Draw()
 		for (int i = upperLine; i < lowerLine; i++)
 		{
 			for (int x = -((backgroundScroll->scrollArray[i] + backX) % backgroundTexture->width); x < SCREEN_WIDTH; x += backgroundTexture->width)
-				backgroundTexture->Draw(LEVEL_RENDERLAYER_BACKGROUND, backgroundTexture->loadedPalette, &backSrc, x, i - backY, false, false);
+				gSoftwareBuffer->DrawTexture(backgroundTexture, backgroundTexture->loadedPalette, &backSrc, LEVEL_RENDERLAYER_BACKGROUND, x, i - backY, false, false);
 			backSrc.y++;
 		}
 	}
@@ -1084,8 +1064,8 @@ void LEVEL::Draw()
 				//Draw tile
 				SDL_Rect backSrc = {0, tile->tile * 16, 16, 16};
 				SDL_Rect frontSrc = {16, tile->tile * 16, 16, 16};
-				tileTexture->Draw(LEVEL_RENDERLAYER_FOREGROUND_LOW, tileTexture->loadedPalette, &backSrc, tx * 16 - camera->x, ty * 16 - camera->y, tile->xFlip, tile->yFlip);
-				tileTexture->Draw(LEVEL_RENDERLAYER_FOREGROUND_HIGH, tileTexture->loadedPalette, &frontSrc, tx * 16 - camera->x, ty * 16 - camera->y, tile->xFlip, tile->yFlip);
+				gSoftwareBuffer->DrawTexture(tileTexture, tileTexture->loadedPalette, &backSrc, LEVEL_RENDERLAYER_FOREGROUND_LOW, tx * 16 - camera->x, ty * 16 - camera->y, tile->xFlip, tile->yFlip);
+				gSoftwareBuffer->DrawTexture(tileTexture, tileTexture->loadedPalette, &frontSrc, LEVEL_RENDERLAYER_FOREGROUND_HIGH, tx * 16 - camera->x, ty * 16 - camera->y, tile->xFlip, tile->yFlip);
 			}
 		}
 	}

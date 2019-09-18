@@ -203,15 +203,9 @@ void OBJECT::PlatformObject(int16_t width, int16_t height, int16_t lastXPos)
 			int16_t xDiff = player->x.pos - lastXPos + width;
 			
 			if (!player->status.inAir && xDiff >= 0 && xDiff <= width * 2)
-			{
-				//Move on the platform
 				player->MoveOnPlatform((void*)this, height, lastXPos);
-			}
 			else
-			{
-				//We've jumped or fell off the platform
 				ExitPlatform(player, i);
-			}
 		}
 		else
 		{
@@ -231,17 +225,34 @@ void OBJECT::LandOnPlatform(PLAYER *player, int i, int16_t width, int16_t height
 	if (player->yVel < 0 || xDiff < 0 || xDiff > width * 2)
 		return;
 	
-	//Land on platform
-	int16_t playerBottom = (player->y.pos + player->yRadius) + 4;
-	int16_t yThing = (y.pos - height) - playerBottom;
-	
-	//If we're on top of the platform, and not in an intangible state
-	if (yThing > 0 || yThing < -16 || player->objectControl.disableObjectInteract || player->routine == PLAYERROUTINE_DEATH)
-		return;
-	
-	//Land on top of the platform
-	player->y.pos += yThing + 4;
-	player->AttachToObject((void*)this, (&playerContact[i].standing - (size_t)this));
+	if (player->status.reverseGravity)
+	{
+		//Land on platform
+		int16_t playerBottom = (player->y.pos - player->yRadius) - 4;
+		int16_t yThing = -((y.pos + height) - playerBottom);
+		
+		//If we're on top of the platform, and not in an intangible state
+		if (yThing > 0 || yThing < -16 || player->objectControl.disableObjectInteract || player->routine == PLAYERROUTINE_DEATH)
+			return;
+		
+		//Land on top of the platform
+		player->y.pos += yThing + 4;
+		player->AttachToObject((void*)this, (&playerContact[i].standing - (size_t)this));
+	}
+	else
+	{
+		//Land on platform
+		int16_t playerBottom = (player->y.pos + player->yRadius) + 4;
+		int16_t yThing = (y.pos - height) - playerBottom;
+		
+		//If we're on top of the platform, and not in an intangible state
+		if (yThing > 0 || yThing < -16 || player->objectControl.disableObjectInteract || player->routine == PLAYERROUTINE_DEATH)
+			return;
+		
+		//Land on top of the platform
+		player->y.pos += yThing + 4;
+		player->AttachToObject((void*)this, (&playerContact[i].standing - (size_t)this));
+	}
 }
 
 void OBJECT::ExitPlatform(PLAYER *player, int i)
@@ -297,8 +308,19 @@ void OBJECT::SolidObjectCont(OBJECT_SOLIDTOUCH *solidTouch, PLAYER *player, int 
 	//Check if we're within range
 	int16_t xDiff = (player->x.pos - x.pos) + width; //d0
 	
-	int16_t checkHeight = player->yRadius + height; //d2
-	int16_t yDiff = (player->y.pos - y.pos + 4) + checkHeight; //d3
+	int16_t checkHeight; //d2
+	int16_t yDiff; //d3
+	
+	if (player->status.reverseGravity)
+	{
+		checkHeight = player->defaultYRadius + height;
+		yDiff = (-(player->y.pos - y.pos) + 4) + checkHeight;
+	}
+	else
+	{
+		checkHeight = player->defaultYRadius + height;
+		yDiff = (player->y.pos - y.pos + 4) + checkHeight;
+	}
 	
 	//Perform main collision checks if within range and not under the influence of another object
 	if (!(player->objectControl.disableObjectInteract || (xDiff < 0 || xDiff > (width * 2)) || (yDiff < 0 || yDiff > (checkHeight * 2))))
@@ -329,16 +351,16 @@ void OBJECT::SolidObjectCont(OBJECT_SOLIDTOUCH *solidTouch, PLAYER *player, int 
 					//Check our vertical difference
 					if (yDiff < 16 || (yDiff < 20 /*&& object->function != ObjLauncherSpring*/))
 					{
-						//Subtract 4 from yDiff for some reason
-						yDiff -= 4;
-						
 						//Check our horizontal range
-						int16_t xDiff2 = (player->x.pos - x.pos) + widthPixels;
+						int16_t xDiff2 = (player->x.pos - lastXPos) + widthPixels;
 						
 						if (xDiff2 >= 0 && xDiff2 < widthPixels * 2 && player->yVel >= 0)
 						{
 							//Land on the object
-							player->y.pos -= yDiff;
+							if (player->status.reverseGravity)
+								player->y.pos -= yDiff - 4;
+							else
+								player->y.pos += yDiff - 4;
 							player->AttachToObject((void*)this, (&playerContact[i].standing - (size_t)this));
 							
 							//Set top touch flag
@@ -359,7 +381,10 @@ void OBJECT::SolidObjectCont(OBJECT_SOLIDTOUCH *solidTouch, PLAYER *player, int 
 						//Clip us out of the top (why does it check if yOff is negative?)
 						if (player->yVel < 0 && yDiff < 0)
 						{
-							player->y.pos -= yDiff;
+							if (player->status.reverseGravity)
+								player->y.pos -= yDiff;
+							else
+								player->y.pos += yDiff;
 							player->yVel = 0;
 						}
 						
@@ -504,7 +529,7 @@ void OBJECT::DrawToScreen()
 		
 		int alignX = renderFlags.alignPlane ? gLevel->camera->x : 0;
 		int alignY = renderFlags.alignPlane ? gLevel->camera->y : 0;
-		texture->Draw(gLevel->GetObjectLayer(highPriority, priority), texture->loadedPalette, mapRect, x.pos - origX - alignX, y.pos - origY - alignY, renderFlags.xFlip, renderFlags.yFlip);
+		gSoftwareBuffer->DrawTexture(texture, texture->loadedPalette, mapRect, gLevel->GetObjectLayer(highPriority, priority), x.pos - origX - alignX, y.pos - origY - alignY, renderFlags.xFlip, renderFlags.yFlip);
 	}
 }
 

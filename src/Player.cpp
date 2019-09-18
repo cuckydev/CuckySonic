@@ -2308,6 +2308,7 @@ bool PLAYER::HurtCharacter(void *hit)
 			OBJECT *ringObject = new OBJECT(&gLevel->objectList, &ObjBouncingRing);
 			ringObject->x.pos = x.pos;
 			ringObject->y.pos = y.pos;
+			ringObject->parent = (void*)this;
 		}
 	}
 	
@@ -3343,22 +3344,8 @@ void PLAYER::Update()
 		gGameLoadLevel++;
 		gGameLoadLevel %= LEVELID_MAX;
 	}
-	
-	if (gController[controller].held.start && gController[controller].held.a)
-		AddToRings(1);
-	
 	if (gController[controller].press.start && gController[controller].held.c)
-	{
-		MUSICSPEC speedShoesSpec = {"SpeedShoes", 0, GetMusicVolume()};
-		gLevel->ChangeMusic(speedShoesSpec);
-		
-		speedShoesTime = 150;
-		item.hasSpeedShoes = true;
-		
-		top = 0xC00;
-		acceleration = 0x18;
-		deceleration = 0x80;
-	}
+		gLevel->SetFade(false, true);
 }
 
 //Draw our player
@@ -3434,7 +3421,7 @@ void PLAYER::DrawToScreen()
 			
 			int alignX = renderFlags.alignPlane ? gLevel->camera->x : 0;
 			int alignY = renderFlags.alignPlane ? gLevel->camera->y : 0;
-			texture->Draw(gLevel->GetObjectLayer(highPriority, priority), texture->loadedPalette, mapRect, x.pos - origX - alignX, y.pos - origY - alignY, renderFlags.xFlip, renderFlags.yFlip);
+			gSoftwareBuffer->DrawTexture(texture, texture->loadedPalette, mapRect, gLevel->GetObjectLayer(highPriority, priority), x.pos - origX - alignX, y.pos - origY - alignY, renderFlags.xFlip, renderFlags.yFlip);
 		}
 	}
 }
@@ -3704,7 +3691,12 @@ void PLAYER::AttachToObject(void *object, bool *standingBit)
 void PLAYER::MoveOnPlatform(void *platform, int16_t height, int16_t lastXPos)
 {
 	OBJECT* const platformObject = (OBJECT* const)platform;
-	int top = platformObject->y.pos - height;
+	
+	int top;
+	if (status.reverseGravity)
+		top = platformObject->y.pos + height;
+	else
+		top = platformObject->y.pos - height;
 	
 	//Check if we're in an intangible state
 	if (objectControl.disableObjectInteract || routine == PLAYERROUTINE_DEATH || debug != 0)
@@ -3712,5 +3704,9 @@ void PLAYER::MoveOnPlatform(void *platform, int16_t height, int16_t lastXPos)
 	
 	//Move with the platform
 	x.pos += (platformObject->x.pos - lastXPos);
-	y.pos = top - yRadius;
+	
+	if (status.reverseGravity)
+		y.pos = top + yRadius;
+	else
+		y.pos = top - yRadius;
 }
