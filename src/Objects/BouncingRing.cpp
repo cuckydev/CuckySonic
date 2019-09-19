@@ -119,15 +119,11 @@ void ObjBouncingRing(OBJECT *object)
 			object->xPosLong += object->xVel * 0x100;
 			
 			if (parentPlayer->status.reverseGravity)
-			{
 				object->yPosLong -= object->yVel * 0x100;
-				object->yVel -= 0x18;
-			}
 			else
-			{
 				object->yPosLong += object->yVel * 0x100;
-				object->yVel += 0x18;
-			}
+			
+			object->yVel += 0x18;
 			
 			//Check for collision with the floor or ceiling
 			int16_t checkVel = object->yVel;

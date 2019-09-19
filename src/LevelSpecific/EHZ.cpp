@@ -19,6 +19,11 @@ void EHZ_PaletteCycle(LEVEL *lvl)
 		SetPaletteColour(&lvl->tileTexture->loadedPalette->colour[0x1E], ehzWaterfallCycle[lvl->palCycle[0].cycle][2][0], ehzWaterfallCycle[lvl->palCycle[0].cycle][2][1], ehzWaterfallCycle[lvl->palCycle[0].cycle][2][2]);
 		SetPaletteColour(&lvl->tileTexture->loadedPalette->colour[0x1F], ehzWaterfallCycle[lvl->palCycle[0].cycle][3][0], ehzWaterfallCycle[lvl->palCycle[0].cycle][3][1], ehzWaterfallCycle[lvl->palCycle[0].cycle][3][2]);
 		
+		SetPaletteColour(&lvl->backgroundTexture->loadedPalette->colour[0x13], ehzWaterfallCycle[lvl->palCycle[0].cycle][0][0], ehzWaterfallCycle[lvl->palCycle[0].cycle][0][1], ehzWaterfallCycle[lvl->palCycle[0].cycle][0][2]);
+		SetPaletteColour(&lvl->backgroundTexture->loadedPalette->colour[0x14], ehzWaterfallCycle[lvl->palCycle[0].cycle][1][0], ehzWaterfallCycle[lvl->palCycle[0].cycle][1][1], ehzWaterfallCycle[lvl->palCycle[0].cycle][1][2]);
+		SetPaletteColour(&lvl->backgroundTexture->loadedPalette->colour[0x1E], ehzWaterfallCycle[lvl->palCycle[0].cycle][2][0], ehzWaterfallCycle[lvl->palCycle[0].cycle][2][1], ehzWaterfallCycle[lvl->palCycle[0].cycle][2][2]);
+		SetPaletteColour(&lvl->backgroundTexture->loadedPalette->colour[0x1F], ehzWaterfallCycle[lvl->palCycle[0].cycle][3][0], ehzWaterfallCycle[lvl->palCycle[0].cycle][3][1], ehzWaterfallCycle[lvl->palCycle[0].cycle][3][2]);
+		
 		//Increment cycle
 		lvl->palCycle[0].timer = 0;
 		if (++lvl->palCycle[0].cycle >= 4)

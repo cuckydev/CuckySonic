@@ -78,13 +78,14 @@ bool GM_Title(bool *noError)
 		return (*noError = !Error(titleTexture->fail));
 	
 	//Emblem and banner positions
-	const int emblemX = (SCREEN_WIDTH - titleEmblem.w) / 2;
-	const int emblemY = (SCREEN_HEIGHT - titleEmblem.h) / 2;
-	const int bannerX = (SCREEN_WIDTH - titleBanner.w) / 2;
+	const int emblemX = (gRenderSpec.width - titleEmblem.w) / 2;
+	const int emblemY = (gRenderSpec.height - titleEmblem.h) / 2;
+	
+	const int bannerX = (gRenderSpec.width - titleBanner.w) / 2;
 	const int bannerY = emblemY + titleBannerJoin;
 	
 	//Title state
-	int titleYShift = SCREEN_HEIGHT * 0x100;
+	int titleYShift = gRenderSpec.height * 0x100;
 	int titleYSpeed = -0x107E;
 	int titleYGoal = 0;
 	int frame = 0;
@@ -92,7 +93,7 @@ bool GM_Title(bool *noError)
 	//Sonic's animation and position
 	int sonicTime = 54;
 	
-	int sonicX = (SCREEN_WIDTH / 2) * 0x100;
+	int sonicX = (gRenderSpec.width / 2) * 0x100;
 	int sonicY = (bannerY + 16) * 0x100;
 	
 	int sonicXsp = -0x400;
@@ -159,9 +160,9 @@ bool GM_Title(bool *noError)
 		
 		//Draw each line
 		SDL_Rect backSrc = {0, 0, backgroundTexture->width, 1};
-		for (int i = 0; i < min(SCREEN_HEIGHT, backgroundTexture->height); i++)
+		for (int i = 0; i < min(gRenderSpec.height, backgroundTexture->height); i++)
 		{
-			for (int x = -(backgroundScroll->scrollArray[i] % backgroundTexture->width); x < SCREEN_WIDTH; x += backgroundTexture->width)
+			for (int x = -(backgroundScroll->scrollArray[i] % backgroundTexture->width); x < gRenderSpec.width; x += backgroundTexture->width)
 				gSoftwareBuffer->DrawTexture(backgroundTexture, backgroundTexture->loadedPalette, &backSrc, LEVEL_RENDERLAYER_BACKGROUND, x, i, false, false);
 			backSrc.y++;
 		}
@@ -188,8 +189,8 @@ bool GM_Title(bool *noError)
 			sonicTime = 0;
 			
 			//Move Sonic
-			if ((sonicX += sonicXsp) > (SCREEN_WIDTH / 2) * 0x100)
-				sonicX = (SCREEN_WIDTH / 2) * 0x100;
+			if ((sonicX += sonicXsp) > (gRenderSpec.width / 2) * 0x100)
+				sonicX = (gRenderSpec.width / 2) * 0x100;
 			else
 				sonicXsp += 54;
 				

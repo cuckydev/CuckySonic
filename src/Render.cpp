@@ -7,12 +7,15 @@
 #include "Path.h"
 #include "GameConstants.h"
 
-//Window
+//Window and renderer
 SDL_Window *gWindow;
 SDL_Renderer *gRenderer;
 SOFTWAREBUFFER *gSoftwareBuffer;
 
 SDL_PixelFormat *gNativeFormat;
+
+//Current render specifications
+RENDERSPEC gRenderSpec = {426, 240, 2};
 
 //VSync / framerate limiter
 unsigned int vsyncMultiple = 0;
@@ -375,7 +378,7 @@ bool InitializeRender()
 	LOG(("Initializing renderer... "));
 	
 	//Create our window
-	if ((gWindow = SDL_CreateWindow(WINDOW_TITLE, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, SCREEN_WIDTH * SCREEN_SCALE, SCREEN_HEIGHT * SCREEN_SCALE, 0)) == NULL)
+	if ((gWindow = SDL_CreateWindow(WINDOW_TITLE, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, gRenderSpec.width * gRenderSpec.scale, gRenderSpec.height * gRenderSpec.scale, 0)) == NULL)
 		return Error(SDL_GetError());
 	
 	//Use display mode to detect VSync
@@ -397,7 +400,7 @@ bool InitializeRender()
 	gNativeFormat = SDL_AllocFormat(SDL_GetWindowPixelFormat(gWindow));
 	
 	//Create our software buffer
-	gSoftwareBuffer = new SOFTWAREBUFFER(SCREEN_WIDTH, SCREEN_HEIGHT);
+	gSoftwareBuffer = new SOFTWAREBUFFER(gRenderSpec.width, gRenderSpec.height);
 	if (gSoftwareBuffer->fail)
 		return Error(gSoftwareBuffer->fail);
 	

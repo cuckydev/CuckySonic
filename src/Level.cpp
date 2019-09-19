@@ -54,10 +54,10 @@ OBJECTFUNCTION objFuncSonic2[] = {
 //Our level table
 LEVELTABLE gLevelTable[LEVELID_MAX] = {
 	//ZONEID_GHZ
-		/*LEVELID_GHZ1*/ {ZONEID_GHZ, 0, "Green Hill Zone", "Act 1", LEVELFORMAT_CHUNK128_SONIC2, ARTFORMAT_BMP, "data/Level/GHZ/ghz1", "data/Level/GHZ/ghz", "data/Level/sonic1", "data/Level/GHZ/ghz", "GHZ", objFuncSonic1, 0x0050, 0x03B0, 0x0000, 0x25FF + (SCREEN_WIDTH - 320) / 2, 0x0000, 0x03E0},
-		/*LEVELID_GHZ2*/ {ZONEID_GHZ, 1, "Green Hill Zone", "Act 2", LEVELFORMAT_CHUNK128_SONIC2, ARTFORMAT_BMP, "data/Level/GHZ/ghz2", "data/Level/GHZ/ghz", "data/Level/sonic1", "data/Level/GHZ/ghz", "GHZ", objFuncSonic1, 0x0050, 0x00FC, 0x0000, 0x1FFF + (SCREEN_WIDTH - 320) / 2, 0x0000, 0x03E0},
+		/*LEVELID_GHZ1*/ {ZONEID_GHZ, 0, "Green Hill Zone", "Act 1", LEVELFORMAT_CHUNK128_SONIC2, ARTFORMAT_BMP, "data/Level/GHZ/ghz1", "data/Level/GHZ/ghz", "data/Level/sonic1", "data/Level/GHZ/ghz", "GHZ", objFuncSonic1, 0x0050, 0x03B0, 0x0000, 0x255F, 0x0000, 0x03E0},
+		/*LEVELID_GHZ2*/ {ZONEID_GHZ, 1, "Green Hill Zone", "Act 2", LEVELFORMAT_CHUNK128_SONIC2, ARTFORMAT_BMP, "data/Level/GHZ/ghz2", "data/Level/GHZ/ghz", "data/Level/sonic1", "data/Level/GHZ/ghz", "GHZ", objFuncSonic1, 0x0050, 0x00FC, 0x0000, 0x1F5F, 0x0000, 0x03E0},
 	//ZONEID_EHZ
-		/*LEVELID_EHZ1*/ {ZONEID_EHZ, 0, "Emerald Hill Zone", "Act 1", LEVELFORMAT_CHUNK128_SONIC2, ARTFORMAT_BMP, "data/Level/EHZ/ehz1", "data/Level/EHZ/ehz", "data/Level/sonic2", "data/Level/EHZ/ehz", "EHZ", objFuncSonic2, 0x0060, 0x028F, 0x0000, 0x2AE0 + (SCREEN_WIDTH - 320) / 2, 0x0000, 0x0400},
+		/*LEVELID_EHZ1*/ {ZONEID_EHZ, 0, "Emerald Hill Zone", "Act 1", LEVELFORMAT_CHUNK128_SONIC2, ARTFORMAT_BMP, "data/Level/EHZ/ehz1", "data/Level/EHZ/ehz", "data/Level/sonic2", "data/Level/EHZ/ehz", "EHZ", objFuncSonic2, 0x0060, 0x028F, 0x0000, 0x2A40, 0x0000, 0x0400},
 };
 
 //Loading functions
@@ -222,7 +222,7 @@ bool LEVEL::LoadLayout(LEVELTABLE *tableEntry)
 	
 	//Initialize boundaries
 	leftBoundary = tableEntry->leftBoundary;
-	rightBoundary = tableEntry->rightBoundary;
+	rightBoundary = tableEntry->rightBoundary + gRenderSpec.width / 2;
 	topBoundary = tableEntry->topBoundary;
 	bottomBoundary = tableEntry->bottomBoundary;
 	
@@ -687,7 +687,12 @@ bool LEVEL::UpdateFade()
 	
 	//Fade music out
 	if (!isFadingIn)
-		SetMusicVolume(max(GetMusicVolume() - (1.0f / 32.0f), 0.0f));
+	{
+		if (finished)
+			PauseMusic();
+		else
+			SetMusicVolume(max(GetMusicVolume() - (1.0f / 32.0f), 0.0f));
+	}
 	
 	return finished;
 }
@@ -696,7 +701,7 @@ bool LEVEL::UpdateFade()
 void LEVEL::DynamicEvents()
 {
 	//Get our bottom boundary
-	int16_t checkX = camera->x + (SCREEN_WIDTH - 320) / 2;
+	int16_t checkX = camera->x + (gRenderSpec.width - 320) / 2;
 	
 	switch (levelId)
 	{
@@ -726,8 +731,8 @@ void LEVEL::DynamicEvents()
 	if (bottomBoundaryTarget < bottomBoundary)
 	{
 		//Move up to the boundary smoothly
-		if ((camera->y + SCREEN_HEIGHT) > bottomBoundaryTarget)
-			bottomBoundary = (camera->y + SCREEN_HEIGHT);
+		if ((camera->y + gRenderSpec.height) > bottomBoundaryTarget)
+			bottomBoundary = (camera->y + gRenderSpec.height);
 		
 		//Move
 		bottomBoundary -= move;
@@ -737,7 +742,7 @@ void LEVEL::DynamicEvents()
 	else if (bottomBoundaryTarget > bottomBoundary)
 	{
 		//Move faster if in mid-air
-		if ((camera->y + 8 + SCREEN_HEIGHT) >= bottomBoundary && playerList->status.inAir)
+		if ((camera->y + 8 + gRenderSpec.height) >= bottomBoundary && playerList->status.inAir)
 			move *= 4;
 		
 		//Move
@@ -748,7 +753,7 @@ void LEVEL::DynamicEvents()
 	
 	//Set boundaries to target
 	int16_t left = camera->x;
-	int16_t right = camera->x + SCREEN_WIDTH;
+	int16_t right = camera->x + gRenderSpec.width;
 	
 	if (leftBoundary < leftBoundaryTarget)
 	{
@@ -1032,12 +1037,12 @@ void LEVEL::Draw()
 		
 		//Draw each line
 		int upperLine = max(backY, 0);
-		int lowerLine = min(backY + SCREEN_HEIGHT, backgroundTexture->height);
+		int lowerLine = min(backY + gRenderSpec.height, backgroundTexture->height);
 		
 		SDL_Rect backSrc = {0, upperLine, backgroundTexture->width, 1};
 		for (int i = upperLine; i < lowerLine; i++)
 		{
-			for (int x = -((backgroundScroll->scrollArray[i] + backX) % backgroundTexture->width); x < SCREEN_WIDTH; x += backgroundTexture->width)
+			for (int x = -((backgroundScroll->scrollArray[i] + backX) % backgroundTexture->width); x < gRenderSpec.width; x += backgroundTexture->width)
 				gSoftwareBuffer->DrawTexture(backgroundTexture, backgroundTexture->loadedPalette, &backSrc, LEVEL_RENDERLAYER_BACKGROUND, x, i - backY, false, false);
 			backSrc.y++;
 		}
@@ -1048,8 +1053,8 @@ void LEVEL::Draw()
 	{
 		int cLeft = max(camera->x / 16, 0);
 		int cTop = max(camera->y / 16, 0);
-		int cRight = min((camera->x + SCREEN_WIDTH + 15) / 16, gLevel->layout.width - 1);
-		int cBottom = min((camera->y + SCREEN_HEIGHT + 15) / 16, gLevel->layout.height - 1);
+		int cRight = min((camera->x + gRenderSpec.width + 15) / 16, gLevel->layout.width - 1);
+		int cBottom = min((camera->y + gRenderSpec.height + 15) / 16, gLevel->layout.height - 1);
 		
 		for (int ty = cTop; ty < cBottom; ty++)
 		{

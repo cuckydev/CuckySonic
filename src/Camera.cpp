@@ -26,18 +26,18 @@ CAMERA::CAMERA(PLAYER *trackPlayer)
 	memset(this, 0, sizeof(CAMERA));
 	
 	//Move to our given player
-	x = trackPlayer->x.pos - (SCREEN_WIDTH / 2);
-	y = trackPlayer->y.pos - (SCREEN_HEIGHT / 2 - 16);
+	x = trackPlayer->x.pos - (gRenderSpec.width / 2);
+	y = trackPlayer->y.pos - (gRenderSpec.height / 2 - 16);
 	
 	//Keep inside level boundaries
 	if (x < gLevel->leftBoundary)
 		x = gLevel->leftBoundary;
-	if (x + SCREEN_WIDTH > gLevel->rightBoundary)
-		x = gLevel->rightBoundary - SCREEN_WIDTH;
+	if (x + gRenderSpec.width > gLevel->rightBoundary)
+		x = gLevel->rightBoundary - gRenderSpec.width;
 	if (y < gLevel->topBoundary)
 		y = gLevel->topBoundary;
-	if (y + SCREEN_HEIGHT > gLevel->bottomBoundary)
-		y = gLevel->bottomBoundary - SCREEN_HEIGHT;
+	if (y + gRenderSpec.height > gLevel->bottomBoundary)
+		y = gLevel->bottomBoundary - gRenderSpec.height;
 	return;
 }
 
@@ -95,7 +95,7 @@ void CAMERA::Track(PLAYER *trackPlayer)
 	
 	int16_t hScrollOffset = trackX - x - xPan;
 	
-	if ((hScrollOffset -= (SCREEN_WIDTH / 2 + CAMERA_HSCROLL_LEFT)) < 0) //Scroll to the left
+	if ((hScrollOffset -= (gRenderSpec.width / 2 + CAMERA_HSCROLL_LEFT)) < 0) //Scroll to the left
 	{
 		//Cap our scrolling to 16 pixels per frame
 		if (hScrollOffset <= -16)
@@ -114,12 +114,12 @@ void CAMERA::Track(PLAYER *trackPlayer)
 		
 		//Scroll and keep within level boundaries
 		x += hScrollOffset;
-		if ((x + SCREEN_WIDTH) > gLevel->rightBoundary)
-			x = gLevel->rightBoundary - SCREEN_WIDTH;
+		if ((x + gRenderSpec.width) > gLevel->rightBoundary)
+			x = gLevel->rightBoundary - gRenderSpec.width;
 	}
 	
 	//Scroll vertically to the player
-	int16_t vScrollOffset = trackPlayer->y.pos - y - (SCREEN_HEIGHT / 2 + CAMERA_VSCROLL_OFFSET) - lookPan;
+	int16_t vScrollOffset = trackPlayer->y.pos - y - (gRenderSpec.height / 2 + CAMERA_VSCROLL_OFFSET) - lookPan;
 	
 	if (trackPlayer->status.inBall)
 		vScrollOffset -= 5; //Shift up 5 pixels if in ball-form
@@ -165,8 +165,8 @@ void CAMERA::Track(PLAYER *trackPlayer)
 		y += vScrollOffset;
 		
 		//Keep within level boundaries
-		if (y + SCREEN_HEIGHT > gLevel->bottomBoundary)
-			y = gLevel->bottomBoundary - SCREEN_HEIGHT;
+		if (y + gRenderSpec.height > gLevel->bottomBoundary)
+			y = gLevel->bottomBoundary - gRenderSpec.height;
 	}
 	
 	#ifdef CAMERA_CD_PAN

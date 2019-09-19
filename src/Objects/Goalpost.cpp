@@ -43,7 +43,7 @@ void ObjGoalpost(OBJECT *object)
 		case 1: //Check for contact
 		{
 			//If near the end of the level, lock screen
-			int16_t boundary = gLevel->rightBoundaryTarget - SCREEN_WIDTH - 0x100;
+			int16_t boundary = gLevel->rightBoundaryTarget - gRenderSpec.width - 0x100;
 			if (gLevel->camera->x >= boundary)
 				gLevel->leftBoundaryTarget = boundary;
 			
@@ -51,7 +51,7 @@ void ObjGoalpost(OBJECT *object)
 			if (gLevel->playerList->x.pos >= object->x.pos && gLevel->playerList->x.pos < (object->x.pos + 0x20))
 			{
 				//Lock the camera, timer, and increment routine
-				gLevel->leftBoundaryTarget = gLevel->rightBoundaryTarget - SCREEN_WIDTH;
+				gLevel->leftBoundaryTarget = gLevel->rightBoundaryTarget - gRenderSpec.width;
 				gLevel->updateTime = false;
 				
 				//Play sound and increment routine

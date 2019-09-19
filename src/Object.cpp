@@ -313,12 +313,12 @@ void OBJECT::SolidObjectCont(OBJECT_SOLIDTOUCH *solidTouch, PLAYER *player, int 
 	
 	if (player->status.reverseGravity)
 	{
-		checkHeight = player->defaultYRadius + height;
+		checkHeight = player->yRadius + height;
 		yDiff = (-(player->y.pos - y.pos) + 4) + checkHeight;
 	}
 	else
 	{
-		checkHeight = player->defaultYRadius + height;
+		checkHeight = player->yRadius + height;
 		yDiff = (player->y.pos - y.pos + 4) + checkHeight;
 	}
 	

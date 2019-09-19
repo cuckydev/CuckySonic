@@ -3,11 +3,6 @@
 #include "SDL_pixels.h"
 #include <stdint.h>
 
-//Screen size constants (TODO: make variable versions of this)
-#define SCREEN_WIDTH	426
-#define SCREEN_HEIGHT	240
-#define SCREEN_SCALE	2
-
 //Pixel function
 typedef void (*PIXELFUNCTION)(uint8_t*, uint32_t);
 	
@@ -122,12 +117,20 @@ class SOFTWAREBUFFER
 		bool RenderToScreen(PALCOLOUR *backgroundColour);
 };
 
+//Current render specifications
+struct RENDERSPEC
+{
+	int width, height, scale;
+};
+
 //Globals
 extern SDL_Window *gWindow;
 extern SDL_Renderer *gRenderer;
 extern SOFTWAREBUFFER *gSoftwareBuffer;
 
 extern SDL_PixelFormat *gNativeFormat;
+
+extern RENDERSPEC gRenderSpec;
 
 bool InitializeRender();
 void QuitRender();

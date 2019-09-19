@@ -34,7 +34,7 @@ TITLECARD::TITLECARD(const char *levelName, const char *levelSubtitle)
 	//Get position to draw at
 	drawY = (gLevel->playerList->y.pos + (gLevel->playerList->yRadius - gLevel->playerList->defaultYRadius)) - gLevel->camera->y;
 	
-	if (drawY < SCREEN_HEIGHT / 2)
+	if (drawY < gRenderSpec.height / 2)
 		drawY += 48;
 	else
 		drawY -= 48;
@@ -64,7 +64,7 @@ void TITLECARD::DrawText(const char *text, int x, int y)
 
 #define END_TIME 160
 #define TRANSITION_SPEED 16
-#define TRANSITION_TIME (SCREEN_WIDTH / TRANSITION_SPEED)
+#define TRANSITION_TIME (gRenderSpec.width / TRANSITION_SPEED)
 
 void TITLECARD::UpdateAndDraw()
 {
@@ -94,16 +94,17 @@ void TITLECARD::UpdateAndDraw()
 		subtitlePosition = (frame - END_TIME + TRANSITION_TIME) * -TRANSITION_SPEED;
 	
 	//Draw level name
-	DrawText(name, namePosition + (SCREEN_WIDTH / 2 - 110), drawY - 12);
+	DrawText(name, namePosition + (gRenderSpec.width / 2 - 110), drawY - 12);
 	
 	//Draw level subtitle
-	DrawText(subtitle, subtitlePosition + (SCREEN_WIDTH / 2 + 32), drawY + 12);
+	DrawText(subtitle, subtitlePosition + (gRenderSpec.width / 2 + 32), drawY + 12);
 	
-	//Draw the strip behind the name text, and the "CUCKYSONIC" label
+	//Draw the "CUCKYSONIC" label
 	SDL_Rect labelSrc = {0, 0, 64, 8};
-	gSoftwareBuffer->DrawTexture(texture, texture->loadedPalette, &labelSrc, LEVEL_RENDERLAYER_TITLECARD, namePosition, drawY - 12 + 4, false, false);
+	gSoftwareBuffer->DrawTexture(texture, texture->loadedPalette, &labelSrc, LEVEL_RENDERLAYER_TITLECARD, namePosition, gRenderSpec.height - 8, false, false);
 	
-	for (int x = 0; x < SCREEN_WIDTH; x += 16)
+	//Draw the strip behind the name text
+	for (int x = 0; x < gRenderSpec.width; x += 16)
 	{
 		SDL_Rect stripSrc = {0, 8, 16, 16};
 		gSoftwareBuffer->DrawTexture(texture, texture->loadedPalette, &stripSrc, LEVEL_RENDERLAYER_TITLECARD, x + namePosition, drawY - 12, false, false);
@@ -119,10 +120,10 @@ void TITLECARD::UpdateAndDraw()
 	int16_t xg = gLevel->playerList->x.pos - gLevel->camera->x;
 	int16_t yg = (gLevel->playerList->y.pos + (gLevel->playerList->yRadius - gLevel->playerList->defaultYRadius)) - gLevel->camera->y;
 	
-	SDL_Rect left = {0, 0, xg - gap, SCREEN_HEIGHT};
-	SDL_Rect top = {0, 0, SCREEN_WIDTH, yg - gap};
-	SDL_Rect right = {xg + gap, 0, SCREEN_WIDTH - xg - gap, SCREEN_HEIGHT};
-	SDL_Rect bottom = {0, yg + gap, SCREEN_WIDTH, SCREEN_HEIGHT - yg - gap};
+	SDL_Rect left = {0, 0, xg - gap, gRenderSpec.height};
+	SDL_Rect top = {0, 0, gRenderSpec.width, yg - gap};
+	SDL_Rect right = {xg + gap, 0, gRenderSpec.width - xg - gap, gRenderSpec.height};
+	SDL_Rect bottom = {0, yg + gap, gRenderSpec.width, gRenderSpec.height - yg - gap};
 	gSoftwareBuffer->DrawQuad(LEVEL_RENDERLAYER_TITLECARD, &left, &titleCardBackground);
 	gSoftwareBuffer->DrawQuad(LEVEL_RENDERLAYER_TITLECARD, &right, &titleCardBackground);
 	gSoftwareBuffer->DrawQuad(LEVEL_RENDERLAYER_TITLECARD, &top, &titleCardBackground);

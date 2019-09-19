@@ -214,7 +214,7 @@ void ObjGHZPlatform(OBJECT *object)
 		{
 			//Respawn when left screen horizontally (emulates how original game does stuff)
 			int16_t xDiff = object->x.pos - gLevel->camera->x;
-			if (xDiff <= -object->widthPixels || xDiff >= SCREEN_WIDTH + object->widthPixels)
+			if (xDiff <= -object->widthPixels || xDiff >= gRenderSpec.width + object->widthPixels)
 			{
 				object->xPosLong = object->scratchS16[SCRATCHS16_SPAWN_X] << 16;
 				object->yPosLong = object->scratchS16[SCRATCHS16_SPAWN_Y] << 16;

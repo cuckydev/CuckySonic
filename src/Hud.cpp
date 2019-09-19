@@ -123,6 +123,6 @@ void HUD::Draw()
 	DrawNumber(112 - 48, 24, gTime / 60 / 60, 0, true); //Minutes
 	
 	//Draw lives
-	DrawElement(16, SCREEN_HEIGHT - 24, 3, 0);
-	DrawNumber(44, SCREEN_HEIGHT - 24 + 2, gLives, 0, false);
+	DrawElement(16, gRenderSpec.height - 24, 3, 0);
+	DrawNumber(44, gRenderSpec.height - 24 + 2, gLives, 0, false);
 }
