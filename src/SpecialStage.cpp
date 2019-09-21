@@ -139,8 +139,8 @@ void SPECIALSTAGE::PalCycle()
 void SPECIALSTAGE::Draw()
 {
 	//Get origin position to draw from
-	const int xCenterOff = (gRenderSpec.width - stageTexture->width) / 2;
-	const int yCenterOff = (gRenderSpec.height - 240) / 2;
+	const int xCenter = gRenderSpec.width / 2;
+	const int yCenter = gRenderSpec.height / 2;
 	
 	//Draw the background
 	for (int x = -(backX % backgroundTexture->width); x < gRenderSpec.width; x += backgroundTexture->width)
@@ -156,5 +156,5 @@ void SPECIALSTAGE::Draw()
 		stageFrame = (animFrame - 16) + 1;
 	
 	SDL_Rect stageRect = {0, stageFrame * 240, stageTexture->width, 240};
-	gSoftwareBuffer->DrawTexture(stageTexture, stageTexture->loadedPalette, &stageRect, SPECIALSTAGE_RENDERLAYER_STAGE, xCenterOff, yCenterOff, false, false);
+	gSoftwareBuffer->DrawTexture(stageTexture, stageTexture->loadedPalette, &stageRect, SPECIALSTAGE_RENDERLAYER_STAGE, xCenter - stageTexture->width / 2, yCenter - stageTexture->height / 2, false, false);
 }

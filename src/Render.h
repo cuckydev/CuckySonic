@@ -72,14 +72,10 @@ struct RENDERQUEUE
 	{
 		struct
 		{
-			//How to draw the texture
-			SDL_Rect src;
-			SDL_Rect dst;
-			double xScale, yScale;
-			
-			//The reference texture and palette
+			int srcX, srcY;
 			PALETTE *palette;
 			TEXTURE *texture;
+			bool xFlip, yFlip;
 		} texture;
 		struct
 		{
@@ -112,7 +108,7 @@ class SOFTWAREBUFFER
 		
 		void DrawPoint(int layer, int x, int y, PALCOLOUR *colour);
 		void DrawQuad(int layer, const SDL_Rect *quad, PALCOLOUR *colour);
-		void DrawTexture(TEXTURE *texture, PALETTE *palette, const SDL_Rect *src, int layer, int x, int y, int origX, int origY, double xScale, double yScale);
+		void DrawTexture(TEXTURE *texture, PALETTE *palette, const SDL_Rect *src, int layer, int x, int y, bool xFlip, bool yFlip);
 		
 		void Blit8 (PALCOLOUR *backgroundColour, uint8_t  *buffer, int pitch);
 		void Blit16(PALCOLOUR *backgroundColour, uint16_t *buffer, int pitch);

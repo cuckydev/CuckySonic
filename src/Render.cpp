@@ -246,28 +246,61 @@ void SOFTWAREBUFFER::DrawQuad(int layer, const SDL_Rect *quad, PALCOLOUR *colour
 	queueEntry[layer]++;
 }
 
-void SOFTWAREBUFFER::DrawTexture(TEXTURE *texture, PALETTE *palette, const SDL_Rect *src, int layer, int x, int y, int origX, int origY, double xScale, double yScale)
+void SOFTWAREBUFFER::DrawTexture(TEXTURE *texture, PALETTE *palette, const SDL_Rect *src, int layer, int x, int y, bool xFlip, bool yFlip)
 {
+	//Get the source rect to use (NULL = entire texture)
+	SDL_Rect newSrc;
+	if (src != NULL)
+		newSrc = *src;
+	else
+		newSrc = {0, 0, texture->width, texture->height};
+	
+	//Clip to the destination
+	if (x < 0)
+	{
+		if (!xFlip)
+			newSrc.x -= x;
+		newSrc.w += x;
+		x -= x;
+	}
+	
+	int dx = x + newSrc.w - width;
+	if (dx > 0)
+	{
+		if (xFlip)
+			newSrc.x += dx;
+		newSrc.w -= dx;
+	}
+	
+	if (y < 0)
+	{
+		if (!yFlip)
+			newSrc.y -= y;
+		newSrc.h += y;
+		y -= y;
+	}
+	
+	int dy = y + newSrc.h - height;
+	if (dy > 0)
+	{
+		if (yFlip)
+			newSrc.y += dy;
+		newSrc.h -= dy;
+	}
+	
 	//Set the member of the render queue
 	queueEntry[layer]->type = RENDERQUEUE_TEXTURE;
-	
-	//Get the source rect to use (NULL = entire texture)
-	if (src != NULL)
-		queueEntry[layer]->texture.src = *src;
-	else
-		queueEntry[layer]->texture.src = {0, 0, texture->width, texture->height};
-	
-	//Clip the destination against the buffer
-	SDL_Rect newDest = {x - (int)(origX * xScale), y - (int)(origX * xScale), (int)(queueEntry[layer]->texture.src.w * xScale), (int)(queueEntry[layer]->texture.src.h * yScale)};
-	queueEntry[layer]->dest = newDest;
-	
-	//Set the scale
-	queueEntry[layer]->texture.xScale = xScale;
-	queueEntry[layer]->texture.yScale = yScale;
+	queueEntry[layer]->dest = {x, y, newSrc.w, newSrc.h};
+	queueEntry[layer]->texture.srcX = newSrc.x;
+	queueEntry[layer]->texture.srcY = newSrc.y;
 	
 	//Set palette and texture references
 	queueEntry[layer]->texture.palette = palette;
 	queueEntry[layer]->texture.texture = texture;
+	
+	//Flipping
+	queueEntry[layer]->texture.xFlip = xFlip;
+	queueEntry[layer]->texture.yFlip = yFlip;
 	
 	//Push forward in queue
 	queueEntry[layer]++;
