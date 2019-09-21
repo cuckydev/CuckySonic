@@ -45,6 +45,7 @@ SOURCES = \
 	Mappings \
 	Level \
 	LevelCollision \
+	SpecialStage \
 	BackgroundScroll \
 	Game \
 	GM_Splash \
@@ -107,4 +108,4 @@ obj/$(FILENAME)/WindowsIcon.o: res/icon.rc res/icon.ico
 
 #Remove all our compiled objects
 clean:
-	@rm -rf build obj
+	@rm -rf obj

@@ -5,15 +5,15 @@
 #include "Event.h"
 #include "Render.h"
 #include "Fade.h"
-#include "MathUtil.h"
-#include "Input.h"
-#include "Audio.h"
-
-#define SPLASH_TIME 200
-#define SPLASH_WARP 80
+#include "SpecialStage.h"
 
 bool GM_SpecialStage(bool *noError)
 {
+	//Load the special stage
+	SPECIALSTAGE *stage = new SPECIALSTAGE("data/SpecialStage/Stage/1");
+	if (stage->fail != NULL)
+		return (*noError = false);
+	
 	//Our loop
 	bool noExit = true;
 	
@@ -23,10 +23,17 @@ bool GM_SpecialStage(bool *noError)
 		if ((noExit = HandleEvents()) == false)
 			break;
 		
-		//Render our software buffer to the screen (using the first colour of our splash texture, should be white)
-		if (!(*noError = gSoftwareBuffer->RenderToScreen(NULL)))
+		//Update and draw stage
+		stage->Update();
+		stage->Draw();
+		
+		//Render our software buffer to the screen
+		if (!(*noError = gSoftwareBuffer->RenderToScreen(&stage->backgroundTexture->loadedPalette->colour[0])))
 			break;
 	}
+	
+	//Unload the stage
+	delete stage;
 	
 	//Return to stage
 	gGameMode = GAMEMODE_GAME;

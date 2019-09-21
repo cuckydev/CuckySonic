@@ -94,14 +94,14 @@ void TITLECARD::UpdateAndDraw()
 		subtitlePosition = (frame - END_TIME + TRANSITION_TIME) * -TRANSITION_SPEED;
 	
 	//Draw level name
-	DrawText(name, namePosition + (gRenderSpec.width / 2 - 110), drawY - 12);
+	DrawText(name, namePosition + 32, drawY - 12);
 	
 	//Draw level subtitle
 	DrawText(subtitle, subtitlePosition + (gRenderSpec.width / 2 + 32), drawY + 12);
 	
 	//Draw the "CUCKYSONIC" label
 	SDL_Rect labelSrc = {0, 0, 64, 8};
-	gSoftwareBuffer->DrawTexture(texture, texture->loadedPalette, &labelSrc, LEVEL_RENDERLAYER_TITLECARD, namePosition, gRenderSpec.height - 8, false, false);
+	gSoftwareBuffer->DrawTexture(texture, texture->loadedPalette, &labelSrc, LEVEL_RENDERLAYER_TITLECARD, -namePosition, gRenderSpec.height - 8, false, false);
 	
 	//Draw the strip behind the name text
 	for (int x = 0; x < gRenderSpec.width; x += 16)
