@@ -357,10 +357,12 @@ void OBJECT::SolidObjectCont(OBJECT_SOLIDTOUCH *solidTouch, PLAYER *player, int 
 						if (xDiff2 >= 0 && xDiff2 < widthPixels * 2 && player->yVel >= 0)
 						{
 							//Land on the object
+							yDiff -= 4;
+							
 							if (player->status.reverseGravity)
-								player->y.pos -= yDiff - 4;
-							else
-								player->y.pos += yDiff - 4;
+								yDiff = -yDiff;
+							
+							player->y.pos -= yDiff;
 							player->AttachToObject((void*)this, (&playerContact[i].standing - (size_t)this));
 							
 							//Set top touch flag
@@ -382,9 +384,9 @@ void OBJECT::SolidObjectCont(OBJECT_SOLIDTOUCH *solidTouch, PLAYER *player, int 
 						if (player->yVel < 0 && yDiff < 0)
 						{
 							if (player->status.reverseGravity)
-								player->y.pos -= yDiff;
-							else
-								player->y.pos += yDiff;
+								yDiff = -yDiff;
+							
+							player->y.pos -= yDiff;
 							player->yVel = 0;
 						}
 						
@@ -460,7 +462,7 @@ void OBJECT::SolidObjectCont(OBJECT_SOLIDTOUCH *solidTouch, PLAYER *player, int 
 		}
 	}
 	
-	//Clear out pushing
+	//Clear our pushing
 	SolidObjectClearPush(player, i);
 }
 
@@ -476,6 +478,32 @@ void OBJECT::SolidObjectClearPush(PLAYER *player, int i)
 		//Clear pushing flags
 		playerContact[i].pushing = false;
 		player->status.pushing = false;
+	}
+}
+
+//Common solid functions
+void OBJECT::ClearSolidContact()
+{
+	//Check all players and clear all contact
+	int i = 0;
+	
+	for (PLAYER *player = gLevel->playerList; player != NULL; player = player->next)
+	{
+		//Clear pushing and standing
+		if (playerContact[i].standing || playerContact[i].pushing)
+		{
+			//Clear our contact flags
+			player->status.shouldNotFall = false;
+			player->status.pushing = false;
+			playerContact[i].standing = false;
+			playerContact[i].pushing = false;
+			
+			//Place the player in mid-air, this is weird and stupid god damn
+			player->status.inAir = true;
+		}
+		
+		//Check next player's contact
+		i++;
 	}
 }
 

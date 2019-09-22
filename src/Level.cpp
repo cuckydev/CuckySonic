@@ -49,15 +49,31 @@ OBJECTFUNCTION objFuncSonic2[] = {
 	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
 	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
 	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
 };
 
 //Our level table
 LEVELTABLE gLevelTable[LEVELID_MAX] = {
 	//ZONEID_GHZ
-		/*LEVELID_GHZ1*/ {ZONEID_GHZ, 0, "Green Hill Zone", "Act 1", LEVELFORMAT_CHUNK128_SONIC2, ARTFORMAT_BMP, "data/Level/GHZ/ghz1", "data/Level/GHZ/ghz", "data/Level/sonic1", "data/Level/GHZ/ghz", "GHZ", objFuncSonic1, 0x0050, 0x03B0, 0x0000, 0x255F, 0x0000, 0x03E0},
-		/*LEVELID_GHZ2*/ {ZONEID_GHZ, 1, "Green Hill Zone", "Act 2", LEVELFORMAT_CHUNK128_SONIC2, ARTFORMAT_BMP, "data/Level/GHZ/ghz2", "data/Level/GHZ/ghz", "data/Level/sonic1", "data/Level/GHZ/ghz", "GHZ", objFuncSonic1, 0x0050, 0x00FC, 0x0000, 0x1F5F, 0x0000, 0x03E0},
+		/*LEVELID_GHZ1*/ {ZONEID_GHZ, 0, "Green Hill Zone", "Act 1", LEVELFORMAT_CHUNK128_SONIC2, OBJECTFORMAT_SONIC1, ARTFORMAT_BMP, "data/Level/GHZ/ghz1", "data/Level/GHZ/ghz", "data/Level/sonic1", "data/Level/GHZ/ghz", "GHZ", objFuncSonic1, 0x0050, 0x03B0, 0x0000, 0x255F, 0x0000, 0x03E0},
+		/*LEVELID_GHZ2*/ {ZONEID_GHZ, 1, "Green Hill Zone", "Act 2", LEVELFORMAT_CHUNK128_SONIC2, OBJECTFORMAT_SONIC1, ARTFORMAT_BMP, "data/Level/GHZ/ghz2", "data/Level/GHZ/ghz", "data/Level/sonic1", "data/Level/GHZ/ghz", "GHZ", objFuncSonic1, 0x0050, 0x00FC, 0x0000, 0x214B, 0x0000, 0x03E0},
 	//ZONEID_EHZ
-		/*LEVELID_EHZ1*/ {ZONEID_EHZ, 0, "Emerald Hill Zone", "Act 1", LEVELFORMAT_CHUNK128_SONIC2, ARTFORMAT_BMP, "data/Level/EHZ/ehz1", "data/Level/EHZ/ehz", "data/Level/sonic2", "data/Level/EHZ/ehz", "EHZ", objFuncSonic2, 0x0060, 0x028F, 0x0000, 0x2A40, 0x0000, 0x0400},
+		/*LEVELID_EHZ1*/ {ZONEID_EHZ, 0, "Emerald Hill Zone", "Act 1", LEVELFORMAT_CHUNK128_SONIC2, OBJECTFORMAT_SONIC2, ARTFORMAT_BMP, "data/Level/EHZ/ehz1", "data/Level/EHZ/ehz", "data/Level/sonic2", "data/Level/EHZ/ehz", "EHZ", objFuncSonic2, 0x0060, 0x028F, 0x0000, 0x2A40, 0x0000, 0x0400},
 };
 
 //Loading functions
@@ -362,33 +378,53 @@ bool LEVEL::LoadObjects(LEVELTABLE *tableEntry)
 	}
 	
 	//Read our object data
-	int objects = SDL_RWsize(objectFile) / 6;
-	
-	for (int i = 0; i < objects; i++)
+	switch (tableEntry->objectFormat)
 	{
-		int16_t xPos = SDL_ReadBE16(objectFile);
-		int16_t word2 = SDL_ReadBE16(objectFile);
-		int16_t yPos = word2 & 0x0FFF;
-		
-		uint8_t id = SDL_ReadU8(objectFile);
-		uint8_t subtype = SDL_ReadU8(objectFile);
-		
-		OBJECT *newObject = new OBJECT(&objectList, tableEntry->objectFunctionList[id & 0x7F]);
-		if (newObject == NULL || newObject->fail)
+		case OBJECTFORMAT_SONIC1:
+		case OBJECTFORMAT_SONIC2:
 		{
-			if (newObject == NULL)
-				Error(fail = "Failed to create object");
-			else
-				Error(fail = newObject->fail);
-			return true;
+			int objects = SDL_RWsize(objectFile) / 6;
+			
+			for (int i = 0; i < objects; i++)
+			{
+				int16_t xPos = SDL_ReadBE16(objectFile);
+				int16_t word2 = SDL_ReadBE16(objectFile);
+				int16_t yPos = word2 & 0x0FFF;
+				
+				uint8_t id = SDL_ReadU8(objectFile);
+				uint8_t subtype = SDL_ReadU8(objectFile);
+				
+				if (tableEntry->objectFormat == OBJECTFORMAT_SONIC1)
+					id &= 0x7F;
+				
+				OBJECT *newObject = new OBJECT(&objectList, tableEntry->objectFunctionList[id]);
+				if (newObject == NULL || newObject->fail)
+				{
+					if (newObject == NULL)
+						Error(fail = "Failed to create object");
+					else
+						Error(fail = newObject->fail);
+					return true;
+				}
+				
+				//Apply data
+				newObject->x.pos = xPos;
+				newObject->y.pos = yPos;
+				
+				if (tableEntry->objectFormat == OBJECTFORMAT_SONIC1)
+				{
+					newObject->status.yFlip = (word2 & 0x8000) != 0;
+					newObject->status.xFlip = (word2 & 0x4000) != 0;
+				}
+				else
+				{
+					newObject->status.yFlip = (word2 & 0x4000) != 0;
+					newObject->status.xFlip = (word2 & 0x2000) != 0;
+				}
+				
+				newObject->subtype = subtype;
+			}
 		}
-		
-		//Apply data
-		newObject->x.pos = xPos;
-		newObject->y.pos = yPos;
-		newObject->status.yFlip = (word2 & 0x8000) != 0;
-		newObject->status.xFlip = (word2 & 0x4000) != 0;
-		newObject->subtype = subtype;
 	}
 	
 	SDL_RWclose(objectFile);
@@ -553,6 +589,7 @@ const char *preloadTexture[] = {
 
 const char *preloadMappings[] = {
 	"data/Object/Explosion.map",
+	"data/Object/MonitorContents.map",
 	NULL,
 };
 
@@ -712,9 +749,9 @@ void LEVEL::DynamicEvents()
 				bottomBoundaryTarget = 0x4E0;
 			break;
 		case LEVELID_GHZ2:
-			if (checkX >= 0x1D60)
+			if (checkX >= 0x2000)
 				bottomBoundaryTarget = 0x3E0;
-			else if (checkX >= 0x1600)
+			else if (checkX >= 0x1500)
 				bottomBoundaryTarget = 0x4E0;
 			else if (checkX >= 0xED0)
 				bottomBoundaryTarget = 0x2E0;

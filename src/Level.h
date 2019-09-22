@@ -38,6 +38,12 @@ enum LEVELFORMAT
 	LEVELFORMAT_TILE,				//16x16 tile data with specified width and height
 };
 
+enum OBJECTFORMAT
+{
+	OBJECTFORMAT_SONIC1,
+	OBJECTFORMAT_SONIC2,
+};
+
 enum ARTFORMAT
 {
 	ARTFORMAT_BMP,	//Generic .bmp file
@@ -70,6 +76,7 @@ struct LEVELTABLE
 	
 	//Level data format
 	LEVELFORMAT format;
+	OBJECTFORMAT objectFormat;
 	ARTFORMAT artFormat;
 	
 	//Paths

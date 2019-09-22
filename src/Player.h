@@ -370,4 +370,6 @@ class PLAYER
 		
 		void AttachToObject(void *object, bool *standingBit);
 		void MoveOnPlatform(void *platform, int16_t height, int16_t lastXPos);
+		
+		void GiveSpeedShoes();
 };

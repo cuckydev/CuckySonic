@@ -153,6 +153,8 @@ class OBJECT
 		void SolidObjectCont(OBJECT_SOLIDTOUCH *solidTouch, PLAYER *player, int i, int16_t width, int16_t height, int16_t lastXPos);
 		void SolidObjectClearPush(PLAYER *player, int i);
 		
+		void ClearSolidContact();
+		
 		bool Update();
 		void Draw();
 		void DrawToScreen();

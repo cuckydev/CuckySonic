@@ -3368,7 +3368,7 @@ void PLAYER::Display()
 	if (invulnerabilityTime == 0 || (--invulnerabilityTime & 0x4) != 0)
 		Draw();
 	
-	const MUSICSPEC levelResumeSpec = {gLevel->music, 0, 0.0f};
+	const MUSICSPEC levelResumeSpec = {gLevel->music, 0, GetMusicVolume()};
 	
 	//Handle invincibility (every 8 frames)
 	if (item.isInvincible && invincibilityTime != 0 && (gLevel->frameCounter & 0x7) == 0 && --invincibilityTime == 0)
@@ -3435,6 +3435,17 @@ void PLAYER::DrawToScreen()
 			int alignX = renderFlags.alignPlane ? gLevel->camera->x : 0;
 			int alignY = renderFlags.alignPlane ? gLevel->camera->y : 0;
 			gSoftwareBuffer->DrawTexture(texture, texture->loadedPalette, mapRect, gLevel->GetObjectLayer(highPriority, priority), x.pos - origX - alignX, y.pos - origY - alignY, renderFlags.xFlip, renderFlags.yFlip);
+			
+			//Draw trail when using speed shoes
+			if (item.hasSpeedShoes)
+			{
+				for (int i = 1; i < min((speedShoesTime * 8 - (gLevel->frameCounter & 0x7)) / 2, 8); i++)
+				{
+					int x = posRecord[(recordPos - (unsigned)i) % (unsigned)PLAYER_RECORD_LENGTH].x, y = posRecord[(recordPos - (unsigned)i) % (unsigned)PLAYER_RECORD_LENGTH].y;
+					if ((i + gLevel->frameCounter) & 0x1)
+						gSoftwareBuffer->DrawTexture(texture, texture->loadedPalette, mapRect, gLevel->GetObjectLayer(highPriority, priority), x - origX - alignX, y - origY - alignY, renderFlags.xFlip, renderFlags.yFlip);
+				}
+			}
 		}
 	}
 }
@@ -3590,14 +3601,12 @@ bool PLAYER::TouchResponseObject(void *objPointer)
 	playerTop = y.pos - playerHeight;
 	playerHeight *= 2; //diameter
 	
-	/*
-	//Code to handle the ducking hitbox from Sonic 1 and 2
+	//Code to handle the ducking hitbox from Sonic 1 and 2 (TODO: it's supposed to check the mapping frame)
 	if (anim == PLAYERANIMATION_DUCK)
 	{
 		playerTop += 12;
 		playerHeight = 10;
 	}
-	*/
 	
 	//Check object
 	OBJECT* const object = (OBJECT* const)objPointer;
@@ -3655,6 +3664,26 @@ bool PLAYER::TouchResponseObject(void *objPointer)
 						object->routine = 2;
 					return true;
 				case COLLISIONTYPE_MONITOR:
+					//If moving upwards, make the monitor bounce upwards
+					if (yVel < 0)
+					{
+						
+						if ((y.pos - 0x10) >= object->y.pos)
+						{
+							//Reverse our y-velocity and bump the monitor upwards (make it fall, too!)
+							yVel = -yVel;
+							object->yVel = -0x180;
+							object->routineSecondary = 4; //why is this 4, the code only checks if it's non-zero?
+						}
+					}
+					//Check if we're the lead, and only break the monitor if so and if in the rolling animation
+					else if (follow == NULL && anim == PLAYERANIMATION_ROLL)
+					{
+						//Reverse our y-velocity and destroy the monitor
+						yVel = -yVel;
+						object->routine = 2;
+						object->parent = (void*)this;
+					}
 					return true;
 			}
 		}
@@ -3722,4 +3751,23 @@ void PLAYER::MoveOnPlatform(void *platform, int16_t height, int16_t lastXPos)
 		y.pos = top + yRadius;
 	else
 		y.pos = top - yRadius;
+}
+
+//Item functions
+void PLAYER::GiveSpeedShoes()
+{
+	//Give speed shoes
+	item.hasSpeedShoes = true;
+	speedShoesTime = 150;
+	
+	top = 0xC00;
+	acceleration = 0x18;
+	deceleration = 0x80;
+	
+	//Play speed shoes music (only if lead)
+	if (follow == NULL)
+	{
+		MUSICSPEC speedShoesMusic = {"SpeedShoes", 0, GetMusicVolume()};
+		gLevel->ChangeMusic(speedShoesMusic);
+	}
 }

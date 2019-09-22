@@ -156,5 +156,5 @@ void SPECIALSTAGE::Draw()
 		stageFrame = (animFrame - 16) + 1;
 	
 	SDL_Rect stageRect = {0, stageFrame * 240, stageTexture->width, 240};
-	gSoftwareBuffer->DrawTexture(stageTexture, stageTexture->loadedPalette, &stageRect, SPECIALSTAGE_RENDERLAYER_STAGE, xCenter - stageTexture->width / 2, yCenter - stageTexture->height / 2, false, false);
+	gSoftwareBuffer->DrawTexture(stageTexture, stageTexture->loadedPalette, &stageRect, SPECIALSTAGE_RENDERLAYER_STAGE, xCenter - stageTexture->width / 2, yCenter - 240 / 2, false, false);
 }
