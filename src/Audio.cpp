@@ -623,7 +623,7 @@ void AudioCallback(void *userdata, uint8_t *stream, int length)
 	}
 	
 	//Mix music into the buffer or clear the buffer
-	if (loadMusicThread == NULL && internalMusic != NULL && internalMusic->playing)
+	if (internalMusic != NULL && internalMusic->playing)
 	{
 		//This will clear the stream with 0.0f
 		internalMusic->Mix((float*)stream, samples);
