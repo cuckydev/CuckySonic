@@ -275,6 +275,7 @@ class PLAYER
 		
 		//Objects that belong to us
 		void *spindashDust;
+		void *shieldObject;
 		
 		//For linked list
 		PLAYER **list;
@@ -313,6 +314,7 @@ class PLAYER
 		void ResetOnFloor3();
 		
 		void RecordPos();
+		void ResetRecords(int16_t xPos, int16_t yPos);
 		
 		bool Spindash();
 		
@@ -365,7 +367,7 @@ class PLAYER
 		void DebugControl();
 		void DebugMode();
 		
-		bool TouchResponseObject(void *objPointer);
+		bool TouchResponseObject(void *objPointer, int16_t playerLeft, int16_t playerTop, int16_t playerWidth, int16_t playerHeight);
 		void TouchResponse();
 		
 		void AttachToObject(void *object, bool *standingBit);

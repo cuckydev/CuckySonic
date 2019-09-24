@@ -3,6 +3,7 @@
 #include "Path.h"
 #include "Log.h"
 #include "Error.h"
+#include "Audio.h"
 
 SPECIALSTAGE::SPECIALSTAGE(const char *name)
 {
@@ -49,9 +50,15 @@ SPECIALSTAGE::SPECIALSTAGE(const char *name)
 	//Read layout header
 	width = SDL_ReadBE16(fp);
 	height = SDL_ReadBE16(fp);
-	layout = (uint8_t*)malloc(width * height);
 	
-	//Read the stage's palette
+	layout = (uint8_t*)malloc(width * height);
+	if (layout == NULL)
+	{
+		Error(fail = "Failed to allocate the internal stage layout");
+		return;
+	}
+	
+	//Read and update the stage's palette
 	uint8_t r1 = SDL_ReadU8(fp); uint8_t g1 = SDL_ReadU8(fp); uint8_t b1 = SDL_ReadU8(fp);
 	uint8_t r2 = SDL_ReadU8(fp); uint8_t g2 = SDL_ReadU8(fp); uint8_t b2 = SDL_ReadU8(fp);
 	SetPaletteColour(&tile1, r1, g1, b1);
@@ -60,7 +67,7 @@ SPECIALSTAGE::SPECIALSTAGE(const char *name)
 	
 	//Read the layout data
 	SDL_RWread(fp, layout, width * height, 1);			//Actual sphere map on the stage
-	playerState.direction = (SDL_ReadBE16(fp)) >> 8;	//Original game sucks, read as a word into the byte (68000 is big-endian, so it only uses the high byte)
+	playerState.direction = (SDL_ReadBE16(fp)) >> 8;	//Original game sucks, read as a word into the byte's address (68000 is big-endian, so it only uses the high byte)
 	playerState.xPosLong =   SDL_ReadBE16(fp)  << 8;	//The original game stores the positions in the native 8.8 format, extend to 16.16
 	playerState.yPosLong =   SDL_ReadBE16(fp)  << 8;
 	spheresLeft = SDL_ReadBE16(fp);
@@ -78,12 +85,22 @@ SPECIALSTAGE::SPECIALSTAGE(const char *name)
 	
 	//Read perspective data
 	perspectiveMap = (uint8_t*)malloc(SDL_RWsize(perspectiveFile));
+	if (perspectiveMap == NULL)
+	{
+		Error(fail = "Failed to allocate memory for the perspective map");
+		return;
+	}
+	
 	SDL_RWread(perspectiveFile, perspectiveMap, SDL_RWsize(perspectiveFile), 1);
 	SDL_RWclose(perspectiveFile);
 	
 	//Initialize state
 	rate = 0x1000;
 	rateTimer = 30 * 60;
+	
+	//Play special stage music
+	MUSICSPEC musicSpec = {"SpecialStage", 0, 1.0f};
+	PlayMusic(musicSpec);
 	
 	LOG(("Success!\n"));
 }
@@ -142,12 +159,17 @@ void SPECIALSTAGE::Draw()
 	const int xCenter = gRenderSpec.width / 2;
 	const int yCenter = gRenderSpec.height / 2;
 	
-	//Draw the background
+	//Draw the background, given our scroll values
 	for (int x = -(backX % backgroundTexture->width); x < gRenderSpec.width; x += backgroundTexture->width)
 		for (int y = -(backY % backgroundTexture->height); y < gRenderSpec.height; y += backgroundTexture->height)
 			gSoftwareBuffer->DrawTexture(backgroundTexture, backgroundTexture->loadedPalette, NULL, SPECIALSTAGE_RENDERLAYER_BACKGROUND, x, y, false, false);
-		
-	//Update our palette cycle
+	
+	static int a = 0;
+	if (a++ & 0x1)
+		animFrame = (animFrame + 1) & 0xF;
+	backY += 3;
+	
+	//Update the stage's palette cycle
 	PalCycle();
 	
 	//Draw the stage

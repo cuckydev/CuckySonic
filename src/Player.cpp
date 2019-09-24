@@ -158,6 +158,8 @@ static const uint8_t* animationListSpindashDust[] = {
 
 void ObjSpindashDust(OBJECT *object)
 {
+	PLAYER *player = (PLAYER*)object->parent;
+	
 	switch (object->routine)
 	{
 		case 0:
@@ -177,35 +179,122 @@ void ObjSpindashDust(OBJECT *object)
 			if (object->anim == 1)
 			{
 				//Are we to be deleted?
-				if (((PLAYER*)object->parent)->routine != PLAYERROUTINE_CONTROL || ((PLAYER*)object->parent)->spindashing == false)
+				if (player->routine != PLAYERROUTINE_CONTROL || player->spindashing == false)
 				{
 					object->anim = 0;
 					break;
 				}
 				
 				//Copy the player's position
-				object->status.xFlip = ((PLAYER*)object->parent)->status.xFlip;
-				object->status.yFlip = ((PLAYER*)object->parent)->status.reverseGravity;
-				object->highPriority = ((PLAYER*)object->parent)->highPriority;
+				object->status.xFlip = player->status.xFlip;
+				object->status.yFlip = player->status.reverseGravity;
+				object->highPriority = player->highPriority;
 				
-				object->x.pos = ((PLAYER*)object->parent)->x.pos;
-				object->y.pos = ((PLAYER*)object->parent)->y.pos;
+				object->x.pos = player->x.pos;
+				object->y.pos = player->y.pos;
 				
 				//Offset if our height is non-default
-				int heightDifference = 0x13 - ((PLAYER*)object->parent)->defaultYRadius;
-				if (heightDifference)
-				{
-					if (((PLAYER*)object->parent)->status.reverseGravity)
-						object->y.pos += heightDifference;
-					else
-						object->y.pos -= heightDifference;
-				}
+				int heightDifference = 0x13 - player->defaultYRadius;
+				
+				if (player->status.reverseGravity)
+					object->y.pos += heightDifference;
+				else
+					object->y.pos -= heightDifference;
 			}
 			break;
 	}
 	
 	//Draw and animate
 	object->Animate(animationListSpindashDust);
+	object->Draw();
+}
+
+//Shield animation (insta-shield)
+static const uint8_t animationInstaShieldNull[] =	{0x1F,0x06,0xFF};
+static const uint8_t animationInstaShieldUse[] =	{0x00,0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x06,0x06,0x06,0x06,0x06,0x06,0x07,0xFD,0x00};
+
+static const uint8_t* animationListInstaShield[] = {
+	animationInstaShieldNull,
+	animationInstaShieldUse,
+};
+
+//Shield object
+void ObjShield(OBJECT *object)
+{
+	PLAYER *player = (PLAYER*)object->parent;
+	
+	//If the player has invincibility, don't exist please
+	if (player->item.isInvincible)
+		return;
+	
+	//Copy player state
+	object->highPriority = player->highPriority;
+	object->x.pos = player->x.pos;
+	object->y.pos = player->y.pos;
+	object->status.xFlip = player->status.xFlip;
+	object->status.yFlip = player->status.reverseGravity;
+	
+	//Do shield specific code (this includes getting our things)
+	const char *useMapping = NULL;
+	const uint8_t **useAniList = NULL;
+	
+	if (player->item.hasShield)
+	{
+		//Main shields
+		switch (player->shield)
+		{
+			case SHIELD_FIRE:
+				useMapping = "data/Object/FireShield.map";
+				break;
+			case SHIELD_ELECTRIC:
+				useMapping = "data/Object/BubbleShield.map";
+				break;
+			case SHIELD_BUBBLE:
+				useMapping = "data/Object/BubbleShield.map";
+				break;
+			case SHIELD_BLUE:
+				useMapping = "data/Object/BlueShield.map";
+				break;
+			default:
+				break;
+		}
+	}
+	else //Insta-shield
+	{
+		//Set our mappings and animation list to use
+		useMapping = "data/Object/InstaShield.map";
+		useAniList = animationListInstaShield;
+		
+		//Set our render properties
+		object->priority = 1;
+		object->widthPixels = 24;
+		object->renderFlags.alignPlane = true;
+		
+		//When we reach the end of the animation, end our attack
+		if (object->mappingFrame == 7 && player->jumpAbility == 1)
+			player->jumpAbility = 2;
+	}
+	
+	//Load the given mappings and textures
+	object->texture = gLevel->GetObjectTexture("data/Object/Shield.bmp");
+	object->mappings = gLevel->GetObjectMappings(useMapping);
+	
+	//Reset animation state if shield has changed and remember our current shield
+	if ((SHIELD)object->routine != player->shield || (bool)object->routineSecondary != player->item.hasShield)
+	{
+		//Copy our current shield
+		object->routine = player->shield;
+		object->routineSecondary = player->item.hasShield;
+		
+		//Reset animation state
+		object->anim = 0;
+		object->prevAnim = 0;
+		object->animFrame = 0;
+		object->animFrameDuration = 0;
+	}
+	
+	//Draw to screen and animate
+	object->Animate(useAniList);
 	object->Draw();
 }
 
@@ -292,15 +381,11 @@ PLAYER::PLAYER(PLAYER **linkedList, const char *specPath, PLAYER *myFollow, int 
 	spindashDust = new OBJECT(&gLevel->objectList, ObjSpindashDust);
 	((OBJECT*)spindashDust)->parent = this;
 	
-	//Initialize our record arrays
-	for (int i = 0; i < PLAYER_RECORD_LENGTH; i++)
-	{
-		posRecord[i].x = x.pos - 0x20;	//Why the hell is the position offset?
-		posRecord[i].y = x.pos - 0x04;
-		memset(&statRecord[i], 0, sizeof(statRecord[0])); //Stat record is initialized as 0
-	}
+	shieldObject = new OBJECT(&gLevel->objectList, ObjShield);
+	((OBJECT*)shieldObject)->parent = this;
 	
-	recordPos = 0;
+	//Initialize our record arrays
+	ResetRecords(x.pos - 0x20, y.pos - 0x04);
 	
 	//Attach to linked list (if applicable)
 	if (linkedList != NULL)
@@ -1247,6 +1332,20 @@ void PLAYER::RecordPos()
 	recordPos %= PLAYER_RECORD_LENGTH;
 }
 
+void PLAYER::ResetRecords(int16_t xPos, int16_t yPos)
+{
+	//Clear our records with the given position
+	for (int i = 0; i < PLAYER_RECORD_LENGTH; i++)
+	{
+		posRecord[i].x = xPos;
+		posRecord[i].y = yPos;
+		memset(&statRecord[i], 0, sizeof(statRecord[0])); //Stat record is initialized as 0
+	}
+	
+	//Reset our record pos
+	recordPos = 0;
+}
+
 //Spindash code
 const uint16_t spindashSpeed[9] =		{0x800, 0x880, 0x900, 0x980, 0xA00, 0xA80, 0xB00, 0xB80, 0xC00};
 const uint16_t spindashSpeedSuper[9] =	{0xB00, 0xB80, 0xC00, 0xC80, 0xD00, 0xD80, 0xE00, 0xE80, 0xF00};
@@ -1375,14 +1474,87 @@ void PLAYER::JumpAbilities()
 {
 	if (jumpAbility == 0 && (controlPress.a || controlPress.b || controlPress.c))
 	{
-		//Perform our ability
-		if (item.hasShield && shield != SHIELD_BLUE) //If can use an ability
-		{
-			status.rollJumping = false; //Clear the rolljump flag
-		}
+		//Clear the roll jump flag, so we regain horizontal control
+		status.rollJumping = false;
 		
-		//Disable our ability flag
-		jumpAbility = 1;
+		//Perform our ability
+		if (super)
+		{
+			if (0 /*hyper*/)
+			{
+				//Hyper dash
+			}
+			else
+			{
+				//Super cannot use any jump abilities, just clear jump ability
+				jumpAbility = 1;
+			}
+		}
+		else if (!item.isInvincible)
+		{
+			//Check and handle shield abilities
+			if (item.hasShield)
+			{
+				if (shield == SHIELD_FIRE)
+				{
+					//Update our shield and ability flag
+					((OBJECT*)shieldObject)->anim = 1;
+					jumpAbility = 1;
+					
+					//Dash in our facing direction
+					int16_t speed = 0x800;
+					if (status.xFlip)
+						speed = -speed;
+					
+					xVel = speed;
+					inertia = speed;
+					yVel = 0;
+					
+					//Make the camera lag behind us
+					scrollDelay = 0x2000;
+					ResetRecords(x.pos, y.pos);
+				}
+				else if (shield == SHIELD_ELECTRIC)
+				{
+					//Update our shield and ability flag
+					((OBJECT*)shieldObject)->anim = 1;
+					jumpAbility = 1;
+					
+					//Electric shield double jump
+					yVel = -0x680;
+					status.jumping = false;
+					//PlaySound(SOUNDID_ELECTRICSHIELD_DOUBLEJUMP);
+				}
+				else if (shield == SHIELD_BUBBLE)
+				{
+					//Update our shield and ability flag
+					((OBJECT*)shieldObject)->anim = 1;
+					jumpAbility = 1;
+					
+					//Shoot down to the ground
+					xVel = 0;
+					inertia = 0;
+					yVel = 0x800;
+					//PlaySound(SOUNDID_BUBBLE_BOUNCE);
+				}
+				else
+				{
+					//Presumably the blue shield, which has no abilities
+					jumpAbility = 1;
+				}
+			}
+			else if (0 /*super checks*/) //Super transformation
+			{
+				
+			}
+			else //Insta-shield
+			{
+				//Update our shield and ability flag
+				((OBJECT*)shieldObject)->anim = 1;
+				jumpAbility = 1;
+				//PlaySound(SOUNDID_INSTA_SHIELD);
+			}
+		}
 	}
 }
 
@@ -3557,57 +3729,8 @@ void PLAYER::DebugMode()
 }
 
 //Object interaction functions
-bool PLAYER::TouchResponseObject(void *objPointer)
+bool PLAYER::TouchResponseObject(void *objPointer, int16_t playerLeft, int16_t playerTop, int16_t playerWidth, int16_t playerHeight)
 {
-	//Get our collision hitbox
-	int16_t playerLeft, playerTop, playerWidth, playerHeight;
-	
-	/* https://www.youtube.com/watch?v=32Hp1LW08Yc
-		bsr.w	ShieldTouchResponse
-		tst.b	character_id(a0)			; Is the player Sonic?
-		bne.s	Touch_NoInstaShield			; If not, branch
-		move.b	status_secondary(a0),d0
-		andi.b	#$73,d0					; Does the player have any shields or is invincible?
-		bne.s	Touch_NoInstaShield			; If so, branch
-		; By this point, we're focussing purely on the Insta-Shield
-		cmpi.b	#1,double_jump_flag(a0)			; Is the Insta-Shield currently in its 'attacking' mode?
-		bne.s	Touch_NoInstaShield			; If not, branch
-		move.b	status_secondary(a0),d0			; Get status_secondary...
-		move.w	d0,-(sp)				; ...and save it
-		bset	#Status_Invincible,status_secondary(a0)	; Make the player invincible
-		move.w	x_pos(a0),d2				; Get player's x_pos
-		move.w	y_pos(a0),d3				; Get player's y_pos
-		subi.w	#$18,d2					; Subtract width of Insta-Shield
-		subi.w	#$18,d3					; Subtract height of Insta-Shield
-		move.w	#$30,d4					; Player's width
-		move.w	#$30,d5					; Player's height
-		bsr.s	Touch_Process
-		move.w	(sp)+,d0				; Get the backed-up status_secondary
-		btst	#Status_Invincible,d0			; Was the player already invincible (wait, what? An earlier check ensures that this can't happen)
-		bne.s	.alreadyinvincible			; If so, branch
-		bclr	#Status_Invincible,status_secondary(a0)	; Make the player vulnerable again
-
-	.alreadyinvincible:
-		moveq	#0,d0
-		rts
-	*/
-	
-	//Get player hitbox
-	playerWidth = 8; //radius
-	playerLeft = x.pos - playerWidth;
-	playerWidth *= 2; //diameter
-	
-	playerHeight = yRadius - 3; //radius
-	playerTop = y.pos - playerHeight;
-	playerHeight *= 2; //diameter
-	
-	//Code to handle the ducking hitbox from Sonic 1 and 2 (TODO: it's supposed to check the mapping frame)
-	if (anim == PLAYERANIMATION_DUCK)
-	{
-		playerTop += 12;
-		playerHeight = 10;
-	}
-	
 	//Check object
 	OBJECT* const object = (OBJECT* const)objPointer;
 	
@@ -3636,7 +3759,7 @@ bool PLAYER::TouchResponseObject(void *objPointer)
 							if (jumpAbility == 0 || status.underwater)
 								return CheckHurt(objPointer);
 							
-							//If the object is above or to the side of us, hurt them
+							//If the object is just about above us, hurt them
 							if (((GetAtan(x.pos - object->x.pos, y.pos - object->y.pos) + 0x20) & 0xFF) < 0x40)
 								return object->Hurt(this);
 							
@@ -3658,8 +3781,10 @@ bool PLAYER::TouchResponseObject(void *objPointer)
 					//Yeah, no
 					return true;
 				case COLLISIONTYPE_HURT:
+					//Hurt us and never don't do that
 					return CheckHurt(objPointer);
 				case COLLISIONTYPE_OTHER:
+					//Generic collision, set to the second routine if we weren't just hit
 					if (invulnerabilityTime < 90)
 						object->routine = 2;
 					return true;
@@ -3692,7 +3817,7 @@ bool PLAYER::TouchResponseObject(void *objPointer)
 	//Iterate through children, we haven't hit the parent
 	for (OBJECT *obj = object->children; obj != NULL; obj = obj->next)
 	{
-		if (TouchResponseObject((void*)obj))
+		if (TouchResponseObject((void*)obj, playerLeft, playerTop, playerWidth, playerHeight))
 			return true;
 	}
 	
@@ -3701,12 +3826,53 @@ bool PLAYER::TouchResponseObject(void *objPointer)
 
 void PLAYER::TouchResponse()
 {
+	//Get our collision hitbox
+	bool wasInvincible = item.isInvincible; //Remember if we were invincible, since this gets temporarily overwritten by the insta-shield hitbox
+	int16_t playerLeft, playerTop, playerWidth, playerHeight;
+	
+	if (item.hasShield == false && item.isInvincible == false && jumpAbility == 1)
+	{
+		//Use insta-shield extended hitbox
+		playerWidth = 24; //radius
+		playerLeft = x.pos - playerWidth;
+		playerWidth *= 2; //diameter
+		
+		playerHeight = 24; //radius
+		playerTop = y.pos - playerHeight;
+		playerHeight *= 2; //diameter
+		
+		//Make us invincible (don't worry, this gets undone by the time TouchResponse is ending)
+		item.isInvincible = true;
+	}
+	else
+	{
+		//Use player's hitbox
+		playerWidth = 8; //radius
+		playerLeft = x.pos - playerWidth;
+		playerWidth *= 2; //diameter
+		
+		playerHeight = yRadius - 3; //radius
+		playerTop = y.pos - playerHeight;
+		playerHeight *= 2; //diameter
+		
+		//Code to handle the ducking hitbox from Sonic 1 and 2 (TODO: it's supposed to check the mapping frame)
+		if (anim == PLAYERANIMATION_DUCK)
+		{
+			playerTop += 12;
+			playerHeight = 10;
+		}
+	}
+	
 	//Iterate through every object
 	for (OBJECT *obj = gLevel->objectList; obj != NULL; obj = obj->next)
 	{
-		if (TouchResponseObject((void*)obj))
-			return; //The original games return once touching an object
+		//Check for collision with this object
+		if (TouchResponseObject((void*)obj, playerLeft, playerTop, playerWidth, playerHeight))
+			break;
 	}
+	
+	//Restore our original invincibility to before the insta-shield code
+	item.isInvincible = wasInvincible;
 }
 
 void PLAYER::AttachToObject(void *object, bool *standingBit)

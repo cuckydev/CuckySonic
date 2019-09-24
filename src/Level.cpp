@@ -584,12 +584,14 @@ void LEVEL::UnloadAll()
 //Assets to pre-load (Assets that are loaded by objects that are usually created mid-game)
 const char *preloadTexture[] = {
 	"data/Object/Explosion.bmp",
+	"data/Object/Shield.bmp",
 	NULL,
 };
 
 const char *preloadMappings[] = {
 	"data/Object/Explosion.map",
 	"data/Object/MonitorContents.map",
+	"data/Object/InstaShield.map",
 	NULL,
 };
 

@@ -117,6 +117,7 @@ void ObjMonitorContents(OBJECT *object)
 			
 			//Set render properties and velocity
 			object->renderFlags.alignPlane = true;
+			object->highPriority = true;
 			object->priority = 3;
 			object->widthPixels = 8;
 			object->yVel = -0x300;

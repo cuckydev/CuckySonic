@@ -5,6 +5,7 @@
 #include "Event.h"
 #include "Render.h"
 #include "Fade.h"
+#include "Input.h"
 #include "SpecialStage.h"
 
 bool GM_SpecialStage(bool *noError)
@@ -29,6 +30,9 @@ bool GM_SpecialStage(bool *noError)
 		
 		//Render our software buffer to the screen
 		if (!(*noError = gSoftwareBuffer->RenderToScreen(&stage->backgroundTexture->loadedPalette->colour[0])))
+			break;
+		
+		if (gController[0].press.a)
 			break;
 	}
 	
