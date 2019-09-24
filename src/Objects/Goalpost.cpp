@@ -2,6 +2,7 @@
 #include "../Level.h"
 #include "../Game.h"
 #include "../Log.h"
+#include "../Objects.h"
 
 static const uint8_t animationEggman[] =	{0x0F,0x00,0xFF};
 static const uint8_t animationSpin1[] =		{0x01,0x00,0x01,0x02,0x03,0xFF};
@@ -15,12 +16,26 @@ static const uint8_t *animationList[] = {
 	animationSonic,
 };
 
+static const int8_t goalpostSparklePos[8][2] = {
+	{-24, -10},
+	{  8,   8},
+	{-16,   0},
+	{ 24,  -8},
+	{  0,  -8},
+	{ 16,   0},
+	{-24,   8},
+	{ 24,  16},
+};
+
 void ObjGoalpost(OBJECT *object)
 {
 	enum SCRATCH
 	{
-		SCRATCH_SPIN_TIME = 0, // 2 bytes
-		SCRATCH_SPARKLE_TIME = 1, // 2 bytes
+		//U8
+		SCRATCHU8_SPARKLE = 0,
+		//S16
+		SCRATCHS16_SPIN_TIME = 0,
+		SCRATCHS16_SPARKLE_TIME = 1,
 	};
 	
 	switch (object->routine)
@@ -63,13 +78,35 @@ void ObjGoalpost(OBJECT *object)
 		case 2: //Touched and spinning
 		{
 			//Handle our spin timer
-			if (--object->scratchS8[SCRATCH_SPIN_TIME] < 0)
+			if (--object->scratchS16[SCRATCHS16_SPIN_TIME] < 0)
 			{
-				object->scratchS8[SCRATCH_SPIN_TIME] = 60;
+				object->scratchS16[SCRATCHS16_SPIN_TIME] = 60;
 				
 				//Increment spin cycle, and if reached end...
 				if (++object->anim >= 3)
 					object->routine++;
+			}
+			
+			//Handle our sparkling
+			if (--object->scratchS16[SCRATCHS16_SPARKLE_TIME] < 0)
+			{
+				object->scratchS16[SCRATCHS16_SPARKLE_TIME] = 11;
+				
+				//Increment our sparkle index
+				object->scratchU8[SCRATCHU8_SPARKLE]++;
+				object->scratchU8[SCRATCHU8_SPARKLE] %= 8;
+				
+				//Create a sparkle object
+				OBJECT *sparkle = new OBJECT(&gLevel->objectList, &ObjRing);
+				sparkle->routine = 3;
+				sparkle->x.pos = object->x.pos + goalpostSparklePos[object->scratchU8[SCRATCHU8_SPARKLE]][0];
+				sparkle->y.pos = object->y.pos + goalpostSparklePos[object->scratchU8[SCRATCHU8_SPARKLE]][1];
+				
+				//Initialize sparkle's rendering stuff
+				sparkle->texture = gLevel->GetObjectTexture("data/Object/Ring.bmp");
+				sparkle->mappings = gLevel->GetObjectMappings("data/Object/Ring.map");
+				sparkle->renderFlags.alignPlane = true;
+				sparkle->widthPixels = 8;
 			}
 			break;
 		}

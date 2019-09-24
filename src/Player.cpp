@@ -1552,7 +1552,7 @@ void PLAYER::JumpAbilities()
 				//Update our shield and ability flag
 				((OBJECT*)shieldObject)->anim = 1;
 				jumpAbility = 1;
-				//PlaySound(SOUNDID_INSTA_SHIELD);
+				PlaySound(SOUNDID_INSTASHIELD_ATTACK);
 			}
 		}
 	}
