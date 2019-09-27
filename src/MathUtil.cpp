@@ -83,9 +83,9 @@ const int16_t AtanData[] =
 
 void GetSine(uint8_t angle, int16_t *sin, int16_t *cos)
 {
-	if (sin != NULL)
+	if (sin != nullptr)
 		*sin = sineTable[angle];
-	if (cos != NULL)
+	if (cos != nullptr)
 		*cos = sineTable[angle + 0x40];
 }
 
