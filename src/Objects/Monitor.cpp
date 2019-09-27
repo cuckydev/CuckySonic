@@ -172,7 +172,7 @@ void ObjMonitorContents(OBJECT *object)
 					case MONITOR_ITEM_SHIELD:
 						//Give the player who hit us a shield
 						if (breakPlayer != NULL)
-							breakPlayer->GiveShield(SOUNDID_GET_BUBBLE_SHIELD, SHIELD_BUBBLE);
+							breakPlayer->GiveShield(SOUNDID_GET_BLUE_SHIELD, SHIELD_BLUE);
 						break;
 					case MONITOR_ITEM_INVINCIBILITY:
 						break;
