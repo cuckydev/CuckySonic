@@ -9,7 +9,7 @@ void ObjSonic1Scenery(OBJECT *object);
 void ObjRing(OBJECT *object);
 void ObjRingSpawner(OBJECT *object);
 void ObjBouncingRing(OBJECT *object);
-void ObjBouncingRing_ReverseGravity(OBJECT *object);
+void ObjAttractRing(OBJECT *object);
 void ObjExplosion(OBJECT *object);
 void ObjMotobug(OBJECT *object);
 void ObjChopper(OBJECT *object);

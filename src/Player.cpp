@@ -218,20 +218,42 @@ static const uint8_t* animationListInstaShield[] = {
 	animationInstaShieldUse,
 };
 
+//Shield animation (blue shield)
+static const uint8_t animationBlueShield[] =			{0x00,0x05,0x00,0x05,0x01,0x05,0x02,0x05,0x03,0x05,0x04,0xFF};
+
+static const uint8_t* animationListBlueShield[] = {
+	animationBlueShield,
+};
+
 //Shield animation (fire shield)
-static const uint8_t animationFireShieldIdle[] =	{0x01,0x00,0x0F,0x01,0x10,0x02,0x11,0x03,0x12,0x04,0x13,0x05,0x14,0x06,0x15,0x07,0x16,0x08,0x17,0xFF};
-static const uint8_t animationFireShieldUse[] =		{0x01,0x09,0x0A,0x0B,0x0C,0x0D,0x0E,0x09,0x0A,0x0B,0x0C,0x0D,0x0E,0xFD,0x00,0x00};
+static const uint8_t animationFireShieldIdle[] =		{0x01,0x00,0x0F,0x01,0x10,0x02,0x11,0x03,0x12,0x04,0x13,0x05,0x14,0x06,0x15,0x07,0x16,0x08,0x17,0xFF};
+static const uint8_t animationFireShieldUse[] =			{0x01,0x09,0x0A,0x0B,0x0C,0x0D,0x0E,0x09,0x0A,0x0B,0x0C,0x0D,0x0E,0xFD,0x00,0x00};
 
 static const uint8_t* animationListFireShield[] = {
 	animationFireShieldIdle,
 	animationFireShieldUse,
 };
 
-//Shield animation (blue shield)
-static const uint8_t animationBlueShield[] =	{0x00,0x05,0x00,0x05,0x01,0x05,0x02,0x05,0x03,0x05,0x04,0xFF};
+//Shield animation (electric shield)
+static const uint8_t animationElectricShieldIdle[] =	{0x01,0x00,0x00,0x01,0x01,0x02,0x02,0x03,0x03,0x04,0x04,0x05,0x05,0x06,0x06,0x07,0x07,0x08,0x08,0x09,0x0A,0x0B,0x16,0x16,0x15,0x15,0x14,0x14,0x13,0x13,0x12,0x12,0x11,0x11,0x10,0x10,0x0F,0x0F,0x0E,0x0E,0x09,0x0A,0x0B,0xFF};
+static const uint8_t animationElectricShieldUse[] =		{0x00,0x0C,0x0D,0x17,0x0C,0x0D,0x17,0x0C,0x0D,0x17,0x0C,0x0D,0x17,0x0C,0x0D,0x17,0x0C,0x0D,0x17,0x0C,0x0D,0xFC,0xFF};
+static const uint8_t animationElectricShield2[] =		{0x03,0x00,0x01,0x02,0xFC,0xFF,0x00};
 
-static const uint8_t* animationListBlueShield[] = {
-	animationBlueShield,
+static const uint8_t* animationListElectricShield[] = {
+	animationElectricShieldIdle,
+	animationElectricShieldUse,
+	animationElectricShield2,
+};
+
+//Shield animation (bubble shield)
+static const uint8_t animationBubbleShieldIdle[] =		{0x01,0x00,0x09,0x00,0x09,0x00,0x09,0x01,0x0A,0x01,0x0A,0x01,0x0A,0x02,0x09,0x02,0x09,0x02,0x09,0x03,0x0A,0x03,0x0A,0x03,0x0A,0x04,0x09,0x04,0x09,0x04,0x09,0x05,0x0A,0x05,0x0A,0x05,0x0A,0x06,0x09,0x06,0x09,0x06,0x09,0x07,0x0A,0x07,0x0A,0x07,0x0A,0x08,0x09,0x08,0x09,0x08,0x09,0xFF};
+static const uint8_t animationBubbleShieldUse[] =		{0x05,0x09,0x0B,0x0B,0x0B,0xFD,0x00};
+static const uint8_t animationBubbleShieldSquish[] =	{0x05,0x0C,0x0C,0x0B,0xFD,0x00,0x00};
+
+static const uint8_t* animationListBubbleShield[] = {
+	animationBubbleShieldIdle,
+	animationBubbleShieldUse,
+	animationBubbleShieldSquish,
 };
 
 //Shield object
@@ -286,10 +308,41 @@ void ObjShield(OBJECT *object)
 			}
 			break;
 		case SHIELD_ELECTRIC:
-			useMapping = "data/Object/BubbleShield.map";
+			//Use electric shield mappings and animations
+			useMapping = "data/Object/ElectricShield.map";
+			useAniList = animationListElectricShield;
+			
+			//Set our render properties
+			object->priority = 1;
+			object->widthPixels = 24;
+			object->renderFlags.alignPlane = true;
+			
+			//Copy orientation
+			object->status.xFlip = player->status.xFlip;
+			object->status.yFlip = player->status.reverseGravity;
+			
+			//Clear animation if non-zero
+			if (object->anim)
+				object->anim = 0;
+			
+			//Extinguish once in water
+			if (player->status.underwater)
+			{
+				player->shield = SHIELD_NULL;
+				player->item.shieldReflect = false;
+				player->item.immuneFire = false;
+				return;
+			}
 			break;
 		case SHIELD_BUBBLE:
+			//Use bubble shield mappings and animations
 			useMapping = "data/Object/BubbleShield.map";
+			useAniList = animationListBubbleShield;
+			
+			//Set our render properties
+			object->priority = 1;
+			object->widthPixels = 24;
+			object->renderFlags.alignPlane = true;
 			break;
 		default: //Insta-shield
 			//Use insta-shield mappings and animations
@@ -336,12 +389,19 @@ void ObjShield(OBJECT *object)
 	{
 		case SHIELD_FIRE:
 			//Check if we should be drawn behind the player
-			if (object->mappingFrame < 0xF)
+			if (object->mappingFrame < 0x0F)
 				object->priority = 1;
 			else
 				object->priority = 4;
 			break;
-		default: //Insta-shield
+		case SHIELD_ELECTRIC:
+			//Check if we should be drawn behind the player
+			if (object->mappingFrame < 0x0E)
+				object->priority = 1;
+			else
+				object->priority = 4;
+			break;
+		default:
 			break;
 	}
 	
@@ -1360,7 +1420,8 @@ void PLAYER::ResetOnFloor3()
 						YSHIFT_ON_FLOOR(-(defaultYRadius - yRadius));
 					#endif
 					
-					//Play the sound
+					//Play the sound and play the squish animation for the bubble
+					((OBJECT*)shieldObject)->anim = 2;
 					PlaySound(SOUNDID_USE_BUBBLE_SHIELD);
 				}
 			}
@@ -3776,6 +3837,34 @@ void PLAYER::DebugMode()
 	}
 }
 
+//Ring attraction check
+void PLAYER::RingAttractCheck(void *objPointer)
+{
+	//Check object
+	OBJECT* const object = (OBJECT* const)objPointer;
+	
+	if (object->function == ObjRing && object->routine)
+	{
+		//If we're within range, change the object to the attraction type
+		int xDiff = object->x.pos - x.pos + 64;
+		int yDiff = object->y.pos - y.pos + 64;
+		
+		if (xDiff >= 0 && xDiff <= 128 && yDiff >= 0 && yDiff <= 128)
+		{
+			//Create an attracted ring at this ring's position and delete the old ring
+			OBJECT *newObject = new OBJECT(&gLevel->objectList, ObjAttractRing);
+			newObject->x.pos = object->x.pos;
+			newObject->y.pos = object->y.pos;
+			newObject->parent = (void*)this;
+			object->deleteFlag = true;
+		}
+	}
+	
+	//Iterate and check children
+	for (OBJECT *obj = object->children; obj != NULL; obj = obj->next)
+		RingAttractCheck((void*)obj);
+}
+
 //Object interaction functions
 bool PLAYER::TouchResponseObject(void *objPointer, int16_t playerLeft, int16_t playerTop, int16_t playerWidth, int16_t playerHeight)
 {
@@ -3874,6 +3963,11 @@ bool PLAYER::TouchResponseObject(void *objPointer, int16_t playerLeft, int16_t p
 
 void PLAYER::TouchResponse()
 {
+	//Check for ring attraction
+	if (shield == SHIELD_ELECTRIC)
+		for (OBJECT *obj = gLevel->objectList; obj != NULL; obj = obj->next)
+			RingAttractCheck((void*)obj);
+	
 	//Get our collision hitbox
 	bool wasInvincible = item.isInvincible; //Remember if we were invincible, since this gets temporarily overwritten by the insta-shield hitbox
 	int16_t playerLeft, playerTop, playerWidth, playerHeight;
@@ -3935,13 +4029,15 @@ void PLAYER::AttachToObject(void *object, bool *standingBit)
 	yVel = 0;
 	inertia = xVel;
 	
-	//Land on object if in mid-air
-	if (status.inAir)
-		ResetOnFloor2();
-	
+	//Land on object
 	status.shouldNotFall = true;
-	status.inAir = false;
 	*((bool*)object + (size_t)standingBit) = true;
+	
+	if (status.inAir)
+	{
+		status.inAir = false;
+		ResetOnFloor2();
+	}
 }
 
 void PLAYER::MoveOnPlatform(void *platform, int16_t height, int16_t lastXPos)

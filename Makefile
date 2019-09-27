@@ -66,6 +66,7 @@ SOURCES = \
 	Objects/Sonic1Scenery \
 	Objects/Ring \
 	Objects/BouncingRing \
+	Objects/AttractRing \
 	Objects/Explosion \
 	Objects/Motobug \
 	Objects/Chopper \
