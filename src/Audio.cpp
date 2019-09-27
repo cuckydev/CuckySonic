@@ -412,7 +412,7 @@ ma_uint32 MUSIC::ReadSamplesToBuffer(float *buffer, int samples)
 	while (playing && samplesRead < samples)
 	{
 		//Read data
-		int thisRead = stb_vorbis_get_samples_float_interleaved(file, channels, bufferPointer, (samples - samplesRead) * channels);
+		int thisRead = stb_vorbis_get_samples_float_interleaved(file, channels, bufferPointer, (samples - samplesRead) * channels) * channels;
 		
 		//Move through file and buffer
 		bufferPointer += thisRead * channels;
