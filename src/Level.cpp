@@ -592,6 +592,10 @@ const char *preloadMappings[] = {
 	"data/Object/Explosion.map",
 	"data/Object/MonitorContents.map",
 	"data/Object/InstaShield.map",
+	"data/Object/BlueShield.map",
+	"data/Object/FireShield.map",
+	//"data/Object/ElectricShield.map",
+	//"data/Object/BubbleShield.map",
 	NULL,
 };
 

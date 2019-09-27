@@ -170,6 +170,12 @@ void ObjMonitorContents(OBJECT *object)
 							breakPlayer->GiveSpeedShoes();
 						break;
 					case MONITOR_ITEM_SHIELD:
+						//Give the player who hit us a shield
+						if (breakPlayer != NULL)
+						{
+							PlaySound(SOUNDID_GET_BLUE_SHIELD);
+							breakPlayer->GiveShield(SOUNDID_NULL, SHIELD_BLUE);
+						}
 						break;
 					case MONITOR_ITEM_INVINCIBILITY:
 						break;

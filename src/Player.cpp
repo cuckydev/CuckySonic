@@ -218,6 +218,22 @@ static const uint8_t* animationListInstaShield[] = {
 	animationInstaShieldUse,
 };
 
+//Shield animation (fire shield)
+static const uint8_t animationFireShieldIdle[] =	{0x01,0x00,0x0F,0x01,0x10,0x02,0x11,0x03,0x12,0x04,0x13,0x05,0x14,0x06,0x15,0x07,0x16,0x08,0x17,0xFF};
+static const uint8_t animationFireShieldUse[] =		{0x01,0x09,0x0A,0x0B,0x0C,0x0D,0x0E,0x09,0x0A,0x0B,0x0C,0x0D,0x0E,0xFD,0x00,0x00};
+
+static const uint8_t* animationListFireShield[] = {
+	animationFireShieldIdle,
+	animationFireShieldUse,
+};
+
+//Shield animation (blue shield)
+static const uint8_t animationBlueShield[] =	{0x00,0x05,0x00,0x05,0x01,0x05,0x02,0x05,0x03,0x05,0x04,0xFF};
+
+static const uint8_t* animationListBlueShield[] = {
+	animationBlueShield,
+};
+
 //Shield object
 void ObjShield(OBJECT *object)
 {
@@ -227,52 +243,72 @@ void ObjShield(OBJECT *object)
 	if (player->item.isInvincible)
 		return;
 	
-	//Copy player state
+	//Copy player position and high priority flag
 	object->highPriority = player->highPriority;
 	object->x.pos = player->x.pos;
 	object->y.pos = player->y.pos;
-	object->status.xFlip = player->status.xFlip;
-	object->status.yFlip = player->status.reverseGravity;
 	
 	//Do shield specific code (this includes getting our things)
 	const char *useMapping = NULL;
 	const uint8_t **useAniList = NULL;
 	
-	if (player->item.hasShield)
+	switch (player->shield)
 	{
-		//Main shields
-		switch (player->shield)
-		{
-			case SHIELD_FIRE:
-				useMapping = "data/Object/FireShield.map";
-				break;
-			case SHIELD_ELECTRIC:
-				useMapping = "data/Object/BubbleShield.map";
-				break;
-			case SHIELD_BUBBLE:
-				useMapping = "data/Object/BubbleShield.map";
-				break;
-			case SHIELD_BLUE:
-				useMapping = "data/Object/BlueShield.map";
-				break;
-			default:
-				break;
-		}
-	}
-	else //Insta-shield
-	{
-		//Set our mappings and animation list to use
-		useMapping = "data/Object/InstaShield.map";
-		useAniList = animationListInstaShield;
-		
-		//Set our render properties
-		object->priority = 1;
-		object->widthPixels = 24;
-		object->renderFlags.alignPlane = true;
-		
-		//When we reach the end of the animation, end our attack
-		if (object->mappingFrame == 7 && player->jumpAbility == 1)
-			player->jumpAbility = 2;
+		case SHIELD_BLUE:
+			//Use blue shield mappings and animations
+			useMapping = "data/Object/BlueShield.map";
+			useAniList = animationListBlueShield;
+			
+			//Set our render properties
+			object->priority = 1;
+			object->widthPixels = 24;
+			object->renderFlags.alignPlane = true;
+			break;
+		case SHIELD_FIRE:
+			//Use fire shield mappings and animations
+			useMapping = "data/Object/FireShield.map";
+			useAniList = animationListFireShield;
+			
+			//Copy orientation (if not in dash state)
+			if (object->anim == 0)
+			{
+				object->status.xFlip = player->status.xFlip;
+				object->status.yFlip = player->status.reverseGravity;
+			}
+			
+			//Extinguish once in water
+			if (player->status.underwater)
+			{
+				player->shield = SHIELD_NULL;
+				player->item.shieldReflect = false;
+				player->item.immuneFire = false;
+				return;
+			}
+			break;
+		case SHIELD_ELECTRIC:
+			useMapping = "data/Object/BubbleShield.map";
+			break;
+		case SHIELD_BUBBLE:
+			useMapping = "data/Object/BubbleShield.map";
+			break;
+		default: //Insta-shield
+			//Use insta-shield mappings and animations
+			useMapping = "data/Object/InstaShield.map";
+			useAniList = animationListInstaShield;
+			
+			//Set our render properties
+			object->priority = 1;
+			object->widthPixels = 24;
+			object->renderFlags.alignPlane = true;
+			
+			//Copy orientation
+			object->status.xFlip = player->status.xFlip;
+			object->status.yFlip = player->status.reverseGravity;
+			
+			//When we reach the end of the animation, end our attack
+			if (object->mappingFrame == 7 && player->jumpAbility == 1)
+				player->jumpAbility = 2;
+			break;
 	}
 	
 	//Load the given mappings and textures
@@ -280,11 +316,10 @@ void ObjShield(OBJECT *object)
 	object->mappings = gLevel->GetObjectMappings(useMapping);
 	
 	//Reset animation state if shield has changed and remember our current shield
-	if ((SHIELD)object->routine != player->shield || (bool)object->routineSecondary != player->item.hasShield)
+	if ((SHIELD)object->routine != player->shield)
 	{
 		//Copy our current shield
 		object->routine = player->shield;
-		object->routineSecondary = player->item.hasShield;
 		
 		//Reset animation state
 		object->anim = 0;
@@ -293,8 +328,24 @@ void ObjShield(OBJECT *object)
 		object->animFrameDuration = 0;
 	}
 	
-	//Draw to screen and animate
+	//Animate
 	object->Animate(useAniList);
+	
+	//Do post-animation shield specific code (specifically priority stuff)
+	switch (player->shield)
+	{
+		case SHIELD_FIRE:
+			//Check if we should be drawn behind the player
+			if (object->mappingFrame < 0xF)
+				object->priority = 1;
+			else
+				object->priority = 4;
+			break;
+		default: //Insta-shield
+			break;
+	}
+	
+	//Draw to screen
 	object->Draw();
 }
 
@@ -1273,10 +1324,10 @@ void PLAYER::ResetOnFloor3()
 		if (jumpAbility != 0)
 		{
 			//Handle jump abilities on landing
-			if ((characterType == CHARACTERTYPE_SONIC) && super == false)
+			if (characterType == CHARACTERTYPE_SONIC && super == false)
 			{
 				//Bubble shield bounce
-				if (item.hasShield && shield == SHIELD_BUBBLE)
+				if (shield == SHIELD_BUBBLE)
 				{
 					//Get the force of our bounce
 					int16_t bounceForce = 0x780;
@@ -1310,7 +1361,7 @@ void PLAYER::ResetOnFloor3()
 					#endif
 					
 					//Play the sound
-					//PlaySound(SOUNDID_BUBBLE_BOUNCE);
+					PlaySound(SOUNDID_USE_BUBBLE_SHIELD);
 				}
 			}
 			
@@ -1493,7 +1544,7 @@ void PLAYER::JumpAbilities()
 		else if (!item.isInvincible)
 		{
 			//Check and handle shield abilities
-			if (item.hasShield)
+			if (shield != SHIELD_NULL)
 			{
 				if (shield == SHIELD_FIRE)
 				{
@@ -1513,6 +1564,7 @@ void PLAYER::JumpAbilities()
 					//Make the camera lag behind us
 					scrollDelay = 0x2000;
 					ResetRecords(x.pos, y.pos);
+					PlaySound(SOUNDID_USE_FIRE_SHIELD);
 				}
 				else if (shield == SHIELD_ELECTRIC)
 				{
@@ -1523,7 +1575,7 @@ void PLAYER::JumpAbilities()
 					//Electric shield double jump
 					yVel = -0x680;
 					status.jumping = false;
-					//PlaySound(SOUNDID_ELECTRICSHIELD_DOUBLEJUMP);
+					PlaySound(SOUNDID_USE_ELECTRIC_SHIELD);
 				}
 				else if (shield == SHIELD_BUBBLE)
 				{
@@ -1535,7 +1587,7 @@ void PLAYER::JumpAbilities()
 					xVel = 0;
 					inertia = 0;
 					yVel = 0x800;
-					//PlaySound(SOUNDID_BUBBLE_BOUNCE);
+					PlaySound(SOUNDID_USE_BUBBLE_SHIELD);
 				}
 				else
 				{
@@ -1552,7 +1604,7 @@ void PLAYER::JumpAbilities()
 				//Update our shield and ability flag
 				((OBJECT*)shieldObject)->anim = 1;
 				jumpAbility = 1;
-				PlaySound(SOUNDID_INSTASHIELD_ATTACK);
+				PlaySound(SOUNDID_USE_INSTA_SHIELD);
 			}
 		}
 	}
@@ -2367,7 +2419,7 @@ bool PLAYER::KillCharacter(SOUNDID soundId)
 	if (debug == 0)
 	{
 		//Reset our state
-		item.hasShield = false;
+		shield = SHIELD_NULL;
 		item.isInvincible = false;
 		item.hasSpeedShoes = false;
 		item.shieldReflect = false;
@@ -2403,19 +2455,15 @@ bool PLAYER::CheckHurt(void *hit)
 	OBJECT *object = (OBJECT*)hit;
 	
 	//Check our shield and invincibility state
-	if (item.hasShield || item.isInvincible || item.immuneFire || item.immuneElectric || item.immuneWater)
+	if (shield != SHIELD_NULL || item.isInvincible)
 	{
 		//If we're immune to the object, don't hurt us
 		if ((item.immuneFire && object->hurtType.fire) || (item.immuneElectric && object->hurtType.electric) || (item.immuneWater && object->hurtType.water))
 			return true;
-		
-		//If invincible, don't hurt us
-		if (!item.hasShield)
-			return true;
 	}
 	
-	//If has a power-up or using the character's special move thing (flying, gliding)
-	if (jumpAbility == 1 || item.hasShield || item.isInvincible)
+	//Don't check for reflection if we are invincible, don't have a shield (and not using insta-shield, but... this check is fucked because isInvincible is set during the insta-shield here)
+	if ((jumpAbility == 1 || shield != SHIELD_NULL) && !item.isInvincible)
 	{
 		//If we should be reflected, reflect
 		if (object->hurtType.reflect)
@@ -2423,10 +2471,10 @@ bool PLAYER::CheckHurt(void *hit)
 			//Get the velocity to reflect at
 			int16_t xVel, yVel;
 			uint8_t angle = GetAtan(x.pos - object->x.pos, y.pos - object->y.pos);
-			GetSine(angle, &xVel, &yVel);
+			GetSine(angle, &yVel, &xVel);
 			
-			object->xVel = (xVel * 0x800) >> 8;
-			object->yVel = (yVel * 0x800) >> 8;
+			object->xVel = (xVel * -0x800) >> 8;
+			object->yVel = (yVel * -0x800) >> 8;
 			
 			//Clear the object's collision
 			object->collisionType = COLLISIONTYPE_ENEMY;
@@ -2458,9 +2506,9 @@ bool PLAYER::HurtCharacter(void *hit)
 	unsigned int *rings = &gRings; //TODO: multiplayer stuff
 	
 	//If we have a shield, lose it, otherwise, lose rings
-	if (item.hasShield || item.shieldReflect || item.immuneFire || item.immuneElectric || item.immuneWater)
+	if (shield != SHIELD_NULL)
 	{
-		item.hasShield = false;
+		shield = SHIELD_NULL;
 		item.shieldReflect = false;
 		item.immuneFire = false;
 		item.immuneElectric = false;
@@ -3830,7 +3878,7 @@ void PLAYER::TouchResponse()
 	bool wasInvincible = item.isInvincible; //Remember if we were invincible, since this gets temporarily overwritten by the insta-shield hitbox
 	int16_t playerLeft, playerTop, playerWidth, playerHeight;
 	
-	if (item.hasShield == false && item.isInvincible == false && jumpAbility == 1)
+	if (shield == SHIELD_NULL && item.isInvincible == false && jumpAbility == 1)
 	{
 		//Use insta-shield extended hitbox
 		playerWidth = 24; //radius
@@ -3878,7 +3926,7 @@ void PLAYER::TouchResponse()
 void PLAYER::AttachToObject(void *object, bool *standingBit)
 {
 	//If already standing on an object, clear that object's standing bit
-	if (status.shouldNotFall)
+	if (status.shouldNotFall && interact != NULL)
 		*((bool*)interact + (size_t)standingBit) = false; //Clear the object we're standing on's standing bit
 	
 	//Set to stand on this object
@@ -3936,4 +3984,17 @@ void PLAYER::GiveSpeedShoes()
 		MUSICSPEC speedShoesMusic = {"SpeedShoes", 0, GetMusicVolume()};
 		gLevel->ChangeMusic(speedShoesMusic);
 	}
+}
+
+void PLAYER::GiveShield(SOUNDID sound, SHIELD type)
+{
+	//Give us the shield and play sound
+	shield = type;
+	item.shieldReflect =	(type != SHIELD_BLUE);
+	item.immuneFire =		(type == SHIELD_FIRE);
+	item.immuneElectric =	(type == SHIELD_ELECTRIC);
+	item.immuneWater =		(type == SHIELD_BUBBLE);
+	
+	if (sound != SOUNDID_NULL)
+		PlaySound(sound);
 }

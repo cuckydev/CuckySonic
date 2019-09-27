@@ -31,6 +31,7 @@ enum CPUROUTINE
 //Types
 enum SHIELD
 {
+	SHIELD_NULL,
 	SHIELD_BLUE,
 	SHIELD_FIRE,
 	SHIELD_ELECTRIC,
@@ -95,8 +96,6 @@ class PLAYER
 			bool alignPlane : 1;
 			bool alignBackground : 1; //Basically, align to background if above is set
 			bool assumePixelHeight : 1;
-			bool bit5 : 1;
-			bool bit6 : 1;
 			bool onScreen : 1;
 		} renderFlags;
 		
@@ -143,7 +142,7 @@ class PLAYER
 			bool xFlip : 1;				//Set if facing left
 			bool inAir : 1;				//In the air
 			bool inBall : 1;			//In ball-form
-			bool shouldNotFall : 1;		//Typically set while standing on an object
+			bool shouldNotFall : 1;		//Typically set while standing on an object (the "Slope Glitch")
 			bool rollJumping : 1;		//If set, we don't have control in mid-air when we jump from a roll
 			bool pushing : 1;			//Pushing against a wall
 			bool underwater : 1;		//In water
@@ -158,7 +157,6 @@ class PLAYER
 		//Items we have
 		struct
 		{
-			bool hasShield : 1;		//Do we have a shield
 			bool isInvincible : 1;	//Do we have invincibility
 			bool hasSpeedShoes : 1;	//Do we have speed shoes
 			
@@ -374,4 +372,5 @@ class PLAYER
 		void MoveOnPlatform(void *platform, int16_t height, int16_t lastXPos);
 		
 		void GiveSpeedShoes();
+		void GiveShield(SOUNDID sound, SHIELD type);
 };

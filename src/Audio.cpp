@@ -44,7 +44,15 @@ SOUNDDEFINITION soundDefinition[SOUNDID_MAX] = {
 	{SOUNDCHANNEL_FM4,	"data/Audio/Sound/Pop.wav", SOUNDID_NULL},
 	{SOUNDCHANNEL_FM3,	"data/Audio/Sound/GoalpostSpin.wav", SOUNDID_NULL},
 	
-	{SOUNDCHANNEL_PSG2,	"data/Audio/Sound/InstaShieldAttack.wav", SOUNDID_NULL},
+	{SOUNDCHANNEL_FM4,	"data/Audio/Sound/GetBlueShield.wav", SOUNDID_NULL},
+	{SOUNDCHANNEL_FM4,	"data/Audio/Sound/GetFireShield.wav", SOUNDID_NULL},
+	{SOUNDCHANNEL_FM4,	"data/Audio/Sound/GetElectricShield.wav", SOUNDID_NULL},
+	{SOUNDCHANNEL_FM4,	"data/Audio/Sound/GetBubbleShield.wav", SOUNDID_NULL},
+	
+	{SOUNDCHANNEL_PSG2,	"data/Audio/Sound/UseInstaShield.wav", SOUNDID_NULL},
+	{SOUNDCHANNEL_PSG2,	"data/Audio/Sound/UseFireShield.wav", SOUNDID_NULL},
+	{SOUNDCHANNEL_FM4,	"data/Audio/Sound/UseElectricShield.wav", SOUNDID_NULL},
+	{SOUNDCHANNEL_FM4,	"data/Audio/Sound/UseBubbleShield.wav", SOUNDID_NULL},
 	
 	{SOUNDCHANNEL_DAC,	"data/Audio/Sound/SplashJingle.wav", SOUNDID_NULL},
 };
