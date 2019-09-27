@@ -3639,7 +3639,18 @@ void PLAYER::Update()
 		gGameLoadLevel %= LEVELID_MAX;
 	}
 	if (gController[controller].press.start && gController[controller].held.c)
-		gLevel->SetFade(false, true);
+	{
+		if (shield == SHIELD_NULL)
+			GiveShield(SOUNDID_GET_BLUE_SHIELD, SHIELD_BLUE);
+		else if (shield == SHIELD_BLUE)
+			GiveShield(SOUNDID_GET_FIRE_SHIELD, SHIELD_FIRE);
+		else if (shield == SHIELD_FIRE)
+			GiveShield(SOUNDID_GET_ELECTRIC_SHIELD, SHIELD_ELECTRIC);
+		else if (shield == SHIELD_ELECTRIC)
+			GiveShield(SOUNDID_GET_BUBBLE_SHIELD, SHIELD_BUBBLE);
+		else if (shield == SHIELD_BUBBLE)
+			GiveShield(SOUNDID_NULL, SHIELD_NULL);
+	}
 }
 
 //Draw our player
