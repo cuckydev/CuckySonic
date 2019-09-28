@@ -75,6 +75,7 @@ SOURCES = \
 	Objects/SwingingPlatform \
 	Objects/PurpleRock \
 	Objects/Monitor \
+	Objects/Spring \
 
 #What to compile
 OBJECTS = $(addprefix obj/$(FILENAME)/, $(addsuffix .o, $(SOURCES)))

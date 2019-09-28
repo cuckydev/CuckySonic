@@ -373,14 +373,8 @@ bool SOFTWAREBUFFER::RenderToScreen(PALCOLOUR *backgroundColour)
 }
 
 //Sub-system
-bool InitializeRender()
+void RenderCheckVSync()
 {
-	LOG(("Initializing renderer... "));
-	
-	//Create our window
-	if ((gWindow = SDL_CreateWindow(WINDOW_TITLE, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, gRenderSpec.width * gRenderSpec.scale, gRenderSpec.height * gRenderSpec.scale, 0)) == nullptr)
-		return Error(SDL_GetError());
-	
 	//Use display mode to detect VSync
 	SDL_DisplayMode mode;
 	if (SDL_GetWindowDisplayMode(gWindow, &mode) < 0)
@@ -391,6 +385,20 @@ bool InitializeRender()
 	
 	if (refreshIntegral >= 1.0 && refreshFractional == 0.0)
 		vsyncMultiple = (unsigned int)refreshIntegral;
+	
+	LOG(("%d vsync cycles\n", vsyncMultiple));
+}
+
+bool InitializeRender()
+{
+	LOG(("Initializing renderer... "));
+	
+	//Create our window
+	if ((gWindow = SDL_CreateWindow(WINDOW_TITLE, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, gRenderSpec.width * gRenderSpec.scale, gRenderSpec.height * gRenderSpec.scale, 0)) == nullptr)
+		return Error(SDL_GetError());
+	
+	//Determine if we should use VSync
+	RenderCheckVSync();
 	
 	//Create the renderer based off of our VSync settings
 	if ((gRenderer = SDL_CreateRenderer(gWindow, -1, SDL_RENDERER_ACCELERATED | (vsyncMultiple > 0 ? SDL_RENDERER_PRESENTVSYNC : 0))) == nullptr)
@@ -412,13 +420,11 @@ void QuitRender()
 {
 	LOG(("Ending renderer... "));
 	
-	//Destroy window, renderer, and software framebuffer
+	//Destroy window, renderer, and software buffer
 	if (gSoftwareBuffer)
 		delete gSoftwareBuffer;
-	
-	SDL_DestroyRenderer(gRenderer);	//no-op
+	SDL_DestroyRenderer(gRenderer);
 	SDL_DestroyWindow(gWindow);
-	
 	SDL_FreeFormat(gNativeFormat);
 	
 	LOG(("Success!\n"));

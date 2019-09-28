@@ -132,5 +132,6 @@ extern SDL_PixelFormat *gNativeFormat;
 
 extern RENDERSPEC gRenderSpec;
 
+void RenderCheckVSync();
 bool InitializeRender();
 void QuitRender();

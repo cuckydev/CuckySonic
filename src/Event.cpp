@@ -1,6 +1,7 @@
 #include "SDL_events.h"
 #include "Input.h"
 #include "Audio.h"
+#include "Render.h"
 
 bool HandleEvents()
 {

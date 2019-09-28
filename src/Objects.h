@@ -18,3 +18,4 @@ void ObjGHZEdgeWall(OBJECT *object);
 void ObjSwingingPlatform(OBJECT *object);
 void ObjPurpleRock(OBJECT *object);
 void ObjMonitor(OBJECT *object);
+void ObjSpring(OBJECT *object);
