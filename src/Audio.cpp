@@ -8,17 +8,22 @@
 
 #include "MathUtil.h"
 
-SDL_AudioDeviceID audioDevice;
+//The current audio device
+SDL_AudioDeviceID gAudioDevice;
+
+//Sound and music lists (for mixing and remembering what soundList/songs exist)
+SOUND *soundList = nullptr;
+MUSIC *musicList = nullptr;
 
 //Sound effects
-SOUND *soundEffects[SOUNDID_MAX];
+SOUND *sounds[SOUNDID_MAX];
 SOUNDDEFINITION soundDefinition[SOUNDID_MAX] = {
-	{SOUNDCHANNEL_NULL, NULL, SOUNDID_NULL}, //SOUNDID_NULL
+	{SOUNDCHANNEL_NULL, nullptr, SOUNDID_NULL}, //SOUNDID_NULL
 	{SOUNDCHANNEL_PSG0, "data/Audio/Sound/Jump.wav", SOUNDID_NULL},
 	{SOUNDCHANNEL_FM3,  "data/Audio/Sound/Roll.wav", SOUNDID_NULL},
 	{SOUNDCHANNEL_PSG1, "data/Audio/Sound/Skid.wav", SOUNDID_NULL},
 	
-	{SOUNDCHANNEL_NULL, NULL, SOUNDID_NULL}, //SOUNDID_SPINDASH_REV
+	{SOUNDCHANNEL_NULL, nullptr, SOUNDID_NULL}, //SOUNDID_SPINDASH_REV
 	{SOUNDCHANNEL_FM4,  "data/Audio/Sound/SpindashRev0.wav", SOUNDID_NULL},
 	{SOUNDCHANNEL_FM4,  "data/Audio/Sound/SpindashRev1.wav", SOUNDID_NULL},
 	{SOUNDCHANNEL_FM4,  "data/Audio/Sound/SpindashRev2.wav", SOUNDID_NULL},
@@ -36,8 +41,8 @@ SOUNDDEFINITION soundDefinition[SOUNDID_MAX] = {
 	{SOUNDCHANNEL_FM4,	"data/Audio/Sound/SpikeHurt.wav", SOUNDID_NULL},
 	
 	{SOUNDCHANNEL_NULL,	"data/Audio/Sound/Ring.wav", SOUNDID_NULL},
-	{SOUNDCHANNEL_FM4,	NULL, SOUNDID_RING}, //SOUNDID_RING_LEFT
-	{SOUNDCHANNEL_FM3,	NULL, SOUNDID_RING}, //SOUNDID_RING_RIGHT
+	{SOUNDCHANNEL_FM4,	nullptr, SOUNDID_RING}, //SOUNDID_RING_LEFT
+	{SOUNDCHANNEL_FM3,	nullptr, SOUNDID_RING}, //SOUNDID_RING_RIGHT
 	
 	{SOUNDCHANNEL_FM4,	"data/Audio/Sound/RingLoss.wav", SOUNDID_NULL},
 	
@@ -58,16 +63,10 @@ SOUNDDEFINITION soundDefinition[SOUNDID_MAX] = {
 };
 
 //Sound class
-SOUND *sounds = NULL;
-
 SOUND::SOUND(const char *path)
 {
-	LOG(("Creating a sound from %s... ", path));
-	
-	//Wait for audio device to be finished and lock it
-	SDL_LockAudioDevice(audioDevice);
-	
 	//Clear class memory
+	LOG(("Creating a sound from %s... ", path));
 	memset(this, 0, sizeof(SOUND));
 	
 	//Read the file given
@@ -79,10 +78,10 @@ SOUND::SOUND(const char *path)
 	
 	SDL_AudioSpec *audioSpec = SDL_LoadWAV(filepath, &wavSpec, &wavBuffer, &wavLength);
 	
-	if (audioSpec == NULL)
+	if (audioSpec == nullptr)
 	{
 		Error(fail = SDL_GetError());
-		SDL_UnlockAudioDevice(audioDevice);
+		SDL_UnlockAudioDevice(gAudioDevice);
 		return;
 	}
 	
@@ -92,16 +91,16 @@ SOUND::SOUND(const char *path)
 	{
 		Error(fail = SDL_GetError());
 		SDL_FreeWAV(wavBuffer);
-		SDL_UnlockAudioDevice(audioDevice);
+		SDL_UnlockAudioDevice(gAudioDevice);
 		return;
 	}
 	
 	//Set up our conversion
-	if ((wavCVT.buf = (uint8_t*)malloc(wavLength * wavCVT.len_mult)) == NULL)
+	if ((wavCVT.buf = (uint8_t*)malloc(wavLength * wavCVT.len_mult)) == nullptr)
 	{
 		Error(fail = "Failed to allocate our converted buffer");
 		SDL_FreeWAV(wavBuffer);
-		SDL_UnlockAudioDevice(audioDevice);
+		SDL_UnlockAudioDevice(gAudioDevice);
 		return;
 	}
 	
@@ -127,45 +126,34 @@ SOUND::SOUND(const char *path)
 	volumeR = 1.0f;
 	
 	//Attach to the linked list
-	next = sounds;
-	sounds = this;
-	
-	//Resume audio device
-	SDL_UnlockAudioDevice(audioDevice);
+	next = soundList;
+	soundList = this;
 	
 	LOG(("Success!\n"));
 }
 
 SOUND::SOUND(SOUND *ourParent)
 {
-	LOG(("Creating a sound from parent %p... ", (void*)ourParent));
-	
-	//Wait for audio device to be finished and lock it
-	SDL_LockAudioDevice(audioDevice);
-	
 	//Clear class memory
+	LOG(("Creating a sound from parent %p... ", (void*)ourParent));
 	memset(this, 0, sizeof(SOUND));
 	
 	//Use our data from the parent
 	parent = ourParent;
-	
-	buffer = ourParent->buffer;
-	size = ourParent->size;
+	buffer = parent->buffer;
+	size = parent->size;
 	
 	//Initialize other properties
 	sample = 0.0;
-	frequency = ourParent->frequency;
+	frequency = parent->frequency;
 	baseFrequency = frequency;
 	volume = 1.0f;
 	volumeL = 1.0f;
 	volumeR = 1.0f;
 	
 	//Attach to the linked list
-	next = sounds;
-	sounds = this;
-	
-	//Resume audio device
-	SDL_UnlockAudioDevice(audioDevice);
+	next = soundList;
+	soundList = this;
 	
 	LOG(("Success!\n"));
 }
@@ -173,10 +161,10 @@ SOUND::SOUND(SOUND *ourParent)
 SOUND::~SOUND()
 {
 	//Wait for audio device to be finished and lock it
-	SDL_LockAudioDevice(audioDevice);
+	SDL_LockAudioDevice(gAudioDevice);
 	
 	//Remove from linked list
-	for (SOUND **sound = &sounds; *sound != NULL; sound = &(*sound)->next)
+	for (SOUND **sound = &soundList; *sound != nullptr; sound = &(*sound)->next)
 	{
 		if (*sound == this)
 		{
@@ -186,80 +174,21 @@ SOUND::~SOUND()
 	}
 	
 	//Free our data (do not free if we're a child of another sound)
-	if (parent == NULL)
+	if (parent == nullptr)
 		free(buffer);
 	
 	//Resume audio device
-	SDL_UnlockAudioDevice(audioDevice);
+	SDL_UnlockAudioDevice(gAudioDevice);
 }
 
-void SOUND::Play()
-{
-	//Wait for audio device to be finished and lock it
-	SDL_LockAudioDevice(audioDevice);
-	
-	//Start playing
-	sample = 0.0;
-	playing = true;
-	
-	//Resume audio device
-	SDL_UnlockAudioDevice(audioDevice);
-}
-
-void SOUND::Stop()
-{
-	//Wait for audio device to be finished and lock it
-	SDL_LockAudioDevice(audioDevice);
-	
-	//Stop playing
-	playing = false;
-	
-	//Resume audio device
-	SDL_UnlockAudioDevice(audioDevice);
-}
-
-void SOUND::SetVolume(float setVolume)
-{
-	//Wait for audio device to be finished and lock it
-	SDL_LockAudioDevice(audioDevice);
-	
-	//Set our volume to the volume given
-	volume = setVolume;
-	
-	//Resume audio device
-	SDL_UnlockAudioDevice(audioDevice);
-}
-
-void SOUND::SetPan(float setVolumeL, float setVolumeR)
-{
-	//Wait for audio device to be finished and lock it
-	SDL_LockAudioDevice(audioDevice);
-	
-	//Set our volume to the volume given
-	volumeL = setVolumeL;
-	volumeR = setVolumeR;
-	
-	//Resume audio device
-	SDL_UnlockAudioDevice(audioDevice);
-}
-
-void SOUND::SetFrequency(double setFrequency)
-{
-	//Wait for audio device to be finished and lock it
-	SDL_LockAudioDevice(audioDevice);
-	
-	//Set our frequency to the frequency given
-	frequency = setFrequency;
-	
-	//Resume audio device
-	SDL_UnlockAudioDevice(audioDevice);
-}
-
+//Mixer function
 void SOUND::Mix(float *stream, int samples)
 {
+	//Don't mix if not playing
 	if (!playing)
 		return;
 	
+	//Mix this song into the buffer
 	const double freqMove = frequency / AUDIO_FREQUENCY;
 	for (int i = 0; i < samples; i++)
 	{
@@ -276,7 +205,7 @@ void SOUND::Mix(float *stream, int samples)
 			const float subPos = (float)fmod(sample, 1.0);
 			const float sampleOut = sample1 + (sample2 - sample1) * subPos;
 
-			//Mix
+			//Mix into buffer
 			*stream++ += sampleOut * volume * (*channelVolume++);
 		}
 
@@ -292,6 +221,14 @@ void SOUND::Mix(float *stream, int samples)
 	}
 }
 
+//The miniaudio converter function
+ma_uint32 MusicReadSamples(ma_pcm_converter *dsp, void *buffer, ma_uint32 requestFrames, void *musicPointer)
+{
+	//Read X amount of frames from the music (in the music's format) to be read and converted to our native format
+	MUSIC *music = (MUSIC*)musicPointer;
+	return music->ReadSamplesToBuffer((float*)buffer, requestFrames);
+}
+
 //Music class (using stb_vorbis and miniaudio)
 #ifdef WINDOWS //Include Windows stuff, required for opening the files with UTF-16 paths
 	#include <wchar.h>
@@ -299,20 +236,22 @@ void SOUND::Mix(float *stream, int samples)
 #endif
 
 //Constructor and destructor
-MUSIC::MUSIC(const char *name)
+MUSIC::MUSIC(const char *name, int initialPosition, float initialVolume)
 {
+	//Clear memory
+	LOG(("Loading music file from %s... ", name));
 	memset(this, 0, sizeof(MUSIC));
 	
-	source = name;
-	LOG(("Loading music file from %s... ", name));
-	
 	//Get our paths
+	source = name;
+	
 	GET_GLOBAL_PATH(basePath, "data/Audio/Music/");
 	GET_APPEND_PATH(musicPath, basePath, name);
 	
 	GET_APPEND_PATH(oggPath, musicPath, ".ogg");
 	GET_APPEND_PATH(metaPath, musicPath, ".mmt");
 	
+	//Open the given file (different between Windows and non-Windows, because Windows hates UTF-8)
 	#ifdef WINDOWS
 		//Convert to UTF-16
 		wchar_t wcharBuffer[0x200];
@@ -326,7 +265,7 @@ MUSIC::MUSIC(const char *name)
 	#endif
 	
 	//If the file failed to open...
-	if (fp == NULL)
+	if (fp == nullptr)
 	{
 		Error(fail = "Failed to open the given file");
 		return;
@@ -334,9 +273,9 @@ MUSIC::MUSIC(const char *name)
 	
 	//Open our stb_vorbis file from this
 	int error;
-	file = stb_vorbis_open_file(fp, 1, &error, NULL);
+	file = stb_vorbis_open_file(fp, 1, &error, nullptr);
 	
-	if (file == NULL)
+	if (file == nullptr)
 	{
 		char error[0x40];
 		sprintf(error, "Error: %d", error);
@@ -349,76 +288,100 @@ MUSIC::MUSIC(const char *name)
 	frequency = info.sample_rate;
 	channels = info.channels;
 	
-	//Read metadata file
+	//Open meta file
 	SDL_RWops *metafp = SDL_RWFromFile(metaPath, "rb");
-	if (metafp == NULL)
+	if (metafp == nullptr)
 	{
 		Error(fail = "Failed to open the meta file");
 		stb_vorbis_close(file);
 		return;
 	}
 	
+	//Read meta data
 	loopStart = (int64_t)SDL_ReadBE64(metafp);
-	
 	SDL_RWclose(metafp);
 	
 	//Initialize the resampler
 	const ma_pcm_converter_config config = ma_pcm_converter_config_init(ma_format_f32, channels, frequency, ma_format_f32, 2, AUDIO_FREQUENCY, MusicReadSamples, this);
 	ma_pcm_converter_init(&config, &resampler);
 	
+	//Lock the audio device before messing with the music list
+	AUDIO_LOCK;
+	
+	//Attach to the linked list
+	next = musicList;
+	musicList = this;
+	
+	//Seek to given position and use given volume
+	if (stb_vorbis_seek_frame(file, initialPosition) < 0)
+		stb_vorbis_seek_frame(file, 0); //Seek to the beginning if failed
+	volume = initialVolume;
+	
+	//Unlock audio device
+	AUDIO_UNLOCK;
+	
 	LOG(("Success!\n"));
 }
 
 MUSIC::~MUSIC()
 {
+	//Lock the audio device before messing with potentially playing music
+	AUDIO_LOCK;
+	
 	//Close our loaded file
-	if (file != NULL)
+	if (file != nullptr)
 		stb_vorbis_close(file);
+	
+	//Remove from linked list
+	for (MUSIC **music = &musicList; *music != nullptr; music = &(*music)->next)
+	{
+		if (*music == this)
+		{
+			*music = next;
+			break;
+		}
+	}
+	
+	//Free mix buffer
+	free(mixBuffer);
+	
+	//Unlock audio device
+	AUDIO_UNLOCK;
 }
 
 //Playback functions
-void MUSIC::Play(int position)
+void MUSIC::PlayAtPosition(int setPosition)
 {
 	//Play at the given position
-	internalPosition = position;
 	playing = true;
 	
-	//Seek within the given file
-	if (stb_vorbis_seek_frame(file, position) < 0)
+	//Seek to the given position
+	if (stb_vorbis_seek_frame(file, setPosition) < 0)
 		stb_vorbis_seek_frame(file, 0); //Seek to the beginning if failed
 }
 
-int MUSIC::Pause()
-{
-	//Pause and get the position we're at
-	playing = false;
-	return internalPosition;
-}
-
-//Mixer functions
+//Functions for reading from the music file
 void MUSIC::Loop()
 {
 	//Seek back to definition->loopStart
-	if (stb_vorbis_seek_frame(file, (int)(internalPosition = loopStart)) < 0)
+	if (stb_vorbis_seek_frame(file, loopStart) < 0)
 		stb_vorbis_seek_frame(file, 0); //Seek to the beginning if failed
 }
 
 ma_uint32 MUSIC::ReadSamplesToBuffer(float *buffer, int samples)
 {
 	//Read the given amount of samples
-	float *bufferPointer = &(*buffer);
+	float *bufferPointer = buffer;
 	int samplesRead = 0;
 	
 	while (playing && samplesRead < samples)
 	{
-		//Read data
+		//Read data and advance through buffer
 		int thisRead = stb_vorbis_get_samples_float_interleaved(file, channels, bufferPointer, (samples - samplesRead) * channels) * channels;
-		
-		//Move through file and buffer
-		bufferPointer += thisRead * channels;
+		bufferPointer += thisRead;
 		samplesRead += thisRead;
-		internalPosition += thisRead;
 		
+		//If reached the end of the file, either loop, or if there's no loop point, stop playing
 		if (thisRead == 0)
 		{
 			if (loopStart < 0)
@@ -428,175 +391,33 @@ ma_uint32 MUSIC::ReadSamplesToBuffer(float *buffer, int samples)
 		}
 	}
 	
+	//Fill the rest of the buffer with 0.0 (reached end of song)
 	for (; samplesRead < samples * channels; samplesRead++)
 		*bufferPointer++ = 0.0f;
 	
 	return samplesRead;
 }
 
-void MUSIC::Mix(float *stream, int samples)
+//Used for mixing into the audio buffer
+void MUSIC::ReadAndMix(float *stream, int frames)
 {
-	//Read the samples and convert to native format
-	ma_pcm_converter_read(&resampler, stream, samples);
+	//Don't mix if not playing
+	if (!playing)
+		return;
 	
-	//Apply volume
-	for (int i = 0; i < samples * 2; i++)
-		*stream++ *= volume;
-}
-
-ma_uint32 MusicReadSamples(ma_pcm_converter *dsp, void *buffer, ma_uint32 requestFrames, void *musicPointer)
-{
-	MUSIC *music = (MUSIC*)musicPointer;
-	return music->ReadSamplesToBuffer((float*)buffer, requestFrames);
-}
-
-//Music functions
-MUSIC *internalMusic = NULL;
-SDL_Thread *loadMusicThread = NULL;
-MUSICSPEC gMusicSpec;
-
-int LoadMusicThreadFunction(void *dummy)
-{
-	//Unload current song
-	if (internalMusic != NULL && gMusicSpec.name != internalMusic->source)
-	{
-		delete internalMusic;
-		internalMusic = NULL;
-	}
+	//Allocate mix buffer if unallocated
+	if (mixBuffer == nullptr)
+		mixBuffer = (float*)malloc(frames * sizeof(float) * 2);
 	
-	//Load new song (if not null)
-	if (gMusicSpec.name != NULL)
-	{
-		//If not reloading, initialize our internal music
-		if (internalMusic == NULL)
-			internalMusic = new MUSIC(gMusicSpec.name);
-		
-		//Play our music using the given specifications
-		internalMusic->volume = gMusicSpec.initialVolume;
-		internalMusic->Play(gMusicSpec.initialPosition);
-	}
+	//Read the samples and convert to native format using miniaudio
+	ma_pcm_converter_read(&resampler, mixBuffer, frames);
 	
-	loadMusicThread = NULL;
-	return 0;
-}
-
-void PlayMusic(const MUSICSPEC musicSpec)
-{
-	//Wait for audio device to be finished and lock it
-	SDL_LockAudioDevice(audioDevice);
+	//Mix to buffer, applying volume
+	float *buffer = stream;
+	float *srcBuffer = mixBuffer;
 	
-	//Wait for song to have already finished loading
-	SDL_WaitThread(loadMusicThread, NULL);
-	loadMusicThread = NULL;
-	
-	//Load new song using the specifications in a separate thread
-	gMusicSpec = musicSpec;
-	loadMusicThread = SDL_CreateThread(LoadMusicThreadFunction, "LoadMusicThread", NULL);
-	
-	//Resume audio device
-	SDL_UnlockAudioDevice(audioDevice);
-}
-
-int PauseMusic()
-{
-	int position = gMusicSpec.initialPosition;
-	
-	if (loadMusicThread == NULL)
-	{
-		//Wait for audio device to be finished and lock it
-		SDL_LockAudioDevice(audioDevice);
-		
-		//Set the volume
-		if (internalMusic != NULL)
-			position = internalMusic->Pause();
-		else
-			position = -1;
-		
-		//Resume audio device
-		SDL_UnlockAudioDevice(audioDevice);
-	}
-	
-	return position;
-}
-
-void SetMusicVolume(float volume)
-{
-	if (loadMusicThread == NULL)
-	{
-		//Wait for audio device to be finished and lock it
-		SDL_LockAudioDevice(audioDevice);
-		
-		//Set the volume
-		if (internalMusic != NULL)
-			internalMusic->volume = volume;
-		
-		//Resume audio device
-		SDL_UnlockAudioDevice(audioDevice);
-	}
-}
-
-float GetMusicVolume()
-{
-	float volume = gMusicSpec.initialVolume;
-	
-	if (loadMusicThread == NULL)
-	{
-		//Wait for audio device to be finished and lock it
-		SDL_LockAudioDevice(audioDevice);
-		
-		//Set the volume
-		if (internalMusic != NULL)
-			volume = internalMusic->volume;
-		
-		//Resume audio device
-		SDL_UnlockAudioDevice(audioDevice);
-	}
-	
-	return volume;
-}
-
-int GetMusicPosition()
-{
-	int position = gMusicSpec.initialPosition;
-	
-	if (loadMusicThread == NULL)
-	{
-		//Wait for audio device to be finished and lock it
-		SDL_LockAudioDevice(audioDevice);
-		
-		//Set the volume
-		if (internalMusic != NULL)
-			position = internalMusic->internalPosition;
-		else
-			position = 0;
-		
-		//Resume audio device
-		SDL_UnlockAudioDevice(audioDevice);
-	}
-	
-	return position;
-}
-
-bool IsMusicPlaying()
-{
-	bool playing = true;
-	
-	if (loadMusicThread == NULL)
-	{
-		//Wait for audio device to be finished and lock it
-		SDL_LockAudioDevice(audioDevice);
-		
-		//Set the volume
-		if (internalMusic != NULL)
-			playing = internalMusic->playing;
-		else
-			playing = false;
-		
-		//Resume audio device
-		SDL_UnlockAudioDevice(audioDevice);
-	}
-	
-	return playing;
+	for (int i = 0; i < frames * 2; i++)
+		*buffer++ += (*srcBuffer++) * volume;
 }
 
 //Callback function
@@ -604,51 +425,34 @@ bool gAudioYield = false;
 
 void YieldAudio(bool yield)
 {
-	//Wait for audio device to be finished and lock it
-	SDL_LockAudioDevice(audioDevice);
-	
-	//Set yield
+	//Set our yield while the audio device is locked
+	AUDIO_LOCK;
 	gAudioYield = yield;
-	
-	//Resume audio device
-	SDL_UnlockAudioDevice(audioDevice);
+	AUDIO_UNLOCK;
 }
 
 void AudioCallback(void *userdata, uint8_t *stream, int length)
 {
-	//We aren't using userdata, this prevents the warning
+	//We aren't using userdata, this prevents an unused variable warning
 	(void)userdata;
 	
-	//Get our buffer to render to
-	int samples = length / (2 * sizeof(float));
+	//Get how many frames are in our buffer
+	int frames = length / (2 * sizeof(float));
+	
+	//Clear the stream with 0.0f
+	float *buffer = (float*)stream;
+	for (int i = 0; i < frames * 2; i++)
+		*buffer++ = 0.0f;
 	
 	//If window is unfocused, don't mix anything, pause audio
 	if (gAudioYield)
-	{
-		//Clear the stream with 0.0f
-		float *buffer = (float*)stream;
-		for (int i = 0; i < samples * 2; i++)
-			*buffer++ = 0.0f;
 		return;
-	}
 	
-	//Mix music into the buffer or clear the buffer
-	if (loadMusicThread == NULL && internalMusic != NULL && internalMusic->playing)
-	{
-		//This will clear the stream with 0.0f
-		internalMusic->Mix((float*)stream, samples);
-	}
-	else
-	{
-		//Clear the stream with 0.0f
-		float *buffer = (float*)stream;
-		for (int i = 0; i < samples * 2; i++)
-			*buffer++ = 0.0f;
-	}
-	
-	//Mix our sound effects into the buffer
-	for (SOUND *sound = sounds; sound != NULL; sound = sound->next)
-		sound->Mix((float*)stream, samples);
+	//Mix all loaded sounds and music into the buffer
+	for (MUSIC *music = musicList; music != nullptr; music = music->next)
+		music->ReadAndMix((float*)stream, frames);
+	for (SOUND *sound = soundList; sound != nullptr; sound = sound->next)
+		sound->Mix((float*)stream, frames);
 }
 
 //Play sound functions
@@ -660,9 +464,10 @@ bool spindashLast = false;	//Set to 1 if spindash was the last sound, set to 0 i
 
 void PlaySound(SOUNDID id)
 {
-	SOUNDID playId = id;
+	//Wait for audio device to be locked before modifying sound effect
+	AUDIO_LOCK;
 	
-	//Sound specifics go here (i.e ring panning, or spindash rev frequency)
+	//Play sound (there's specific sound stuff here though, such as ring panning, or spindash rev frequency)
 	if (id == SOUNDID_SPINDASH_REV)
 	{
 		//Check spindash pitch clear
@@ -677,7 +482,7 @@ void PlaySound(SOUNDID id)
 			spindashPitch = 11;
 		
 		//Set sound id
-		playId = (SOUNDID)((unsigned int)SOUNDID_SPINDASH_REV + spindashPitch);
+		id = (SOUNDID)((unsigned int)SOUNDID_SPINDASH_REV + spindashPitch);
 		
 		//Update timer
 		spindashTimer = SDL_GetTicks() + 1000;
@@ -692,49 +497,56 @@ void PlaySound(SOUNDID id)
 		{
 			//Flip between left and right every time the sound plays
 			ringPanLeft ^= 1;
-			playId = ringPanLeft ? SOUNDID_RING_LEFT : SOUNDID_RING_RIGHT;
-			soundEffects[playId]->SetPan(ringPanLeft ? 1.0f : 0.0f, ringPanLeft ? 0.0f : 1.0f);
+			id = ringPanLeft ? SOUNDID_RING_LEFT : SOUNDID_RING_RIGHT;
+			sounds[id]->volumeL = ringPanLeft ? 1.0f : 0.0f;
+			sounds[id]->volumeR = ringPanLeft ? 0.0f : 1.0f;
 		}
 	}
 	
-	//Get our sound
-	SOUND *sound = soundEffects[playId];
-	
 	//Stop sounds of the same channel
 	for (int i = 0; i < SOUNDID_MAX; i++)
-		if (soundEffects[i] != NULL && soundDefinition[i].channel == soundDefinition[playId].channel)
-			soundEffects[i]->Stop();
+		if (sounds[i] != nullptr && soundDefinition[i].channel == soundDefinition[id].channel)
+			sounds[i]->playing = false;
 	
 	//Actually play our sound
-	if (sound != NULL)
-		sound->Play();
+	if (sounds[id] != nullptr)
+	{
+		sounds[id]->sample = 0.0;
+		sounds[id]->playing = true;
+	}
+	
+	//Unlock the audio buffer
+	AUDIO_UNLOCK;
 	return;
 }
 
 void StopSound(SOUNDID id)
 {
-	//Stop the given sound
-	if (soundEffects[id] != NULL)
-		soundEffects[id]->Stop();
+	//Stop the given sound while the audio device is locked
+	AUDIO_LOCK;
+	if (sounds[id] != nullptr)
+		sounds[id]->playing = false;
+	AUDIO_UNLOCK;
 	return;
 }
 
 //Load sound function
 bool LoadAllSoundEffects()
 {
+	//Load all of the defined sound effects
 	for (int i = 0; i < SOUNDID_MAX; i++)
 	{
-		if (soundDefinition[i].path != NULL)
-			soundEffects[i] = new SOUND(soundDefinition[i].path); //Load from path
+		if (soundDefinition[i].path != nullptr)
+			sounds[i] = new SOUND(soundDefinition[i].path); //Load from path
 		else if (soundDefinition[i].parent != SOUNDID_NULL)
-			soundEffects[i] = new SOUND(soundEffects[soundDefinition[i].parent]); //Load from parent
+			sounds[i] = new SOUND(sounds[soundDefinition[i].parent]); //Load from parent
 		else
 		{
-			soundEffects[i] = NULL;
+			sounds[i] = nullptr;
 			continue;
 		}
 		
-		if (soundEffects[i]->fail)
+		if (sounds[i]->fail)
 			return false;
 	}
 	
@@ -754,8 +566,8 @@ bool InitializeAudio()
 	want.channels = 2;
 	want.callback = AudioCallback;
 	
-	audioDevice = SDL_OpenAudioDevice(NULL, 0, &want, NULL, 0);
-	if (!audioDevice)
+	gAudioDevice = SDL_OpenAudioDevice(nullptr, 0, &want, nullptr, 0);
+	if (!gAudioDevice)
 		return Error(SDL_GetError());
 	
 	//Load all of our sound effects
@@ -763,8 +575,7 @@ bool InitializeAudio()
 		return false;
 	
 	//Allow our audio device to play audio
-	SDL_PauseAudioDevice(audioDevice, 0);
-	
+	SDL_PauseAudioDevice(gAudioDevice, 0);
 	LOG(("Success!\n"));
 	return true;
 }
@@ -773,30 +584,26 @@ void QuitAudio()
 {
 	LOG(("Ending audio... "));
 	
-	//Unload all of our sounds
-	for (SOUND *sound = sounds; sound != NULL;)
+	//Lock the audio device, and unload all of our sounds and music
+	AUDIO_LOCK;
+	
+	for (MUSIC *music = musicList; music != nullptr;)
+	{
+		MUSIC *next = music->next;
+		delete music;
+		music = next;
+	}
+	
+	for (SOUND *sound = soundList; sound != nullptr;)
 	{
 		SOUND *next = sound->next;
 		delete sound;
 		sound = next;
 	}
 	
-	//Unload current song
-	if (internalMusic != NULL)
-	{
-		//Wait for audio device to be finished and lock it
-		SDL_LockAudioDevice(audioDevice);
-		
-		MUSIC *rememberMusic = internalMusic;
-		internalMusic = NULL;
-		
-		//Resume audio device then delete original music
-		SDL_UnlockAudioDevice(audioDevice);
-		delete rememberMusic;
-	}
-	
 	//Close our audio device
-	SDL_CloseAudioDevice(audioDevice);
+	AUDIO_UNLOCK;
+	SDL_CloseAudioDevice(gAudioDevice);
 	
 	LOG(("Success!\n"));
 	return;

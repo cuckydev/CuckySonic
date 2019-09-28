@@ -55,7 +55,7 @@ void ObjMotobug(OBJECT *object)
 				object->deleteFlag = true;
 			
 			//Check for the floor
-			int16_t distance = object->CheckFloorEdge(COLLISIONLAYER_NORMAL_TOP, object->x.pos, object->y.pos, NULL);
+			int16_t distance = object->CheckFloorEdge(COLLISIONLAYER_NORMAL_TOP, object->x.pos, object->y.pos, nullptr);
 			if (distance >= 0)
 				break;
 			
@@ -92,7 +92,7 @@ void ObjMotobug(OBJECT *object)
 					int16_t lastX = object->x.pos;
 					object->Move();
 					
-					int16_t distance = object->CheckFloorEdge(COLLISIONLAYER_NORMAL_TOP, object->x.pos, object->y.pos, NULL);
+					int16_t distance = object->CheckFloorEdge(COLLISIONLAYER_NORMAL_TOP, object->x.pos, object->y.pos, nullptr);
 					if (distance < -8 || distance >= 12)
 					{
 						//Set state and wait

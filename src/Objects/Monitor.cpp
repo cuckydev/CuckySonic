@@ -49,7 +49,7 @@ OBJECT_SOLIDTOUCH ObjMonitor_SolidObject(OBJECT *object)
 	OBJECT_SOLIDTOUCH solidTouch;
 	int i = 0;
 	
-	for (PLAYER *player = gLevel->playerList; player != NULL; player = player->next)
+	for (PLAYER *player = gLevel->playerList; player != nullptr; player = player->next)
 	{
 		if (player == gLevel->playerList)
 			ObjMonitor_SolidObject_Lead(object, &solidTouch, i++, player);
@@ -142,22 +142,18 @@ void ObjMonitorContents(OBJECT *object)
 				
 				//Handle our item
 				PLAYER *breakPlayer = (PLAYER*)((OBJECT*)object->parent)->parent;
-				MUSICSPEC itemMusicSpec;
 				
 				switch (object->anim)
 				{
 					case MONITOR_ITEM_EXTRA_LIFE:
 						//Give us one extra life and play the jingle
 						AddToLives(1);
-						
-						//Play jingle
-						itemMusicSpec = {"ExtraLifeJingle", 0, 1.0f};
-						gLevel->PlayJingle(itemMusicSpec);
+						gLevel->PlayJingleMusic(gLevel->extraLifeMusic);
 						break;
 					case MONITOR_ITEM_STATIC:
 					case MONITOR_ITEM_EGGMAN:
 						//Hurt the player
-						if (breakPlayer != NULL)
+						if (breakPlayer != nullptr)
 							breakPlayer->CheckHurt((void*)object);
 						break;
 					case MONITOR_ITEM_RING:
@@ -166,12 +162,12 @@ void ObjMonitorContents(OBJECT *object)
 						break;
 					case MONITOR_ITEM_SPEED_SHOES:
 						//Give the player who hit us speed shoes
-						if (breakPlayer != NULL)
+						if (breakPlayer != nullptr)
 							breakPlayer->GiveSpeedShoes();
 						break;
 					case MONITOR_ITEM_SHIELD:
 						//Give the player who hit us a shield
-						if (breakPlayer != NULL)
+						if (breakPlayer != nullptr)
 							breakPlayer->GiveShield(SOUNDID_GET_BLUE_SHIELD, SHIELD_BLUE);
 						break;
 					case MONITOR_ITEM_INVINCIBILITY:
@@ -233,7 +229,7 @@ void ObjMonitor(OBJECT *object)
 				//Fall and check for the floor
 				object->MoveAndFall();
 				
-				int16_t distance = object->CheckFloorEdge(COLLISIONLAYER_NORMAL_TOP, object->x.pos, object->y.pos, NULL);
+				int16_t distance = object->CheckFloorEdge(COLLISIONLAYER_NORMAL_TOP, object->x.pos, object->y.pos, nullptr);
 				if (distance < 0)
 				{
 					//Land on the ground and stop falling

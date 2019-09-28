@@ -12,7 +12,7 @@ BACKGROUNDSCROLL::BACKGROUNDSCROLL(const char *name, TEXTURE *backgroundTexture)
 	GET_GLOBAL_PATH(path, name);
 	
 	SDL_RWops *fp = SDL_RWFromFile(path, "rb");
-	if (fp == NULL)
+	if (fp == nullptr)
 	{
 		fail = SDL_GetError();
 		return;
@@ -87,11 +87,11 @@ BACKGROUNDSCROLL::BACKGROUNDSCROLL(const char *name, TEXTURE *backgroundTexture)
 		
 		//Offset array index
 		const uint16_t offsetIndex = SDL_ReadBE16(fp);
-		strip[i].offset = (offsetIndex == BACK_NULLVAL) ? NULL : &offset[offsetIndex];
+		strip[i].offset = (offsetIndex == BACK_NULLVAL) ? nullptr : &offset[offsetIndex];
 		
 		//Timer index
 		const uint16_t timerIndex = SDL_ReadBE16(fp);
-		strip[i].timer = (timerIndex == BACK_NULLVAL) ? NULL : &timer[timerIndex].value;
+		strip[i].timer = (timerIndex == BACK_NULLVAL) ? nullptr : &timer[timerIndex].value;
 		
 		//Offset array reference mode
 		strip[i].offsetMode = (OFFSETMODE)SDL_ReadU8(fp);
@@ -99,14 +99,14 @@ BACKGROUNDSCROLL::BACKGROUNDSCROLL(const char *name, TEXTURE *backgroundTexture)
 		//Scroll from...
 		const uint16_t fromScrollIndex = SDL_ReadBE16(fp);
 		const uint16_t fromParallaxIndex = SDL_ReadBE16(fp);
-		strip[i].fromScroll = (fromScrollIndex == BACK_NULLVAL) ? NULL : &scroll[fromScrollIndex].value;
-		strip[i].fromParallax = (fromParallaxIndex == BACK_NULLVAL) ? NULL : &parallax[fromParallaxIndex].value;
+		strip[i].fromScroll = (fromScrollIndex == BACK_NULLVAL) ? nullptr : &scroll[fromScrollIndex].value;
+		strip[i].fromParallax = (fromParallaxIndex == BACK_NULLVAL) ? nullptr : &parallax[fromParallaxIndex].value;
 		
 		//Scroll to...
 		const uint16_t toScrollIndex = SDL_ReadBE16(fp);
 		const uint16_t toParallaxIndex = SDL_ReadBE16(fp);
-		strip[i].toScroll = (toScrollIndex == BACK_NULLVAL) ? NULL : &scroll[toScrollIndex].value;
-		strip[i].toParallax = (toParallaxIndex == BACK_NULLVAL) ? NULL : &parallax[toParallaxIndex].value;
+		strip[i].toScroll = (toScrollIndex == BACK_NULLVAL) ? nullptr : &scroll[toScrollIndex].value;
+		strip[i].toParallax = (toParallaxIndex == BACK_NULLVAL) ? nullptr : &parallax[toParallaxIndex].value;
 	}
 	
 	//We're done reading the file
@@ -131,9 +131,9 @@ BACKGROUNDSCROLL::~BACKGROUNDSCROLL()
 void BACKGROUNDSCROLL::GetScroll(int16_t cameraX, int16_t cameraY, int16_t *backX, int16_t *backY)
 {
 	//Update our parallax and background scrolling to the camera position
-	if (backX != NULL)
+	if (backX != nullptr)
 		*backX = cameraX * multiplierX / divisorX + addX;
-	if (backY != NULL)
+	if (backY != nullptr)
 		*backY = cameraY * multiplierY / divisorY + addY;
 	
 	for (uint16_t i = 0; i < parallaxScrolls; i++)
@@ -153,14 +153,14 @@ void BACKGROUNDSCROLL::GetScroll(int16_t cameraX, int16_t cameraY, int16_t *back
 		//Get our scroll positions
 		int64_t from = 0, to = 0;
 		
-		if (strip[i].fromScroll != NULL)
+		if (strip[i].fromScroll != nullptr)
 			from += *strip[i].fromScroll;
-		if (strip[i].fromParallax != NULL)
+		if (strip[i].fromParallax != nullptr)
 			from += *strip[i].fromParallax;
 		
-		if (strip[i].toScroll != NULL)
+		if (strip[i].toScroll != nullptr)
 			to += *strip[i].toScroll;
-		if (strip[i].toParallax != NULL)
+		if (strip[i].toParallax != nullptr)
 			to += *strip[i].toParallax;
 		
 		for (uint16_t v = 0; v < height; v++)

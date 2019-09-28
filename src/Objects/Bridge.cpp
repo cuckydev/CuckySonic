@@ -85,12 +85,12 @@ void ObjBridge(OBJECT *object)
 			//Check players on the bridge
 			int16_t bridgeLeft = (object->x.pos - (subtype * 8));
 			
-			for (PLAYER *player = gLevel->playerList; player != NULL; player = player->next)
+			for (PLAYER *player = gLevel->playerList; player != nullptr; player = player->next)
 			{
 				OBJECT *child = object->children;
 				int log = 0;
 				
-				for (OBJECT *child = object->children; child != NULL; child = child->next)
+				for (OBJECT *child = object->children; child != nullptr; child = child->next)
 				{
 					//Check this log
 					if (player->status.shouldNotFall && player->interact == (void*)child)
@@ -139,7 +139,7 @@ void ObjBridge(OBJECT *object)
 			int16_t depressPosition = object->scratchS16[SCRATCHS16_DEPRESS_POSITION];
 			
 			int i = 0;
-			for (OBJECT *child = object->children; child != NULL; child = child->next)
+			for (OBJECT *child = object->children; child != nullptr; child = child->next)
 			{
 				//Get the angle of this log (go up to 0x40 from the left, and go back down to 0x00 to the right)
 				uint8_t angle;
@@ -150,7 +150,7 @@ void ObjBridge(OBJECT *object)
 				
 				//Get the depression value from the value above, scaled by the force of the players on it (0x00 with no-one on it, 0x40 when someone is on it)
 				int16_t depress;
-				GetSine(object->angle * angle / 0x40, &depress, NULL);
+				GetSine(object->angle * angle / 0x40, &depress, nullptr);
 				
 				//Set our depression position
 				child->y.pos = object->y.pos + (depress * depressForce[depressPosition] / 0x100);

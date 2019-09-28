@@ -73,8 +73,8 @@ void DrawText(TEXTURE *tex, const char *text, int x, int y)
 bool GM_Title(bool *noError)
 {
 	//Load our title sheet
-	TEXTURE *titleTexture = new TEXTURE(NULL, "data/Title.bmp");
-	if (titleTexture->fail != NULL)
+	TEXTURE *titleTexture = new TEXTURE(nullptr, "data/Title.bmp");
+	if (titleTexture->fail != nullptr)
 		return (*noError = !Error(titleTexture->fail));
 	
 	//Emblem and banner positions
@@ -104,12 +104,12 @@ bool GM_Title(bool *noError)
 	int sonicAnimTimer = 0;
 	
 	//Background
-	TEXTURE *backgroundTexture = new TEXTURE(NULL, "data/TitleBackground.bmp");
-	if (backgroundTexture->fail != NULL)
+	TEXTURE *backgroundTexture = new TEXTURE(nullptr, "data/TitleBackground.bmp");
+	if (backgroundTexture->fail != nullptr)
 		return (*noError = !Error(backgroundTexture->fail));
 	
 	BACKGROUNDSCROLL *backgroundScroll = new BACKGROUNDSCROLL("data/Title.bsc", backgroundTexture);
-	if (backgroundScroll->fail != NULL)
+	if (backgroundScroll->fail != nullptr)
 		return (*noError = !Error(backgroundScroll->fail));
 	
 	int backgroundX = 0;
@@ -121,10 +121,16 @@ bool GM_Title(bool *noError)
 	FillPaletteBlack(titleTexture->loadedPalette);
 	FillPaletteBlack(backgroundTexture->loadedPalette);
 	
-	//Handle music
-	const MUSICSPEC titleSpec = {"Title", 0, 1.0f};
-	const MUSICSPEC menuSpec = {"Menu", 0, 1.0f};
-	PlayMusic(titleSpec);
+	//Lock audio device so we can load new music
+	AUDIO_LOCK;
+	
+	//Load title and menu music
+	MUSIC *titleMusic = new MUSIC("Title", 0, 1.0f);
+	MUSIC *menuMusic = new MUSIC("Menu", 0, 1.0f);
+	titleMusic->playing = true;
+	
+	//Unlock audio device
+	AUDIO_UNLOCK;
 	
 	//Our loop
 	bool noExit = true;
@@ -140,23 +146,26 @@ bool GM_Title(bool *noError)
 		
 		if (!selected)
 		{
-			//Fade asset sheet palette in
+			//Fade asset sheet and background palette in
 			PaletteFadeInFromBlack(titleTexture->loadedPalette);
 			PaletteFadeInFromBlack(backgroundTexture->loadedPalette);
 		}
 		else
 		{
-			//Fade asset sheet palette out
+			//Fade asset sheet and background palette out
 			bool res1 = PaletteFadeOutToBlack(titleTexture->loadedPalette);
 			bool res2 = PaletteFadeOutToBlack(backgroundTexture->loadedPalette);
 			breakThisState = res1 && res2;
 			
-			//Fade music out
-			SetMusicVolume(max(GetMusicVolume() - (1.0f / 24.0f), 0.0f));
+			//Fade out music
+			if (titleMusic->playing)
+				titleMusic->volume = max(titleMusic->volume - (1.0f / 32.0f), 0.0f);
+			if (menuMusic->playing)
+				menuMusic->volume = max(menuMusic->volume - (1.0f / 32.0f), 0.0f);
 		}
 		
 		//Draw background
-		backgroundScroll->GetScroll(backgroundX, 0, NULL, NULL);
+		backgroundScroll->GetScroll(backgroundX, 0, nullptr, nullptr);
 		
 		//Draw each line
 		SDL_Rect backSrc = {0, 0, backgroundTexture->width, 1};
@@ -253,15 +262,35 @@ bool GM_Title(bool *noError)
 		//Increment frame
 		frame++;
 		
-		//Switch to menu music after a few seconds
-		if (selected == false && frame == (17 * 60))
-			PlayMusic(menuSpec);
+		//Switch to menu music once the title music is done
+		if (titleMusic->playing == false && menuMusic->playing == false)
+		{
+			//Lock the audio device so we can safely change which song is playing and volume
+			AUDIO_LOCK;
+			
+			//Play menu music
+			menuMusic->playing = true;
+			menuMusic->volume = titleMusic->volume;
+			
+			//Unlock audio device
+			AUDIO_UNLOCK;
+		}
 	}
 	
 	//Unload our textures
 	delete backgroundScroll;
 	delete backgroundTexture;
 	delete titleTexture;
+	
+	//Lock audio device so we can safely unload all loaded music
+	AUDIO_LOCK;
+	
+	//Unload loaded music
+	delete titleMusic;
+	delete menuMusic;
+	
+	//Unlock audio device
+	AUDIO_UNLOCK;
 	
 	//Continue to game
 	gGameLoadLevel = 0;

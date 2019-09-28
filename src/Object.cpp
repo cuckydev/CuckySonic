@@ -13,12 +13,12 @@ OBJECT::OBJECT(OBJECT **linkedList, void (*objectFunction)(OBJECT *object))
 	function = objectFunction;
 	
 	//Attach to linked list (if applicable)
-	if (linkedList != NULL)
+	if (linkedList != nullptr)
 	{
 		list = linkedList;
 		
 		//If linked list is unset, set us as the first 
-		if (*linkedList == NULL)
+		if (*linkedList == nullptr)
 		{
 			*linkedList = this;
 			return;
@@ -27,7 +27,7 @@ OBJECT::OBJECT(OBJECT **linkedList, void (*objectFunction)(OBJECT *object))
 		//Attach us to the linked list
 		for (OBJECT *object = *linkedList; 1; object = object->next)
 		{
-			if (object->next == NULL)
+			if (object->next == nullptr)
 			{
 				object->next = this;
 				break;
@@ -39,9 +39,9 @@ OBJECT::OBJECT(OBJECT **linkedList, void (*objectFunction)(OBJECT *object))
 OBJECT::~OBJECT()
 {
 	//Detach from linked list
-	if (list != NULL)
+	if (list != nullptr)
 	{
-		for (OBJECT **object = list; *object != NULL; object = &(*object)->next)
+		for (OBJECT **object = list; *object != nullptr; object = &(*object)->next)
 		{
 			if (*object == this)
 			{
@@ -52,7 +52,7 @@ OBJECT::~OBJECT()
 	}
 	
 	//Destroy children
-	for (OBJECT *object = children; object != NULL;)
+	for (OBJECT *object = children; object != nullptr;)
 	{
 		OBJECT *next = object->next;
 		delete object;
@@ -185,7 +185,7 @@ void OBJECT::Animate(const uint8_t **animationList)
 int16_t OBJECT::CheckFloorEdge(COLLISIONLAYER layer, int16_t xPos, int16_t yPos, uint8_t *outAngle)
 {
 	int16_t distance = FindFloor(xPos, yPos + yRadius, layer, false, outAngle);
-	if (outAngle != NULL)
+	if (outAngle != nullptr)
 		*outAngle = ((*outAngle) & 1) ? 0 : (*outAngle);
 	return distance;
 }
@@ -194,7 +194,7 @@ int16_t OBJECT::CheckFloorEdge(COLLISIONLAYER layer, int16_t xPos, int16_t yPos,
 void OBJECT::PlatformObject(int16_t width, int16_t height, int16_t lastXPos)
 {
 	int i = 0;
-	for (PLAYER *player = gLevel->playerList; player != NULL; player = player->next)
+	for (PLAYER *player = gLevel->playerList; player != nullptr; player = player->next)
 	{
 		//If the player is already standing on us
 		if (playerContact[i].standing == true)
@@ -271,7 +271,7 @@ OBJECT_SOLIDTOUCH OBJECT::SolidObject(int16_t width, int16_t height, int16_t las
 	
 	//Check all players
 	int i = 0;
-	for (PLAYER *player = gLevel->playerList; player != NULL; player = player->next)
+	for (PLAYER *player = gLevel->playerList; player != nullptr; player = player->next)
 	{
 		//Check if we're still standing on the object
 		if (playerContact[i].standing)
@@ -487,7 +487,7 @@ void OBJECT::ClearSolidContact()
 	//Check all players and clear all contact
 	int i = 0;
 	
-	for (PLAYER *player = gLevel->playerList; player != NULL; player = player->next)
+	for (PLAYER *player = gLevel->playerList; player != nullptr; player = player->next)
 	{
 		//Clear pushing and standing
 		if (playerContact[i].standing || playerContact[i].pushing)
@@ -514,17 +514,17 @@ bool OBJECT::Update()
 	isDrawing = false;
 	
 	//Run our object code
-	if (function != NULL)
+	if (function != nullptr)
 		function(this);
 	
 	//Check if any of our assets failed to load
-	if (texture != NULL && texture->fail != NULL)
+	if (texture != nullptr && texture->fail != nullptr)
 		return Error(texture->fail);
-	if (mappings != NULL && mappings->fail != NULL)
+	if (mappings != nullptr && mappings->fail != nullptr)
 		return Error(mappings->fail);
 	
 	//Update children's code
-	for (OBJECT *object = children; object != NULL; object = object->next)
+	for (OBJECT *object = children; object != nullptr; object = object->next)
 	{
 		if (object->Update())
 			return true;
@@ -542,7 +542,7 @@ void OBJECT::Draw()
 void OBJECT::DrawToScreen()
 {
 	//Don't draw if we don't have textures or mappings
-	if (texture != NULL && mappings != NULL)
+	if (texture != nullptr && mappings != nullptr)
 	{
 		//Draw our sprite
 		SDL_Rect *mapRect = &mappings->rect[mappingFrame];
@@ -565,6 +565,6 @@ void OBJECT::DrawRecursive()
 {
 	if (isDrawing)
 		DrawToScreen();
-	for (OBJECT *object = children; object != NULL; object = object->next)
+	for (OBJECT *object = children; object != nullptr; object = object->next)
 		object->DrawRecursive();
 }

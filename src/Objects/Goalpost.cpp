@@ -112,7 +112,7 @@ void ObjGoalpost(OBJECT *object)
 		}
 		case 3: //Make players run to the right of the screen
 		{
-			for (PLAYER *player = gLevel->playerList; player != NULL; player = player->next)
+			for (PLAYER *player = gLevel->playerList; player != nullptr; player = player->next)
 			{
 				//Skip if debug is enabled
 				if (player->debug)

@@ -3,7 +3,7 @@
 void SOFTWAREBUFFER::Blit8(PALCOLOUR *backgroundColour, uint8_t *buffer, int pitch)
 {
 	//Clear to the given background colour
-	if (backgroundColour != NULL)
+	if (backgroundColour != nullptr)
 	{
 		uint8_t *clrBuffer = buffer;
 		
@@ -90,7 +90,7 @@ void SOFTWAREBUFFER::Blit8(PALCOLOUR *backgroundColour, uint8_t *buffer, int pit
 void SOFTWAREBUFFER::Blit16(PALCOLOUR *backgroundColour, uint16_t *buffer, int pitch)
 {
 	//Clear to the given background colour
-	if (backgroundColour != NULL)
+	if (backgroundColour != nullptr)
 	{
 		uint16_t *clrBuffer = buffer;
 		
@@ -177,7 +177,7 @@ void SOFTWAREBUFFER::Blit16(PALCOLOUR *backgroundColour, uint16_t *buffer, int p
 void SOFTWAREBUFFER::Blit32(PALCOLOUR *backgroundColour, uint32_t *buffer, int pitch)
 {
 	//Clear to the given background colour
-	if (backgroundColour != NULL)
+	if (backgroundColour != nullptr)
 	{
 		uint32_t *clrBuffer = buffer;
 		

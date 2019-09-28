@@ -14,14 +14,14 @@ TITLECARD::TITLECARD(const char *levelName, const char *levelSubtitle)
 	
 	//Load textures
 	texture = gLevel->GetObjectTexture("data/TitleCard.bmp");
-	if (texture == NULL || texture->fail)
+	if (texture == nullptr || texture->fail)
 	{
 		Error(fail = texture->fail);
 		return;
 	}
 	
 	fontTexture = gLevel->GetObjectTexture("data/GenericFont.bmp");
-	if (fontTexture == NULL || fontTexture->fail)
+	if (fontTexture == nullptr || fontTexture->fail)
 	{
 		Error(fail = fontTexture->fail);
 		return;

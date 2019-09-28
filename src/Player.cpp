@@ -271,8 +271,8 @@ void ObjShield(OBJECT *object)
 	object->y.pos = player->y.pos;
 	
 	//Do shield specific code (this includes getting our things)
-	const char *useMapping = NULL;
-	const uint8_t **useAniList = NULL;
+	const char *useMapping = nullptr;
+	const uint8_t **useAniList = nullptr;
 	
 	switch (player->shield)
 	{
@@ -423,14 +423,14 @@ PLAYER::PLAYER(PLAYER **linkedList, const char *specPath, PLAYER *myFollow, int 
 	GET_APPEND_PATH(mapPath, specPath, ".map");
 	
 	texture = gLevel->GetObjectTexture(texPath);
-	if (texture->fail != NULL)
+	if (texture->fail != nullptr)
 	{
 		Error(fail = texture->fail);
 		return;
 	}
 	
 	mappings = gLevel->GetObjectMappings(mapPath);
-	if (mappings->fail != NULL)
+	if (mappings->fail != nullptr)
 	{
 		Error(fail = mappings->fail);
 		return;
@@ -442,7 +442,7 @@ PLAYER::PLAYER(PLAYER **linkedList, const char *specPath, PLAYER *myFollow, int 
 	
 	SDL_RWops *playerSpec = SDL_RWFromFile(plrSpecPath, "rb");
 	
-	if (playerSpec == NULL)
+	if (playerSpec == nullptr)
 	{
 		Error(fail = SDL_GetError());
 		return;
@@ -499,12 +499,12 @@ PLAYER::PLAYER(PLAYER **linkedList, const char *specPath, PLAYER *myFollow, int 
 	ResetRecords(x.pos - 0x20, y.pos - 0x04);
 	
 	//Attach to linked list (if applicable)
-	if (linkedList != NULL)
+	if (linkedList != nullptr)
 	{
 		list = linkedList;
 		
 		//If linked list is unset, set us as the first 
-		if (*linkedList == NULL)
+		if (*linkedList == nullptr)
 		{
 			*linkedList = this;
 			return;
@@ -513,7 +513,7 @@ PLAYER::PLAYER(PLAYER **linkedList, const char *specPath, PLAYER *myFollow, int 
 		//Attach us to the linked list
 		for (PLAYER *player = *linkedList;; player = player->next)
 		{
-			if (player->next == NULL)
+			if (player->next == nullptr)
 			{
 				player->next = this;
 				break;
@@ -527,9 +527,9 @@ PLAYER::PLAYER(PLAYER **linkedList, const char *specPath, PLAYER *myFollow, int 
 PLAYER::~PLAYER()
 {
 	//Detach from linked list
-	if (list != NULL)
+	if (list != nullptr)
 	{
-		for (PLAYER **player = list; *player != NULL; player = &(*player)->next)
+		for (PLAYER **player = list; *player != nullptr; player = &(*player)->next)
 		{
 			if (*player == this)
 			{
@@ -567,13 +567,13 @@ void PLAYER::CheckFloor(COLLISIONLAYER layer, int16_t *distance, int16_t *distan
 
 	uint8_t retAngle = AngleIn(0x00, &retDistance, &retDistance2);
 
-	if (distance != NULL)
+	if (distance != nullptr)
 		*distance = retDistance;
 
-	if (distance2 != NULL)
+	if (distance2 != nullptr)
 		*distance2 = retDistance2;
 
-	if (outAngle != NULL)
+	if (outAngle != nullptr)
 		*outAngle = retAngle;
 }
 
@@ -584,13 +584,13 @@ void PLAYER::CheckCeiling(COLLISIONLAYER layer, int16_t *distance, int16_t *dist
 
 	uint8_t retAngle = AngleIn(0x80, &retDistance, &retDistance2);
 
-	if (distance != NULL)
+	if (distance != nullptr)
 		*distance = retDistance;
 
-	if (distance2 != NULL)
+	if (distance2 != nullptr)
 		*distance2 = retDistance2;
 	
-	if (outAngle != NULL)
+	if (outAngle != nullptr)
 		*outAngle = retAngle;
 }
 
@@ -602,7 +602,7 @@ int16_t PLAYER::ChkFloorEdge(COLLISIONLAYER layer, int16_t xPos, int16_t yPos, u
 	
 	//Get floor distance and angle
 	int16_t distance = FindFloor(xPos, yPos + (status.reverseGravity ? -yRadius : yRadius), layer, status.reverseGravity, &primaryAngle);
-	if (outAngle != NULL)
+	if (outAngle != nullptr)
 		*outAngle = (primaryAngle & 1) ? 0 : primaryAngle;
 	return distance;
 }
@@ -616,7 +616,7 @@ uint8_t PLAYER::AngleSide(uint8_t angleSide)
 int16_t PLAYER::CheckFloorDist(int16_t xPos, int16_t yPos, COLLISIONLAYER layer, uint8_t *outAngle)
 {
 	int16_t distance = FindFloor(xPos, yPos + 10, layer, false, &primaryAngle);
-	if (outAngle != NULL)
+	if (outAngle != nullptr)
 		*outAngle = AngleSide(0x00);
 	return distance;
 }
@@ -624,7 +624,7 @@ int16_t PLAYER::CheckFloorDist(int16_t xPos, int16_t yPos, COLLISIONLAYER layer,
 int16_t PLAYER::CheckCeilingDist(int16_t xPos, int16_t yPos, COLLISIONLAYER layer, uint8_t *outAngle)
 {
 	int16_t distance = FindFloor(xPos, yPos - 10, layer, true, &primaryAngle);
-	if (outAngle != NULL)
+	if (outAngle != nullptr)
 		*outAngle = AngleSide(0x80);
 	return distance;
 }
@@ -632,7 +632,7 @@ int16_t PLAYER::CheckCeilingDist(int16_t xPos, int16_t yPos, COLLISIONLAYER laye
 int16_t PLAYER::CheckLeftWallDist(int16_t xPos, int16_t yPos, COLLISIONLAYER layer, uint8_t *outAngle)
 {
 	int16_t distance = FindWall(xPos - 10, yPos, layer, true, &primaryAngle);
-	if (outAngle != NULL)
+	if (outAngle != nullptr)
 		*outAngle = AngleSide(0x40);
 	return distance;
 }
@@ -640,7 +640,7 @@ int16_t PLAYER::CheckLeftWallDist(int16_t xPos, int16_t yPos, COLLISIONLAYER lay
 int16_t PLAYER::CheckRightWallDist(int16_t xPos, int16_t yPos, COLLISIONLAYER layer, uint8_t *outAngle)
 {
 	int16_t distance = FindWall(xPos + 10, yPos, layer, false, &primaryAngle);
-	if (outAngle != NULL)
+	if (outAngle != nullptr)
 		*outAngle = AngleSide(0xC0);
 	return distance;
 }
@@ -682,16 +682,16 @@ int16_t PLAYER::CalcRoomOverHead(uint8_t upAngle)
 	switch ((upAngle + 0x20) & 0xC0)
 	{
 		case 0:
-			CheckFloor(topSolidLayer, NULL, &distance, NULL);
+			CheckFloor(topSolidLayer, nullptr, &distance, nullptr);
 			break;
 		case 0x40:
-			distance = CheckLeftCeilingDist(lrbSolidLayer, NULL);
+			distance = CheckLeftCeilingDist(lrbSolidLayer, nullptr);
 			break;
 		case 0x80:
-			CheckCeiling(lrbSolidLayer, NULL, &distance, NULL);
+			CheckCeiling(lrbSolidLayer, nullptr, &distance, nullptr);
 			break;
 		case 0xC0:
-			distance = CheckRightCeilingDist(lrbSolidLayer, NULL);
+			distance = CheckRightCeilingDist(lrbSolidLayer, nullptr);
 			break;
 	}
 
@@ -727,11 +727,11 @@ int16_t PLAYER::CalcRoomInFront(uint8_t moveAngle)
 
 	if (offAngle == 0)
 	{
-		return CheckFloorDist(xPos, yPos, lrbSolidLayer, NULL);
+		return CheckFloorDist(xPos, yPos, lrbSolidLayer, nullptr);
 	}
 	else if (offAngle == 0x80)
 	{
-		return CheckCeilingDist(xPos, yPos, lrbSolidLayer, NULL);
+		return CheckCeilingDist(xPos, yPos, lrbSolidLayer, nullptr);
 	}
 	else
 	{
@@ -740,9 +740,9 @@ int16_t PLAYER::CalcRoomInFront(uint8_t moveAngle)
 			yPos += 8;
 		
 		if (offAngle == 0x40)
-			return CheckLeftWallDist(xPos, yPos, lrbSolidLayer, NULL);
+			return CheckLeftWallDist(xPos, yPos, lrbSolidLayer, nullptr);
 		else
-			return CheckRightWallDist(xPos, yPos, lrbSolidLayer, NULL);
+			return CheckRightWallDist(xPos, yPos, lrbSolidLayer, nullptr);
 	}
 }
 
@@ -1020,7 +1020,7 @@ void PLAYER::DoLevelCollision()
 			int16_t distance, distance2;
 			
 			//Check for wall collisions
-			distance = CheckLeftWallDist(x.pos, y.pos, lrbSolidLayer, NULL);
+			distance = CheckLeftWallDist(x.pos, y.pos, lrbSolidLayer, nullptr);
 			if (distance < 0)
 			{
 				//Clip out and stop our velocity
@@ -1028,7 +1028,7 @@ void PLAYER::DoLevelCollision()
 				xVel = 0;
 			}
 			
-			distance = CheckRightWallDist(x.pos, y.pos, lrbSolidLayer, NULL);
+			distance = CheckRightWallDist(x.pos, y.pos, lrbSolidLayer, nullptr);
 			if (distance < 0)
 			{
 				//Clip out and stop our velocity
@@ -1094,7 +1094,7 @@ void PLAYER::DoLevelCollision()
 		case 0x40: //Moving to the left
 		{
 			//Collide with walls to the left of us
-			int16_t distance = CheckLeftWallDist(x.pos, y.pos, lrbSolidLayer, NULL);
+			int16_t distance = CheckLeftWallDist(x.pos, y.pos, lrbSolidLayer, nullptr);
 
 			if (distance < 0)
 			{
@@ -1109,9 +1109,9 @@ void PLAYER::DoLevelCollision()
 			{
 				//Collide with ceilings
 				if (!status.reverseGravity)
-					CheckCeiling(lrbSolidLayer, NULL, &distance, NULL);
+					CheckCeiling(lrbSolidLayer, nullptr, &distance, nullptr);
 				else
-					CheckFloor(topSolidLayer, NULL, &distance, NULL);
+					CheckFloor(topSolidLayer, nullptr, &distance, nullptr);
 				
 				if (distance < 0)
 				{
@@ -1130,7 +1130,7 @@ void PLAYER::DoLevelCollision()
 					else
 					{
 						//Collide with walls to the right?
-						int16_t distance = CheckRightWallDist(x.pos, y.pos, lrbSolidLayer, NULL);
+						int16_t distance = CheckRightWallDist(x.pos, y.pos, lrbSolidLayer, nullptr);
 						
 						if (distance < 0)
 						{
@@ -1145,11 +1145,11 @@ void PLAYER::DoLevelCollision()
 					uint8_t floorAngle;
 					if (!status.reverseGravity)
 					{
-						CheckFloor(topSolidLayer, NULL, &distance, &floorAngle);
+						CheckFloor(topSolidLayer, nullptr, &distance, &floorAngle);
 					}
 					else
 					{
-						CheckCeiling(lrbSolidLayer, NULL, &distance, &floorAngle);
+						CheckCeiling(lrbSolidLayer, nullptr, &distance, &floorAngle);
 						floorAngle = -(floorAngle + 0x40) - 0x40;
 					}
 					
@@ -1180,7 +1180,7 @@ void PLAYER::DoLevelCollision()
 		{
 			//Check for wall collisions
 			int16_t distance;
-			distance = CheckLeftWallDist(x.pos, y.pos, lrbSolidLayer, NULL);
+			distance = CheckLeftWallDist(x.pos, y.pos, lrbSolidLayer, nullptr);
 			if (distance < 0)
 			{
 				//Clip out of the wall and stop our velocity
@@ -1188,7 +1188,7 @@ void PLAYER::DoLevelCollision()
 				xVel = 0;
 			}
 			
-			distance = CheckRightWallDist(x.pos, y.pos, lrbSolidLayer, NULL);
+			distance = CheckRightWallDist(x.pos, y.pos, lrbSolidLayer, nullptr);
 			if (distance < 0)
 			{
 				//Clip out of the wall and stop our velocity
@@ -1200,11 +1200,11 @@ void PLAYER::DoLevelCollision()
 			uint8_t ceilingAngle;
 			if (!status.reverseGravity)
 			{
-				CheckCeiling(lrbSolidLayer, NULL, &distance, &ceilingAngle);
+				CheckCeiling(lrbSolidLayer, nullptr, &distance, &ceilingAngle);
 			}
 			else
 			{
-				CheckFloor(topSolidLayer, NULL, &distance, &ceilingAngle);
+				CheckFloor(topSolidLayer, nullptr, &distance, &ceilingAngle);
 				ceilingAngle = -(ceilingAngle + 0x40) - 0x40;
 			}
 			
@@ -1236,7 +1236,7 @@ void PLAYER::DoLevelCollision()
 		case 0xC0: //Moving to the right
 		{
 			//Collide with walls
-			int16_t distance = CheckRightWallDist(x.pos, y.pos, lrbSolidLayer, NULL);
+			int16_t distance = CheckRightWallDist(x.pos, y.pos, lrbSolidLayer, nullptr);
 
 			if (distance < 0)
 			{
@@ -1251,9 +1251,9 @@ void PLAYER::DoLevelCollision()
 			{
 				//Collide with ceilings
 				if (!status.reverseGravity)
-					CheckCeiling(lrbSolidLayer, NULL, &distance, NULL);
+					CheckCeiling(lrbSolidLayer, nullptr, &distance, nullptr);
 				else
-					CheckFloor(topSolidLayer, NULL, &distance, NULL);
+					CheckFloor(topSolidLayer, nullptr, &distance, nullptr);
 				
 				if (distance < 0)
 				{
@@ -1273,11 +1273,11 @@ void PLAYER::DoLevelCollision()
 					uint8_t floorAngle;
 					if (!status.reverseGravity)
 					{
-						CheckFloor(topSolidLayer, NULL, &distance, &floorAngle);
+						CheckFloor(topSolidLayer, nullptr, &distance, &floorAngle);
 					}
 					else
 					{
-						CheckCeiling(lrbSolidLayer, NULL, &distance, &floorAngle);
+						CheckCeiling(lrbSolidLayer, nullptr, &distance, &floorAngle);
 						floorAngle = -(floorAngle + 0x40) - 0x40;
 					}
 					
@@ -1908,7 +1908,7 @@ void PLAYER::SlopeResist()
 	{
 		//Get our slope gravity
 		int16_t sin;
-		GetSine(angle, &sin, NULL);
+		GetSine(angle, &sin, nullptr);
 		sin = (sin * 0x20) >> 8;
 		
 		#ifndef SONIC12_SLOPE_RESIST
@@ -1946,7 +1946,7 @@ void PLAYER::RollRepel()
 	{
 		//Get our slope gravity
 		int16_t sin;
-		GetSine(angle, &sin, NULL);
+		GetSine(angle, &sin, nullptr);
 		sin = (sin * 0x50) / 0x100;
 		
 		//Apply our slope gravity (divide by 4 if opposite to our inertia sign)
@@ -2137,7 +2137,7 @@ void PLAYER::Move()
 					OBJECT *object = (OBJECT*)interact;
 					
 					//Balancing on an object
-					if (object != NULL && !object->status.noBalance)
+					if (object != nullptr && !object->status.noBalance)
 					{
 						//Get our area we stand on
 						int width = (object->widthPixels * 2) - 4;
@@ -2158,7 +2158,7 @@ void PLAYER::Move()
 				else
 				{
 					//If Sonic's middle bottom point is 12 pixels away from the floor, start balancing
-					if (ChkFloorEdge(topSolidLayer, x.pos, y.pos, NULL) >= 12)
+					if (ChkFloorEdge(topSolidLayer, x.pos, y.pos, nullptr) >= 12)
 					{
 						if (nextTilt == 3) //If there's no floor to the left of us
 						{
@@ -2399,8 +2399,8 @@ void PLAYER::DeadCheckRespawn()
 	int16_t cameraY = gLevel->camera->y;
 	cameraLock = true;
 	
-	//Cancel spindash
-	spindashing = false;
+	//Stop the timer
+	gLevel->updateTime = false;
 	
 	//Check if we're off-screen
 	#ifndef SONIC12_DEATH_RESPAWN
@@ -2498,7 +2498,7 @@ bool PLAYER::KillCharacter(SOUNDID soundId)
 		inertia = 0;
 		
 		//If the lead player, freeze level
-		if (follow == NULL)
+		if (follow == nullptr)
 			gLevel->updateStage = false;
 		
 		//Do animation and sound
@@ -3092,260 +3092,12 @@ void PLAYER::Animate()
 //CPU
 void PLAYER::CPUFilterAction(CONTROLMASK *nextHeld, CONTROLMASK *nextPress, int16_t leadX, int16_t leadY, bool incP1)
 {
-	if (incP1)
-	{
-		//Handle jumping
-		if (cpuJumping)
-		{
-			nextHeld->a = true;
-			nextHeld->b = true;
-			nextHeld->c = true;
-			nextPress->a = true;
-			nextPress->b = true;
-			nextPress->c = true;
-			
-			if (!status.inAir)
-				cpuJumping = false;
-			else
-				return;
-		}
-		
-		//If there's a great X-difference attached to a stupid timer thing
-		unsigned int timer = (cpuTimer & 0xFF);
-		if (timer != 0 && abs(leadX - x.pos) >= 0x40)
-			return;
-		
-		//Y difference check
-		int16_t yDiff = leadY - y.pos;
-		if (yDiff >= 0 || yDiff > -0x20)
-			return;
-	}
 	
-	//Check timer and if we're ducking
-	unsigned int timer = cpuTimer & 0x3F;
-	if (timer != 0 || anim == PLAYERANIMATION_DUCK)
-		return;
-	
-	//Jump
-	nextHeld->a = true;
-	nextHeld->b = true;
-	nextHeld->c = true;
-	nextPress->a = true;
-	nextPress->b = true;
-	nextPress->c = true;
-	cpuJumping = true;
 }
 
 void PLAYER::CPUControl()
 {
-	//Give the player control if any buttons are pressed
-	if (controlHeld.a || controlHeld.b || controlHeld.c || controlHeld.start || controlHeld.left || controlHeld.right || controlHeld.down || controlHeld.up)
-		cpuOverride = 600; //10 seconds before control is restored to the CPU
 	
-	switch (cpuRoutine)
-	{
-		case CPUROUTINE_INIT:
-			//Set our intended routine
-			cpuRoutine = CPUROUTINE_NORMAL;
-			
-			//Clear object control
-			memset(&objectControl, 0, sizeof(objectControl));
-			
-			//Reset speed and animation
-			anim = PLAYERANIMATION_WALK;
-			xVel = 0;
-			yVel = 0;
-			inertia = 0;
-			
-			//Clear status
-			memset(&status, 0, sizeof(STATUS));
-			break;
-		case CPUROUTINE_NORMAL:
-			//If the lead is dead, fly down to them
-			PLAYER *lead;
-			for (lead = (PLAYER*)follow; lead->follow != NULL; lead = (PLAYER*)lead->follow);
-			
-			if (lead->routine == PLAYERROUTINE_DEATH)
-			{
-				//Fly down to the player's corpse
-				cpuRoutine = CPUROUTINE_FLYING;
-				spindashing = false;
-				spindashCounter = 0;
-				
-				objectControl.disableOurMovement = true;
-				objectControl.disableObjectInteract = true;
-				
-				//Clear status
-				memset(&status, 0, sizeof(STATUS));
-				status.inAir = true;
-				return;
-			}
-			
-			//If not under human or object control
-			if (cpuOverride == 0 && objectControl.disableOurMovement == false)
-			{
-				//Panic if locked from a slope and stopped
-				if (moveLock > 0 && inertia == 0)
-					cpuRoutine = CPUROUTINE_PANIC;
-				
-				//Copy our leads controls from approximately 16 frames ago
-				int index = (unsigned)(((PLAYER*)follow)->recordPos - 0x11) % PLAYER_RECORD_LENGTH;
-				
-				int leadX = ((PLAYER*)follow)->posRecord[index].x;
-				int leadY = ((PLAYER*)follow)->posRecord[index].y;
-				CONTROLMASK leadHeld = ((PLAYER*)follow)->statRecord[index].controlHeld;
-				CONTROLMASK leadPress = ((PLAYER*)follow)->statRecord[index].controlPress;
-				STATUS leadStatus = ((PLAYER*)follow)->statRecord[index].status;
-				
-				//Move towards the lead
-				if (!status.pushing)
-				{
-					CONTROLMASK nextHeld = leadHeld;
-					CONTROLMASK nextPress = leadPress;
-					
-					//If the lead isn't pushing
-					if (!leadStatus.pushing)
-					{
-						int16_t xDiff = leadX - x.pos;
-							
-						//If not lined up with the lead, move towards them
-						if (xDiff < 0)
-						{
-							//Move left towards the lead
-							if (xDiff <= -0x10)
-							{
-								nextHeld.left = true;
-								nextPress.left = true;
-								nextHeld.right = false;
-								nextPress.right = false;
-							}
-							
-							//Move left 1 pixel if moving and not facing left
-							if (inertia != 0 && status.xFlip == false)
-								x.pos--;
-						}
-						else if (xDiff > 0)
-						{
-							//Move right towards the lead
-							if (xDiff >= 0x10)
-							{
-								nextHeld.left = false;
-								nextPress.left = false;
-								nextHeld.right = true;
-								nextPress.right = true;
-							}
-							
-							//Move left 1 pixel if moving and not facing left
-							if (inertia != 0 && status.xFlip == true)
-								x.pos++;
-						}
-						else
-						{
-							//Standing still
-							status.xFlip = leadStatus.xFlip;
-						}
-						
-						//Get our held buttons and actions
-						CPUFilterAction(&nextHeld, &nextPress, leadX, leadY, true);
-						
-						//Copy held and press
-						controlHeld = nextHeld;
-						controlPress = nextPress;
-						break;
-					}
-					
-					//Get our held buttons and actions
-					CPUFilterAction(&nextHeld, &nextPress, leadX, leadY, false);
-					
-					//Copy held and press
-					controlHeld = nextHeld;
-					controlPress = nextPress;
-					break;
-				}
-			}
-			else
-			{
-				if (cpuOverride > 0)
-					cpuOverride--;
-			}
-			break;
-		case CPUROUTINE_PANIC:
-			if (cpuOverride == 0 && moveLock == 0)
-			{
-				if (spindashing == false)
-				{
-					//Prepare to spindash
-					if (inertia == 0)
-					{
-						//Face towards our lead
-						status.xFlip = (((PLAYER*)follow)->x.pos < x.pos);
-						
-						//Force our input to down
-						controlHeld = {false, false, false, false, false, false, false, false};
-						controlPress = {false, false, false, false, false, false, false, false};
-						controlHeld.down = true;
-						controlPress.down = true;
-						
-						//If taking too long, quit
-						if ((cpuTimer & 0x7F) == 0)
-						{
-							controlHeld = {false, false, false, false, false, false, false, false};
-							controlPress = {false, false, false, false, false, false, false, false};
-							cpuRoutine = CPUROUTINE_NORMAL;
-							return;
-						}
-						
-						//Initiate our spindash if ducking
-						if (anim == PLAYERANIMATION_DUCK)
-						{
-							controlHeld = {false, false, false, false, false, false, false, false};
-							controlHeld.down = true;
-							controlHeld.a = true;
-							controlHeld.b = true;
-							controlHeld.c = true;
-							controlPress = {false, false, false, false, false, false, false, false};
-							controlPress.down = true;
-							controlPress.a = true;
-							controlPress.b = true;
-							controlPress.c = true;
-						}
-					}
-				}
-				else
-				{
-					//Force our input to down
-					controlHeld = {false, false, false, false, false, false, false, false};
-					controlPress = {false, false, false, false, false, false, false, false};
-					controlHeld.down = true;
-					controlPress.down = true;
-					
-					//Release spindash at some point
-					if ((cpuTimer & 0x7F) == 0)
-					{
-						controlHeld = {false, false, false, false, false, false, false, false};
-						controlPress = {false, false, false, false, false, false, false, false};
-						cpuRoutine = CPUROUTINE_NORMAL;
-					}
-					
-					//Every 20 frames rev our spindash
-					else if ((cpuTimer & 0x1F) == 0)
-					{
-						controlHeld.a = true;
-						controlHeld.b = true;
-						controlHeld.c = true;
-						controlPress.a = true;
-						controlPress.b = true;
-						controlPress.c = true;
-					}
-				}
-			}
-			break;
-		default:
-			break;
-	}
-	
-	//Increment CPU timer
-	cpuTimer++;
 }
 
 //Update
@@ -3394,7 +3146,7 @@ void PLAYER::Update()
 					}
 					
 					//Copy the given controller's inputs if not locked
-					if (follow == NULL)
+					if (follow == nullptr)
 					{
 						//If the lead, just directly copy our controller inputs
 						if (!controlLock)
@@ -3660,14 +3412,12 @@ void PLAYER::Display()
 	if (invulnerabilityTime == 0 || (--invulnerabilityTime & 0x4) != 0)
 		Draw();
 	
-	const MUSICSPEC levelResumeSpec = {gLevel->music, 0, GetMusicVolume()};
-	
 	//Handle invincibility (every 8 frames)
 	if (item.isInvincible && invincibilityTime != 0 && (gLevel->frameCounter & 0x7) == 0 && --invincibilityTime == 0)
 	{
 		//Resume music
-		if (follow == NULL && !strcmp(gLevel->currentMusic, "Invincibility"))
-			gLevel->ChangeMusic(levelResumeSpec);
+		if (follow == nullptr && gLevel->secondaryMusic == gLevel->invincibilityMusic)
+			gLevel->StopSecondaryMusic();
 		
 		//Lose invincibility
 		item.isInvincible = false;
@@ -3677,8 +3427,8 @@ void PLAYER::Display()
 	if (item.hasSpeedShoes && speedShoesTime != 0 && (gLevel->frameCounter & 0x7) == 0 && --speedShoesTime == 0)
 	{
 		//Resume music
-		if (follow == NULL && !strcmp(gLevel->currentMusic, "SpeedShoes"))
-			gLevel->ChangeMusic(levelResumeSpec);
+		if (follow == nullptr && gLevel->secondaryMusic == gLevel->speedShoesMusic)
+			gLevel->StopSecondaryMusic();
 		
 		//Lose speed shoes
 		item.hasSpeedShoes = false;
@@ -3711,7 +3461,7 @@ void PLAYER::DrawToScreen()
 	if (isDrawing)
 	{
 		//Don't draw if we don't have textures or mappings
-		if (texture != NULL && mappings != NULL)
+		if (texture != nullptr && mappings != nullptr)
 		{
 			//Draw our sprite
 			SDL_Rect *mapRect = &mappings->rect[mappingFrame];
@@ -3862,17 +3612,14 @@ void PLAYER::RingAttractCheck(void *objPointer)
 		
 		if (xDiff >= 0 && xDiff <= 128 && yDiff >= 0 && yDiff <= 128)
 		{
-			//Create an attracted ring at this ring's position and delete the old ring
-			OBJECT *newObject = new OBJECT(&gLevel->objectList, ObjAttractRing);
-			newObject->x.pos = object->x.pos;
-			newObject->y.pos = object->y.pos;
-			newObject->parent = (void*)this;
-			object->deleteFlag = true;
+			//Turn this ring into an attracted ring
+			object->function = ObjAttractRing;
+			object->parent = (void*)this;
 		}
 	}
 	
 	//Iterate and check children
-	for (OBJECT *obj = object->children; obj != NULL; obj = obj->next)
+	for (OBJECT *obj = object->children; obj != nullptr; obj = obj->next)
 		RingAttractCheck((void*)obj);
 }
 
@@ -3950,7 +3697,7 @@ bool PLAYER::TouchResponseObject(void *objPointer, int16_t playerLeft, int16_t p
 						}
 					}
 					//Check if we're the lead, and only break the monitor if so and if in the rolling animation
-					else if (follow == NULL && anim == PLAYERANIMATION_ROLL)
+					else if (follow == nullptr && anim == PLAYERANIMATION_ROLL)
 					{
 						//Reverse our y-velocity and destroy the monitor
 						yVel = -yVel;
@@ -3963,7 +3710,7 @@ bool PLAYER::TouchResponseObject(void *objPointer, int16_t playerLeft, int16_t p
 	}
 	
 	//Iterate through children, we haven't hit the parent
-	for (OBJECT *obj = object->children; obj != NULL; obj = obj->next)
+	for (OBJECT *obj = object->children; obj != nullptr; obj = obj->next)
 	{
 		if (TouchResponseObject((void*)obj, playerLeft, playerTop, playerWidth, playerHeight))
 			return true;
@@ -3976,7 +3723,7 @@ void PLAYER::TouchResponse()
 {
 	//Check for ring attraction
 	if (shield == SHIELD_ELECTRIC)
-		for (OBJECT *obj = gLevel->objectList; obj != NULL; obj = obj->next)
+		for (OBJECT *obj = gLevel->objectList; obj != nullptr; obj = obj->next)
 			RingAttractCheck((void*)obj);
 	
 	//Get our collision hitbox
@@ -4017,7 +3764,7 @@ void PLAYER::TouchResponse()
 	}
 	
 	//Iterate through every object
-	for (OBJECT *obj = gLevel->objectList; obj != NULL; obj = obj->next)
+	for (OBJECT *obj = gLevel->objectList; obj != nullptr; obj = obj->next)
 	{
 		//Check for collision with this object
 		if (TouchResponseObject((void*)obj, playerLeft, playerTop, playerWidth, playerHeight))
@@ -4031,7 +3778,7 @@ void PLAYER::TouchResponse()
 void PLAYER::AttachToObject(void *object, bool *standingBit)
 {
 	//If already standing on an object, clear that object's standing bit
-	if (status.shouldNotFall && interact != NULL)
+	if (status.shouldNotFall && interact != nullptr)
 		*((bool*)interact + (size_t)standingBit) = false; //Clear the object we're standing on's standing bit
 	
 	//Set to stand on this object
@@ -4086,11 +3833,8 @@ void PLAYER::GiveSpeedShoes()
 	deceleration = 0x80;
 	
 	//Play speed shoes music (only if lead)
-	if (follow == NULL)
-	{
-		MUSICSPEC speedShoesMusic = {"SpeedShoes", 0, GetMusicVolume()};
-		gLevel->ChangeMusic(speedShoesMusic);
-	}
+	if (follow == nullptr)
+		gLevel->ChangeSecondaryMusic(gLevel->speedShoesMusic);
 }
 
 void PLAYER::GiveShield(SOUNDID sound, SHIELD type)

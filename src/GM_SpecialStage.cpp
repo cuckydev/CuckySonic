@@ -12,7 +12,7 @@ bool GM_SpecialStage(bool *noError)
 {
 	//Load the special stage
 	SPECIALSTAGE *stage = new SPECIALSTAGE("data/SpecialStage/Stage/1");
-	if (stage->fail != NULL)
+	if (stage->fail != nullptr)
 		return (*noError = false);
 	
 	//Our loop

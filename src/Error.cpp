@@ -17,7 +17,7 @@ bool Error(const char *error)
 		{SDL_MESSAGEBOX_BUTTON_ESCAPEKEY_DEFAULT, 1, "Quit"},
 	};
 	
-	const SDL_MessageBoxData msgData = {SDL_MESSAGEBOX_ERROR, NULL, "Error", error, SDL_arraysize(msgButtons), msgButtons, NULL};
+	const SDL_MessageBoxData msgData = {SDL_MESSAGEBOX_ERROR, nullptr, "Error", error, SDL_arraysize(msgButtons), msgButtons, nullptr};
 	
 	//Show us our error
 	int button;
@@ -32,7 +32,7 @@ bool Error(const char *error)
 		
 		//Write the time
 		char timeString[0x200];
-		time_t timeValue = time(NULL);
+		time_t timeValue = time(nullptr);
 		tm dateTime = *localtime(&timeValue);
 		
 		sprintf(timeString, "%d-%d-%d %d:%d:%d: ", dateTime.tm_year + 1900, dateTime.tm_mon + 1, dateTime.tm_mday, dateTime.tm_hour, dateTime.tm_min, dateTime.tm_sec);
@@ -57,7 +57,7 @@ void Warn(const char *warning)
 		{SDL_MESSAGEBOX_BUTTON_ESCAPEKEY_DEFAULT, 1, "Ok"},
 	};
 	
-	const SDL_MessageBoxData msgData = {SDL_MESSAGEBOX_ERROR, NULL, "Warning", warning, SDL_arraysize(msgButtons), msgButtons, NULL};
+	const SDL_MessageBoxData msgData = {SDL_MESSAGEBOX_ERROR, nullptr, "Warning", warning, SDL_arraysize(msgButtons), msgButtons, nullptr};
 	
 	//Show us our error
 	int button;
@@ -72,7 +72,7 @@ void Warn(const char *warning)
 		
 		//Write the time
 		char timeString[0x200];
-		time_t timeValue = time(NULL);
+		time_t timeValue = time(nullptr);
 		tm dateTime = *localtime(&timeValue);
 		
 		sprintf(timeString, "%d-%d-%d %d:%d:%d: ", dateTime.tm_year + 1900, dateTime.tm_mon + 1, dateTime.tm_mday, dateTime.tm_hour, dateTime.tm_min, dateTime.tm_sec);

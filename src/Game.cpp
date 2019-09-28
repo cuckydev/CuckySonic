@@ -36,16 +36,14 @@ void AddToScore(unsigned int score)
 	//Check for extra life rewards
 	if (gScore >= gNextScoreReward)
 	{
-		//Increase lives
+		//Increase lives, update our reward, and play jingle
 		while (gScore >= gNextScoreReward)
 		{
 			gNextScoreReward += SCORE_REWARD;
 			AddToLives(1);
 		}
 		
-		//Play jingle
-		MUSICSPEC jingleSpec = {"ExtraLifeJingle", 0, 1.0f};
-		gLevel->PlayJingle(jingleSpec);
+		gLevel->PlayJingleMusic(gLevel->extraLifeMusic);
 	}
 }
 
@@ -66,16 +64,14 @@ void AddToRings(unsigned int rings)
 	//Check for extra life rewards
 	if (gRings >= gNextRingReward)
 	{
-		//Increase lives
+		//Increase lives, update our reward, and play jingle
 		while (gRings >= gNextRingReward)
 		{
 			AddToLives(1);
 			gNextRingReward += RINGS_REWARD;
 		}
 		
-		//Play jingle
-		MUSICSPEC jingleSpec = {"ExtraLifeJingle", 0, 1.0f};
-		gLevel->PlayJingle(jingleSpec);
+		gLevel->PlayJingleMusic(gLevel->extraLifeMusic);
 	}
 	else
 	{

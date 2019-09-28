@@ -14,7 +14,7 @@ MAPPINGS::MAPPINGS(MAPPINGS **linkedList, const char *path)
 	
 	GET_GLOBAL_PATH(filepath, path);
 	SDL_RWops *fp = SDL_RWFromFile(filepath, "rb");
-	if (fp == NULL)
+	if (fp == nullptr)
 	{
 		fail = SDL_GetError();
 		return;
@@ -25,7 +25,7 @@ MAPPINGS::MAPPINGS(MAPPINGS **linkedList, const char *path)
 	rect = (SDL_Rect*)calloc(size, sizeof(SDL_Rect));
 	origin = (SDL_Point*)calloc(size, sizeof(SDL_Point));
 	
-	if (rect == NULL || origin == NULL)
+	if (rect == nullptr || origin == nullptr)
 	{
 		SDL_RWclose(fp);
 		free(rect);
@@ -48,7 +48,7 @@ MAPPINGS::MAPPINGS(MAPPINGS **linkedList, const char *path)
 	SDL_RWclose(fp);
 	
 	//Attach to linked list if given
-	if (linkedList != NULL)
+	if (linkedList != nullptr)
 	{
 		list = linkedList;
 		next = *linkedList;

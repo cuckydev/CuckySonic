@@ -11,7 +11,7 @@ HUD::HUD()
 	
 	//Load texture
 	texture = gLevel->GetObjectTexture("data/HUD.bmp");
-	if (texture == NULL || texture->fail)
+	if (texture == nullptr || texture->fail)
 	{
 		Error(fail = texture->fail);
 		return;

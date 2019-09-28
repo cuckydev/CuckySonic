@@ -166,11 +166,22 @@ class LEVEL
 		ZONEID zone;
 		int act;
 		
-		//Level music
-		const char *music;
-		const char *currentMusic;
+		//Loaded music
+		MUSIC *stageMusic;
+		MUSIC *bossMusic;
+		MUSIC *goalMusic;
 		
-		int musicResumePoint;
+		MUSIC *speedShoesMusic;
+		MUSIC *invincibilityMusic;
+		MUSIC *extraLifeMusic;
+		
+		//Current music state
+		MUSIC *primaryMusic;	//stageMusic or bossMusic							(played below secondaryMusic)
+		MUSIC *secondaryMusic;	//speedShoesMusic, invincibilityMusic, or goalMusic	(played below jingles)
+		
+		MUSIC *currentMusic;	//Any of the loaded songs
+		bool musicIsTemporary;	//If set, when the song ends, it will go back to playing primaryMusic, or secondaryMusic if not null
+		bool musicFadeAtEnd;	//If set, when the song ends, the next song playing will start from being faded out
 		
 		//Game update stuff
 		int frameCounter; //Frames the level has been loaded
@@ -234,9 +245,11 @@ class LEVEL
 		bool specialFade;
 		
 	public:
+		//Constructor and destructor
 		LEVEL(int id, int players, const char **playerPaths);
 		~LEVEL();
 		
+		//Level loading functions
 		bool LoadMappings(LEVELTABLE *tableEntry);
 		bool LoadLayout(LEVELTABLE *tableEntry);
 		bool LoadCollisionTiles(LEVELTABLE *tableEntry);
@@ -244,24 +257,38 @@ class LEVEL
 		bool LoadArt(LEVELTABLE *tableEntry);
 		void UnloadAll();
 		
+		//Fading
 		void SetFade(bool fadeIn, bool isSpecial);
 		bool UpdateFade();
 		
+		//Dynamic events (TODO: move to external file)
 		void DynamicEvents();
 		
+		//Object texture and mapping cache functions
 		TEXTURE *GetObjectTexture(const char *path);
 		MAPPINGS *GetObjectMappings(const char *path);
 		
+		//Object layer function
 		LEVEL_RENDERLAYER GetObjectLayer(bool highPriority, int priority);
 		
+		//Palette update function (TODO: move to external file)
 		void PaletteUpdate();
 		
-		void PlayJingle(MUSICSPEC newMusic);
-		void ChangeMusic(MUSICSPEC newMusic);
-		
+		//Oscillatory table functions
 		void OscillatoryInit();
 		void OscillatoryUpdate();
 		
+		//Music functions
+		void SetPlayingMusic(MUSIC *music, bool resumeLastPosition, bool fade);
+		void ChangePrimaryMusic(MUSIC *music);
+		void ChangeSecondaryMusic(MUSIC *music);
+		void PlayJingleMusic(MUSIC *music);
+		
+		void StopSecondaryMusic();
+		
+		void UpdateMusic();
+		
+		//Update and draw functions
 		bool Update(bool checkTitleCard);
 		void Draw();
 };

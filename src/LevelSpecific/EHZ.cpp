@@ -1,33 +1,25 @@
 #include "../Level.h"
 #include "../Game.h"
 
-static const uint8_t ehzWaterfallCycle[4][4][3] = {
-	{{0x66, 0x88, 0xAA}, {0x66, 0x88, 0xEE}, {0x88, 0xAA, 0xEE}, {0xAA, 0xCC, 0xEE}},
-	{{0xAA, 0xCC, 0xEE}, {0x66, 0x88, 0xAA}, {0x66, 0x88, 0xEE}, {0x88, 0xAA, 0xEE}},
-	{{0x88, 0xAA, 0xEE}, {0xAA, 0xCC, 0xEE}, {0x66, 0x88, 0xAA}, {0x66, 0x88, 0xEE}},
-	{{0x66, 0x88, 0xEE}, {0x88, 0xAA, 0xEE}, {0xAA, 0xCC, 0xEE}, {0x66, 0x88, 0xAA}},
-};
-
 void EHZ_PaletteCycle(LEVEL *lvl)
 {
-	//Palette cycle 0 (waterfall)
+	//Palette cycle 0 (waterfall and background)
 	if (++lvl->palCycle[0].timer >= 8)
 	{
-		//Set colours
-		SetPaletteColour(&lvl->tileTexture->loadedPalette->colour[0x13], ehzWaterfallCycle[lvl->palCycle[0].cycle][0][0], ehzWaterfallCycle[lvl->palCycle[0].cycle][0][1], ehzWaterfallCycle[lvl->palCycle[0].cycle][0][2]);
-		SetPaletteColour(&lvl->tileTexture->loadedPalette->colour[0x14], ehzWaterfallCycle[lvl->palCycle[0].cycle][1][0], ehzWaterfallCycle[lvl->palCycle[0].cycle][1][1], ehzWaterfallCycle[lvl->palCycle[0].cycle][1][2]);
-		SetPaletteColour(&lvl->tileTexture->loadedPalette->colour[0x1E], ehzWaterfallCycle[lvl->palCycle[0].cycle][2][0], ehzWaterfallCycle[lvl->palCycle[0].cycle][2][1], ehzWaterfallCycle[lvl->palCycle[0].cycle][2][2]);
-		SetPaletteColour(&lvl->tileTexture->loadedPalette->colour[0x1F], ehzWaterfallCycle[lvl->palCycle[0].cycle][3][0], ehzWaterfallCycle[lvl->palCycle[0].cycle][3][1], ehzWaterfallCycle[lvl->palCycle[0].cycle][3][2]);
-		
-		SetPaletteColour(&lvl->backgroundTexture->loadedPalette->colour[0x13], ehzWaterfallCycle[lvl->palCycle[0].cycle][0][0], ehzWaterfallCycle[lvl->palCycle[0].cycle][0][1], ehzWaterfallCycle[lvl->palCycle[0].cycle][0][2]);
-		SetPaletteColour(&lvl->backgroundTexture->loadedPalette->colour[0x14], ehzWaterfallCycle[lvl->palCycle[0].cycle][1][0], ehzWaterfallCycle[lvl->palCycle[0].cycle][1][1], ehzWaterfallCycle[lvl->palCycle[0].cycle][1][2]);
-		SetPaletteColour(&lvl->backgroundTexture->loadedPalette->colour[0x1E], ehzWaterfallCycle[lvl->palCycle[0].cycle][2][0], ehzWaterfallCycle[lvl->palCycle[0].cycle][2][1], ehzWaterfallCycle[lvl->palCycle[0].cycle][2][2]);
-		SetPaletteColour(&lvl->backgroundTexture->loadedPalette->colour[0x1F], ehzWaterfallCycle[lvl->palCycle[0].cycle][3][0], ehzWaterfallCycle[lvl->palCycle[0].cycle][3][1], ehzWaterfallCycle[lvl->palCycle[0].cycle][3][2]);
-		
-		//Increment cycle
+		//Cycle colours and reset timer
 		lvl->palCycle[0].timer = 0;
-		if (++lvl->palCycle[0].cycle >= 4)
-			lvl->palCycle[0].cycle = 0;
+		
+		//Cycle the tile texture (using the background palette, because backgroundTexture won't change until after)
+		lvl->tileTexture->loadedPalette->colour[0x1F] = lvl->backgroundTexture->loadedPalette->colour[0x1E];
+		lvl->tileTexture->loadedPalette->colour[0x1E] = lvl->backgroundTexture->loadedPalette->colour[0x14];
+		lvl->tileTexture->loadedPalette->colour[0x14] = lvl->backgroundTexture->loadedPalette->colour[0x13];
+		lvl->tileTexture->loadedPalette->colour[0x13] = lvl->backgroundTexture->loadedPalette->colour[0x1F];
+		
+		//Copy the background's palette from the tile texture
+		lvl->backgroundTexture->loadedPalette->colour[0x13] = lvl->tileTexture->loadedPalette->colour[0x13];
+		lvl->backgroundTexture->loadedPalette->colour[0x14] = lvl->tileTexture->loadedPalette->colour[0x14];
+		lvl->backgroundTexture->loadedPalette->colour[0x1E] = lvl->tileTexture->loadedPalette->colour[0x1E];
+		lvl->backgroundTexture->loadedPalette->colour[0x1F] = lvl->tileTexture->loadedPalette->colour[0x1F];
 	}
 }
 

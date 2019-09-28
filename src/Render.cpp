@@ -33,14 +33,14 @@ TEXTURE::TEXTURE(TEXTURE **linkedList, const char *path)
 	GET_GLOBAL_PATH(filepath, path);
 	
 	SDL_Surface *bitmap = SDL_LoadBMP(filepath);
-	if (bitmap == NULL)
+	if (bitmap == nullptr)
 	{
 		fail = SDL_GetError();
 		return;
 	}
 	
 	//Check if this format is valid
-	if (bitmap->format->palette == NULL || bitmap->format->BytesPerPixel > 1)
+	if (bitmap->format->palette == nullptr || bitmap->format->BytesPerPixel > 1)
 	{
 		SDL_FreeSurface(bitmap);
 		fail = "Bitmap is not an 8-bit indexed .bmp";
@@ -48,7 +48,7 @@ TEXTURE::TEXTURE(TEXTURE **linkedList, const char *path)
 	}
 	
 	//Create our palette using the image's palette
-	if ((loadedPalette = new PALETTE) == NULL)
+	if ((loadedPalette = new PALETTE) == nullptr)
 	{
 		SDL_FreeSurface(bitmap);
 		fail = "Failed to allocate palette for texture";
@@ -64,7 +64,7 @@ TEXTURE::TEXTURE(TEXTURE **linkedList, const char *path)
 	//Allocate texture data
 	texture = (uint8_t*)malloc(bitmap->pitch * bitmap->h);
 	
-	if (texture == NULL)
+	if (texture == nullptr)
 	{
 		SDL_FreeSurface(bitmap);
 		delete loadedPalette;
@@ -82,7 +82,7 @@ TEXTURE::TEXTURE(TEXTURE **linkedList, const char *path)
 	SDL_FreeSurface(bitmap);
 	
 	//Attach to linked list if given
-	if (linkedList != NULL)
+	if (linkedList != nullptr)
 	{
 		list = linkedList;
 		next = *linkedList;
@@ -100,7 +100,7 @@ TEXTURE::TEXTURE(TEXTURE **linkedList, uint8_t *data, int dWidth, int dHeight)
 	//Allocate texture data
 	texture = (uint8_t*)malloc(dWidth * dHeight);
 	
-	if (texture == NULL)
+	if (texture == nullptr)
 	{
 		fail = "Failed to allocate texture buffer";
 		return;
@@ -112,7 +112,7 @@ TEXTURE::TEXTURE(TEXTURE **linkedList, uint8_t *data, int dWidth, int dHeight)
 	height = dHeight;
 	
 	//Attach to linked list if given
-	if (linkedList != NULL)
+	if (linkedList != nullptr)
 	{
 		list = linkedList;
 		next = *linkedList;
@@ -177,7 +177,7 @@ SOFTWAREBUFFER::SOFTWAREBUFFER(int bufWidth, int bufHeight)
 		queueEntry[i] = queue[i];
 	
 	//Create the render texture
-	if ((texture = SDL_CreateTexture(gRenderer, gNativeFormat->format, SDL_TEXTUREACCESS_STREAMING, width, height)) == NULL)
+	if ((texture = SDL_CreateTexture(gRenderer, gNativeFormat->format, SDL_TEXTUREACCESS_STREAMING, width, height)) == nullptr)
 	{
 		fail = SDL_GetError();
 		return;
@@ -248,9 +248,9 @@ void SOFTWAREBUFFER::DrawQuad(int layer, const SDL_Rect *quad, PALCOLOUR *colour
 
 void SOFTWAREBUFFER::DrawTexture(TEXTURE *texture, PALETTE *palette, const SDL_Rect *src, int layer, int x, int y, bool xFlip, bool yFlip)
 {
-	//Get the source rect to use (NULL = entire texture)
+	//Get the source rect to use (nullptr = entire texture)
 	SDL_Rect newSrc;
-	if (src != NULL)
+	if (src != nullptr)
 		newSrc = *src;
 	else
 		newSrc = {0, 0, texture->width, texture->height};
@@ -312,7 +312,7 @@ bool SOFTWAREBUFFER::RenderToScreen(PALCOLOUR *backgroundColour)
 	//Lock texture
 	void *writeBuffer;
 	int writePitch;
-	if (SDL_LockTexture(texture, NULL, &writeBuffer, &writePitch) < 0)
+	if (SDL_LockTexture(texture, nullptr, &writeBuffer, &writePitch) < 0)
 		return Error(SDL_GetError());
 	
 	//Render to our buffer
@@ -337,7 +337,7 @@ bool SOFTWAREBUFFER::RenderToScreen(PALCOLOUR *backgroundColour)
 	SDL_UnlockTexture(texture);
 	
 	//Copy to renderer (this is also where the scaling happens, incidentally)
-	if (SDL_RenderCopy(gRenderer, texture, NULL, NULL) < 0)
+	if (SDL_RenderCopy(gRenderer, texture, nullptr, nullptr) < 0)
 		return Error(SDL_GetError());
 	
 	//Present renderer then wait for next frame (either use VSync if applicable, or just wait)
@@ -378,7 +378,7 @@ bool InitializeRender()
 	LOG(("Initializing renderer... "));
 	
 	//Create our window
-	if ((gWindow = SDL_CreateWindow(WINDOW_TITLE, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, gRenderSpec.width * gRenderSpec.scale, gRenderSpec.height * gRenderSpec.scale, 0)) == NULL)
+	if ((gWindow = SDL_CreateWindow(WINDOW_TITLE, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, gRenderSpec.width * gRenderSpec.scale, gRenderSpec.height * gRenderSpec.scale, 0)) == nullptr)
 		return Error(SDL_GetError());
 	
 	//Use display mode to detect VSync
@@ -393,7 +393,7 @@ bool InitializeRender()
 		vsyncMultiple = (unsigned int)refreshIntegral;
 	
 	//Create the renderer based off of our VSync settings
-	if ((gRenderer = SDL_CreateRenderer(gWindow, -1, SDL_RENDERER_ACCELERATED | (vsyncMultiple > 0 ? SDL_RENDERER_PRESENTVSYNC : 0))) == NULL)
+	if ((gRenderer = SDL_CreateRenderer(gWindow, -1, SDL_RENDERER_ACCELERATED | (vsyncMultiple > 0 ? SDL_RENDERER_PRESENTVSYNC : 0))) == nullptr)
 		return Error(SDL_GetError());
 	
 	//Get our window's pixel format

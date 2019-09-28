@@ -12,16 +12,16 @@ SPECIALSTAGE::SPECIALSTAGE(const char *name)
 	LOG(("Loading special stage %s...\n", name));
 	
 	//Load the stage texture
-	stageTexture = new TEXTURE(NULL, "data/SpecialStage/Stage.bmp");
-	if (stageTexture->fail != NULL)
+	stageTexture = new TEXTURE(nullptr, "data/SpecialStage/Stage.bmp");
+	if (stageTexture->fail != nullptr)
 	{
 		Error(fail = stageTexture->fail);
 		return;
 	}
 	
 	//Load the texture for the spheres and rings
-	sphereTexture = new TEXTURE(NULL, "data/SpecialStage/Spheres.bmp");
-	if (sphereTexture->fail != NULL)
+	sphereTexture = new TEXTURE(nullptr, "data/SpecialStage/Spheres.bmp");
+	if (sphereTexture->fail != nullptr)
 	{
 		Error(fail = sphereTexture->fail);
 		return;
@@ -29,8 +29,8 @@ SPECIALSTAGE::SPECIALSTAGE(const char *name)
 	
 	//Load the background texture (stage-specific)
 	GET_APPEND_PATH(backTexture, name, ".background.bmp");
-	backgroundTexture = new TEXTURE(NULL, backTexture);
-	if (backgroundTexture->fail != NULL)
+	backgroundTexture = new TEXTURE(nullptr, backTexture);
+	if (backgroundTexture->fail != nullptr)
 	{
 		Error(fail = backgroundTexture->fail);
 		return;
@@ -41,7 +41,7 @@ SPECIALSTAGE::SPECIALSTAGE(const char *name)
 	GET_GLOBAL_PATH(layoutPath, layoutName);
 	
 	SDL_RWops *fp = SDL_RWFromFile(layoutPath, "rb");
-	if (fp == NULL)
+	if (fp == nullptr)
 	{
 		Error(fail = SDL_GetError());
 		return;
@@ -52,7 +52,7 @@ SPECIALSTAGE::SPECIALSTAGE(const char *name)
 	height = SDL_ReadBE16(fp);
 	
 	layout = (uint8_t*)malloc(width * height);
-	if (layout == NULL)
+	if (layout == nullptr)
 	{
 		Error(fail = "Failed to allocate the internal stage layout");
 		return;
@@ -77,7 +77,7 @@ SPECIALSTAGE::SPECIALSTAGE(const char *name)
 	GET_GLOBAL_PATH(perspectivePath, "data/SpecialStage/Perspective.bin");
 	
 	SDL_RWops *perspectiveFile = SDL_RWFromFile(perspectivePath, "rb");
-	if (perspectiveFile == NULL)
+	if (perspectiveFile == nullptr)
 	{
 		Error(fail = SDL_GetError());
 		return;
@@ -85,7 +85,7 @@ SPECIALSTAGE::SPECIALSTAGE(const char *name)
 	
 	//Read perspective data
 	perspectiveMap = (uint8_t*)malloc(SDL_RWsize(perspectiveFile));
-	if (perspectiveMap == NULL)
+	if (perspectiveMap == nullptr)
 	{
 		Error(fail = "Failed to allocate memory for the perspective map");
 		return;
@@ -97,10 +97,6 @@ SPECIALSTAGE::SPECIALSTAGE(const char *name)
 	//Initialize state
 	rate = 0x1000;
 	rateTimer = 30 * 60;
-	
-	//Play special stage music
-	MUSICSPEC musicSpec = {"SpecialStage", 0, 1.0f};
-	PlayMusic(musicSpec);
 	
 	LOG(("Success!\n"));
 }
@@ -162,7 +158,7 @@ void SPECIALSTAGE::Draw()
 	//Draw the background, given our scroll values
 	for (int x = -(backX % backgroundTexture->width); x < gRenderSpec.width; x += backgroundTexture->width)
 		for (int y = -(backY % backgroundTexture->height); y < gRenderSpec.height; y += backgroundTexture->height)
-			gSoftwareBuffer->DrawTexture(backgroundTexture, backgroundTexture->loadedPalette, NULL, SPECIALSTAGE_RENDERLAYER_BACKGROUND, x, y, false, false);
+			gSoftwareBuffer->DrawTexture(backgroundTexture, backgroundTexture->loadedPalette, nullptr, SPECIALSTAGE_RENDERLAYER_BACKGROUND, x, y, false, false);
 	
 	static int a = 0;
 	if (a++ & 0x1)

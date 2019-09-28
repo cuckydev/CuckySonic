@@ -31,7 +31,7 @@ bool GM_Game(bool *noError)
 {
 	//Load level with characters given
 	gLevel = new LEVEL(gGameLoadLevel, characters[gGameLoadCharacter].players, characters[gGameLoadCharacter].playerPaths);
-	if (gLevel->fail != NULL)
+	if (gLevel->fail != nullptr)
 		return (*noError = false);
 	
 	//Initialize level fade

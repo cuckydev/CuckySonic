@@ -14,57 +14,57 @@
 #include "Objects.h"
 
 OBJECTFUNCTION objFuncSonic1[] = {
-	NULL, NULL, NULL, &ObjPathSwitcher, NULL, NULL, NULL, NULL,
-	NULL, NULL, NULL, NULL, NULL, &ObjGoalpost, NULL, NULL,
-	NULL, &ObjBridge, NULL, NULL, NULL, &ObjSwingingPlatform, NULL, NULL,
-	&ObjGHZPlatform, NULL, NULL, NULL, &ObjSonic1Scenery, NULL, NULL, NULL,
-	NULL, NULL, NULL, NULL, NULL, &ObjRingSpawner, &ObjMonitor, NULL,
-	NULL, NULL, NULL, &ObjChopper, NULL, NULL, NULL, NULL,
-	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-	NULL, NULL, NULL, &ObjPurpleRock, NULL, NULL, NULL, NULL,
-	&ObjMotobug, NULL, NULL, NULL, &ObjGHZEdgeWall, NULL, NULL, NULL,
-	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+	nullptr, nullptr, nullptr, &ObjPathSwitcher, nullptr, nullptr, nullptr, nullptr,
+	nullptr, nullptr, nullptr, nullptr, nullptr, &ObjGoalpost, nullptr, nullptr,
+	nullptr, &ObjBridge, nullptr, nullptr, nullptr, &ObjSwingingPlatform, nullptr, nullptr,
+	&ObjGHZPlatform, nullptr, nullptr, nullptr, &ObjSonic1Scenery, nullptr, nullptr, nullptr,
+	nullptr, nullptr, nullptr, nullptr, nullptr, &ObjRingSpawner, &ObjMonitor, nullptr,
+	nullptr, nullptr, nullptr, &ObjChopper, nullptr, nullptr, nullptr, nullptr,
+	nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
+	nullptr, nullptr, nullptr, &ObjPurpleRock, nullptr, nullptr, nullptr, nullptr,
+	&ObjMotobug, nullptr, nullptr, nullptr, &ObjGHZEdgeWall, nullptr, nullptr, nullptr,
+	nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
+	nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
+	nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
+	nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
+	nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
+	nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
+	nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
 };
 
 OBJECTFUNCTION objFuncSonic2[] = {
-	NULL, NULL, NULL, &ObjPathSwitcher, NULL, NULL, &ObjSpiral, NULL,
-	NULL, NULL, NULL, NULL, NULL, &ObjGoalpost, NULL, NULL,
-	NULL, &ObjBridge, NULL, NULL, NULL, NULL, NULL, NULL,
-	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-	NULL, NULL, NULL, NULL, NULL, NULL, &ObjMonitor, NULL,
-	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+	nullptr, nullptr, nullptr, &ObjPathSwitcher, nullptr, nullptr, &ObjSpiral, nullptr,
+	nullptr, nullptr, nullptr, nullptr, nullptr, &ObjGoalpost, nullptr, nullptr,
+	nullptr, &ObjBridge, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
+	nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
+	nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, &ObjMonitor, nullptr,
+	nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
+	nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
+	nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
+	nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
+	nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
+	nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
+	nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
+	nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
+	nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
+	nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
+	nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
+	nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
+	nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
+	nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
+	nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
+	nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
+	nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
+	nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
+	nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
+	nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
+	nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
+	nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
+	nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
+	nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
+	nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
+	nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
+	nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
 };
 
 //Our level table
@@ -92,7 +92,7 @@ bool LEVEL::LoadMappings(LEVELTABLE *tableEntry)
 			GET_APPEND_PATH(mappingPath, globalPath, ".chk");
 			
 			SDL_RWops *mappingFile = SDL_RWFromFile(mappingPath, "rb");
-			if (mappingFile == NULL)
+			if (mappingFile == nullptr)
 			{
 				Error(fail = SDL_GetError());
 				return true;
@@ -102,7 +102,7 @@ bool LEVEL::LoadMappings(LEVELTABLE *tableEntry)
 			chunks = (SDL_RWsize(mappingFile) / 2 / (8 * 8));
 			chunkMapping = (CHUNKMAPPING*)malloc(sizeof(CHUNKMAPPING) * chunks);
 			
-			if (chunkMapping == NULL)
+			if (chunkMapping == nullptr)
 			{
 				Error(fail = "Failed to allocate chunk mappings in memory");
 				SDL_RWclose(mappingFile);
@@ -147,7 +147,7 @@ bool LEVEL::LoadLayout(LEVELTABLE *tableEntry)
 	GET_APPEND_PATH(layoutPath, globalPath, ".lay");
 	
 	SDL_RWops *layoutFile = SDL_RWFromFile(layoutPath, "rb");
-	if (layoutFile == NULL)
+	if (layoutFile == nullptr)
 	{
 		Error(fail = SDL_GetError());
 		return true;
@@ -173,7 +173,7 @@ bool LEVEL::LoadLayout(LEVELTABLE *tableEntry)
 			//Allocate our layout
 			layout.foreground = (TILE*)malloc(sizeof(TILE) * layout.width * layout.height);
 			
-			if (layout.foreground == NULL)
+			if (layout.foreground == nullptr)
 			{
 				Error(fail = "Failed to allocate layout in memory");
 				SDL_RWclose(layoutFile);
@@ -208,7 +208,7 @@ bool LEVEL::LoadLayout(LEVELTABLE *tableEntry)
 			//Allocate our layout
 			layout.foreground = (TILE*)malloc(sizeof(TILE) * layout.width * layout.height);
 			
-			if (layout.foreground == NULL)
+			if (layout.foreground == nullptr)
 			{
 				Error(fail = "Failed to allocate layout in memory");
 				SDL_RWclose(layoutFile);
@@ -263,7 +263,7 @@ bool LEVEL::LoadCollisionTiles(LEVELTABLE *tableEntry)
 	SDL_RWops *norMapFile = SDL_RWFromFile(normalMapPath, "rb");
 	SDL_RWops *altMapFile = SDL_RWFromFile(alternateMapPath, "rb");
 	
-	if (norMapFile == NULL || altMapFile == NULL)
+	if (norMapFile == nullptr || altMapFile == nullptr)
 	{
 		Error(fail = SDL_GetError());
 		if (norMapFile)
@@ -306,7 +306,7 @@ bool LEVEL::LoadCollisionTiles(LEVELTABLE *tableEntry)
 	SDL_RWops *colRotatedFile = SDL_RWFromFile(collisionRotatedPath, "rb");
 	SDL_RWops *colAngleFile = SDL_RWFromFile(collisionAnglePath, "rb");
 	
-	if (colNormalFile == NULL || colRotatedFile == NULL || colAngleFile == NULL)
+	if (colNormalFile == nullptr || colRotatedFile == nullptr || colAngleFile == nullptr)
 	{
 		Error(fail = SDL_GetError());
 		if (colNormalFile)
@@ -333,7 +333,7 @@ bool LEVEL::LoadCollisionTiles(LEVELTABLE *tableEntry)
 	collisionTiles = SDL_RWsize(colNormalFile) / 0x10;
 	collisionTile = (COLLISIONTILE*)malloc(sizeof(COLLISIONTILE) * collisionTiles);
 	
-	if (collisionTile == NULL)
+	if (collisionTile == nullptr)
 	{
 		Error(fail = "Failed to allocate collision tile data in memory");
 		SDL_RWclose(colNormalFile);
@@ -371,7 +371,7 @@ bool LEVEL::LoadObjects(LEVELTABLE *tableEntry)
 	
 	SDL_RWops *objectFile = SDL_RWFromFile(objectPath, "rb");
 	
-	if (objectFile == NULL)
+	if (objectFile == nullptr)
 	{
 		Error(fail = SDL_GetError());
 		return true;
@@ -398,9 +398,9 @@ bool LEVEL::LoadObjects(LEVELTABLE *tableEntry)
 					id &= 0x7F;
 				
 				OBJECT *newObject = new OBJECT(&objectList, tableEntry->objectFunctionList[id]);
-				if (newObject == NULL || newObject->fail)
+				if (newObject == nullptr || newObject->fail)
 				{
-					if (newObject == NULL)
+					if (newObject == nullptr)
 						Error(fail = "Failed to create object");
 					else
 						Error(fail = newObject->fail);
@@ -434,7 +434,7 @@ bool LEVEL::LoadObjects(LEVELTABLE *tableEntry)
 	
 	SDL_RWops *ringFile = SDL_RWFromFile(ringPath, "rb");
 	
-	if (ringFile == NULL)
+	if (ringFile == nullptr)
 	{
 		Error(fail = SDL_GetError());
 		return true;
@@ -455,9 +455,9 @@ bool LEVEL::LoadObjects(LEVELTABLE *tableEntry)
 		{
 			//Create ring object
 			OBJECT *newObject = new OBJECT(&objectList, &ObjRing);
-			if (newObject == NULL || newObject->fail)
+			if (newObject == nullptr || newObject->fail)
 			{
-				if (newObject == NULL)
+				if (newObject == nullptr)
 					Error(fail = "Failed to create object");
 				else
 					Error(fail = newObject->fail);
@@ -490,7 +490,7 @@ bool LEVEL::LoadArt(LEVELTABLE *tableEntry)
 			//Load our background image
 			GET_APPEND_PATH(backPath, tableEntry->artReferencePath, ".background.bmp");
 			
-			backgroundTexture = new TEXTURE(NULL, backPath);
+			backgroundTexture = new TEXTURE(nullptr, backPath);
 			if (backgroundTexture->fail)
 			{
 				Error(fail = backgroundTexture->fail);
@@ -500,7 +500,7 @@ bool LEVEL::LoadArt(LEVELTABLE *tableEntry)
 			//Load our foreground tilemap
 			GET_APPEND_PATH(artPath, tableEntry->artReferencePath, ".foreground.bmp");
 			
-			tileTexture = new TEXTURE(NULL, artPath);
+			tileTexture = new TEXTURE(nullptr, artPath);
 			if (tileTexture->fail)
 			{
 				Error(fail = tileTexture->fail);
@@ -536,56 +536,76 @@ void LEVEL::UnloadAll()
 	free(collisionTile);
 	
 	//Unload textures
-	if (tileTexture != NULL)
+	if (tileTexture != nullptr)
 		delete tileTexture;
-	if (backgroundTexture != NULL)
+	if (backgroundTexture != nullptr)
 		delete backgroundTexture;
-	if (backgroundScroll != NULL)
+	if (backgroundScroll != nullptr)
 		delete backgroundScroll;
 	
 	//Unload players, objects, and camera
-	for (PLAYER *player = playerList; player != NULL;)
+	for (PLAYER *player = playerList; player != nullptr;)
 	{
 		PLAYER *next = player->next;
 		delete player;
 		player = next;
 	}
 	
-	for (OBJECT *object = objectList; object != NULL;)
+	for (OBJECT *object = objectList; object != nullptr;)
 	{
 		OBJECT *next = object->next;
 		delete object;
 		object = next;
 	}
 	
-	if (camera != NULL)
+	if (camera != nullptr)
 		delete camera;
-	if (titleCard != NULL)
+	if (titleCard != nullptr)
 		delete titleCard;
-	if (hud != NULL)
+	if (hud != nullptr)
 		delete hud;
 	
 	//Unload object textures and mappings
-	for (TEXTURE *texture = objTextureCache; texture != NULL;)
+	for (TEXTURE *texture = objTextureCache; texture != nullptr;)
 	{
 		TEXTURE *next = texture->next;
 		delete texture;
 		texture = next;
 	}
 	
-	for (MAPPINGS *mappings = objMappingsCache; mappings != NULL;)
+	for (MAPPINGS *mappings = objMappingsCache; mappings != nullptr;)
 	{
 		MAPPINGS *next = mappings->next;
 		delete mappings;
 		mappings = next;
 	}
+	
+	//Lock audio device so we can safely unload all loaded music
+	AUDIO_LOCK;
+	
+	//Unload music
+	if (stageMusic != nullptr)
+		delete stageMusic;
+	if (bossMusic != nullptr)
+		delete bossMusic;
+	if (goalMusic != nullptr)
+		delete goalMusic;
+	if (speedShoesMusic != nullptr)
+		delete speedShoesMusic;
+	if (invincibilityMusic != nullptr)
+		delete invincibilityMusic;
+	if (extraLifeMusic != nullptr)
+		delete extraLifeMusic;
+	
+	//Unlock audio device
+	AUDIO_UNLOCK;
 }
 
 //Assets to pre-load (Assets that are loaded by objects that are usually created mid-game)
 const char *preloadTexture[] = {
 	"data/Object/Explosion.bmp",
 	"data/Object/Shield.bmp",
-	NULL,
+	nullptr,
 };
 
 const char *preloadMappings[] = {
@@ -596,7 +616,7 @@ const char *preloadMappings[] = {
 	"data/Object/FireShield.map",
 	"data/Object/ElectricShield.map",
 	"data/Object/BubbleShield.map",
-	NULL,
+	nullptr,
 };
 
 //Level class
@@ -622,13 +642,13 @@ LEVEL::LEVEL(int id, int players, const char **playerPaths)
 	}
 	
 	//Pre-load assets
-	for (int i = 0; preloadTexture[i] != NULL; i++)
+	for (int i = 0; preloadTexture[i] != nullptr; i++)
 		GetObjectTexture(preloadTexture[i]);
-	for (int i = 0; preloadMappings[i] != NULL; i++)
+	for (int i = 0; preloadMappings[i] != nullptr; i++)
 		GetObjectMappings(preloadMappings[i]);
 	
 	//Create our players
-	PLAYER *follow = NULL;
+	PLAYER *follow = nullptr;
 	
 	for (int i = 0; i < players; i++)
 	{
@@ -677,9 +697,20 @@ LEVEL::LEVEL(int id, int players, const char **playerPaths)
 	updateTime = true;
 	updateStage = true;
 	
-	//Play music
-	const MUSICSPEC levelSpec = {currentMusic = music = tableEntry->music, 0, 1.0f};
-	PlayMusic(levelSpec);
+	//Lock audio device so we can load new music
+	AUDIO_LOCK;
+	
+	stageMusic = new MUSIC(tableEntry->music, 0, 1.0f);
+	
+	speedShoesMusic = new MUSIC("SpeedShoes", 0, 1.0f);
+	invincibilityMusic = new MUSIC("Invincibility", 0, 1.0f);
+	extraLifeMusic = new MUSIC("ExtraLife", 0, 1.0f);
+	
+	//Unlock audio device
+	AUDIO_UNLOCK;
+	
+	//Play stage music
+	ChangePrimaryMusic(stageMusic);
 	
 	//Initialize scores
 	InitializeScores();
@@ -690,10 +721,7 @@ LEVEL::LEVEL(int id, int players, const char **playerPaths)
 LEVEL::~LEVEL()
 {
 	LOG(("Unloading level... "));
-	
-	//Unload data
 	UnloadAll();
-	
 	LOG(("Success!\n"));
 }
 
@@ -711,7 +739,7 @@ void LEVEL::SetFade(bool fadeIn, bool isSpecial)
 		void (*function)(PALETTE *palette) = (specialFade ? &FillPaletteWhite : &FillPaletteBlack);
 		function(tileTexture->loadedPalette);
 		function(backgroundTexture->loadedPalette);
-		for (TEXTURE *texture = objTextureCache; texture != NULL; texture = texture->next)
+		for (TEXTURE *texture = objTextureCache; texture != nullptr; texture = texture->next)
 			function(texture->loadedPalette);
 	}
 }
@@ -725,16 +753,20 @@ bool LEVEL::UpdateFade()
 	//Fade all palettes
 	finished = function(tileTexture->loadedPalette) ? finished : false;
 	finished = function(backgroundTexture->loadedPalette) ? finished : false;
-	for (TEXTURE *texture = objTextureCache; texture != NULL; texture = texture->next)
+	for (TEXTURE *texture = objTextureCache; texture != nullptr; texture = texture->next)
 		finished = function(texture->loadedPalette) ? finished : false;
 	
 	//Fade music out
-	if (!isFadingIn)
+	if (currentMusic != nullptr && !isFadingIn)
 	{
-		if (finished)
-			PauseMusic();
-		else
-			SetMusicVolume(max(GetMusicVolume() - (1.0f / 32.0f), 0.0f));
+		//Lock audio device so we can safely modify the music's volume
+		AUDIO_LOCK;
+		
+		//Fade music out
+		currentMusic->volume = max(currentMusic->volume - (1.0f / 32.0f), 0.0f);
+		
+		//Unlock audio device
+		AUDIO_UNLOCK;
 	}
 	
 	return finished;
@@ -826,7 +858,7 @@ void LEVEL::DynamicEvents()
 //Texture cache and mappings cache
 TEXTURE* LEVEL::GetObjectTexture(const char *path)
 {
-	for (TEXTURE *texture = objTextureCache; texture != NULL; texture = texture->next)
+	for (TEXTURE *texture = objTextureCache; texture != nullptr; texture = texture->next)
 	{
 		if (!strcmp(texture->source, path))
 			return texture;
@@ -837,7 +869,7 @@ TEXTURE* LEVEL::GetObjectTexture(const char *path)
 
 MAPPINGS* LEVEL::GetObjectMappings(const char *path)
 {
-	for (MAPPINGS *mappings = objMappingsCache; mappings != NULL; mappings = mappings->next)
+	for (MAPPINGS *mappings = objMappingsCache; mappings != nullptr; mappings = mappings->next)
 	{
 		if (!strcmp(mappings->source, path))
 			return mappings;
@@ -855,7 +887,7 @@ LEVEL_RENDERLAYER LEVEL::GetObjectLayer(bool highPriority, int priority)
 void LEVEL::PaletteUpdate()
 {
 	//Handle this stage's palette cycle
-	if (tileTexture == NULL || tileTexture->loadedPalette == NULL)
+	if (tileTexture == nullptr || tileTexture->loadedPalette == nullptr)
 		return;
 	
 	switch (zone)
@@ -867,37 +899,6 @@ void LEVEL::PaletteUpdate()
 			EHZ_PaletteCycle(this);
 			break;
 	}
-}
-
-//Change music functions
-void LEVEL::PlayJingle(MUSICSPEC newMusic)
-{
-	//If currently playing the stage's song, remember our resume point
-	if (!strcmp(currentMusic, music))
-		musicResumePoint = GetMusicPosition();
-	
-	//Play music without overlapping our music variables
-	PlayMusic(newMusic);
-}
-
-void LEVEL::ChangeMusic(MUSICSPEC newMusic)
-{
-	//If currently playing the stage's song, remember our resume point
-	if (!strcmp(currentMusic, music))
-		musicResumePoint = GetMusicPosition();
-	
-	if (strcmp(gMusicSpec.name, "ExtraLifeJingle")) //Do not overlap jingles
-	{
-		//If our new song is the stage's song, play at the resume point
-		if (!strcmp(newMusic.name, music))
-			newMusic.initialPosition = musicResumePoint;
-		
-		//Play our new music
-		PlayMusic(newMusic);
-	}
-	
-	//Set this as our current song
-	currentMusic = newMusic.name;
 }
 
 //Oscillatory Update
@@ -986,23 +987,132 @@ void LEVEL::OscillatoryUpdate()
 	}
 }
 
+//Music functions
+void LEVEL::SetPlayingMusic(MUSIC *music, bool resumeLastPosition, bool fade)
+{
+	//Stop last song
+	if (currentMusic != nullptr)
+		currentMusic->playing = false;
+	
+	//Play this song
+	if (music != nullptr)
+	{
+		if (!resumeLastPosition)
+			music->PlayAtPosition(0);
+		else
+			music->playing = true;
+		music->volume = fade ? 0.0f : (currentMusic == nullptr ? music->volume : currentMusic->volume);
+	}
+	
+	currentMusic = music;
+}
+
+void LEVEL::ChangePrimaryMusic(MUSIC *music)
+{
+	//Lock the audio device so we can safely change which song is playing and volume
+	AUDIO_LOCK;
+	
+	//Check if we should play or not...
+	if (currentMusic == nullptr || currentMusic == primaryMusic)
+		SetPlayingMusic(primaryMusic = music, true, false); //If was already playing primary music, start playing this music
+	else
+		primaryMusic = music; //Set primary music to be this music
+	
+	//Update our music state
+	musicIsTemporary = false;
+	musicFadeAtEnd = false;
+	
+	//Unlock audio device
+	AUDIO_UNLOCK;
+}
+
+void LEVEL::ChangeSecondaryMusic(MUSIC *music)
+{
+	//Lock the audio device so we can safely change which song is playing and volume
+	AUDIO_LOCK;
+	
+	//Check if we should play or not...
+	if (currentMusic == nullptr || currentMusic == primaryMusic || currentMusic == secondaryMusic)
+		SetPlayingMusic(secondaryMusic = music, true, false); //If was already playing primary or secondary music (secondary music overrides primary music), start playing this music
+	else
+		secondaryMusic = music; //Set secondary music to be this music
+	
+	//Update our music state
+	musicIsTemporary = true;
+	musicFadeAtEnd = false;
+	
+	//Unlock audio device
+	AUDIO_UNLOCK;
+}
+
+void LEVEL::PlayJingleMusic(MUSIC *music)
+{
+	//Lock the audio device so we can safely change which song is playing and volume
+	AUDIO_LOCK;
+	
+	//Play this song and update our music state
+	SetPlayingMusic(music, false, false);
+	musicIsTemporary = true;
+	musicFadeAtEnd = true;
+	
+	//Unlock audio device
+	AUDIO_UNLOCK;
+}
+
+void LEVEL::StopSecondaryMusic()
+{
+	//Lock the audio device so we can safely change which song is playing and volume
+	AUDIO_LOCK;
+	
+	//Check if we should play the primary song or not...
+	if (currentMusic == secondaryMusic)
+		SetPlayingMusic(primaryMusic, true, false);
+	secondaryMusic = nullptr;
+	
+	//Unlock audio device
+	AUDIO_UNLOCK;
+}
+
+void LEVEL::UpdateMusic()
+{
+	//Do not attempt to update music if there is no song playing
+	if (currentMusic == nullptr)
+	{
+		LOG(("There's no music playing!\n"));
+		return;
+	}
+	
+	//Lock the audio device so we can safely change which song is playing and volume
+	AUDIO_UNLOCK;
+	
+	//If the song is temporary and has ended, resume
+	if (currentMusic->playing == false && musicIsTemporary)
+	{
+		//Play the previous song
+		if (currentMusic == secondaryMusic)
+			SetPlayingMusic(primaryMusic, true, false);		//secondaryMusic to primaryMusic
+		else if (secondaryMusic != nullptr)
+			SetPlayingMusic(secondaryMusic, true, true);	//Jingle to secondaryMusic
+		else if (primaryMusic != nullptr)
+			SetPlayingMusic(primaryMusic, true, true);		//Jingle to primaryMusic
+		else
+			currentMusic = nullptr;
+	}
+	
+	//Fade in the currently playing music
+	if (currentMusic != nullptr)
+		currentMusic->volume = min(currentMusic->volume + (1.0f / 180.0f), 1.0f);
+	
+	//Unlock the audio device
+	AUDIO_UNLOCK;
+}
+
+
 //Level update and draw
 bool LEVEL::Update(bool checkTitleCard)
 {
-	//Update music (1-up jingle, fading in)
-	if (IsMusicPlaying() == false && !strcmp(gMusicSpec.name, "ExtraLifeJingle"))
-	{
-		//Get which song to play and the resume point
-		MUSICSPEC resumeSpec = {currentMusic, !strcmp(currentMusic, music) ? musicResumePoint : 0, 0.0f};
-		
-		//Play song
-		PlayMusic(resumeSpec);
-	}
-	else if (!fading)
-	{
-		SetMusicVolume(min(GetMusicVolume() + (1.0f / 180.0f), 1.0f));
-		musicResumePoint = GetMusicPosition();
-	}
+	//Update the music
+	UpdateMusic();
 	
 	//Update title card
 	if (checkTitleCard)
@@ -1020,7 +1130,7 @@ bool LEVEL::Update(bool checkTitleCard)
 	frameCounter++;
 	
 	//Update players
-	for (PLAYER *player = playerList; player != NULL; player = player->next)
+	for (PLAYER *player = playerList; player != nullptr; player = player->next)
 		player->Update();
 	
 	if (updateStage)
@@ -1028,7 +1138,7 @@ bool LEVEL::Update(bool checkTitleCard)
 		//Update objects
 		OBJECT *object = objectList;
 		
-		while (object != NULL)
+		while (object != nullptr)
 		{
 			//Remember our next object
 			OBJECT *next = object->next;
@@ -1040,9 +1150,9 @@ bool LEVEL::Update(bool checkTitleCard)
 			//Check for deletion
 			if (object->deleteFlag)
 			{
-				for (PLAYER *player = playerList; player != NULL; player = player->next)
+				for (PLAYER *player = playerList; player != nullptr; player = player->next)
 					if (player->interact == object)
-						player->interact = NULL;
+						player->interact = nullptr;
 				delete object;
 			}
 			
@@ -1052,11 +1162,11 @@ bool LEVEL::Update(bool checkTitleCard)
 	}
 	
 	//Update camera
-	if (camera != NULL)
+	if (camera != nullptr)
 		camera->Track(playerList);
 	
 	//Update level dynamic events
-	if (playerList != NULL)
+	if (playerList != nullptr)
 		DynamicEvents();
 	
 	//Update all other level stuff
@@ -1072,7 +1182,7 @@ bool LEVEL::Update(bool checkTitleCard)
 void LEVEL::Draw()
 {
 	//Draw background
-	if (backgroundTexture != NULL && backgroundScroll != NULL && camera != NULL)
+	if (backgroundTexture != nullptr && backgroundScroll != nullptr && camera != nullptr)
 	{
 		//Get our background scroll
 		int16_t backX, backY;
@@ -1092,7 +1202,7 @@ void LEVEL::Draw()
 	}
 	
 	//Draw foreground
-	if (layout.foreground != NULL && tileTexture != NULL && camera != NULL)
+	if (layout.foreground != nullptr && tileTexture != nullptr && camera != nullptr)
 	{
 		int cLeft = max(camera->x / 16, 0);
 		int cTop = max(camera->y / 16, 0);
@@ -1119,10 +1229,10 @@ void LEVEL::Draw()
 	}
 	
 	//Draw players and objects
-	for (PLAYER *player = playerList; player != NULL; player = player->next)
+	for (PLAYER *player = playerList; player != nullptr; player = player->next)
 		player->DrawToScreen();
 	
-	for (OBJECT *object = objectList; object != NULL; object = object->next)
+	for (OBJECT *object = objectList; object != nullptr; object = object->next)
 		object->DrawRecursive();
 	
 	//Draw HUD

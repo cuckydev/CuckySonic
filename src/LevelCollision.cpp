@@ -8,7 +8,7 @@
 TILE *FindTile(int16_t x, int16_t y)
 {
 	if (x < 0 || x >= gLevel->layout.width * 16 || y < 0 || y >= gLevel->layout.height * 16)
-		return NULL;
+		return nullptr;
 	return &gLevel->layout.foreground[(y / 16) * gLevel->layout.width + (x / 16)];
 }
 
@@ -21,7 +21,7 @@ int16_t FindFloor2(int16_t x, int16_t y, COLLISIONLAYER layer, bool flipped, uin
 	TILE *tile = FindTile(x, y);
 	
 	//Flip our y-position if flipped
-	if (tile != NULL && tile->tile != 0 && TILE_ON_LAYER(LAYER_IS_ALT(layer), LAYER_IS_LRB(layer), tile))
+	if (tile != nullptr && tile->tile != 0 && TILE_ON_LAYER(LAYER_IS_ALT(layer), LAYER_IS_LRB(layer), tile))
 	{
 		TILEMAPPING *tileMap = &gLevel->tileMapping[tile->tile];
 		COLLISIONTILE *collisionTile = &gLevel->collisionTile[LAYER_IS_ALT(layer) ? (tileMap->alternateColTile) : (tileMap->normalColTile)];
@@ -29,20 +29,20 @@ int16_t FindFloor2(int16_t x, int16_t y, COLLISIONLAYER layer, bool flipped, uin
 		if (collisionTile != gLevel->collisionTile)
 		{
 			//Get our angle
-			if (angle != NULL)
+			if (angle != nullptr)
 				*angle = collisionTile->angle;
 			
 			int16_t xPos = x;
 			if (tile->xFlip) //Reverse if horizontally flipped
 			{
 				xPos = ~xPos;
-				if (angle != NULL)
+				if (angle != nullptr)
 					*angle = -*angle;
 			}
 			
 			if (tile->yFlip) //Invert if vertically flipped
 			{
-				if (angle != NULL)
+				if (angle != nullptr)
 					*angle = (-(*angle + 0x40)) - 0x40;
 			}
 			
@@ -78,7 +78,7 @@ int16_t FindFloor(int16_t x, int16_t y, COLLISIONLAYER layer, bool flipped, uint
 	//Get our chunk tile
 	TILE *tile = FindTile(x, y);
 	
-	if (tile != NULL && tile->tile != 0 && TILE_ON_LAYER(LAYER_IS_ALT(layer), LAYER_IS_LRB(layer), tile))
+	if (tile != nullptr && tile->tile != 0 && TILE_ON_LAYER(LAYER_IS_ALT(layer), LAYER_IS_LRB(layer), tile))
 	{
 		TILEMAPPING *tileMap = &gLevel->tileMapping[tile->tile];
 		COLLISIONTILE *collisionTile = &gLevel->collisionTile[LAYER_IS_ALT(layer) ? (tileMap->alternateColTile) : (tileMap->normalColTile)];
@@ -86,20 +86,20 @@ int16_t FindFloor(int16_t x, int16_t y, COLLISIONLAYER layer, bool flipped, uint
 		if (collisionTile != gLevel->collisionTile)
 		{
 			//Get our angle
-			if (angle != NULL)
+			if (angle != nullptr)
 				*angle = collisionTile->angle;
 			
 			int16_t xPos = x;
 			if (tile->xFlip) //Reverse if horizontally flipped
 			{
 				xPos = ~xPos;
-				if (angle != NULL)
+				if (angle != nullptr)
 					*angle = -*angle;
 			}
 			
 			if (tile->yFlip) //Invert if vertically flipped
 			{
-				if (angle != NULL)
+				if (angle != nullptr)
 					*angle = (-(*angle + 0x40)) - 0x40;
 			}
 			
@@ -134,7 +134,7 @@ int16_t FindWall2(int16_t x, int16_t y, COLLISIONLAYER layer, bool flipped, uint
 	//Get our chunk tile
 	TILE *tile = FindTile(x, y);
 	
-	if (tile != NULL && tile->tile != 0 && TILE_ON_LAYER(LAYER_IS_ALT(layer), LAYER_IS_LRB(layer), tile))
+	if (tile != nullptr && tile->tile != 0 && TILE_ON_LAYER(LAYER_IS_ALT(layer), LAYER_IS_LRB(layer), tile))
 	{
 		TILEMAPPING *tileMap = &gLevel->tileMapping[tile->tile];
 		COLLISIONTILE *collisionTile = &gLevel->collisionTile[LAYER_IS_ALT(layer) ? (tileMap->alternateColTile) : (tileMap->normalColTile)];
@@ -142,20 +142,20 @@ int16_t FindWall2(int16_t x, int16_t y, COLLISIONLAYER layer, bool flipped, uint
 		if (collisionTile != gLevel->collisionTile)
 		{
 			//Get our angle
-			if (angle != NULL)
+			if (angle != nullptr)
 				*angle = collisionTile->angle;
 			
 			int16_t yPos = y;
 			if (tile->yFlip) //Invert if vertically flipped
 			{
 				yPos = ~yPos;
-				if (angle != NULL)
+				if (angle != nullptr)
 					*angle = (-(*angle + 0x40)) - 0x40;
 			}
 			
 			if (tile->xFlip) //Reverse if horizontally flipped
 			{
-				if (angle != NULL)
+				if (angle != nullptr)
 					*angle = -*angle;
 			}
 			
@@ -191,7 +191,7 @@ int16_t FindWall(int16_t x, int16_t y, COLLISIONLAYER layer, bool flipped, uint8
 	//Get our chunk tile
 	TILE *tile = FindTile(x, y);
 	
-	if (tile != NULL && tile->tile != 0 && TILE_ON_LAYER(LAYER_IS_ALT(layer), LAYER_IS_LRB(layer), tile))
+	if (tile != nullptr && tile->tile != 0 && TILE_ON_LAYER(LAYER_IS_ALT(layer), LAYER_IS_LRB(layer), tile))
 	{
 		TILEMAPPING *tileMap = &gLevel->tileMapping[tile->tile];
 		COLLISIONTILE *collisionTile = &gLevel->collisionTile[LAYER_IS_ALT(layer) ? (tileMap->alternateColTile) : (tileMap->normalColTile)];
@@ -199,20 +199,20 @@ int16_t FindWall(int16_t x, int16_t y, COLLISIONLAYER layer, bool flipped, uint8
 		if (collisionTile != gLevel->collisionTile)
 		{
 			//Get our angle
-			if (angle != NULL)
+			if (angle != nullptr)
 				*angle = collisionTile->angle;
 			
 			int16_t yPos = y;
 			if (tile->yFlip) //Invert if vertically flipped
 			{
 				yPos = ~yPos;
-				if (angle != NULL)
+				if (angle != nullptr)
 					*angle = (-(*angle + 0x40)) - 0x40;
 			}
 			
 			if (tile->xFlip) //Reverse if horizontally flipped
 			{
-				if (angle != NULL)
+				if (angle != nullptr)
 					*angle = -*angle;
 			}
 			

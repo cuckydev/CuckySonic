@@ -11,7 +11,7 @@ char *gPrefPath;
 
 char *AllocPath(const char *string, const char *append)
 {
-	char *newString = (char*)malloc(strlen(string) + (append == NULL ? 1 : strlen(append)) + 1);
+	char *newString = (char*)malloc(strlen(string) + (append == nullptr ? 1 : strlen(append)) + 1);
 	strcpy(newString, string);
 	if (append)
 		strcat(newString, append);
@@ -26,14 +26,14 @@ bool InitializePath()
 	gPrefPath = SDL_GetPrefPath(GAME_ORGANIZATION, GAME_TITLE);
 	
 	//Get base (executable's) path
-	if (gBasePath == NULL)
+	if (gBasePath == nullptr)
 	{
-		gBasePath = AllocPath("./", NULL);
+		gBasePath = AllocPath("./", nullptr);
 		Warn("Couldn't get a path to the executable from SDL, may cause undefined behaviour");
 	}
 	
 	//Get pref (save data) path
-	if (gPrefPath == NULL)
+	if (gPrefPath == nullptr)
 	{
 		gPrefPath = gBasePath;
 		Warn("Couldn't get a path to pref directory from SDL, executable's path will be used instead");

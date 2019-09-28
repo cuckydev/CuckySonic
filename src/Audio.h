@@ -1,8 +1,17 @@
 #pragma once
+#include "SDL_audio.h"
 #include <stdint.h>
 
+//Constant defines
 #define AUDIO_FREQUENCY 44100
 #define AUDIO_SAMPLES	0x200
+
+//Audio device
+extern SDL_AudioDeviceID gAudioDevice;
+
+//Nice little lock things to help us
+#define AUDIO_LOCK		SDL_LockAudioDevice(gAudioDevice)
+#define AUDIO_UNLOCK	SDL_UnlockAudioDevice(gAudioDevice)
 
 //Sound ids
 enum SOUNDID
@@ -80,13 +89,14 @@ struct SOUNDDEFINITION
 class SOUND
 {
 	public:
+		//Failure
 		const char *fail;
 		
 		//Our actual buffer data
 		float *buffer;
 		int size;
 		
-		//Playback position and frequency
+		//Current playback state
 		bool playing;
 		
 		double sample;
@@ -97,6 +107,7 @@ class SOUND
 		float volumeL;
 		float volumeR;
 		
+		//Linked list and parent
 		SOUND *next;
 		SOUND *parent;
 		
@@ -104,13 +115,6 @@ class SOUND
 		SOUND(const char *path);
 		SOUND(SOUND *ourParent);
 		~SOUND();
-		
-		void Play();
-		void Stop();
-		
-		void SetVolume(float setVolume);
-		void SetPan(float setVolumeL, float setVolumeR);
-		void SetFrequency(double setFrequency);
 		
 		void Mix(float *stream, int samples);
 };
@@ -120,64 +124,45 @@ class SOUND
 #include "Audio_stb_vorbis.cpp"
 #include "Audio_miniaudio.h"
 
+ma_uint32 MusicReadSamples(ma_pcm_converter *dsp, void *buffer, ma_uint32 requestFrames, void *musicPointer);
+
 class MUSIC
 {
 	public:
 		//Failure
 		const char *fail;
 		
-		//stb_vorbis decoder
+		//stb_vorbis decoder (music file) and other things about the music
 		stb_vorbis *file;
+		
 		double frequency;
 		int channels;
+		int64_t loopStart;
 		
 		//miniaudio resampler
 		ma_pcm_converter resampler;
+		float *mixBuffer;
 		
 		//Music data
 		const char *source;
 		
-		int64_t loopStart;
-		
+		//Current playback state
 		bool playing;
-		int internalPosition;
-		
 		float volume;
+		
+		//Linked list
+		MUSIC *next;
 	
 	public:
-		MUSIC(const char *name);
+		MUSIC(const char *name, int initialPosition, float initialVolume);
 		~MUSIC();
 		
-		void Play(int position);
-		int Pause();
+		void PlayAtPosition(int setPosition);
 		
 		void Loop();
 		ma_uint32 ReadSamplesToBuffer(float *buffer, int samples);
-		void Mix(float *stream, int samples);
+		void ReadAndMix(float *stream, int frames);
 };
-
-ma_uint32 MusicReadSamples(ma_pcm_converter *dsp, void *buffer, ma_uint32 requestFrames, void *musicPointer);
-
-//Music spec
-struct MUSICSPEC
-{
-	const char *name;
-	int initialPosition;
-	float initialVolume;
-};
-
-extern MUSICSPEC gMusicSpec;
-
-//Music functions
-void PlayMusic(const MUSICSPEC musicSpec);
-int PauseMusic();
-
-void SetMusicVolume(float volume);
-float GetMusicVolume();
-
-int GetMusicPosition();
-
-bool IsMusicPlaying();
 
 //Sound functions
 void PlaySound(SOUNDID id);

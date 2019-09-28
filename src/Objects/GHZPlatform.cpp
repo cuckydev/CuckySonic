@@ -66,7 +66,7 @@ void ObjGHZPlatform_Move(OBJECT *object)
 			if (!object->scratchU16[SCRATCHU16_FALL_TIME])
 			{
 				//Wait for the player to stand on us
-				for (PLAYER *player = gLevel->playerList; player != NULL; player = player->next)
+				for (PLAYER *player = gLevel->playerList; player != nullptr; player = player->next)
 					if (player->status.shouldNotFall && player->interact == (void*)object)
 						object->scratchU16[SCRATCHU16_FALL_TIME] = 30; //Wait for 0.5 seconds
 			}
@@ -90,7 +90,7 @@ void ObjGHZPlatform_Move(OBJECT *object)
 				bool touching = false;
 				
 				int i = 0;
-				for (PLAYER *player = gLevel->playerList; player != NULL; player = player->next)
+				for (PLAYER *player = gLevel->playerList; player != nullptr; player = player->next)
 				{
 					if (player->status.shouldNotFall && player->interact == (void*)object)
 					{
@@ -131,7 +131,7 @@ void ObjGHZPlatform_Nudge(OBJECT *object)
 {
 	//Get the force
 	int16_t sin;
-	GetSine(object->scratchU8[SCRATCHU8_WEIGHT], &sin, NULL);
+	GetSine(object->scratchU8[SCRATCHU8_WEIGHT], &sin, nullptr);
 	object->y.pos = (object->scratchS32[SCRATCHS32_Y] >> 16) + ((sin * 0x400) >> 16);
 }
 
@@ -176,7 +176,7 @@ void ObjGHZPlatform(OBJECT *object)
 		{
 			//Is a player standing on us?
 			bool touching = false;
-			for (PLAYER *player = gLevel->playerList; player != NULL; player = player->next)
+			for (PLAYER *player = gLevel->playerList; player != nullptr; player = player->next)
 				if (player->status.shouldNotFall && player->interact == (void*)object)
 					touching = true;
 			
