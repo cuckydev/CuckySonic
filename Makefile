@@ -100,7 +100,7 @@ obj/$(FILENAME)/%.o: src/%.cpp
 	@$(CXX) $(CXXFLAGS) $< -o $@ -c
 	@echo Compiled!
 	
-include $(wildcards $(DEPENDENCIES))
+include $(wildcard $(DEPENDENCIES))
 
 #Compile the Windows icon file into an object
 obj/$(FILENAME)/WindowsIcon.o: res/icon.rc res/icon.ico
