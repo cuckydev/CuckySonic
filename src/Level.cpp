@@ -1133,11 +1133,12 @@ bool LEVEL::Update(bool checkTitleCard)
 	frameCounter++;
 	
 	//Update players
-	for (PLAYER *player = playerList; player != nullptr; player = player->next)
-		player->Update();
-	
 	if (updateStage)
 	{
+		//Update players and objects
+		for (PLAYER *player = playerList; player != nullptr; player = player->next)
+			player->Update();
+	
 		//Update objects
 		OBJECT *object = objectList;
 		
@@ -1162,6 +1163,12 @@ bool LEVEL::Update(bool checkTitleCard)
 			//Advance to next object
 			object = next;
 		}
+	}
+	else
+	{
+		//If not to update the stage, only update players
+		for (PLAYER *player = playerList; player != nullptr; player = player->next)
+			player->Update();
 	}
 	
 	//Update camera

@@ -48,6 +48,7 @@ SOUNDDEFINITION soundDefinition[SOUNDID_MAX] = {
 	
 	{SOUNDCHANNEL_FM4,	"data/Audio/Sound/Pop.wav", SOUNDID_NULL},
 	{SOUNDCHANNEL_FM3,	"data/Audio/Sound/GoalpostSpin.wav", SOUNDID_NULL},
+	{SOUNDCHANNEL_FM3,	"data/Audio/Sound/Spring.wav", SOUNDID_NULL},
 	
 	{SOUNDCHANNEL_FM4,	"data/Audio/Sound/GetBlueShield.wav", SOUNDID_NULL},
 	{SOUNDCHANNEL_FM4,	"data/Audio/Sound/GetFireShield.wav", SOUNDID_NULL},

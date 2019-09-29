@@ -2155,15 +2155,45 @@ void PLAYER::Move()
 						int width = (object->widthPixels * 2) - 4;
 						int xDiff = (object->widthPixels + x.pos) - object->x.pos;
 						
-						if (xDiff < 4)
+						if (xDiff < 2)
 						{
-							status.xFlip = true;
-							anim = PLAYERANIMATION_BALANCE1;
+							if (status.xFlip)
+							{
+								if (xDiff < -4)
+									anim = PLAYERANIMATION_BALANCE2;	//Balancing on the edge
+								else
+									anim = PLAYERANIMATION_BALANCE1;	//Far over the edge
+							}
+							else
+							{
+								if (xDiff < -4)
+								{
+									anim = PLAYERANIMATION_BALANCE4;	//Turn around to the "far over the edge" balancing animation
+									status.xFlip = true;
+								}
+								else
+									anim = PLAYERANIMATION_BALANCE3;	//Balancing on the edge backwards
+							}
 						}
 						else if (xDiff >= width)
 						{
-							status.xFlip = false;
-							anim = PLAYERANIMATION_BALANCE1;
+							if (!status.xFlip)
+							{
+								if (xDiff >= width + 6)
+									anim = PLAYERANIMATION_BALANCE2;	//Balancing on the edge
+								else
+									anim = PLAYERANIMATION_BALANCE1;	//Far over the edge
+							}
+							else
+							{
+								if (xDiff >= width + 6)
+								{
+									anim = PLAYERANIMATION_BALANCE4;	//Turn around to the "far over the edge" balancing animation
+									status.xFlip = false;
+								}
+								else
+									anim = PLAYERANIMATION_BALANCE3;	//Balancing on the edge backwards
+							}
 						}
 					}
 				}
@@ -2174,13 +2204,45 @@ void PLAYER::Move()
 					{
 						if (nextTilt == 3) //If there's no floor to the left of us
 						{
-							status.xFlip = false;
-							anim = PLAYERANIMATION_BALANCE1;
+							if (!status.xFlip)
+							{
+								if (ChkFloorEdge(topSolidLayer, x.pos - 6, y.pos, nullptr) >= 12)
+									anim = PLAYERANIMATION_BALANCE2;	//Far over the edge
+								else
+									anim = PLAYERANIMATION_BALANCE1;	//Balancing on the edge
+							}
+							else
+							{
+								//Facing right on ledge to the left of us...
+								if (ChkFloorEdge(topSolidLayer, x.pos - 6, y.pos, nullptr) >= 12)
+								{
+									anim = PLAYERANIMATION_BALANCE4;	//Turn around to the "far over the edge" balancing animation
+									status.xFlip = false;
+								}
+								else
+									anim = PLAYERANIMATION_BALANCE3;	//Balancing on the edge backwards
+							}
 						}
 						else if (tilt == 3) //If there's no floor to the right of us
 						{
-							status.xFlip = true;
-							anim = PLAYERANIMATION_BALANCE1;
+							if (status.xFlip)
+							{
+								if (ChkFloorEdge(topSolidLayer, x.pos + 6, y.pos, nullptr) >= 12)
+									anim = PLAYERANIMATION_BALANCE2;	//Far over the edge
+								else
+									anim = PLAYERANIMATION_BALANCE1;	//Balancing on the edge
+							}
+							else
+							{
+								//Facing right on ledge to the left of us...
+								if (ChkFloorEdge(topSolidLayer, x.pos + 6, y.pos, nullptr) >= 12)
+								{
+									anim = PLAYERANIMATION_BALANCE4;	//Turn around to the "far over the edge" balancing animation
+									status.xFlip = true;
+								}
+								else
+									anim = PLAYERANIMATION_BALANCE3;	//Balancing on the edge backwards
+							}
 						}
 					}
 				}
