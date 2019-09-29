@@ -4,6 +4,26 @@
 #include "../Game.h"
 #include "../Log.h"
 
+static const uint8_t animationUpIdle[] =				{0x0F,0x00,0xFF};
+static const uint8_t animationUpBounce[] =				{0x00,0x00,0x01,0x00,0x00,0x02,0x02,0x02,0x02,0x02,0x02,0xFD,0x00};
+static const uint8_t animationHorizontalIdle[] =		{0x0F,0x03,0xFF};
+static const uint8_t animationHorizontalBounce[] =		{0x00,0x03,0x04,0x03,0x03,0x05,0x05,0x05,0x05,0x05,0x05,0xFD,0x02};
+static const uint8_t animationDiagonalUpIdle[] =		{0x0F,0x06,0xFF};
+static const uint8_t animationDiagonalUpBounce[] =		{0x00,0x06,0x07,0x06,0x06,0x08,0x08,0x08,0x08,0x08,0x08,0xFD,0x04};
+static const uint8_t animationDiagonalDownIdle[] =		{0x0F,0x09,0xFF};
+static const uint8_t animationDiagonalDownBounce[] =	{0x00,0x09,0x0A,0x09,0x09,0x0B,0x0B,0x0B,0x0B,0x0B,0x0B,0xFD,0x06};
+
+static const uint8_t *animationList[] = {
+	animationUpIdle,
+	animationUpBounce,
+	animationHorizontalIdle,
+	animationHorizontalBounce,
+	animationDiagonalUpIdle,
+	animationDiagonalUpBounce,
+	animationDiagonalDownIdle,
+	animationDiagonalDownBounce,
+};
+
 void ObjSpring(OBJECT *object)
 {
 	enum SCRATCH
@@ -27,11 +47,11 @@ void ObjSpring(OBJECT *object)
 		case 0:
 		{
 			//Load graphics
-			//if (object->subtype & 0x2)
-			//	object->texture = object->texture = gLevel->GetObjectTexture("data/Object/YellowSpring.bmp");
-			//else
-			//	object->texture = gLevel->GetObjectTexture("data/Object/RedSpring.bmp");
-			//object->mappings = gLevel->GetObjectMappings("data/Object/SpringV.map");
+			object->texture = gLevel->GetObjectTexture("data/Object/Spring.bmp");
+			if (object->subtype & 0x2)
+				object->mappings = gLevel->GetObjectMappings("data/Object/YellowSpring.map");
+			else
+				object->mappings = gLevel->GetObjectMappings("data/Object/RedSpring.map");
 			
 			//Set render properties
 			object->renderFlags.alignPlane = true;
@@ -47,23 +67,19 @@ void ObjSpring(OBJECT *object)
 				case 1: //Horizontal
 					object->routine = ROUTINE_HORIZONTAL;
 					object->anim = 2;
-					object->mappingFrame = 0x03;
 					object->widthPixels = 8;
 					break;
 				case 2: //Down
 					object->routine = ROUTINE_DOWN;
-					object->mappingFrame = 0x06;
 					object->status.yFlip = true;
 					break;
 				case 3: //Diagonally up
 					object->routine = ROUTINE_DIAGONALLY_UP;
 					object->anim = 4;
-					object->mappingFrame = 0x07;
 					break;
 				case 4: //Diagonally down
 					object->routine = ROUTINE_DIAGONALLY_DOWN;
 					object->anim = 4;
-					object->mappingFrame = 0x0A;
 					object->status.yFlip = true;
 					break;
 			}
@@ -145,6 +161,7 @@ void ObjSpring(OBJECT *object)
 				}
 			}
 			
+			object->Animate(animationList);
 			object->Draw();
 			break;
 		}
@@ -225,6 +242,7 @@ void ObjSpring(OBJECT *object)
 				}
 			}
 			
+			object->Animate(animationList);
 			object->Draw();
 			break;
 		}

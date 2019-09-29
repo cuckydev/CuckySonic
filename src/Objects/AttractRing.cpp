@@ -45,6 +45,8 @@ void ObjAttractRing(OBJECT *object)
 				object->function = ObjBouncingRing;
 				object->scratchU8[0] = 0xFF; //Ring_spill_anim_counter
 				object->scratchU16[1] = 0x00; //Ring_spill_anim_accum
+				object->xRadius = 8;
+				object->yRadius = 8;
 				object->Draw();
 			}
 			

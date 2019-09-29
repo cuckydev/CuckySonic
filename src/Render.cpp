@@ -59,7 +59,12 @@ TEXTURE::TEXTURE(TEXTURE **linkedList, const char *path)
 	for (i = 0; i < bitmap->format->palette->ncolors; i++)
 		SetPaletteColour(&loadedPalette->colour[i], bitmap->format->palette->colors[i].r, bitmap->format->palette->colors[i].g, bitmap->format->palette->colors[i].b);
 	for (; i < 0x100; i++)
-		SetPaletteColour(&loadedPalette->colour[i], 0, 0, 0);
+	{
+		if (bitmap->format->palette->ncolors)
+			loadedPalette->colour[i] = loadedPalette->colour[0];
+		else
+			SetPaletteColour(&loadedPalette->colour[i], 0, 0, 0);
+	}
 	
 	//Allocate texture data
 	texture = (uint8_t*)malloc(bitmap->pitch * bitmap->h);
