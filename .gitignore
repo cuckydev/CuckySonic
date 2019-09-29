@@ -5,3 +5,4 @@ Exclude the build executable
 build/*.exe
 build/*.dll
 build/*.zip
+build/*.7z
