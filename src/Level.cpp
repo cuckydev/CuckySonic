@@ -1090,7 +1090,10 @@ void LEVEL::UpdateMusic()
 	{
 		//Play the previous song
 		if (currentMusic == secondaryMusic)
+		{
 			SetPlayingMusic(primaryMusic, true, false);		//secondaryMusic to primaryMusic
+			secondaryMusic = nullptr;
+		}
 		else if (secondaryMusic != nullptr)
 			SetPlayingMusic(secondaryMusic, true, true);	//Jingle to secondaryMusic
 		else if (primaryMusic != nullptr)

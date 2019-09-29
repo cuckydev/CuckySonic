@@ -72,7 +72,7 @@ void ObjSpring(OBJECT *object)
 		case 3: //Downwards
 		{
 			//Act as solid
-			OBJECT_SOLIDTOUCH touch = object->SolidObject(27, 8, object->x.pos);
+			OBJECT_SOLIDTOUCH touch = object->SolidObject(27, 16, object->x.pos);
 			
 			//Check if any players touched the top of us
 			int i = 0;
@@ -85,7 +85,7 @@ void ObjSpring(OBJECT *object)
 					object->prevAnim = 0;
 					
 					//Launch player
-					player->y.pos -= object->routine == 1 ? 8 : -8;
+					player->y.pos += object->routine == 1 ? 8 : -8;
 					player->yVel = object->scratchS16[SCRATCHS16_FORCE];
 					player->status.inAir = true;
 					player->status.shouldNotFall = false;
@@ -158,7 +158,7 @@ void ObjSpring(OBJECT *object)
 					
 					//Launch player
 					player->xVel = object->scratchS16[SCRATCHS16_FORCE];
-					player->x.pos += direction ? -8 : 8;
+					player->x.pos += direction ? 8 : -8;
 					player->status.xFlip = true;
 					
 					if (!(object->status.xFlip ^ direction)) //Reverse if flipped
