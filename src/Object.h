@@ -149,7 +149,7 @@ class OBJECT
 		void LandOnPlatform(PLAYER *player, int i, int16_t width, int16_t height, int16_t lastXPos);
 		void ExitPlatform(PLAYER *player, int i);
 		
-		OBJECT_SOLIDTOUCH SolidObject(int16_t width, int16_t height, int16_t lastXPos);
+		OBJECT_SOLIDTOUCH SolidObject(int16_t width, int16_t height_air, int16_t height_standing, int16_t lastXPos);
 		void SolidObjectCont(OBJECT_SOLIDTOUCH *solidTouch, PLAYER *player, int i, int16_t width, int16_t height, int16_t lastXPos);
 		void SolidObjectClearPush(PLAYER *player, int i);
 		

@@ -7,7 +7,7 @@
 #include "../Audio.h"
 
 #define MONITOR_WIDTH	26
-#define MONITOR_HEIGHT	16
+#define MONITOR_HEIGHT	15
 
 //Solid functions
 void ObjMonitor_ChkOverEdge(OBJECT *object, int i, PLAYER *player)
@@ -17,7 +17,7 @@ void ObjMonitor_ChkOverEdge(OBJECT *object, int i, PLAYER *player)
 	
 	if (!player->status.inAir && xDiff >= 0 && xDiff < MONITOR_WIDTH * 2)
 	{
-		player->MoveOnPlatform((void*)object, MONITOR_HEIGHT, object->x.pos);
+		player->MoveOnPlatform((void*)object, MONITOR_HEIGHT + 1, object->x.pos);
 		return;
 	}
 	

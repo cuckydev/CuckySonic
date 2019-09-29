@@ -72,7 +72,7 @@ void ObjSpring(OBJECT *object)
 		case 3: //Downwards
 		{
 			//Act as solid
-			OBJECT_SOLIDTOUCH touch = object->SolidObject(27, 16, object->x.pos);
+			OBJECT_SOLIDTOUCH touch = object->SolidObject(27, 8, 16, object->x.pos);
 			
 			//Check if any players touched the top of us
 			int i = 0;
@@ -139,7 +139,7 @@ void ObjSpring(OBJECT *object)
 		case 2: //Horizontal
 		{
 			//Act as solid
-			object->SolidObject(19, 15, object->x.pos);
+			object->SolidObject(19, 14, 15, object->x.pos);
 			
 			//Check if any players touched our sides
 			int i = 0;

@@ -263,7 +263,7 @@ void OBJECT::ExitPlatform(PLAYER *player, int i)
 }
 
 //Solid object and its variants
-OBJECT_SOLIDTOUCH OBJECT::SolidObject(int16_t width, int16_t height, int16_t lastXPos)
+OBJECT_SOLIDTOUCH OBJECT::SolidObject(int16_t width, int16_t height_air, int16_t height_standing, int16_t lastXPos)
 {
 	//Get cleared solid touch
 	OBJECT_SOLIDTOUCH solidTouch;
@@ -286,7 +286,7 @@ OBJECT_SOLIDTOUCH OBJECT::SolidObject(int16_t width, int16_t height, int16_t las
 			}
 			
 			//Move with the object
-			player->MoveOnPlatform((void*)this, height, lastXPos);
+			player->MoveOnPlatform((void*)this, height_standing, lastXPos);
 			
 			//Check next player
 			i++;
@@ -295,7 +295,7 @@ OBJECT_SOLIDTOUCH OBJECT::SolidObject(int16_t width, int16_t height, int16_t las
 		else
 		{
 			//Check for collisions, then check next player
-			SolidObjectCont(&solidTouch, player, i++, width, height, lastXPos);
+			SolidObjectCont(&solidTouch, player, i++, width, height_air, lastXPos);
 			continue;
 		}
 	}
@@ -308,22 +308,14 @@ void OBJECT::SolidObjectCont(OBJECT_SOLIDTOUCH *solidTouch, PLAYER *player, int 
 	//Check if we're within range
 	int16_t xDiff = (player->x.pos - x.pos) + width; //d0
 	
-	int16_t checkHeight; //d2
 	int16_t yDiff; //d3
-	
 	if (player->status.reverseGravity)
-	{
-		checkHeight = player->yRadius + height;
-		yDiff = (-(player->y.pos - y.pos) + 4) + checkHeight;
-	}
+		yDiff = (-(player->y.pos - y.pos) + 4) + (height += player->yRadius);
 	else
-	{
-		checkHeight = player->yRadius + height;
-		yDiff = (player->y.pos - y.pos + 4) + checkHeight;
-	}
+		yDiff = (player->y.pos - y.pos + 4) + (height += player->yRadius);
 	
 	//Perform main collision checks if within range and not under the influence of another object
-	if (!(player->objectControl.disableObjectInteract || (xDiff < 0 || xDiff > (width * 2)) || (yDiff < 0 || yDiff > (checkHeight * 2))))
+	if (!(player->objectControl.disableObjectInteract || (xDiff < 0 || xDiff > (width * 2)) || (yDiff < 0 || yDiff > (height * 2))))
 	{
 		//Check if we're intangible
 		if (!(player->routine == PLAYERROUTINE_DEATH || player->debug))
@@ -339,7 +331,7 @@ void OBJECT::SolidObjectCont(OBJECT_SOLIDTOUCH *solidTouch, PLAYER *player, int 
 			int16_t yClip = yDiff;
 			if (yDiff >= height)
 			{
-				yDiff -= (4 + (checkHeight * 2));
+				yDiff -= (4 + (height * 2));
 				yClip = -yDiff;
 			}
 			
@@ -349,7 +341,7 @@ void OBJECT::SolidObjectCont(OBJECT_SOLIDTOUCH *solidTouch, PLAYER *player, int 
 				if (yDiff >= 0)
 				{
 					//Check our vertical difference
-					if (yDiff < 16 || (yDiff < 20 /*&& object->function != ObjLauncherSpring*/))
+					if (yDiff < 16)
 					{
 						//Check our horizontal range
 						int16_t xDiff2 = (player->x.pos - lastXPos) + widthPixels;
@@ -358,11 +350,11 @@ void OBJECT::SolidObjectCont(OBJECT_SOLIDTOUCH *solidTouch, PLAYER *player, int 
 						{
 							//Land on the object
 							yDiff -= 4;
-							
 							if (player->status.reverseGravity)
-								yDiff = -yDiff;
+								player->y.pos += (yDiff + 1);
+							else
+								player->y.pos -= (yDiff + 1);
 							
-							player->y.pos -= yDiff;
 							player->AttachToObject((void*)this, (&playerContact[i].standing - (size_t)this));
 							
 							//Set top touch flag
@@ -420,7 +412,7 @@ void OBJECT::SolidObjectCont(OBJECT_SOLIDTOUCH *solidTouch, PLAYER *player, int 
 				}
 			}
 			
-			//Horizontal checking
+			//Horizontal checking (if yClip is greater than xClip or it fell-through to here)
 			if (yClip > 4)
 			{
 				//Hault our velocity if running into sides
