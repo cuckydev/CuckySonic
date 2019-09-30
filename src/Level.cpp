@@ -1196,7 +1196,7 @@ void LEVEL::Draw()
 	{
 		//Get our background scroll
 		int16_t backX, backY;
-		backgroundScroll->GetScroll(camera->x, camera->y, &backX, &backY);
+		backgroundScroll->GetScroll(updateStage, camera->x, camera->y, &backX, &backY);
 		
 		//Draw each line
 		int upperLine = max(backY, 0);

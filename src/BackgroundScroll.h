@@ -90,5 +90,5 @@ class BACKGROUNDSCROLL
 		BACKGROUNDSCROLL(const char *name, TEXTURE *backgroundTexture);
 		~BACKGROUNDSCROLL();
 		
-		void GetScroll(int16_t cameraX, int16_t cameraY, int16_t *backX, int16_t *backY);
+		void GetScroll(bool doScroll, int16_t cameraX, int16_t cameraY, int16_t *backX, int16_t *backY);
 };

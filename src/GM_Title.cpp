@@ -165,7 +165,7 @@ bool GM_Title(bool *noError)
 		}
 		
 		//Draw background
-		backgroundScroll->GetScroll(backgroundX, 0, nullptr, nullptr);
+		backgroundScroll->GetScroll(true, backgroundX, 0, nullptr, nullptr);
 		
 		//Draw each line
 		SDL_Rect backSrc = {0, 0, backgroundTexture->width, 1};

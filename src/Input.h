@@ -48,6 +48,8 @@ struct CONTROLLER
 	
 	//Our game controller
 	SDL_GameController *controller;
+	int16_t axisX;
+	int16_t axisY;
 };
 
 extern CONTROLLER gController[CONTROLLERS];

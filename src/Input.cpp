@@ -1,5 +1,9 @@
 #include "Input.h"
+#include "Path.h"
 #include "Log.h"
+#include "Error.h"
+
+#define CONTROLLER_DEADZONE 0x200
 
 CONTROLLER gController[CONTROLLERS];
 
@@ -14,7 +18,7 @@ BUTTONBINDS defaultBinds[CONTROLLERS] = {																										//nintendo co
 //Subsystem code
 bool InitializeInput()
 {
-	LOG(("Initializing input... "));
+	LOG(("Initializing input...\n"));
 	
 	//Initialize controllers
 	memset(gController, 0, sizeof(gController));
@@ -25,7 +29,49 @@ bool InitializeInput()
 	for (int i = 0; i < CONTROLLERS; i++)
 		gController[i].binds = defaultBinds[i];
 	
-	//TODO: Connect controllers
+	//Open gamecontrollerdb.txt (Gamepad mappings)
+	GET_GLOBAL_PATH(gcdbPath, "data/gamecontrollerdb.txt");
+	
+	if (SDL_GameControllerAddMappingsFromFile(gcdbPath) < 0)
+	{
+		Error(SDL_GetError());
+		return false;
+	}
+	
+	//Connect controllers
+	for (int i = 0, v = 0; i < SDL_NumJoysticks(); i++)
+	{
+		if (SDL_IsGameController(i))
+		{
+			//Open this controller and assign to a virtual controller
+			SDL_GameController *controller = SDL_GameControllerOpen(i);
+			
+			if (controller != nullptr && v < CONTROLLERS)
+			{
+				//Successfully connected controller
+				LOG(("Connected controller %s to controller %d\n", SDL_GameControllerName(controller), v));
+				gController[v++].controller = controller;
+			}
+			else
+			{
+				//Failed to connect controller
+				const char *reason = "Ran out of virtual controller slots";
+				if (controller == nullptr)
+					reason = SDL_GetError();
+				
+				//Disconnect controller
+				if (controller != nullptr)
+				{
+					LOG(("Failed to connect controller %s\nReason: %s\n", SDL_GameControllerName(controller), reason));
+					SDL_GameControllerClose(controller);
+				}
+				else
+				{
+					LOG(("Failed to connect controller %d\nReason: %s\n", i, reason));
+				}
+			}
+		}
+	}
 	
 	LOG(("Success!\n"));
 	return true;
@@ -35,7 +81,12 @@ void QuitInput()
 {
 	LOG(("Ending input... "));
 	
-	//TODO: Disconnect controllers
+	//Disconnect controllers
+	for (int i = 0; i < CONTROLLERS; i++)
+	{
+		if (gController[i].controller != nullptr)
+			SDL_GameControllerClose(gController[i].controller);
+	}
 	
 	LOG(("Success!\n"));
 }
@@ -52,7 +103,7 @@ void ClearControllerInput()
 }
 
 //Handle event
-#define DO_BUTTON_EVENT(button, bind, set) if (event->key.keysym.scancode == bind) { button = set; continue; }
+#define DO_BUTTON_EVENT(src, button, bind, set) if (src == bind) { button = set; continue; }
 
 void HandleInputEvent(SDL_Event *event)
 {
@@ -60,32 +111,190 @@ void HandleInputEvent(SDL_Event *event)
 	{
 		case SDL_KEYDOWN: //Keyboard input events
 		case SDL_KEYUP:
+			//Check which key and virtual controller this maps to, and set it according to if it's a press or release
 			for (int i = 0; i < CONTROLLERS; i++)
 			{
-				DO_BUTTON_EVENT(gController[i].nextHeld.start,	gController[i].binds.start.key,	(event->type == SDL_KEYDOWN));
-				DO_BUTTON_EVENT(gController[i].nextHeld.a,		gController[i].binds.a.key,		(event->type == SDL_KEYDOWN));
-				DO_BUTTON_EVENT(gController[i].nextHeld.b,		gController[i].binds.b.key,		(event->type == SDL_KEYDOWN));
-				DO_BUTTON_EVENT(gController[i].nextHeld.c,		gController[i].binds.c.key,		(event->type == SDL_KEYDOWN));
-				DO_BUTTON_EVENT(gController[i].nextHeld.right,	gController[i].binds.right.key,	(event->type == SDL_KEYDOWN));
-				DO_BUTTON_EVENT(gController[i].nextHeld.left,	gController[i].binds.left.key,	(event->type == SDL_KEYDOWN));
-				DO_BUTTON_EVENT(gController[i].nextHeld.down,	gController[i].binds.down.key,	(event->type == SDL_KEYDOWN));
-				DO_BUTTON_EVENT(gController[i].nextHeld.up,		gController[i].binds.up.key,	(event->type == SDL_KEYDOWN));
+				DO_BUTTON_EVENT(event->key.keysym.scancode,	gController[i].nextHeld.start,	gController[i].binds.start.key,	(event->type == SDL_KEYDOWN));
+				DO_BUTTON_EVENT(event->key.keysym.scancode,	gController[i].nextHeld.a,		gController[i].binds.a.key,		(event->type == SDL_KEYDOWN));
+				DO_BUTTON_EVENT(event->key.keysym.scancode,	gController[i].nextHeld.b,		gController[i].binds.b.key,		(event->type == SDL_KEYDOWN));
+				DO_BUTTON_EVENT(event->key.keysym.scancode,	gController[i].nextHeld.c,		gController[i].binds.c.key,		(event->type == SDL_KEYDOWN));
+				DO_BUTTON_EVENT(event->key.keysym.scancode,	gController[i].nextHeld.right,	gController[i].binds.right.key,	(event->type == SDL_KEYDOWN));
+				DO_BUTTON_EVENT(event->key.keysym.scancode,	gController[i].nextHeld.left,	gController[i].binds.left.key,	(event->type == SDL_KEYDOWN));
+				DO_BUTTON_EVENT(event->key.keysym.scancode,	gController[i].nextHeld.down,	gController[i].binds.down.key,	(event->type == SDL_KEYDOWN));
+				DO_BUTTON_EVENT(event->key.keysym.scancode,	gController[i].nextHeld.up,		gController[i].binds.up.key,	(event->type == SDL_KEYDOWN));
 			}
 			break;
+		case SDL_CONTROLLERDEVICEADDED: //Controller (not joystick) connected
+		{
+			//Open the connected controller
+			SDL_GameController *connectController = SDL_GameControllerOpen(event->cdevice.which);
+			if (connectController == nullptr)
+			{
+				LOG(("Failed to connect controller %s\nReason: %s\n", SDL_GameControllerName(connectController), SDL_GetError()));
+				break;
+			}
+			
+			//Attach to the first vacant virtual controller
+			for (int i = 0; ; i++)
+			{
+				if (i >= CONTROLLERS)
+				{
+					//If there's no more virtual controllers, stop trying to connect
+					LOG(("Failed to connect controller %s\nReason: Ran out of virtual controller slots\n", SDL_GameControllerName(connectController)));
+					SDL_GameControllerClose(connectController);
+					break;
+				}
+				else
+				{
+					//Quit if this controller is already connected
+					if (gController[i].controller == connectController)
+						break;
+					
+					//Check if this virtual controller is vacant, and attach if so (then stop checking)
+					if (gController[i].controller == nullptr)
+					{
+						gController[i].controller = connectController;
+						LOG(("Connected controller %s to controller %d\n", SDL_GameControllerName(connectController), i));
+						break;
+					}
+				}
+			}
+			break;
+		}
+		case SDL_CONTROLLERDEVICEREMOVED: //Controller (not joystick) disconnecting
+		{
+			//Identify the disconnected controller
+			SDL_GameController *disconnectController = SDL_GameControllerFromInstanceID(event->cdevice.which);
+			if (disconnectController == nullptr)
+			{
+				LOG(("Failed to identify disconnected controller\n"));
+				break;
+			}
+			
+			//Check all virtual controllers to see if this is connected to any, then disconnect them
+			for (int i = 0; i < CONTROLLERS; i++)
+			{
+				if (gController[i].controller == disconnectController)
+				{
+					//This controller matches the given controller, disconnect
+					LOG(("Disconnecting controller %s from controller %d\n", SDL_GameControllerName(gController[i].controller), i));
+					SDL_GameControllerClose(gController[i].controller);
+					gController[i].controller = nullptr;
+					
+					//Clear previous input
+					gController[i].axisX = 0;
+					gController[i].axisY = 0;
+					memset(&gController[i].held, 0, sizeof(CONTROLLER::held));
+					memset(&gController[i].lastHeld, 0, sizeof(CONTROLLER::lastHeld));
+					memset(&gController[i].press, 0, sizeof(CONTROLLER::press));
+					break;
+				}
+			}
+			break;
+		}
+		case SDL_CONTROLLERBUTTONDOWN: //Controller button press / release
+		case SDL_CONTROLLERBUTTONUP:
+		{
+			//Identify controller
+			SDL_GameController *buttonController = SDL_GameControllerFromInstanceID(event->cbutton.which);
+			if (buttonController == nullptr)
+			{
+				LOG(("Failed to identify controller\n"));
+				break;
+			}
+			
+			//Check which button and virtual controller this maps to, and set it according to if it's a press or release
+			for (int i = 0; i < CONTROLLERS; i++)
+			{
+				if (gController[i].controller == buttonController)
+				{
+					DO_BUTTON_EVENT(event->cbutton.button,	gController[i].nextHeld.start,	gController[i].binds.start.button,	(event->type == SDL_CONTROLLERBUTTONDOWN));
+					DO_BUTTON_EVENT(event->cbutton.button,	gController[i].nextHeld.a,		gController[i].binds.a.button,		(event->type == SDL_CONTROLLERBUTTONDOWN));
+					DO_BUTTON_EVENT(event->cbutton.button,	gController[i].nextHeld.b,		gController[i].binds.b.button,		(event->type == SDL_CONTROLLERBUTTONDOWN));
+					DO_BUTTON_EVENT(event->cbutton.button,	gController[i].nextHeld.c,		gController[i].binds.c.button,		(event->type == SDL_CONTROLLERBUTTONDOWN));
+					DO_BUTTON_EVENT(event->cbutton.button,	gController[i].nextHeld.right,	gController[i].binds.right.button,	(event->type == SDL_CONTROLLERBUTTONDOWN));
+					DO_BUTTON_EVENT(event->cbutton.button,	gController[i].nextHeld.left,	gController[i].binds.left.button,	(event->type == SDL_CONTROLLERBUTTONDOWN));
+					DO_BUTTON_EVENT(event->cbutton.button,	gController[i].nextHeld.down,	gController[i].binds.down.button,	(event->type == SDL_CONTROLLERBUTTONDOWN));
+					DO_BUTTON_EVENT(event->cbutton.button,	gController[i].nextHeld.up,		gController[i].binds.up.button,		(event->type == SDL_CONTROLLERBUTTONDOWN));
+				}
+			}
+			break;
+		}
+		case SDL_CONTROLLERAXISMOTION: //Controller axis (analogue stick and some d-pads)
+		{
+			//Identify controller
+			SDL_GameController *axisController = SDL_GameControllerFromInstanceID(event->caxis.which);
+			if (axisController == nullptr)
+			{
+				LOG(("Failed to identify controller\n"));
+				break;
+			}
+			
+			//Check which button and virtual controller this maps to and set the axis position
+			for (int i = 0; i < CONTROLLERS; i++)
+			{
+				if (gController[i].controller == axisController)
+				{
+					if (event->caxis.axis == SDL_CONTROLLER_AXIS_LEFTX)
+					{
+						if (abs(gController[i].axisX) >= CONTROLLER_DEADZONE && abs(event->caxis.value) < CONTROLLER_DEADZONE)
+						{
+							gController[i].nextHeld.left = false;
+							gController[i].nextHeld.right = false;
+						}
+						
+						gController[i].axisX = event->caxis.value;
+					}
+					else if (event->caxis.axis == SDL_CONTROLLER_AXIS_LEFTY)
+					{
+						if (abs(gController[i].axisY) >= CONTROLLER_DEADZONE && abs(event->caxis.value) < CONTROLLER_DEADZONE)
+						{
+							gController[i].nextHeld.up = false;
+							gController[i].nextHeld.down = false;
+						}
+						
+						gController[i].axisY = event->caxis.value;
+					}
+				}
+			}
+			break;
+		}
 	}
 }
 
-//Update our pressed keys, and last held
+//Update our pressed buttons, and last held
 #define DO_PRESS_CHECK(press, held, last) press = (held ? !last : false);
 
 void UpdateInput()
 {
 	for (int i = 0; i < CONTROLLERS; i++)
 	{
+		//Apply axis input
+		if (gController[i].axisX >= CONTROLLER_DEADZONE)
+		{
+			gController[i].nextHeld.right = true;
+			gController[i].nextHeld.left = false;
+		}
+		if (gController[i].axisX <= -CONTROLLER_DEADZONE)
+		{
+			gController[i].nextHeld.left = true;
+			gController[i].nextHeld.right = false;
+		}
+		if (gController[i].axisY >= CONTROLLER_DEADZONE)
+		{
+			gController[i].nextHeld.down = true;
+			gController[i].nextHeld.up = false;
+		}
+		if (gController[i].axisY <= -CONTROLLER_DEADZONE)
+		{
+			gController[i].nextHeld.up = true;
+			gController[i].nextHeld.down = false;
+		}
+		
 		//Update our held
 		gController[i].held = gController[i].nextHeld;
 		
-		//Set pressed keys
+		//Set pressed buttons
 		DO_PRESS_CHECK(gController[i].press.start,	gController[i].held.start,	gController[i].lastHeld.start);
 		DO_PRESS_CHECK(gController[i].press.a,		gController[i].held.a,		gController[i].lastHeld.a);
 		DO_PRESS_CHECK(gController[i].press.b,		gController[i].held.b,		gController[i].lastHeld.b);

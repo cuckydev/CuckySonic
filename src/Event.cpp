@@ -40,15 +40,10 @@ bool HandleEvents()
 						break;
 				}
 				break;
-				
-			case SDL_KEYDOWN:	//Input events
-			case SDL_KEYUP:
-				HandleInputEvent(&event);
-				break;
-				
-			default:	//Unhandled just to be handled by our operating system
-				break;
 		}
+		
+		//Check this event for input
+		HandleInputEvent(&event);
 	}
 	
 	//Update our input (such as pressed keys, or analogue stick input)

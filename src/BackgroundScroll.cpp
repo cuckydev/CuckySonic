@@ -128,7 +128,7 @@ BACKGROUNDSCROLL::~BACKGROUNDSCROLL()
 	free(scrollArray);
 }
 
-void BACKGROUNDSCROLL::GetScroll(int16_t cameraX, int16_t cameraY, int16_t *backX, int16_t *backY)
+void BACKGROUNDSCROLL::GetScroll(bool doScroll, int16_t cameraX, int16_t cameraY, int16_t *backX, int16_t *backY)
 {
 	//Update our parallax and background scrolling to the camera position
 	if (backX != nullptr)
@@ -172,7 +172,7 @@ void BACKGROUNDSCROLL::GetScroll(int16_t cameraX, int16_t cameraY, int16_t *back
 	}
 	
 	//Handle constant scrolling
-	for (uint16_t i = 0; i < scrolls; i++)
+	for (uint16_t i = 0; i < scrolls && doScroll; i++)
 		scroll[i].value = (scroll[i].value + scroll[i].scrollIncrement) % (referenceBackgroundTexture->width << 16);
 	
 	//Handle timers

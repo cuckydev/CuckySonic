@@ -121,6 +121,8 @@ void ObjSpring(OBJECT *object)
 					}
 					
 					player->status.inAir = true;
+					player->status.jumping = false;
+					player->jumpAbility = 2;
 					player->status.shouldNotFall = false;
 					player->routine = PLAYERROUTINE_CONTROL;
 					
