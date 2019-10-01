@@ -13,6 +13,16 @@ static const uint8_t *animationList[] = {
 	animationCollect,
 };
 
+enum SCRATCH
+{
+	//U8
+	SCRATCHU8_ANIM_COUNT = 0,
+	SCRATCHU8_MAX = 1,
+	//U16
+	SCRATCHU16_ANIM_ACCUM = 0,
+	SCRATCHU16_MAX = 1,
+};
+
 void ObjBouncingRing_Routine0(OBJECT *object)
 {
 	//Cap our rings
@@ -64,8 +74,12 @@ void ObjBouncingRing_Routine0(OBJECT *object)
 		ring->collisionType = COLLISIONTYPE_OTHER;
 		ring->touchWidth = 6;
 		ring->touchHeight = 6;
-		ring->scratchU8[0] = 0xFF; //Ring_spill_anim_counter
-		ring->scratchU16[1] = 0x00; //Ring_spill_anim_accum
+		
+		ring->ScratchAllocU8(SCRATCHU8_MAX);
+		ring->ScratchAllocU16(SCRATCHU16_MAX);
+		ring->scratchU8[SCRATCHU8_ANIM_COUNT] = 0xFF;
+		ring->scratchU16[SCRATCHU16_ANIM_ACCUM] = 0x00;
+		
 		ring->parent = object->parent;
 		
 		//Get the ring's velocity
@@ -105,6 +119,10 @@ void ObjBouncingRing_Routine0(OBJECT *object)
 
 void ObjBouncingRing(OBJECT *object)
 {
+	//Allocate scratch memory
+	object->ScratchAllocU8(SCRATCHU8_MAX);
+	object->ScratchAllocU16(SCRATCHU16_MAX);
+	
 	switch (object->routine)
 	{
 		case 0:
@@ -178,14 +196,14 @@ void ObjBouncingRing(OBJECT *object)
 			}
 			
 			//Animate
-			if (object->scratchU8[0] != 0)
+			if (object->scratchU8[SCRATCHU8_ANIM_COUNT] != 0)
 			{
-				object->scratchU16[1] += object->scratchU8[0]--;
-				object->mappingFrame = (object->scratchU16[1] >> 9) & 3;
+				object->scratchU16[SCRATCHU16_ANIM_ACCUM] += object->scratchU8[SCRATCHU8_ANIM_COUNT]--;
+				object->mappingFrame = (object->scratchU16[SCRATCHU16_ANIM_ACCUM] >> 9) & 0x3;
 			}
 			
 			//Check for deletion
-			if (object->scratchU8[0] == 0)
+			if (object->scratchU8[SCRATCHU8_ANIM_COUNT] == 0)
 				object->deleteFlag = true;
 			else
 				object->Draw();

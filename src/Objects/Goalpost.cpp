@@ -29,14 +29,20 @@ static const int8_t goalpostSparklePos[8][2] = {
 
 void ObjGoalpost(OBJECT *object)
 {
+	//Scratch
 	enum SCRATCH
 	{
 		//U8
-		SCRATCHU8_SPARKLE = 0,
+		SCRATCHU8_SPARKLE =			0,
+		SCRATCHU8_MAX =				1,
 		//S16
-		SCRATCHS16_SPIN_TIME = 0,
-		SCRATCHS16_SPARKLE_TIME = 1,
+		SCRATCHS16_SPIN_TIME =		0,
+		SCRATCHS16_SPARKLE_TIME =	1,
+		SCRATCHS16_MAX =			2,
 	};
+	
+	object->ScratchAllocU8(SCRATCHU8_MAX);
+	object->ScratchAllocS16(SCRATCHS16_MAX);
 	
 	switch (object->routine)
 	{

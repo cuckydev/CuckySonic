@@ -43,11 +43,15 @@ void ObjAttractRing(OBJECT *object)
 			if (player->shield != SHIELD_ELECTRIC)
 			{
 				object->function = ObjBouncingRing;
-				object->scratchU8[0] = 0xFF; //Ring_spill_anim_counter
-				object->scratchU16[1] = 0x00; //Ring_spill_anim_accum
+				object->prevFunction = ObjBouncingRing;
+				
+				object->ScratchAllocU8(1);
+				object->ScratchAllocU16(1);
+				object->scratchU8[0] = 0xFF;
+				object->scratchU16[0] = 0x00;
+				
 				object->xRadius = 8;
 				object->yRadius = 8;
-				object->Draw();
 			}
 			
 			//Horizontal pull

@@ -7,9 +7,10 @@
 enum SCRATCH
 {
 	//S16
-	SCRATCHS16_ORIG_X = 0,
-	SCRATCHS16_ORIG_Y = 1,
-	SCRATCHS16_OFF_Y = 2,
+	SCRATCHS16_ORIG_X =	0,
+	SCRATCHS16_ORIG_Y =	1,
+	SCRATCHS16_OFF_Y =	2,
+	SCRATCHS16_MAX =	3,
 };
 
 void ObjSwingingPlatform_Move_Individual(OBJECT *parent, OBJECT *child, int16_t sin, int16_t cos)
@@ -40,6 +41,9 @@ void ObjSwingingPlatform_Move(OBJECT *object)
 
 void ObjSwingingPlatform(OBJECT *object)
 {
+	//Allocate scratch memory
+	object->ScratchAllocS16(SCRATCHS16_MAX);
+	
 	switch (object->routine)
 	{
 		case 0:
@@ -80,6 +84,7 @@ void ObjSwingingPlatform(OBJECT *object)
 				newSegment->priority = 4;
 				
 				//Set position and routine
+				newSegment->ScratchAllocS16(SCRATCHS16_MAX);
 				newSegment->scratchS16[SCRATCHS16_OFF_Y] = yOff;
 				newSegment->routine = 2;
 				

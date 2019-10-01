@@ -34,11 +34,16 @@ void ObjBridgeSegment(OBJECT *object)
 
 void ObjBridge(OBJECT *object)
 {
+	//Scratch
 	enum SCRATCH
 	{
-		//S16
-		SCRATCHS16_DEPRESS_POSITION = 0,
+		//U8
+		SCRATCHU8_DEPRESS_POSITION =	0,
+		SCRATCHU8_DEPRESS_FORCE =		1,
+		SCRATCHU8_MAX =					2,
 	};
+	
+	object->ScratchAllocU8(SCRATCHU8_MAX);
 	
 	switch (object->routine)
 	{
@@ -78,87 +83,129 @@ void ObjBridge(OBJECT *object)
 			for (int i = subtype - 1, v = 0; i >= subtype / 2; i--)
 				depressForce[i] = (v += 2);
 			
-			//Get our depression value
-			int depressCurrentPosition = 0;
-			int depressCurrentPlayers = 0;
+			//Is a player standing on us?
+			bool touching = false;
+			for (int i = 0; i < OBJECT_PLAYER_REFERENCES; i++)
+				if (object->playerContact[i].standing)
+					touching = true;
 			
-			//Check players on the bridge
-			int16_t bridgeLeft = (object->x.pos - (subtype * 8));
+			//Handle bridge depression stuff depending on players standing on us
+			int16_t bridgeWidth = object->subtype * 8;
+			int16_t bridgeWidthSecondary = bridgeWidth * 2;
+			bridgeWidth += 8;
 			
-			for (PLAYER *player = gLevel->playerList; player != nullptr; player = player->next)
+			if (!touching)
 			{
-				OBJECT *child = object->children;
-				int log = 0;
-				
-				for (OBJECT *child = object->children; child != nullptr; child = child->next)
-				{
-					//Check this log
-					if (player->status.shouldNotFall && player->interact == (void*)child)
-					{
-						//Depress at this log
-						if (depressCurrentPlayers == 0)
-						{
-							//We're the first player to be standing on the bridge
-							depressCurrentPosition = log;
-						}
-						else
-						{
-							//Move position towards us if there's already another player standing on the bridge
-							if (log < depressCurrentPosition)
-								depressCurrentPosition--;
-							else if (log > depressCurrentPosition)
-								depressCurrentPosition++;
-						}
-						
-						depressCurrentPlayers++;
-					}
-					
-					//Check next log
-					log++;
-				}
-			}
-			
-			//Update our depression values
-			if (depressCurrentPlayers != 0) //There are players standing on us
-			{
-				//Increment our angle / force, so there's a smooth transition when running on / landing on the bridge
-				if (object->angle < 0x40)
-					object->angle += 4;
-				
-				//Update our position and force
-				object->scratchS16[SCRATCHS16_DEPRESS_POSITION] = depressCurrentPosition;
+				//Decrease force if no-one is standing on us
+				if (object->scratchU8[SCRATCHU8_DEPRESS_FORCE] != 0)
+					object->scratchU8[SCRATCHU8_DEPRESS_FORCE] -= 4;
 			}
 			else
 			{
-				//Decrement our angle / force, so it transitions back when jumping off / running off the bridge
-				if (object->angle > 0)
-					object->angle -= 4;
+				//Check for any players standing on us and handle appropriately
+				int i = 0, v = 0;
+				
+				for (PLAYER *player = gLevel->playerList; player != nullptr; player = player->next)
+				{
+					//Check if this specific player is standing on us
+					if (object->playerContact[i].standing)
+					{
+						//If a secondary player, pull the bridge position slightly towards us
+						int16_t standingLog = ((player->x.pos - object->x.pos) + bridgeWidth) / 16;
+						
+						if (v != 0)
+						{
+							if (standingLog < object->scratchU8[SCRATCHU8_DEPRESS_POSITION])
+								object->scratchU8[SCRATCHU8_DEPRESS_POSITION]--;
+							else if (standingLog > object->scratchU8[SCRATCHU8_DEPRESS_POSITION])
+								object->scratchU8[SCRATCHU8_DEPRESS_POSITION]++;
+						}
+						
+						//Increment standing players count
+						v++;
+					}
+					
+					//Check next player's contact
+					i++;
+				}
+				
+				//Increase force if someone is standing on us
+				if (object->scratchU8[SCRATCHU8_DEPRESS_FORCE] != 0x40)
+					object->scratchU8[SCRATCHU8_DEPRESS_FORCE] += 4;
 			}
 			
-			//Depress the log children
-			int16_t depressPosition = object->scratchS16[SCRATCHS16_DEPRESS_POSITION];
+			//Handle depression
+			int j = 0;
 			
-			int i = 0;
 			for (OBJECT *child = object->children; child != nullptr; child = child->next)
 			{
 				//Get the angle of this log (go up to 0x40 from the left, and go back down to 0x00 to the right)
 				uint8_t angle;
-				if (i <= depressPosition)
-					angle = (0x40 * (i + 1)) / (depressPosition + 1); //To the left of the depress position
+				if (j <= object->scratchU8[SCRATCHU8_DEPRESS_POSITION])
+					angle = (0x40 * (j + 1)) / (object->scratchU8[SCRATCHU8_DEPRESS_POSITION] + 1); //To the left of the depress position
 				else
-					angle = (0x40 * (subtype - i)) / (subtype - depressPosition); //To the right of the depress position
+					angle = (0x40 * (subtype - j)) / (subtype - object->scratchU8[SCRATCHU8_DEPRESS_POSITION]); //To the right of the depress position
 				
 				//Get the depression value from the value above, scaled by the force of the players on it (0x00 with no-one on it, 0x40 when someone is on it)
 				int16_t depress;
-				GetSine(object->angle * angle / 0x40, &depress, nullptr);
+				GetSine(object->scratchU8[SCRATCHU8_DEPRESS_FORCE] * angle / 0x40, &depress, nullptr);
 				
-				//Set our depression position
-				child->y.pos = object->y.pos + (depress * depressForce[depressPosition] / 0x100);
+				//Set our depression position, then check next log
+				child->y.pos = object->y.pos + (depress * depressForce[object->scratchU8[SCRATCHU8_DEPRESS_POSITION]] / 0x100);
+				j++;
+			}
+			
+			//Act as a solid platform
+			int i = 0, v = 0;
+			
+			for (PLAYER *player = gLevel->playerList; player != nullptr; player = player->next)
+			{
+				if (object->playerContact[i].standing)
+				{
+					//Check if we're leaving the platform
+					int16_t xDiff = (player->x.pos - object->x.pos) + bridgeWidth;
+					
+					if (player->status.inAir || xDiff < 0 || xDiff >= bridgeWidthSecondary)
+					{
+						//Leave the platform
+						player->status.shouldNotFall = false;
+						object->playerContact[i].standing = false;
+					}
+					else
+					{
+						//Set the depression position if we're the lead player on the bridge
+						xDiff /= 16;
+						if (v == 0)
+							object->scratchU8[SCRATCHU8_DEPRESS_POSITION] = xDiff;
+						
+						//Set our y-position
+						OBJECT *child = object->children;
+						for (int i = 0; i < xDiff; i++)
+							child = child->next;
+						player->y.pos = child->y.pos - (8 + player->yRadius);
+					}
+					
+					//Increment standing players count
+					v++;
+				}
+				else
+				{
+					//Check to land onto the bridge
+					int16_t standingLog = ((player->x.pos - object->x.pos) + bridgeWidth) / 16;
+					object->LandOnPlatform(player, i, bridgeWidth, bridgeWidthSecondary, 8, object->x.pos);
+					
+					if (object->playerContact[i].standing)
+					{
+						//If there was no one standing on the bridge, update depress position
+						if (v == 0)
+							object->scratchU8[SCRATCHU8_DEPRESS_POSITION] = standingLog;
+						
+						//Increment standing players count
+						v++;
+					}
+				}
 				
-				//Act as a solid
-				child->PlatformObject(8, 8, child->x.pos);
-				
-				//Increment our log index
+				//Check next player's contact
 				i++;
 			}
 			break;

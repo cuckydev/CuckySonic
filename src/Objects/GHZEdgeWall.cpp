@@ -7,12 +7,12 @@
 int ObjGHZEdgeWall_Solid2(PLAYER *player, int i, OBJECT *object, int16_t width, int16_t height, int16_t *retXDiff, int16_t *retYDiff)
 {
 	//Get our position differences and return 0 if out of range
-	int16_t xDiff = (player->x.pos - object->x.pos) + width; //d0
+	int16_t xDiff = (player->x.pos - object->x.pos) + width;
 	if (xDiff < 0 || xDiff > (width * 2))
 		return 0;
 	
-	int16_t yDiff = (player->y.pos - object->y.pos) + (height += player->yRadius); //d3
-	if (yDiff < 0 || yDiff >= (height * 2))
+	int16_t yDiff = (player->y.pos - object->y.pos) + (height += player->yRadius);
+	if (yDiff < 0 || yDiff > (height * 2))
 		return 0;
 	
 	//Check if player is tangible
@@ -27,8 +27,8 @@ int ObjGHZEdgeWall_Solid2(PLAYER *player, int i, OBJECT *object, int16_t width, 
 		xClip = -xDiff;
 	}
 	
-	int16_t yClip = yDiff; //d1
-	if (yDiff < height)
+	int16_t yClip = yDiff;
+	if (yDiff >= height)
 	{
 		yDiff -= height * 2;
 		yClip = -yDiff;

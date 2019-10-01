@@ -2,6 +2,7 @@
 #include <stdint.h>
 
 #define abs(x) ((x) < 0 ? -(x) : (x))
+#define sign(x) (x ? (x / abs(x)) : 0)
 #define min(x, y) ((x) < (y) ? (x) : (y))
 #define max(x, y) ((x) > (y) ? (x) : (y))
 

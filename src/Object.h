@@ -7,7 +7,6 @@
 #include "CommonMacros.h"
 #include "Player.h"
 
-#define SCRATCH_ENTRIES 0x20
 #define OBJECT_PLAYER_REFERENCES 0x100
 
 enum COLLISIONTYPE
@@ -119,12 +118,12 @@ class OBJECT
 		OBJECT *children;
 		
 		//Scratch memory
-		 uint8_t  scratchU8[SCRATCH_ENTRIES];
-		  int8_t  scratchS8[SCRATCH_ENTRIES];
-		uint16_t scratchU16[SCRATCH_ENTRIES];
-		 int16_t scratchS16[SCRATCH_ENTRIES];
-		uint32_t scratchU32[SCRATCH_ENTRIES];
-		 int32_t scratchS32[SCRATCH_ENTRIES];
+		 uint8_t  *scratchU8;
+		  int8_t  *scratchS8;
+		uint16_t *scratchU16;
+		 int16_t *scratchS16;
+		uint32_t *scratchU32;
+		 int32_t *scratchS32;
 		
 		//Deletion flag
 		bool deleteFlag;
@@ -132,10 +131,18 @@ class OBJECT
 		OBJECT *next;
 		OBJECT **list;
 		void (*function)(OBJECT *object);
+		void (*prevFunction)(OBJECT *object);
 		
 	public:
 		OBJECT(OBJECT **linkedList, void (*objectFunction)(OBJECT *object));
 		~OBJECT();
+		
+		void  ScratchAllocU8(int max);
+		void  ScratchAllocS8(int max);
+		void ScratchAllocU16(int max);
+		void ScratchAllocS16(int max);
+		void ScratchAllocU32(int max);
+		void ScratchAllocS32(int max);
 		
 		void Move();
 		void MoveAndFall();
@@ -146,7 +153,7 @@ class OBJECT
 		int16_t CheckFloorEdge(COLLISIONLAYER layer, int16_t xPos, int16_t yPos, uint8_t *outAngle);
 		
 		void PlatformObject(int16_t width, int16_t height, int16_t lastXPos);
-		void LandOnPlatform(PLAYER *player, int i, int16_t width, int16_t height, int16_t lastXPos);
+		bool LandOnPlatform(PLAYER *player, int i, int16_t width1, int16_t width2, int16_t height, int16_t lastXPos);
 		void ExitPlatform(PLAYER *player, int i);
 		
 		OBJECT_SOLIDTOUCH SolidObject(int16_t width, int16_t height_air, int16_t height_standing, int16_t lastXPos);

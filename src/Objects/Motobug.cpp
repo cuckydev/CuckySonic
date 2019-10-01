@@ -16,11 +16,16 @@ static const uint8_t *animationList[] = {
 
 void ObjMotobug(OBJECT *object)
 {
+	//Scratch
 	enum SCRATCH
 	{
-		SCRATCH_TIME = 0,			//1 byte
-		SCRATCH_SMOKE_DELAY = 1,	//1 byte
+		//S8
+		SCRATCHS8_TIME =		0,
+		SCRATCHS8_SMOKE_DELAY =	1,
+		SCRATCHS8_MAX =			2,
 	};
+	
+	object->ScratchAllocS8(SCRATCHS8_MAX);
 	
 	switch (object->routine)
 	{
@@ -72,7 +77,7 @@ void ObjMotobug(OBJECT *object)
 			{
 				case 0:
 				{
-					if (--object->scratchS8[SCRATCH_TIME] < 0)
+					if (--object->scratchS8[SCRATCHS8_TIME] < 0)
 					{
 						//Set state and turn around
 						object->routineSecondary = 1;
@@ -97,7 +102,7 @@ void ObjMotobug(OBJECT *object)
 					{
 						//Set state and wait
 						object->routineSecondary = 0;
-						object->scratchS8[SCRATCH_TIME] = 59;
+						object->scratchS8[SCRATCHS8_TIME] = 59;
 						object->xVel = 0;
 						object->anim = 0;
 						break;

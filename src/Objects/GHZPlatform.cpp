@@ -9,15 +9,19 @@ enum SCRATCH
 	//U8
 	SCRATCHU8_WEIGHT =		0,
 	SCRATCHU8_SPAWN_TYPE =	1,
+	SCRATCHU8_MAX =			2,
 	//U16
 	SCRATCHU16_FALL_TIME =	0,
+	SCRATCHU16_MAX =		1,
 	//S16
 	SCRATCHS16_SPAWN_X =	0,
 	SCRATCHS16_SPAWN_Y =	1,
+	SCRATCHS16_MAX =		2,
 	//S32
 	SCRATCHS32_ORIG_X =		0,
 	SCRATCHS32_ORIG_Y =		1,
 	SCRATCHS32_Y =			2,
+	SCRATCHS32_MAX =		3,
 };
 
 void ObjGHZPlatform_Move(OBJECT *object)
@@ -136,7 +140,13 @@ void ObjGHZPlatform_Nudge(OBJECT *object)
 }
 
 void ObjGHZPlatform(OBJECT *object)
-{	
+{
+	//Allocate scratch memory
+	object->ScratchAllocU8(SCRATCHU8_MAX);
+	object->ScratchAllocU16(SCRATCHU16_MAX);
+	object->ScratchAllocS16(SCRATCHS16_MAX);
+	object->ScratchAllocS32(SCRATCHS32_MAX);
+	
 	switch (object->routine)
 	{
 		case 0:
@@ -176,8 +186,8 @@ void ObjGHZPlatform(OBJECT *object)
 		{
 			//Is a player standing on us?
 			bool touching = false;
-			for (PLAYER *player = gLevel->playerList; player != nullptr; player = player->next)
-				if (player->status.shouldNotFall && player->interact == (void*)object)
+			for (int i = 0; i < OBJECT_PLAYER_REFERENCES; i++)
+				if (object->playerContact[i].standing)
 					touching = true;
 			
 			//Decrease / increase our weight

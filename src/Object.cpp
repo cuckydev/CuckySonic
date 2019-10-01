@@ -11,6 +11,7 @@ OBJECT::OBJECT(OBJECT **linkedList, void (*objectFunction)(OBJECT *object))
 	
 	//Set type and subtype
 	function = objectFunction;
+	prevFunction = objectFunction;
 	
 	//Attach to linked list (if applicable)
 	if (linkedList != nullptr)
@@ -38,6 +39,14 @@ OBJECT::OBJECT(OBJECT **linkedList, void (*objectFunction)(OBJECT *object))
 
 OBJECT::~OBJECT()
 {
+	//Free all scratch memory
+	free(scratchU8);
+	free(scratchS8);
+	free(scratchU16);
+	free(scratchS16);
+	free(scratchU32);
+	free(scratchS32);
+	
 	//Detach from linked list
 	if (list != nullptr)
 	{
@@ -59,6 +68,16 @@ OBJECT::~OBJECT()
 		object = next;
 	}
 }
+
+//Scratch allocation
+#define SCRATCH_ALLOC(name, type, max) if (name == nullptr) { name = (type*)malloc(max * sizeof(type)); memset(name, 0, max * sizeof(type)); }
+
+void  OBJECT::ScratchAllocU8(int max) { SCRATCH_ALLOC(scratchU8,   uint8_t, max) }
+void  OBJECT::ScratchAllocS8(int max) { SCRATCH_ALLOC(scratchS8,    int8_t, max) }
+void OBJECT::ScratchAllocU16(int max) { SCRATCH_ALLOC(scratchU16, uint16_t, max) }
+void OBJECT::ScratchAllocS16(int max) { SCRATCH_ALLOC(scratchS16,  int16_t, max) }
+void OBJECT::ScratchAllocU32(int max) { SCRATCH_ALLOC(scratchU32, uint32_t, max) }
+void OBJECT::ScratchAllocS32(int max) { SCRATCH_ALLOC(scratchS32,  int32_t, max) }
 
 //Movement and gravity
 void OBJECT::Move()
@@ -202,7 +221,7 @@ void OBJECT::PlatformObject(int16_t width, int16_t height, int16_t lastXPos)
 			//Check if we're still on the platform
 			int16_t xDiff = player->x.pos - lastXPos + width;
 			
-			if (!player->status.inAir && xDiff >= 0 && xDiff <= width * 2)
+			if (!player->status.inAir && xDiff >= 0 && xDiff < width * 2)
 				player->MoveOnPlatform((void*)this, height, lastXPos);
 			else
 				ExitPlatform(player, i);
@@ -210,7 +229,7 @@ void OBJECT::PlatformObject(int16_t width, int16_t height, int16_t lastXPos)
 		else
 		{
 			//Check if we're going to land on the platform
-			LandOnPlatform(player, i, width, height, lastXPos);
+			LandOnPlatform(player, i, width, width * 2, height, lastXPos);
 		}
 		
 		//Check next player's contact
@@ -218,12 +237,12 @@ void OBJECT::PlatformObject(int16_t width, int16_t height, int16_t lastXPos)
 	}
 }
 
-void OBJECT::LandOnPlatform(PLAYER *player, int i, int16_t width, int16_t height, int16_t lastXPos)
+bool OBJECT::LandOnPlatform(PLAYER *player, int i, int16_t width1, int16_t width2, int16_t height, int16_t lastXPos)
 {
 	//Check if we're in a state where we can enter onto the platform
-	int16_t xDiff = (player->x.pos - lastXPos) + width;
-	if (player->yVel < 0 || xDiff < 0 || xDiff > width * 2)
-		return;
+	int16_t xDiff = (player->x.pos - lastXPos) + width1;
+	if (player->yVel < 0 || xDiff < 0 || xDiff >= width2)
+		return false;
 	
 	if (player->status.reverseGravity)
 	{
@@ -233,11 +252,12 @@ void OBJECT::LandOnPlatform(PLAYER *player, int i, int16_t width, int16_t height
 		
 		//If we're on top of the platform, and not in an intangible state
 		if (yThing > 0 || yThing < -16 || player->objectControl.disableObjectInteract || player->routine == PLAYERROUTINE_DEATH)
-			return;
+			return false;
 		
 		//Land on top of the platform
 		player->y.pos += yThing + 4;
 		player->AttachToObject((void*)this, (&playerContact[i].standing - (size_t)this));
+		return true;
 	}
 	else
 	{
@@ -247,11 +267,12 @@ void OBJECT::LandOnPlatform(PLAYER *player, int i, int16_t width, int16_t height
 		
 		//If we're on top of the platform, and not in an intangible state
 		if (yThing > 0 || yThing < -16 || player->objectControl.disableObjectInteract || player->routine == PLAYERROUTINE_DEATH)
-			return;
+			return false;
 		
 		//Land on top of the platform
 		player->y.pos += yThing + 4;
 		player->AttachToObject((void*)this, (&playerContact[i].standing - (size_t)this));
+		return true;
 	}
 }
 
@@ -504,6 +525,21 @@ bool OBJECT::Update()
 {
 	//Clear drawing flag
 	isDrawing = false;
+	
+	//If our function has changed, free any allocated scratch memory
+	if (function != prevFunction)
+	{
+		//Free all scratch memory
+		free(scratchU8);	scratchU8 =  nullptr;
+		free(scratchS8);	scratchS8 =  nullptr;
+		free(scratchU16);	scratchU16 = nullptr;
+		free(scratchS16);	scratchS16 = nullptr;
+		free(scratchU32);	scratchU32 = nullptr;
+		free(scratchS32);	scratchS32 = nullptr;
+		
+		//Remember this as our last function
+		prevFunction = function;
+	}
 	
 	//Run our object code
 	if (function != nullptr)

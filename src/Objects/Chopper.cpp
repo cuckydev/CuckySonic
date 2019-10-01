@@ -16,11 +16,15 @@ static const uint8_t *animationList[] = {
 
 void ObjChopper(OBJECT *object)
 {
+	//Scratch
 	enum SCRATCH
 	{
 		//S16
 		SCRATCHS16_ORIG_Y = 0,
+		SCRATCHS16_MAX = 1,
 	};
+	
+	object->ScratchAllocS16(SCRATCHS16_MAX);
 	
 	switch (object->routine)
 	{

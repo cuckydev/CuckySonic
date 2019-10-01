@@ -2,6 +2,7 @@
 #include "Path.h"
 #include "Log.h"
 #include "Error.h"
+#include "MathUtil.h"
 
 #define CONTROLLER_DEADZONE 0x200
 
@@ -37,6 +38,10 @@ bool InitializeInput()
 		Error(SDL_GetError());
 		return false;
 	}
+	else
+	{
+		LOG(("Successfully loaded gamepad mappings from gamecontrollerdb.txt\n"));
+	}
 	
 	//Connect controllers
 	for (int i = 0, v = 0; i < SDL_NumJoysticks(); i++)
@@ -46,29 +51,26 @@ bool InitializeInput()
 			//Open this controller and assign to a virtual controller
 			SDL_GameController *controller = SDL_GameControllerOpen(i);
 			
-			if (controller != nullptr && v < CONTROLLERS)
+			if (controller != nullptr)
 			{
-				//Successfully connected controller
-				LOG(("Connected controller %s to controller %d\n", SDL_GameControllerName(controller), v));
-				gController[v++].controller = controller;
-			}
-			else
-			{
-				//Failed to connect controller
-				const char *reason = "Ran out of virtual controller slots";
-				if (controller == nullptr)
-					reason = SDL_GetError();
-				
-				//Disconnect controller
-				if (controller != nullptr)
+				if (v >= CONTROLLERS)
 				{
-					LOG(("Failed to connect controller %s\nReason: %s\n", SDL_GameControllerName(controller), reason));
+					//Surpassed virtual controller count
+					LOG(("Failed to connect controller %s to controller %d\nReason: Ran out of virtual controller slots\n", SDL_GameControllerName(controller), v));
 					SDL_GameControllerClose(controller);
+					break;
 				}
 				else
 				{
-					LOG(("Failed to connect controller %d\nReason: %s\n", i, reason));
+					//Successfully connected controller
+					LOG(("Connected controller %s to controller %d\n", SDL_GameControllerName(controller), v));
+					gController[v++].controller = controller;
 				}
+			}
+			else
+			{
+				LOG(("Failed to connect controller %s\nReason: %s\n", SDL_GameControllerName(controller), SDL_GetError()));
+				SDL_GameControllerClose(controller);
 			}
 		}
 	}
@@ -230,29 +232,63 @@ void HandleInputEvent(SDL_Event *event)
 				break;
 			}
 			
-			//Check which button and virtual controller this maps to and set the axis position
+			//Check which virtual controller this maps to and set the axis position + directions from it
 			for (int i = 0; i < CONTROLLERS; i++)
 			{
 				if (gController[i].controller == axisController)
 				{
 					if (event->caxis.axis == SDL_CONTROLLER_AXIS_LEFTX)
 					{
+						//Check how the new axis value will affect our held directions
 						if (abs(gController[i].axisX) >= CONTROLLER_DEADZONE && abs(event->caxis.value) < CONTROLLER_DEADZONE)
 						{
+							//Moving the stick back into the dead-zone
 							gController[i].nextHeld.left = false;
 							gController[i].nextHeld.right = false;
 						}
+						else
+						{
+							//Moving the stick out of the dead-zone or switching sides
+							if (event->caxis.value > 0)	//+ = Right
+							{
+								gController[i].nextHeld.right = true;
+								gController[i].nextHeld.left = false;
+							}
+							if (event->caxis.value < 0)	//- = Left
+							{
+								gController[i].nextHeld.left = true;
+								gController[i].nextHeld.right = false;
+							}
+						}
 						
+						//Remember our axis value for next update
 						gController[i].axisX = event->caxis.value;
 					}
 					else if (event->caxis.axis == SDL_CONTROLLER_AXIS_LEFTY)
 					{
+						//Check how the new axis value will affect our held directions
 						if (abs(gController[i].axisY) >= CONTROLLER_DEADZONE && abs(event->caxis.value) < CONTROLLER_DEADZONE)
 						{
+							//Moving the stick back into the dead-zone
 							gController[i].nextHeld.up = false;
 							gController[i].nextHeld.down = false;
 						}
+						else
+						{
+							//Moving the stick out of the dead-zone or switching sides
+							if (event->caxis.value > 0)	//+ = Down
+							{
+								gController[i].nextHeld.down = true;
+								gController[i].nextHeld.up = false;
+							}
+							if (event->caxis.value < 0)	//- = Up
+							{
+								gController[i].nextHeld.up = true;
+								gController[i].nextHeld.down = false;
+							}
+						}
 						
+						//Remember our axis value for next update
 						gController[i].axisY = event->caxis.value;
 					}
 				}
@@ -269,28 +305,6 @@ void UpdateInput()
 {
 	for (int i = 0; i < CONTROLLERS; i++)
 	{
-		//Apply axis input
-		if (gController[i].axisX >= CONTROLLER_DEADZONE)
-		{
-			gController[i].nextHeld.right = true;
-			gController[i].nextHeld.left = false;
-		}
-		if (gController[i].axisX <= -CONTROLLER_DEADZONE)
-		{
-			gController[i].nextHeld.left = true;
-			gController[i].nextHeld.right = false;
-		}
-		if (gController[i].axisY >= CONTROLLER_DEADZONE)
-		{
-			gController[i].nextHeld.down = true;
-			gController[i].nextHeld.up = false;
-		}
-		if (gController[i].axisY <= -CONTROLLER_DEADZONE)
-		{
-			gController[i].nextHeld.up = true;
-			gController[i].nextHeld.down = false;
-		}
-		
 		//Update our held
 		gController[i].held = gController[i].nextHeld;
 		
