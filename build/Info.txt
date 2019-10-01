@@ -10,5 +10,4 @@ stb_vorbis - public domain
 miniaudio - public domain
 
 Other Credtis:
-Credit to Anne (Sketch) for the corkscrew animation sprites
 Thanks to everyone behind the Sonic 1, 2, and 3K disassemblies for their hard work to make something like this possible!

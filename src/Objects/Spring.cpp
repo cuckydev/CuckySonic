@@ -4,6 +4,9 @@
 #include "../Game.h"
 #include "../Log.h"
 
+#define HORIZONTAL_UPSIDEDOWN_FIX	//In the originals, horizontal springs wouldn't bounce you correctly if you were upside down (on a ceiling), this fixes that
+#define SOLIDOBJECT_CONTACT_CHECK	//In S3K, springs were modified to use the contact information returned from SolidObject rather than the player contact flags, the only thing changed gameplay-wise by this is springs bounce you even in mid-air
+
 static const uint8_t animationUpIdle[] =				{0x0F,0x00,0xFF};
 static const uint8_t animationUpBounce[] =				{0x00,0x01,0x00,0x00,0x02,0x02,0x02,0x02,0x02,0x02,0xFD,0x00};
 static const uint8_t animationHorizontalIdle[] =		{0x0F,0x03,0xFF};
@@ -104,16 +107,23 @@ void ObjSpring(OBJECT *object)
 			
 			//Check if any players touched the top of us
 			int i = 0;
+			
 			for (PLAYER *player = gLevel->playerList; player != nullptr; player = player->next)
 			{
-				if (object->routine == 1 ? object->playerContact[i++].standing : touch.bottom[i++])
+				bool isUp = (object->routine == ROUTINE_UP) ^ player->status.reverseGravity;
+				
+			#ifdef SOLIDOBJECT_CONTACT_CHECK
+				if (isUp ? touch.top[i] : touch.bottom[i])
+			#else
+				if (isUp ? object->playerContact[i].standing : touch.bottom[i])
+			#endif
 				{
 					//Play bouncing animation
 					object->anim = 1;
 					object->prevAnim = 0;
 					
 					//Launch player
-					if (object->routine == ROUTINE_UP)
+					if (isUp)
 					{
 						player->y.pos += 8;
 						player->yVel = object->scratchS16[SCRATCHS16_FORCE];
@@ -125,9 +135,10 @@ void ObjSpring(OBJECT *object)
 						player->yVel = -object->scratchS16[SCRATCHS16_FORCE];
 					}
 					
-					player->status.inAir = true;
 					player->status.jumping = false;
-					player->jumpAbility = 2;
+					player->spindashing = false;
+					
+					player->status.inAir = true;
 					player->status.shouldNotFall = false;
 					player->routine = PLAYERROUTINE_CONTROL;
 					
@@ -166,6 +177,9 @@ void ObjSpring(OBJECT *object)
 					
 					PlaySound(SOUNDID_SPRING);
 				}
+				
+				//Check next player's contact
+				i++;
 			}
 			
 			object->Animate(animationList);
@@ -175,13 +189,17 @@ void ObjSpring(OBJECT *object)
 		case 2: //Horizontal
 		{
 			//Act as solid
-			object->SolidObject(19, 14, 15, object->x.pos);
+			OBJECT_SOLIDTOUCH touch = object->SolidObject(19, 14, 15, object->x.pos);
 			
 			//Check if any players touched our sides
 			int i = 0;
 			for (PLAYER *player = gLevel->playerList; player != nullptr; player = player->next)
 			{
-				if (object->playerContact[i++].pushing)
+			#ifdef SOLIDOBJECT_CONTACT_CHECK
+				if (touch.side[i])
+			#else
+				if (object->playerContact[i].pushing)
+			#endif
 				{
 					//Reverse flip if to the left
 					bool launchLeft = object->status.xFlip;
@@ -211,6 +229,15 @@ void ObjSpring(OBJECT *object)
 					player->inertia = player->xVel;
 					if (!player->status.inBall)
 						player->anim = PLAYERANIMATION_WALK;
+					
+					#ifdef HORIZONTAL_UPSIDEDOWN_FIX
+						if ((player->angle + 0x40) & 0x80)
+						{
+							//If upside down, invert inertia and xFlip
+							player->inertia = -player->inertia;
+							player->status.xFlip = !player->status.xFlip;
+						}
+					#endif
 					
 					if (object->subtype & 0x80) //Unused flag?
 						player->yVel = 0;
@@ -245,8 +272,14 @@ void ObjSpring(OBJECT *object)
 						player->lrbSolidLayer = COLLISIONLAYER_ALTERNATE_LRB;
 					}
 					
+					//Clear pushing and play spring sound
+					player->status.pushing = false;
+					object->playerContact[i].pushing = false;
 					PlaySound(SOUNDID_SPRING);
 				}
+				
+				//Check next player's contact
+				i++;
 			}
 			
 			object->Animate(animationList);

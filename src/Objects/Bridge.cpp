@@ -103,7 +103,7 @@ void ObjBridge(OBJECT *object)
 			else
 			{
 				//Check for any players standing on us and handle appropriately
-				int i = 0, v = 0;
+				int i = 0;
 				
 				for (PLAYER *player = gLevel->playerList; player != nullptr; player = player->next)
 				{
@@ -113,16 +113,13 @@ void ObjBridge(OBJECT *object)
 						//If a secondary player, pull the bridge position slightly towards us
 						int16_t standingLog = ((player->x.pos - object->x.pos) + bridgeWidth) / 16;
 						
-						if (v != 0)
+						if (i != 0)
 						{
 							if (standingLog < object->scratchU8[SCRATCHU8_DEPRESS_POSITION])
 								object->scratchU8[SCRATCHU8_DEPRESS_POSITION]--;
 							else if (standingLog > object->scratchU8[SCRATCHU8_DEPRESS_POSITION])
 								object->scratchU8[SCRATCHU8_DEPRESS_POSITION]++;
 						}
-						
-						//Increment standing players count
-						v++;
 					}
 					
 					//Check next player's contact
@@ -156,7 +153,7 @@ void ObjBridge(OBJECT *object)
 			}
 			
 			//Act as a solid platform
-			int i = 0, v = 0;
+			int i = 0;
 			
 			for (PLAYER *player = gLevel->playerList; player != nullptr; player = player->next)
 			{
@@ -175,18 +172,15 @@ void ObjBridge(OBJECT *object)
 					{
 						//Set the depression position if we're the lead player on the bridge
 						xDiff /= 16;
-						if (v == 0)
+						if (i == 0)
 							object->scratchU8[SCRATCHU8_DEPRESS_POSITION] = xDiff;
 						
 						//Set our y-position
 						OBJECT *child = object->children;
-						for (int i = 0; i < xDiff; i++)
+						for (int k = 0; k < xDiff; k++)
 							child = child->next;
 						player->y.pos = child->y.pos - (8 + player->yRadius);
 					}
-					
-					//Increment standing players count
-					v++;
 				}
 				else
 				{
@@ -196,12 +190,9 @@ void ObjBridge(OBJECT *object)
 					
 					if (object->playerContact[i].standing)
 					{
-						//If there was no one standing on the bridge, update depress position
-						if (v == 0)
+						//If we're the lead, update depress position
+						if (i == 0)
 							object->scratchU8[SCRATCHU8_DEPRESS_POSITION] = standingLog;
-						
-						//Increment standing players count
-						v++;
 					}
 				}
 				

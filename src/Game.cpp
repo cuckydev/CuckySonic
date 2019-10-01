@@ -6,7 +6,7 @@
 #include "SDL_events.h"
 
 //Debug bool
-bool gDebugEnabled = false;
+bool gDebugEnabled = true;
 
 //Score, time, rings, and lives
 #define SCORE_REWARD 50000

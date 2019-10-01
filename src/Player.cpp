@@ -3189,16 +3189,7 @@ void PLAYER::Update()
 					{
 						//Toggle our reverse gravity
 						if (gController[controller].press.a)
-						{
 							status.reverseGravity ^= 1;
-							if (anim != PLAYERANIMATION_ROLL)
-								anim = PLAYERANIMATION_WALK;
-							status.inAir = true;
-							flipAngle = 0x80;
-							flipsRemaining = 1;
-							flipSpeed = 4;
-							yVel = -yVel;
-						}
 						
 						//Enable debug mode
 						if (gController[controller].press.b)
