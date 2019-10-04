@@ -268,7 +268,9 @@ MUSIC::MUSIC(const char *name, int initialPosition, float initialVolume)
 	//If the file failed to open...
 	if (fp == nullptr)
 	{
-		Error(fail = "Failed to open the given file");
+		char error[0x300];
+		sprintf(error, "Failed to open %s\n", oggPath);
+		Error(fail = error);
 		return;
 	}
 	
@@ -306,9 +308,6 @@ MUSIC::MUSIC(const char *name, int initialPosition, float initialVolume)
 	const ma_pcm_converter_config config = ma_pcm_converter_config_init(ma_format_f32, channels, frequency, ma_format_f32, 2, AUDIO_FREQUENCY, MusicReadSamples, this);
 	ma_pcm_converter_init(&config, &resampler);
 	
-	//Lock the audio device before messing with the music list
-	AUDIO_LOCK;
-	
 	//Attach to the linked list
 	next = musicList;
 	musicList = this;
@@ -318,17 +317,11 @@ MUSIC::MUSIC(const char *name, int initialPosition, float initialVolume)
 		stb_vorbis_seek_frame(file, 0); //Seek to the beginning if failed
 	volume = initialVolume;
 	
-	//Unlock audio device
-	AUDIO_UNLOCK;
-	
 	LOG(("Success!\n"));
 }
 
 MUSIC::~MUSIC()
 {
-	//Lock the audio device before messing with potentially playing music
-	AUDIO_LOCK;
-	
 	//Close our loaded file
 	if (file != nullptr)
 		stb_vorbis_close(file);
@@ -345,9 +338,6 @@ MUSIC::~MUSIC()
 	
 	//Free mix buffer
 	free(mixBuffer);
-	
-	//Unlock audio device
-	AUDIO_UNLOCK;
 }
 
 //Playback functions

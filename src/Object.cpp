@@ -1,11 +1,12 @@
 #include "Object.h"
 #include "Objects.h"
+
 #include "Game.h"
 #include "Log.h"
-#include "LevelCollision.h"
 #include "Error.h"
+#include "Player.h"
 
-OBJECT::OBJECT(OBJECT **linkedList, void (*objectFunction)(OBJECT *object))
+OBJECT::OBJECT(OBJECT **linkedList, OBJECTFUNCTION objectFunction)
 {
 	memset(this, 0, sizeof(OBJECT));
 	
@@ -222,7 +223,7 @@ void OBJECT::PlatformObject(int16_t width, int16_t height, int16_t lastXPos)
 			int16_t xDiff = player->x.pos - lastXPos + width;
 			
 			if (!player->status.inAir && xDiff >= 0 && xDiff < width * 2)
-				player->MoveOnPlatform((void*)this, height, lastXPos);
+				player->MoveOnPlatform(this, height, lastXPos);
 			else
 				ExitPlatform(player, i);
 		}
@@ -256,7 +257,7 @@ bool OBJECT::LandOnPlatform(PLAYER *player, int i, int16_t width1, int16_t width
 		
 		//Land on top of the platform
 		player->y.pos += yThing + 4;
-		player->AttachToObject((void*)this, (&playerContact[i].standing - (size_t)this));
+		player->AttachToObject(this, (&playerContact[i].standing - (size_t)this));
 		return true;
 	}
 	else
@@ -271,7 +272,7 @@ bool OBJECT::LandOnPlatform(PLAYER *player, int i, int16_t width1, int16_t width
 		
 		//Land on top of the platform
 		player->y.pos += yThing + 4;
-		player->AttachToObject((void*)this, (&playerContact[i].standing - (size_t)this));
+		player->AttachToObject(this, (&playerContact[i].standing - (size_t)this));
 		return true;
 	}
 }
@@ -307,7 +308,7 @@ OBJECT_SOLIDTOUCH OBJECT::SolidObject(int16_t width, int16_t height_air, int16_t
 			}
 			
 			//Move with the object
-			player->MoveOnPlatform((void*)this, height_standing, lastXPos);
+			player->MoveOnPlatform(this, height_standing, lastXPos);
 			
 			//Check next player
 			i++;
@@ -376,7 +377,7 @@ void OBJECT::SolidObjectCont(OBJECT_SOLIDTOUCH *solidTouch, PLAYER *player, int 
 							else
 								player->y.pos -= (yDiff + 1);
 							
-							player->AttachToObject((void*)this, (&playerContact[i].standing - (size_t)this));
+							player->AttachToObject(this, (&playerContact[i].standing - (size_t)this));
 							
 							//Set top touch flag
 							solidTouch->top[i] = true;

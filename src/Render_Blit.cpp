@@ -15,7 +15,7 @@ void SOFTWAREBUFFER::Blit8(PALCOLOUR *backgroundColour, uint8_t *buffer, int pit
 	for (int i = RENDERLAYERS - 1; i >= 0; i--)
 	{
 		//Iterate through each entry
-		for (RENDERQUEUE *entry = queueEntry[i] - 1; entry >= queue[i]; entry--)
+		for (RENDERQUEUE *entry = queue[i]; entry != nullptr; entry = entry->next)
 		{
 			switch (entry->type)
 			{
@@ -81,9 +81,6 @@ void SOFTWAREBUFFER::Blit8(PALCOLOUR *backgroundColour, uint8_t *buffer, int pit
 				}
 			}
 		}
-		
-		//Reset this layer to the beginning
-		queueEntry[i] = queue[i];
 	}
 }
 
@@ -102,7 +99,7 @@ void SOFTWAREBUFFER::Blit16(PALCOLOUR *backgroundColour, uint16_t *buffer, int p
 	for (int i = RENDERLAYERS - 1; i >= 0; i--)
 	{
 		//Iterate through each entry
-		for (RENDERQUEUE *entry = queueEntry[i] - 1; entry >= queue[i]; entry--)
+		for (RENDERQUEUE *entry = queue[i]; entry != nullptr; entry = entry->next)
 		{
 			switch (entry->type)
 			{
@@ -168,9 +165,6 @@ void SOFTWAREBUFFER::Blit16(PALCOLOUR *backgroundColour, uint16_t *buffer, int p
 				}
 			}
 		}
-		
-		//Reset this layer to the beginning
-		queueEntry[i] = queue[i];
 	}
 }
 
@@ -189,7 +183,7 @@ void SOFTWAREBUFFER::Blit32(PALCOLOUR *backgroundColour, uint32_t *buffer, int p
 	for (int i = RENDERLAYERS - 1; i >= 0; i--)
 	{
 		//Iterate through each entry
-		for (RENDERQUEUE *entry = queueEntry[i] - 1; entry >= queue[i]; entry--)
+		for (RENDERQUEUE *entry = queue[i]; entry != nullptr; entry = entry->next)
 		{
 			switch (entry->type)
 			{
@@ -255,8 +249,5 @@ void SOFTWAREBUFFER::Blit32(PALCOLOUR *backgroundColour, uint32_t *buffer, int p
 				}
 			}
 		}
-		
-		//Reset this layer to the beginning
-		queueEntry[i] = queue[i];
 	}
 }

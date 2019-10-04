@@ -129,6 +129,27 @@ TEXTURE::TEXTURE(TEXTURE **linkedList, uint8_t *data, int dWidth, int dHeight)
 
 TEXTURE::~TEXTURE()
 {
+	//Check if any software buffers are referencing us and remove said entries
+	for (int i = 0; i < RENDERLAYERS; i++)
+	{
+		for (RENDERQUEUE *entry = gSoftwareBuffer->queue[i]; entry != nullptr; entry = entry->next)
+		{
+			if (entry->type == RENDERQUEUE_TEXTURE && entry->texture.texture == this)
+			{
+				//Remove from linked list then delete entry
+				for (RENDERQUEUE **dcEntry = &gSoftwareBuffer->queue[i]; *dcEntry != nullptr; dcEntry = &(*dcEntry)->next)
+				{
+					if (*dcEntry == entry)
+					{
+						*dcEntry = entry->next;
+						break;
+					}
+				}
+				
+				delete entry;
+			}
+		}
+	}
 	//Free data
 	free(texture);
 	if (loadedPalette)
@@ -177,10 +198,6 @@ SOFTWAREBUFFER::SOFTWAREBUFFER(int bufWidth, int bufHeight)
 	width = bufWidth;
 	height = bufHeight;
 	
-	//Set our render queue position
-	for (int i = 0; i < RENDERLAYERS; i++)
-		queueEntry[i] = queue[i];
-	
 	//Create the render texture
 	if ((texture = SDL_CreateTexture(gRenderer, gNativeFormat->format, SDL_TEXTUREACCESS_STREAMING, width, height)) == nullptr)
 	{
@@ -204,51 +221,53 @@ void SOFTWAREBUFFER::DrawPoint(int layer, int x, int y, PALCOLOUR *colour)
 	if (y < 0 || y >= height)
 		return;
 	
-	//Set the member of the render queue
-	queueEntry[layer]->type = RENDERQUEUE_SOLID;
-	queueEntry[layer]->dest = {x, y, 1, 1};
+	//Allocate our new queue entry
+	RENDERQUEUE *newEntry = new RENDERQUEUE;
+	newEntry->type = RENDERQUEUE_SOLID;
+	newEntry->dest = {x, y, 1, 1};
+	newEntry->solid.colour = colour;
 	
-	//Set colour reference
-	queueEntry[layer]->solid.colour = colour;
-	
-	//Push forward in queue
-	queueEntry[layer]++;
+	//Link to the queue
+	newEntry->next = queue[layer];
+	queue[layer] = newEntry;
 }
 
 void SOFTWAREBUFFER::DrawQuad(int layer, const SDL_Rect *quad, PALCOLOUR *colour)
 {
-	//Set the member of the render queue
-	queueEntry[layer]->type = RENDERQUEUE_SOLID;
-	queueEntry[layer]->dest = *quad;
+	//Allocate our new queue entry
+	RENDERQUEUE *newEntry = new RENDERQUEUE;
+	newEntry->type = RENDERQUEUE_SOLID;
+	newEntry->dest = *quad;
 	
 	//Clip top & left
 	if (quad->x < 0)
 	{
-		queueEntry[layer]->dest.x -= quad->x;
-		queueEntry[layer]->dest.w += quad->x;
+		newEntry->dest.x -= quad->x;
+		newEntry->dest.w += quad->x;
 	}
 	
 	if (quad->y < 0)
 	{
-		queueEntry[layer]->dest.y -= quad->y;
-		queueEntry[layer]->dest.h += quad->y;
+		newEntry->dest.y -= quad->y;
+		newEntry->dest.h += quad->y;
 	}
 	
 	//Clip right and bottom
-	if (queueEntry[layer]->dest.x > (width - queueEntry[layer]->dest.w))
-		queueEntry[layer]->dest.w -= queueEntry[layer]->dest.x - (width - queueEntry[layer]->dest.w);
-	if (queueEntry[layer]->dest.y > (height - queueEntry[layer]->dest.h))
-		queueEntry[layer]->dest.h -= queueEntry[layer]->dest.y - (height - queueEntry[layer]->dest.h);
+	if (newEntry->dest.x > (width - newEntry->dest.w))
+		newEntry->dest.w -= newEntry->dest.x - (width - newEntry->dest.w);
+	if (newEntry->dest.y > (height - newEntry->dest.h))
+		newEntry->dest.h -= newEntry->dest.y - (height - newEntry->dest.h);
 	
 	//Quit if clipped off-screen
-	if (queueEntry[layer]->dest.w <= 0 || queueEntry[layer]->dest.h <= 0)
+	if (newEntry->dest.w <= 0 || newEntry->dest.h <= 0)
 		return;
 	
 	//Set colour reference
-	queueEntry[layer]->solid.colour = colour;
+	newEntry->solid.colour = colour;
 	
-	//Push forward in queue
-	queueEntry[layer]++;
+	//Link to the queue
+	newEntry->next = queue[layer];
+	queue[layer] = newEntry;
 }
 
 void SOFTWAREBUFFER::DrawTexture(TEXTURE *texture, PALETTE *palette, const SDL_Rect *src, int layer, int x, int y, bool xFlip, bool yFlip)
@@ -293,22 +312,24 @@ void SOFTWAREBUFFER::DrawTexture(TEXTURE *texture, PALETTE *palette, const SDL_R
 		newSrc.h -= dy;
 	}
 	
-	//Set the member of the render queue
-	queueEntry[layer]->type = RENDERQUEUE_TEXTURE;
-	queueEntry[layer]->dest = {x, y, newSrc.w, newSrc.h};
-	queueEntry[layer]->texture.srcX = newSrc.x;
-	queueEntry[layer]->texture.srcY = newSrc.y;
+	//Allocate our new queue entry
+	RENDERQUEUE *newEntry = new RENDERQUEUE;
+	newEntry->type = RENDERQUEUE_TEXTURE;
+	newEntry->dest = {x, y, newSrc.w, newSrc.h};
+	newEntry->texture.srcX = newSrc.x;
+	newEntry->texture.srcY = newSrc.y;
 	
 	//Set palette and texture references
-	queueEntry[layer]->texture.palette = palette;
-	queueEntry[layer]->texture.texture = texture;
+	newEntry->texture.palette = palette;
+	newEntry->texture.texture = texture;
 	
 	//Flipping
-	queueEntry[layer]->texture.xFlip = xFlip;
-	queueEntry[layer]->texture.yFlip = yFlip;
+	newEntry->texture.xFlip = xFlip;
+	newEntry->texture.yFlip = yFlip;
 	
-	//Push forward in queue
-	queueEntry[layer]++;
+	//Link to the queue
+	newEntry->next = queue[layer];
+	queue[layer] = newEntry;
 }
 
 //Primary render function
@@ -336,6 +357,21 @@ bool SOFTWAREBUFFER::RenderToScreen(PALCOLOUR *backgroundColour)
 			break;
 		default:
 			return Error("Unsupported BPP");
+	}
+	
+	//Clear all layers
+	for (int i = 0; i < RENDERLAYERS; i++)
+	{
+		//Unload all entries
+		for (RENDERQUEUE *entry = queue[i]; entry != nullptr;)
+		{
+			RENDERQUEUE *next = entry->next;
+			delete entry;
+			entry = next;
+		}
+		
+		//Reset queue
+		queue[i] = nullptr;
 	}
 	
 	//Unlock
@@ -378,12 +414,51 @@ bool SOFTWAREBUFFER::RenderToScreen(PALCOLOUR *backgroundColour)
 }
 
 //Sub-system
-void RenderCheckVSync()
+bool RefreshRenderer()
+{
+	//Destroy old renderer and software buffer
+	if (gSoftwareBuffer)
+		delete gSoftwareBuffer;
+	if (gRenderer != nullptr)
+		SDL_DestroyRenderer(gRenderer);
+	
+	//Create the renderer based off of our VSync settings
+	if ((gRenderer = SDL_CreateRenderer(gWindow, -1, SDL_RENDERER_ACCELERATED | (vsyncMultiple > 0 ? SDL_RENDERER_PRESENTVSYNC : 0))) == nullptr)
+		return Error(SDL_GetError());
+	
+	//Create our software buffer
+	gSoftwareBuffer = new SOFTWAREBUFFER(gRenderSpec.width, gRenderSpec.height);
+	if (gSoftwareBuffer->fail)
+		return Error(gSoftwareBuffer->fail);
+	return true;
+}
+
+bool RefreshWindow()
+{
+	//Destroy old window
+	if (gWindow != nullptr)
+		SDL_DestroyWindow(gWindow);
+	
+	//Create our window
+	if ((gWindow = SDL_CreateWindow(WINDOW_TITLE, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, gRenderSpec.width * gRenderSpec.scale, gRenderSpec.height * gRenderSpec.scale, 0)) == nullptr)
+		return Error(SDL_GetError());
+	
+	//Free old window pixel format and get new one
+	if (gNativeFormat != nullptr)
+		SDL_FreeFormat(gNativeFormat);
+	if ((gNativeFormat = SDL_AllocFormat(SDL_GetWindowPixelFormat(gWindow))) == nullptr)
+		return Error(SDL_GetError());
+	
+	//Regenerate our renderer and software buffer
+	return RefreshRenderer();
+}
+
+bool RenderCheckVSync()
 {
 	//Use display mode to detect VSync
 	SDL_DisplayMode mode;
 	if (SDL_GetWindowDisplayMode(gWindow, &mode) < 0)
-		Error(SDL_GetError());
+		return Error(SDL_GetError());
 	
 	long double refreshIntegral;
 	long double refreshFractional = std::modf((long double)mode.refresh_rate / FRAMERATE, &refreshIntegral);
@@ -391,31 +466,17 @@ void RenderCheckVSync()
 	if (refreshIntegral >= 1.0 && refreshFractional == 0.0)
 		vsyncMultiple = (unsigned int)refreshIntegral;
 	
-	LOG(("%d vsync cycles\n", vsyncMultiple));
+	//Regenerate our renderer and software buffer
+	return RefreshRenderer();
 }
 
 bool InitializeRender()
 {
 	LOG(("Initializing renderer... "));
 	
-	//Create our window
-	if ((gWindow = SDL_CreateWindow(WINDOW_TITLE, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, gRenderSpec.width * gRenderSpec.scale, gRenderSpec.height * gRenderSpec.scale, 0)) == nullptr)
-		return Error(SDL_GetError());
-	
-	//Determine if we should use VSync
-	RenderCheckVSync();
-	
-	//Create the renderer based off of our VSync settings
-	if ((gRenderer = SDL_CreateRenderer(gWindow, -1, SDL_RENDERER_ACCELERATED | (vsyncMultiple > 0 ? SDL_RENDERER_PRESENTVSYNC : 0))) == nullptr)
-		return Error(SDL_GetError());
-	
-	//Get our window's pixel format
-	gNativeFormat = SDL_AllocFormat(SDL_GetWindowPixelFormat(gWindow));
-	
-	//Create our software buffer
-	gSoftwareBuffer = new SOFTWAREBUFFER(gRenderSpec.width, gRenderSpec.height);
-	if (gSoftwareBuffer->fail)
-		return Error(gSoftwareBuffer->fail);
+	//Create window, renderer, and software buffer
+	if (!RefreshWindow())
+		return false;
 	
 	LOG(("Success!\n"));
 	return true;

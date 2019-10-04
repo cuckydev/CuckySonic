@@ -2,20 +2,17 @@
 #include <stdint.h>
 #include "BackgroundScroll.h"
 #include "Render.h"
+#include "GameConstants.h"
+#include "Audio.h"
+
 #include "Player.h"
 #include "Object.h"
 #include "Camera.h"
 #include "TitleCard.h"
 #include "Hud.h"
-#include "GameConstants.h"
-#include "Audio.h"
 
 #define PALETTE_CYCLES 8
-
 #define OSCILLATORY_VALUES 16
-
-//Object function definition
-typedef void (*OBJECTFUNCTION)(OBJECT*);
 
 //Level render layer
 #define OBJECT_LAYERS 8
@@ -169,15 +166,16 @@ class LEVEL
 		//Loaded music
 		MUSIC *stageMusic;
 		MUSIC *bossMusic;
-		MUSIC *goalMusic;
 		
 		MUSIC *speedShoesMusic;
 		MUSIC *invincibilityMusic;
 		MUSIC *extraLifeMusic;
+		MUSIC *goalMusic;
+		MUSIC *gameoverMusic;
 		
 		//Current music state
-		MUSIC *primaryMusic;	//stageMusic or bossMusic							(played below secondaryMusic)
-		MUSIC *secondaryMusic;	//speedShoesMusic, invincibilityMusic, or goalMusic	(played below jingles)
+		MUSIC *primaryMusic;	//stageMusic or bossMusic											(played below secondaryMusic)
+		MUSIC *secondaryMusic;	//speedShoesMusic, invincibilityMusic, goalMusic, or gameoverMusic	(played below jingles)
 		
 		MUSIC *currentMusic;	//Any of the loaded songs
 		bool musicIsTemporary;	//If set, when the song ends, it will go back to playing primaryMusic, or secondaryMusic if not null
@@ -246,7 +244,7 @@ class LEVEL
 		
 	public:
 		//Constructor and destructor
-		LEVEL(int id, int players, const char **playerPaths);
+		LEVEL(int id, const char *players[]);
 		~LEVEL();
 		
 		//Level loading functions
@@ -281,10 +279,11 @@ class LEVEL
 		//Music functions
 		void SetPlayingMusic(MUSIC *music, bool resumeLastPosition, bool fade);
 		void ChangePrimaryMusic(MUSIC *music);
-		void ChangeSecondaryMusic(MUSIC *music);
+		void ChangeSecondaryMusic(MUSIC *music, bool isTemporary);
 		void PlayJingleMusic(MUSIC *music);
 		
 		void StopSecondaryMusic();
+		void StopJingleMusic();
 		
 		void UpdateMusic();
 		

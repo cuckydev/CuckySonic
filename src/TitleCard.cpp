@@ -101,7 +101,7 @@ void TITLECARD::UpdateAndDraw()
 	
 	//Draw the "CUCKYSONIC" label
 	SDL_Rect labelSrc = {0, 0, 64, 8};
-	gSoftwareBuffer->DrawTexture(texture, texture->loadedPalette, &labelSrc, LEVEL_RENDERLAYER_TITLECARD, -namePosition, gRenderSpec.height - 8, false, false);
+	gSoftwareBuffer->DrawTexture(texture, texture->loadedPalette, &labelSrc, LEVEL_RENDERLAYER_TITLECARD, namePosition * -2, gRenderSpec.height - 8, false, false);
 	
 	//Draw the strip behind the name text
 	for (int x = 0; x < gRenderSpec.width; x += 16)
@@ -124,6 +124,7 @@ void TITLECARD::UpdateAndDraw()
 	SDL_Rect top = {0, 0, gRenderSpec.width, yg - gap};
 	SDL_Rect right = {xg + gap, 0, gRenderSpec.width - xg - gap, gRenderSpec.height};
 	SDL_Rect bottom = {0, yg + gap, gRenderSpec.width, gRenderSpec.height - yg - gap};
+	
 	gSoftwareBuffer->DrawQuad(LEVEL_RENDERLAYER_TITLECARD, &left, &titleCardBackground);
 	gSoftwareBuffer->DrawQuad(LEVEL_RENDERLAYER_TITLECARD, &right, &titleCardBackground);
 	gSoftwareBuffer->DrawQuad(LEVEL_RENDERLAYER_TITLECARD, &top, &titleCardBackground);

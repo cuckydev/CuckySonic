@@ -202,16 +202,25 @@ void ObjSpring(OBJECT *object)
 			#endif
 				{
 					//Reverse flip if to the left
-					bool launchLeft = object->status.xFlip;
+					bool launchInvert = object->status.xFlip;
 					if ((object->x.pos - player->x.pos) >= 0)
-						launchLeft ^= 1;
+						launchInvert ^= 1;
+					
+					#ifdef SOLIDOBJECT_CONTACT_CHECK
+						//Drop collision if on wrong side
+						if (launchInvert)
+						{
+							i++;
+							continue;
+						}
+					#endif
 					
 					//Play bouncing animation
 					object->anim = 3;
 					object->prevAnim = 0;
 					
 					//Launch player
-					if (object->status.xFlip != launchLeft)
+					if (object->status.xFlip != launchInvert)
 					{
 						player->xVel = object->scratchS16[SCRATCHS16_FORCE];
 						player->x.pos += 8;

@@ -52,7 +52,6 @@ class TEXTURE
 };
 	
 //Render queue structure
-#define RENDERQUEUE_LENGTH 0x1000
 #define RENDERLAYERS 0x100
 
 enum RENDERQUEUE_TYPE
@@ -82,22 +81,24 @@ struct RENDERQUEUE
 			PALCOLOUR *colour;
 		} solid;
 	};
+	
+	//Linked list
+	RENDERQUEUE *next;
 };
 
 //Software framebuffer class
 class SOFTWAREBUFFER
 {
 	public:
+		//Failure
+		const char *fail;
+		
 		//Render queue
-		RENDERQUEUE queue[RENDERLAYERS][RENDERQUEUE_LENGTH];
-		RENDERQUEUE *queueEntry[RENDERLAYERS];
+		RENDERQUEUE *queue[RENDERLAYERS];
 		
 		//Dimensions and pixel drawn buffer
 		int width;
 		int height;
-		
-		//Status
-		const char *fail;
 		
 	private:
 		SDL_Texture *texture;
@@ -132,6 +133,7 @@ extern SDL_PixelFormat *gNativeFormat;
 
 extern RENDERSPEC gRenderSpec;
 
-void RenderCheckVSync();
+bool RefreshRenderer();
+bool RenderCheckVSync();
 bool InitializeRender();
 void QuitRender();

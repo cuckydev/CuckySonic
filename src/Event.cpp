@@ -32,8 +32,6 @@ bool HandleEvents()
 						//Yield game until refocused
 						focusYield = true;
 						YieldAudio(true);
-						
-						//Clear controller input
 						ClearControllerInput();
 						break;
 					default:

@@ -1,14 +1,22 @@
 #pragma once
 #include <stdint.h>
+
 #include "Render.h"
 #include "Mappings.h"
 #include "LevelCollision.h"
-#include "GameConstants.h"
 #include "CommonMacros.h"
-#include "Player.h"
 
+//Declare the object and player classes
+class OBJECT;
+class PLAYER;
+
+//Object function type
+typedef void (*OBJECTFUNCTION)(OBJECT*);
+
+//Constants
 #define OBJECT_PLAYER_REFERENCES 0x100
 
+//Enumerations
 enum COLLISIONTYPE
 {
 	COLLISIONTYPE_NULL,
@@ -27,6 +35,7 @@ struct OBJECT_SOLIDTOUCH
 	bool top[OBJECT_PLAYER_REFERENCES];
 };
 
+//Object class
 class OBJECT
 {
 	public:
@@ -130,11 +139,11 @@ class OBJECT
 		
 		OBJECT *next;
 		OBJECT **list;
-		void (*function)(OBJECT *object);
-		void (*prevFunction)(OBJECT *object);
+		OBJECTFUNCTION function;
+		OBJECTFUNCTION prevFunction;
 		
 	public:
-		OBJECT(OBJECT **linkedList, void (*objectFunction)(OBJECT *object));
+		OBJECT(OBJECT **linkedList, OBJECTFUNCTION object);
 		~OBJECT();
 		
 		void  ScratchAllocU8(int max);

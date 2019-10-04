@@ -13,24 +13,20 @@ LEVEL *gLevel;
 int gGameLoadLevel = 0;
 int gGameLoadCharacter = 0;
 
-const char *p0[] = {"data/Sonic/Sonic"};
-const char *p1[] = {"data/Sonic/Sonic", "data/Tails/Tails"};
-const char *p2[] = {"data/Knuckles/Knuckles"};
+const char *sonicOnly[] =		{"data/Sonic/Sonic", nullptr};
+const char *sonicAndTails[] =	{"data/Sonic/Sonic", "data/Tails/Tails", nullptr};
+const char *knucklesOnly[] =	{"data/Knuckles/Knuckles", nullptr};
 
-struct
-{
-	int players;
-	const char **playerPaths;
-} characters[] = {
-	{1, p0}, //0 - Sonic Only
-	{2, p1}, //1 - Sonic and Tails
-	{1, p2}, //2 - Knuckles
+const char **characterSetList[] = {
+	sonicOnly,
+	sonicAndTails,
+	knucklesOnly,
 };
 
 bool GM_Game(bool *noError)
 {
 	//Load level with characters given
-	gLevel = new LEVEL(gGameLoadLevel, characters[gGameLoadCharacter].players, characters[gGameLoadCharacter].playerPaths);
+	gLevel = new LEVEL(gGameLoadLevel, characterSetList[gGameLoadCharacter]);
 	if (gLevel->fail != nullptr)
 		return (*noError = false);
 	

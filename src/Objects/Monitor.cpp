@@ -17,7 +17,7 @@ void ObjMonitor_ChkOverEdge(OBJECT *object, int i, PLAYER *player)
 	
 	if (!player->status.inAir && xDiff >= 0 && xDiff < MONITOR_WIDTH * 2)
 	{
-		player->MoveOnPlatform((void*)object, MONITOR_HEIGHT + 1, object->x.pos);
+		player->MoveOnPlatform(object, MONITOR_HEIGHT + 1, object->x.pos);
 		return;
 	}
 	
@@ -40,7 +40,10 @@ void ObjMonitor_SolidObject_Lead(OBJECT *object, OBJECT_SOLIDTOUCH *solidTouch, 
 void ObjMonitor_SolidObject_Follower(OBJECT *object, OBJECT_SOLIDTOUCH *solidTouch, int i, PLAYER *player)
 {
 	//There's a 2-player check in Sonic 2 here
-	object->SolidObjectCont(solidTouch, player, i, MONITOR_WIDTH, MONITOR_HEIGHT, object->x.pos);
+	if (object->playerContact[i].standing)
+		ObjMonitor_ChkOverEdge(object, i, player);
+	else
+		object->SolidObjectCont(solidTouch, player, i, MONITOR_WIDTH, MONITOR_HEIGHT, object->x.pos);
 }
 
 OBJECT_SOLIDTOUCH ObjMonitor_SolidObject(OBJECT *object)

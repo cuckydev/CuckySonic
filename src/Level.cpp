@@ -588,12 +588,16 @@ void LEVEL::UnloadAll()
 		delete stageMusic;
 	if (bossMusic != nullptr)
 		delete bossMusic;
-	if (goalMusic != nullptr)
-		delete goalMusic;
+	
 	if (speedShoesMusic != nullptr)
 		delete speedShoesMusic;
 	if (invincibilityMusic != nullptr)
 		delete invincibilityMusic;
+	if (goalMusic != nullptr)
+		delete goalMusic;
+	if (gameoverMusic != nullptr)
+		delete gameoverMusic;
+	
 	if (extraLifeMusic != nullptr)
 		delete extraLifeMusic;
 	
@@ -620,7 +624,7 @@ const char *preloadMappings[] = {
 };
 
 //Level class
-LEVEL::LEVEL(int id, int players, const char **playerPaths)
+LEVEL::LEVEL(int id, const char *players[])
 {
 	LOG(("Loading level ID %d...\n", id));
 	memset(this, 0, sizeof(LEVEL));
@@ -650,10 +654,10 @@ LEVEL::LEVEL(int id, int players, const char **playerPaths)
 	//Create our players
 	PLAYER *follow = nullptr;
 	
-	for (int i = 0; i < players; i++)
+	for (int i = 0; *players != nullptr; i++, players++)
 	{
 		//Create our player
-		PLAYER *newPlayer = new PLAYER(&playerList, playerPaths[i], follow, i);
+		PLAYER *newPlayer = new PLAYER(&playerList, *players, follow, i);
 		
 		if (newPlayer->fail)
 		{
@@ -663,7 +667,7 @@ LEVEL::LEVEL(int id, int players, const char **playerPaths)
 		}
 		
 		//Set position and set the next player to follow us
-		newPlayer->x.pos = tableEntry->startX - (i * 18);
+		newPlayer->x.pos = tableEntry->startX - (i * 24);
 		newPlayer->y.pos = tableEntry->startY;
 		follow = newPlayer;
 	}
@@ -704,7 +708,19 @@ LEVEL::LEVEL(int id, int players, const char **playerPaths)
 	
 	speedShoesMusic = new MUSIC("SpeedShoes", 0, 1.0f);
 	invincibilityMusic = new MUSIC("Invincibility", 0, 1.0f);
+	goalMusic = new MUSIC("Goal", 0, 1.0f);
+	gameoverMusic = new MUSIC("GameOver", 0, 1.0f);
+	
 	extraLifeMusic = new MUSIC("ExtraLife", 0, 1.0f);
+	
+	//Check if any music failed to load...
+	if (stageMusic->fail || speedShoesMusic->fail || invincibilityMusic->fail || goalMusic->fail || gameoverMusic->fail || extraLifeMusic->fail)
+	{
+		fail = "Failed to load music";
+		UnloadAll();
+		AUDIO_UNLOCK;
+		return;
+	}
 	
 	//Unlock audio device
 	AUDIO_UNLOCK;
@@ -1026,7 +1042,7 @@ void LEVEL::ChangePrimaryMusic(MUSIC *music)
 	AUDIO_UNLOCK;
 }
 
-void LEVEL::ChangeSecondaryMusic(MUSIC *music)
+void LEVEL::ChangeSecondaryMusic(MUSIC *music, bool isTemporary)
 {
 	//Lock the audio device so we can safely change which song is playing and volume
 	AUDIO_LOCK;
@@ -1038,7 +1054,7 @@ void LEVEL::ChangeSecondaryMusic(MUSIC *music)
 		secondaryMusic = music; //Set secondary music to be this music
 	
 	//Update our music state
-	musicIsTemporary = true;
+	musicIsTemporary = isTemporary;
 	musicFadeAtEnd = false;
 	
 	//Unlock audio device
@@ -1068,6 +1084,24 @@ void LEVEL::StopSecondaryMusic()
 	if (currentMusic == secondaryMusic)
 		SetPlayingMusic(primaryMusic, true, false);
 	secondaryMusic = nullptr;
+	
+	//Unlock audio device
+	AUDIO_UNLOCK;
+}
+
+void LEVEL::StopJingleMusic()
+{
+	//Lock the audio device so we can safely change which song is playing and volume
+	AUDIO_LOCK;
+	
+	//Check what song we should resume (if playing a jingle)
+	if (currentMusic != primaryMusic && primaryMusic != secondaryMusic)
+	{
+		if (secondaryMusic != nullptr)
+			SetPlayingMusic(secondaryMusic, true, false);
+		else
+			SetPlayingMusic(primaryMusic, true, false);
+	}
 	
 	//Unlock audio device
 	AUDIO_UNLOCK;

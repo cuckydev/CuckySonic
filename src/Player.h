@@ -1,6 +1,6 @@
 #pragma once
 #include <stdint.h>
-#include "SDL_endian.h"
+
 #include "Render.h"
 #include "Mappings.h"
 #include "Input.h"
@@ -8,6 +8,10 @@
 #include "LevelCollision.h"
 #include "CommonMacros.h"
 
+//Declare the object class
+class OBJECT;
+
+//Constants
 #define PLAYER_RECORD_LENGTH 0x40
 
 //Routines
@@ -28,7 +32,7 @@ enum CPUROUTINE
 	CPUROUTINE_PANIC,
 };
 
-//Types
+//Other enumerations
 enum SHIELD
 {
 	SHIELD_NULL,
@@ -45,7 +49,6 @@ enum CHARACTERTYPE
 	CHARACTERTYPE_KNUCKLES,
 };
 
-//Player animation
 enum PLAYERANIMATION
 {
 	PLAYERANIMATION_WALK,
@@ -83,6 +86,7 @@ enum PLAYERANIMATION
 	PLAYERANIMATION_LIEDOWN,
 };
 
+//Player class
 class PLAYER
 {
 	public:
@@ -197,7 +201,7 @@ class PLAYER
 			bool disableObjectInteract : 1;		//Disables generic interaction with objects (we'll still otherwise collide with objects that have separate detection, such as bubbles, springs, and other solid objects, though)
 		} objectControl;
 		
-		void *interact;	//Object we're touching
+		OBJECT *interact;	//Object we're touching
 		
 		//Chain point counter
 		uint16_t chainPointCounter;
@@ -220,6 +224,7 @@ class PLAYER
 		COLLISIONLAYER lrbSolidLayer;
 		
 		uint16_t restartCountdown;	//Timer for the level restarting after death
+		bool inGameover;			//If got a game-over
 		
 		//Speeds
 		uint16_t top;
@@ -258,7 +263,7 @@ class PLAYER
 		bool cameraLock;
 		
 		//Position and status records
-		struct
+		struct POS_RECORD
 		{
 			int16_t x, y;
 		} posRecord[PLAYER_RECORD_LENGTH];
@@ -273,8 +278,9 @@ class PLAYER
 		int recordPos;
 		
 		//Objects that belong to us
-		void *spindashDust;
-		void *shieldObject;
+		OBJECT *spindashDust;
+		OBJECT *skidDust;
+		OBJECT *shieldObject;
 		
 		//For linked list
 		PLAYER **list;
@@ -352,7 +358,6 @@ class PLAYER
 		void FlipAngle();
 		void Animate();
 		
-		void CPUFilterAction(CONTROLMASK *nextHeld, CONTROLMASK *nextPress, int16_t leadX, int16_t leadY, bool incP1);
 		void CPUControl();
 		
 		void Update();
@@ -366,13 +371,13 @@ class PLAYER
 		void DebugControl();
 		void DebugMode();
 		
-		void RingAttractCheck(void *objPointer);
+		void RingAttractCheck(OBJECT *object);
 		
-		bool TouchResponseObject(void *objPointer, int16_t playerLeft, int16_t playerTop, int16_t playerWidth, int16_t playerHeight);
+		bool TouchResponseObject(OBJECT *object, int16_t playerLeft, int16_t playerTop, int16_t playerWidth, int16_t playerHeight);
 		void TouchResponse();
 		
-		void AttachToObject(void *object, bool *standingBit);
-		void MoveOnPlatform(void *platform, int16_t height, int16_t lastXPos);
+		void AttachToObject(OBJECT *object, bool *standingBit);
+		void MoveOnPlatform(OBJECT *platform, int16_t height, int16_t lastXPos);
 		
 		void GiveSpeedShoes();
 		void GiveShield(SOUNDID sound, SHIELD type);

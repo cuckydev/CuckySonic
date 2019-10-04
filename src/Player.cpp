@@ -8,9 +8,10 @@
 #include "Error.h"
 #include "Level.h"
 #include "Game.h"
+#include "GameConstants.h"
+
 #include "Object.h"
 #include "Objects.h"
-#include "GameConstants.h"
 
 //Bug-fixes
 //#define FIX_SPINDASH_JUMP     //When you jump the frame after you spindash, you'll jump straight upwards
@@ -171,6 +172,8 @@ static const uint8_t* animationListSpindashDust[] = {
 void ObjSpindashDust(OBJECT *object)
 {
 	PLAYER *player = (PLAYER*)object->parent;
+	if (player == nullptr)
+		return;
 	
 	switch (object->routine)
 	{
@@ -190,7 +193,7 @@ void ObjSpindashDust(OBJECT *object)
 			//If we're active
 			if (object->anim == 1)
 			{
-				//Are we to be deleted?
+				//Is the player still spindashing?
 				if (player->routine != PLAYERROUTINE_CONTROL || player->spindashing == false)
 				{
 					object->anim = 0;
@@ -206,7 +209,7 @@ void ObjSpindashDust(OBJECT *object)
 				object->y.pos = player->y.pos;
 				
 				//Offset if our height is non-default
-				int heightDifference = 0x13 - player->defaultYRadius;
+				int heightDifference = 19 - player->defaultYRadius;
 				
 				if (player->status.reverseGravity)
 					object->y.pos += heightDifference;
@@ -219,6 +222,82 @@ void ObjSpindashDust(OBJECT *object)
 	//Draw and animate
 	object->Animate(animationListSpindashDust);
 	object->Draw();
+}
+
+//Skid dust
+static const uint8_t animationSkidDustNull[] =	{0x1F,0x00,0xFF};
+static const uint8_t animationSkidDust[] =		{0x03,0x01,0x02,0x03,0x04,0xFC};
+
+static const uint8_t* animationListSkidDust[] = {
+	animationSkidDustNull,
+	animationSkidDustNull,
+	animationSkidDust,
+};
+
+void ObjSkidDust(OBJECT *object)
+{
+	PLAYER *player = (PLAYER*)object->parent;
+	
+	switch (object->routine)
+	{
+		case 0:
+			//Initialize render properties
+			object->texture = gLevel->GetObjectTexture("data/Object/SkidDust.bmp");
+			object->mappings = gLevel->GetObjectMappings("data/Object/SkidDust.map");
+			
+			object->priority = 1;
+			object->widthPixels = 4;
+			object->renderFlags.alignPlane = true;
+			
+			//Set our routine 
+			object->routine = (object->anim == 2) ? 2 : 1;
+			break;
+		case 1: //Dust controller
+			//Don't run if there's no parent
+			if (player == nullptr)
+				break;
+			
+			//If we're active
+			if (object->anim == 1)
+			{
+				//Is the player still skidding?
+				if (player->anim != PLAYERANIMATION_SKID)
+				{
+					object->anim = 0;
+					break;
+				}
+				
+				//Spawn skid dust every 4 frames
+				if (--object->animFrameDuration < 0)
+				{
+					//Reset timer
+					object->animFrameDuration = 3;
+					
+					//Create a new dust object at the player's feet
+					OBJECT *dust = new OBJECT(&gLevel->objectList, &ObjSkidDust);
+					dust->x.pos = player->x.pos;
+					dust->y.pos = player->y.pos + (player->status.reverseGravity ? -16 : 16);
+					dust->highPriority = player->highPriority;
+					dust->anim = 2;
+					
+					//Offset if our height is non-default
+					int heightDifference = 19 - player->defaultYRadius;
+					
+					if (player->status.reverseGravity)
+						object->y.pos += heightDifference;
+					else
+						object->y.pos -= heightDifference;
+				}
+			}
+			break;
+		case 2: //Dust instance
+			object->Animate(animationListSkidDust);
+			object->Draw();
+			break;
+		case 3: //Dust deleting
+			object->deleteFlag = true;
+			break;
+	}
 }
 
 //Shield animation (insta-shield)
@@ -502,10 +581,13 @@ PLAYER::PLAYER(PLAYER **linkedList, const char *specPath, PLAYER *myFollow, int 
 	
 	//Load our objects
 	spindashDust = new OBJECT(&gLevel->objectList, ObjSpindashDust);
-	((OBJECT*)spindashDust)->parent = this;
+	spindashDust->parent = this;
+	
+	skidDust = new OBJECT(&gLevel->objectList, ObjSkidDust);
+	skidDust->parent = this;
 	
 	shieldObject = new OBJECT(&gLevel->objectList, ObjShield);
-	((OBJECT*)shieldObject)->parent = this;
+	shieldObject->parent = this;
 	
 	//Initialize our record arrays
 	ResetRecords(x.pos - 0x20, y.pos - 0x04);
@@ -1429,7 +1511,8 @@ void PLAYER::ResetOnFloor3()
 					#endif
 					
 					//Play the sound and play the squish animation for the bubble
-					((OBJECT*)shieldObject)->anim = 2;
+					if (shieldObject != nullptr)
+						shieldObject->anim = 2;
 					PlaySound(SOUNDID_USE_BUBBLE_SHIELD);
 				}
 			}
@@ -1493,7 +1576,8 @@ bool PLAYER::Spindash()
 				spindashCounter = 0;
 				
 				//Make our spindash dust visible
-				((OBJECT*)spindashDust)->anim = 1;
+				if (spindashDust != nullptr)
+					spindashDust->anim = 1;
 			}
 			else
 			{
@@ -1536,7 +1620,8 @@ bool PLAYER::Spindash()
 			
 			//Actually go into the roll routine
 			status.inBall = true;
-			((OBJECT*)spindashDust)->anim = 0;
+			if (spindashDust != nullptr)
+				spindashDust->anim = 0;
 			PlaySound(SOUNDID_SPINDASH_RELEASE);
 			
 			#ifdef FIX_SPINDASH_JUMP
@@ -1618,7 +1703,8 @@ void PLAYER::JumpAbilities()
 				if (shield == SHIELD_FIRE)
 				{
 					//Update our shield and ability flag
-					((OBJECT*)shieldObject)->anim = 1;
+					if (shieldObject != nullptr)
+						shieldObject->anim = 1;
 					jumpAbility = 1;
 					
 					//Dash in our facing direction
@@ -1638,7 +1724,8 @@ void PLAYER::JumpAbilities()
 				else if (shield == SHIELD_ELECTRIC)
 				{
 					//Update our shield and ability flag
-					((OBJECT*)shieldObject)->anim = 1;
+					if (shieldObject != nullptr)
+						shieldObject->anim = 1;
 					jumpAbility = 1;
 					
 					//Electric shield double jump
@@ -1649,7 +1736,8 @@ void PLAYER::JumpAbilities()
 				else if (shield == SHIELD_BUBBLE)
 				{
 					//Update our shield and ability flag
-					((OBJECT*)shieldObject)->anim = 1;
+					if (shieldObject != nullptr)
+						shieldObject->anim = 1;
 					jumpAbility = 1;
 					
 					//Shoot down to the ground
@@ -1671,7 +1759,8 @@ void PLAYER::JumpAbilities()
 			else //Insta-shield
 			{
 				//Update our shield and ability flag
-				((OBJECT*)shieldObject)->anim = 1;
+				if (shieldObject != nullptr)
+						shieldObject->anim = 1;
 				jumpAbility = 1;
 				PlaySound(SOUNDID_USE_INSTA_SHIELD);
 			}
@@ -2062,7 +2151,8 @@ void PLAYER::MoveLeft()
 			anim = PLAYERANIMATION_SKID;
 			status.xFlip = false;
 			
-			//TODO: Create dust here
+			if (skidDust != nullptr)
+				skidDust->anim = 1;
 		}
 	}
 }
@@ -2116,7 +2206,8 @@ void PLAYER::MoveRight()
 			anim = PLAYERANIMATION_SKID;
 			status.xFlip = true;
 			
-			//TODO: Create dust here
+			if (skidDust != nullptr)
+				skidDust->anim = 1;
 		}
 	}
 }
@@ -2561,6 +2652,9 @@ bool PLAYER::KillCharacter(SOUNDID soundId)
 		routine = PLAYERROUTINE_DEATH;
 		ResetOnFloor2();
 		status.inAir = true;
+		
+		//Clear shield animation so it doesn't show during death
+		shieldObject->anim = 0;
 		
 		//Set our velocity
 		xVel = 0;
@@ -3159,15 +3253,14 @@ void PLAYER::Animate()
 	}
 }
 
-//CPU
-void PLAYER::CPUFilterAction(CONTROLMASK *nextHeld, CONTROLMASK *nextPress, int16_t leadX, int16_t leadY, bool incP1)
-{
-	
-}
-
+//CPU control code
 void PLAYER::CPUControl()
 {
+	PLAYER *followPlayer = (PLAYER*)follow;
+	STAT_RECORD goal = followPlayer->statRecord[(followPlayer->recordPos - 16) % (unsigned)PLAYER_RECORD_LENGTH];
 	
+	controlHeld = goal.controlHeld;
+	controlPress = goal.controlPress;
 }
 
 //Update
@@ -3545,7 +3638,7 @@ void PLAYER::DrawToScreen()
 				for (int i = 1; i < min((speedShoesTime * 8 - (gLevel->frameCounter & 0x7)) / 2, 8); i++)
 				{
 					int x = posRecord[(recordPos - (unsigned)i) % (unsigned)PLAYER_RECORD_LENGTH].x, y = posRecord[(recordPos - (unsigned)i) % (unsigned)PLAYER_RECORD_LENGTH].y;
-					if ((i + gLevel->frameCounter) & 0x1)
+					if (gLevel->frameCounter % (1 + (i / 2)) == 0)
 						gSoftwareBuffer->DrawTexture(texture, texture->loadedPalette, mapRect, gLevel->GetObjectLayer(highPriority, priority), x - origX - alignX, y - origY - alignY, renderFlags.xFlip, renderFlags.yFlip);
 				}
 			}
@@ -3660,11 +3753,9 @@ void PLAYER::DebugMode()
 }
 
 //Ring attraction check
-void PLAYER::RingAttractCheck(void *objPointer)
+void PLAYER::RingAttractCheck(OBJECT *object)
 {
 	//Check object
-	OBJECT* const object = (OBJECT* const)objPointer;
-	
 	if (object->function == ObjRing && object->routine)
 	{
 		//If we're within range, change the object to the attraction type
@@ -3681,15 +3772,13 @@ void PLAYER::RingAttractCheck(void *objPointer)
 	
 	//Iterate and check children
 	for (OBJECT *obj = object->children; obj != nullptr; obj = obj->next)
-		RingAttractCheck((void*)obj);
+		RingAttractCheck(obj);
 }
 
 //Object interaction functions
-bool PLAYER::TouchResponseObject(void *objPointer, int16_t playerLeft, int16_t playerTop, int16_t playerWidth, int16_t playerHeight)
+bool PLAYER::TouchResponseObject(OBJECT *object, int16_t playerLeft, int16_t playerTop, int16_t playerWidth, int16_t playerHeight)
 {
 	//Check object
-	OBJECT* const object = (OBJECT* const)objPointer;
-	
 	if (object->collisionType != COLLISIONTYPE_NULL)
 	{
 		//Check if our hitboxes are colliding
@@ -3713,24 +3802,24 @@ bool PLAYER::TouchResponseObject(void *objPointer, int16_t playerLeft, int16_t p
 						case CHARACTERTYPE_TAILS:
 							//If not flying or underwater, hurt us
 							if (jumpAbility == 0 || status.underwater)
-								return CheckHurt(objPointer);
+								return CheckHurt(object);
 							
 							//If the object is just about above us, hurt them
 							if (((GetAtan(x.pos - object->x.pos, y.pos - object->y.pos) + 0x20) & 0xFF) < 0x40)
 								return object->Hurt(this);
 							
 							//Otherwise, hurt us
-							return CheckHurt(objPointer);
+							return CheckHurt(object);
 						case CHARACTERTYPE_KNUCKLES:
 							//If gliding or sliding after gliding, hurt the object
 							if (jumpAbility == 1 || jumpAbility == 3)
 								return object->Hurt(this);
 							
 							//Otherwise, hurt us
-							return CheckHurt(objPointer);
+							return CheckHurt(object);
 						default:
 							//No special abilities, hurt us
-							return CheckHurt(objPointer);
+							return CheckHurt(object);
 					}
 					break;
 				case COLLISIONTYPE_SPECIAL:
@@ -3738,7 +3827,7 @@ bool PLAYER::TouchResponseObject(void *objPointer, int16_t playerLeft, int16_t p
 					return true;
 				case COLLISIONTYPE_HURT:
 					//Hurt us and never don't do that
-					return CheckHurt(objPointer);
+					return CheckHurt(object);
 				case COLLISIONTYPE_OTHER:
 					//Generic collision, set to the second routine if we weren't just hit
 					if (invulnerabilityTime < 90)
@@ -3773,7 +3862,7 @@ bool PLAYER::TouchResponseObject(void *objPointer, int16_t playerLeft, int16_t p
 	//Iterate through children, we haven't hit the parent
 	for (OBJECT *obj = object->children; obj != nullptr; obj = obj->next)
 	{
-		if (TouchResponseObject((void*)obj, playerLeft, playerTop, playerWidth, playerHeight))
+		if (TouchResponseObject(obj, playerLeft, playerTop, playerWidth, playerHeight))
 			return true;
 	}
 	
@@ -3785,7 +3874,7 @@ void PLAYER::TouchResponse()
 	//Check for ring attraction
 	if (shield == SHIELD_ELECTRIC)
 		for (OBJECT *obj = gLevel->objectList; obj != nullptr; obj = obj->next)
-			RingAttractCheck((void*)obj);
+			RingAttractCheck(obj);
 	
 	//Get our collision hitbox
 	bool wasInvincible = item.isInvincible; //Remember if we were invincible, since this gets temporarily overwritten by the insta-shield hitbox
@@ -3828,7 +3917,7 @@ void PLAYER::TouchResponse()
 	for (OBJECT *obj = gLevel->objectList; obj != nullptr; obj = obj->next)
 	{
 		//Check for collision with this object
-		if (TouchResponseObject((void*)obj, playerLeft, playerTop, playerWidth, playerHeight))
+		if (TouchResponseObject(obj, playerLeft, playerTop, playerWidth, playerHeight))
 			break;
 	}
 	
@@ -3836,7 +3925,7 @@ void PLAYER::TouchResponse()
 	item.isInvincible = wasInvincible;
 }
 
-void PLAYER::AttachToObject(void *object, bool *standingBit)
+void PLAYER::AttachToObject(OBJECT *object, bool *standingBit)
 {
 	//If already standing on an object, clear that object's standing bit
 	if (status.shouldNotFall && interact != nullptr)
@@ -3859,22 +3948,20 @@ void PLAYER::AttachToObject(void *object, bool *standingBit)
 	}
 }
 
-void PLAYER::MoveOnPlatform(void *platform, int16_t height, int16_t lastXPos)
+void PLAYER::MoveOnPlatform(OBJECT *platform, int16_t height, int16_t lastXPos)
 {
-	OBJECT* const platformObject = (OBJECT* const)platform;
-	
 	int top;
 	if (status.reverseGravity)
-		top = platformObject->y.pos + height;
+		top = platform->y.pos + height;
 	else
-		top = platformObject->y.pos - height;
+		top = platform->y.pos - height;
 	
 	//Check if we're in an intangible state
 	if (objectControl.disableObjectInteract || routine == PLAYERROUTINE_DEATH || debug != 0)
 		return;
 	
 	//Move with the platform
-	x.pos += (platformObject->x.pos - lastXPos);
+	x.pos += (platform->x.pos - lastXPos);
 	
 	if (status.reverseGravity)
 		y.pos = top + yRadius;
@@ -3895,7 +3982,7 @@ void PLAYER::GiveSpeedShoes()
 	
 	//Play speed shoes music (only if lead)
 	if (follow == nullptr)
-		gLevel->ChangeSecondaryMusic(gLevel->speedShoesMusic);
+		gLevel->ChangeSecondaryMusic(gLevel->speedShoesMusic, true);
 }
 
 void PLAYER::GiveShield(SOUNDID sound, SHIELD type)
