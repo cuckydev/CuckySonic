@@ -76,6 +76,7 @@ SOURCES = \
 	Objects/PurpleRock \
 	Objects/Monitor \
 	Objects/Spring \
+	Objects/Minecart \
 
 #What to compile
 OBJECTS = $(addprefix obj/$(FILENAME)/, $(addsuffix .o, $(SOURCES)))

@@ -41,9 +41,13 @@ void ObjBridge(OBJECT *object)
 		SCRATCHU8_DEPRESS_POSITION =	0,
 		SCRATCHU8_DEPRESS_FORCE =		1,
 		SCRATCHU8_MAX =					2,
+		//U16
+		SCRATCHU16_DEPRESS_POSITION =	0,
+		SCRATCHU16_MAX =				1,
 	};
 	
 	object->ScratchAllocU8(SCRATCHU8_MAX);
+	object->ScratchAllocU16(SCRATCHU16_MAX);
 	
 	switch (object->routine)
 	{
@@ -56,12 +60,10 @@ void ObjBridge(OBJECT *object)
 			object->widthPixels = 0x80;
 			
 			//Get our type properties
-			int subtype = object->subtype;
-			int bridgeRadius = (subtype / 2) * 16;
-			int16_t bridgeLeft = object->x.pos - bridgeRadius;
+			int16_t bridgeLeft = object->x.pos - (object->subtype * 8);
 			
 			//Create our log segments
-			for (int i = 0; i < subtype; i++)
+			for (int i = 0; i < object->subtype; i++)
 			{
 				OBJECT *newSegment = new OBJECT(&object->children, &ObjBridgeSegment);
 				newSegment->x.pos = bridgeLeft + 16 * i;
@@ -71,16 +73,13 @@ void ObjBridge(OBJECT *object)
 //Fallthrough
 		case 1:
 		{
-			//Handle our depression
-			int subtype = object->subtype;
+			//Get our depression force values (basically, it just increments by 2 to the middle, then the same from the other side)
+			//ex. 2, 4, 6, 8, 8, 6, 4, 2
+			uint8_t depressForce[0x100];
 			
-			//Get our depression force values (basically, it just increments by 2 to the middle, then decrements by 2)
-			//ex. 2, 4, 6, 8, 8, 6, 4, 2 (at least it should produce results like this)
-			int16_t depressForce[0x100];
-			
-			for (int i = 0, v = 0; i < subtype / 2; i++)
+			for (int i = 0, v = 0; i < object->subtype / 2; i++)
 				depressForce[i] = (v += 2);
-			for (int i = subtype - 1, v = 0; i >= subtype / 2; i--)
+			for (int i = object->subtype - 1, v = 0; i >= object->subtype / 2; i--)
 				depressForce[i] = (v += 2);
 			
 			//Is a player standing on us?
@@ -138,16 +137,16 @@ void ObjBridge(OBJECT *object)
 			{
 				//Get the angle of this log (go up to 0x40 from the left, and go back down to 0x00 to the right)
 				uint8_t angle;
-				if (j <= object->scratchU8[SCRATCHU8_DEPRESS_POSITION])
+				if (j < object->scratchU8[SCRATCHU8_DEPRESS_POSITION])
 					angle = (0x40 * (j + 1)) / (object->scratchU8[SCRATCHU8_DEPRESS_POSITION] + 1); //To the left of the depress position
 				else
-					angle = (0x40 * (subtype - j)) / (subtype - object->scratchU8[SCRATCHU8_DEPRESS_POSITION]); //To the right of the depress position
+					angle = (0x40 * (object->subtype - j)) / (object->subtype - object->scratchU8[SCRATCHU8_DEPRESS_POSITION]); //To the right of the depress position
 				
 				//Get the depression value from the value above, scaled by the force of the players on it (0x00 with no-one on it, 0x40 when someone is on it)
 				int16_t depress;
 				GetSine(object->scratchU8[SCRATCHU8_DEPRESS_FORCE] * angle / 0x40, &depress, nullptr);
 				
-				//Set our depression position, then check next log
+				//Set our depression position, then do next log
 				child->y.pos = object->y.pos + (depress * depressForce[object->scratchU8[SCRATCHU8_DEPRESS_POSITION]] / 0x100);
 				j++;
 			}
@@ -164,7 +163,7 @@ void ObjBridge(OBJECT *object)
 					
 					if (player->status.inAir || xDiff < 0 || xDiff >= bridgeWidthSecondary)
 					{
-						//Leave the platform
+						//Leave the platform (don't set us to be inAir so walking or rolling off the bridge doesn't not work)
 						player->status.shouldNotFall = false;
 						object->playerContact[i].standing = false;
 					}

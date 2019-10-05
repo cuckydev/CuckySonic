@@ -433,26 +433,6 @@ bool RefreshRenderer()
 	return true;
 }
 
-bool RefreshWindow()
-{
-	//Destroy old window
-	if (gWindow != nullptr)
-		SDL_DestroyWindow(gWindow);
-	
-	//Create our window
-	if ((gWindow = SDL_CreateWindow(WINDOW_TITLE, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, gRenderSpec.width * gRenderSpec.scale, gRenderSpec.height * gRenderSpec.scale, 0)) == nullptr)
-		return Error(SDL_GetError());
-	
-	//Free old window pixel format and get new one
-	if (gNativeFormat != nullptr)
-		SDL_FreeFormat(gNativeFormat);
-	if ((gNativeFormat = SDL_AllocFormat(SDL_GetWindowPixelFormat(gWindow))) == nullptr)
-		return Error(SDL_GetError());
-	
-	//Regenerate our renderer and software buffer
-	return RefreshRenderer();
-}
-
 bool RenderCheckVSync()
 {
 	//Use display mode to detect VSync
@@ -465,6 +445,28 @@ bool RenderCheckVSync()
 	
 	if (refreshIntegral >= 1.0 && refreshFractional == 0.0)
 		vsyncMultiple = (unsigned int)refreshIntegral;
+	return true;
+}
+
+bool RefreshWindow()
+{
+	//Destroy old window
+	if (gWindow != nullptr)
+		SDL_DestroyWindow(gWindow);
+	
+	//Create our window
+	if ((gWindow = SDL_CreateWindow(WINDOW_TITLE, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, gRenderSpec.width * gRenderSpec.scale, gRenderSpec.height * gRenderSpec.scale, 0)) == nullptr)
+		return Error(SDL_GetError());
+	
+	//Check our vsync
+	if (!RenderCheckVSync())
+		return false;
+	
+	//Free old window pixel format and get new one
+	if (gNativeFormat != nullptr)
+		SDL_FreeFormat(gNativeFormat);
+	if ((gNativeFormat = SDL_AllocFormat(SDL_GetWindowPixelFormat(gWindow))) == nullptr)
+		return Error(SDL_GetError());
 	
 	//Regenerate our renderer and software buffer
 	return RefreshRenderer();

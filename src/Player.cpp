@@ -21,10 +21,31 @@
 
 //Bug-fix macros
 #define YSHIFT_ON_FLOOR(shift)	\
-	int16_t sin2, cos2;	\
-	GetSine(angle - 0x40, &sin2, &cos2);	\
-	xPosLong -= cos2 * shift * 0x100;	\
-	yPosLong -= sin2 * shift * (status.reverseGravity ? -0x100 : 0x100);	\
+	uint8_t offAngle2 = angle;	\
+	if (offAngle2 < 0x80)	\
+		offAngle2--;	\
+		\
+	switch ((angle + 0x20) & 0xC0)	\
+	{	\
+		case 0x00:	\
+			if (status.reverseGravity)	\
+				y.pos -= shift;	\
+			else	\
+				y.pos += shift;	\
+			break;	\
+		case 0x40:	\
+			x.pos -= shift;	\
+			break;	\
+		case 0x80:	\
+			if (status.reverseGravity)	\
+				y.pos += shift;	\
+			else	\
+				y.pos -= shift;	\
+			break;	\
+		case 0xC0:	\
+			x.pos += shift;	\
+			break;	\
+	}
 
 //Game differences (Uncomment all for an experience like that of Sonic 1, and comment all for the experience of Sonic 3 and Knuckles)
 //#define SONIC1_SLOPE_ANGLE        //In Sonic 2+, the floor's angle will be replaced with the player's cardinal floor angle if there's a 45+ degree difference
@@ -208,7 +229,7 @@ void ObjSpindashDust(OBJECT *object)
 				object->x.pos = player->x.pos;
 				object->y.pos = player->y.pos;
 				
-				//Offset if our height is non-default
+				//Offset if our height is atypical (for a short character like Tails)
 				int heightDifference = 19 - player->defaultYRadius;
 				
 				if (player->status.reverseGravity)
@@ -280,7 +301,7 @@ void ObjSkidDust(OBJECT *object)
 					dust->highPriority = player->highPriority;
 					dust->anim = 2;
 					
-					//Offset if our height is non-default
+					//Offset if our height is atypical (for a short character like Tails)
 					int heightDifference = 19 - player->defaultYRadius;
 					
 					if (player->status.reverseGravity)
@@ -2916,7 +2937,7 @@ void PLAYER::Animate()
 				uint8_t rotAngle = angle;
 				
 				#ifndef SONIC1_SLOPE_ROTATION
-					if (rotAngle > 0 && rotAngle < 0x80)
+					if (rotAngle < 0x80)
 						rotAngle--;
 				#endif
 				
@@ -3880,7 +3901,8 @@ void PLAYER::TouchResponse()
 	bool wasInvincible = item.isInvincible; //Remember if we were invincible, since this gets temporarily overwritten by the insta-shield hitbox
 	int16_t playerLeft, playerTop, playerWidth, playerHeight;
 	
-	if (shield == SHIELD_NULL && item.isInvincible == false && jumpAbility == 1)
+	if ((shield == SHIELD_NULL && item.isInvincible == false && jumpAbility == 1)
+		|| (status.shouldNotFall && interact != nullptr && interact->function == ObjMinecart && abs(interact->xVel) >= 0x200))
 	{
 		//Use insta-shield extended hitbox
 		playerWidth = 24; //radius

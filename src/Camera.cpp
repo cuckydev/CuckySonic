@@ -6,6 +6,7 @@
 
 //Define things
 //#define CAMERA_CD_PAN
+//#define CAMERA_ROLL_SHIFT_FIX
 
 //Constants
 #define CAMERA_HSCROLL_LEFT		-16
@@ -80,6 +81,16 @@ void CAMERA::Track(PLAYER *trackPlayer)
 			lookPan = max(lookPan - LOOK_PANSPEED, 0);
 	}
 	
+	//Get our height shifting (shorter players and/or rolling)
+	int8_t shift = trackPlayer->defaultYRadius - trackPlayer->yRadius;
+	int16_t xShift = 0, yShift = shift;
+	
+#ifdef CAMERA_ROLL_SHIFT_FIX
+	GetSine(trackPlayer->angle + 0x40, &yShift, &xShift);
+	xShift = (xShift * shift) / 0x100;
+	yShift = (yShift * shift) / 0x100;
+#endif
+	
 	//Don't move if locked
 	if (trackPlayer->cameraLock)
 		return;
@@ -91,6 +102,10 @@ void CAMERA::Track(PLAYER *trackPlayer)
 	{
 		trackPlayer->scrollDelay -= 0x100;
 		trackX = trackPlayer->posRecord[(trackPlayer->recordPos - ((trackPlayer->scrollDelay / 0x100) + 1)) % PLAYER_RECORD_LENGTH].x;
+	}
+	else
+	{
+		trackX += xShift;
 	}
 	
 	int16_t hScrollOffset = trackX - x - xPan;
@@ -121,8 +136,10 @@ void CAMERA::Track(PLAYER *trackPlayer)
 	//Scroll vertically to the player
 	int16_t vScrollOffset = trackPlayer->y.pos - y - (gRenderSpec.height / 2 + CAMERA_VSCROLL_OFFSET) - lookPan;
 	
-	if (trackPlayer->status.inBall)
-		vScrollOffset -= 5; //Shift up 5 pixels if in ball-form
+	if (trackPlayer->status.reverseGravity)
+		vScrollOffset += yShift;
+	else
+		vScrollOffset -= yShift;
 	
 	//Handle our specific scrolling
 	uint16_t scrollSpeed = 16;
