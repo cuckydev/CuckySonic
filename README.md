@@ -26,13 +26,13 @@ More information can be found in build/Info.txt
 
 5. To build, simply just input `make` with any of the below parameters
 
-`RELEASE=X` if 0, a debug build will be created, if 1, an optimized release build will be created
+`RELEASE=...` if 0, a debug build will be created, if 1, an optimized release build will be created
 
-`WINDOWS=X` if 1, the build will be optimized for Windows (music loading, .exe icon)
+`WINDOWS=...` if 1, the build will be optimized for Windows (music loading, .exe icon)
 
-`STATIC=1` if 1, the .exe will be compiled with all of the required libraries stored internally (preferred on)
+`STATIC=...` if 1, the .exe will be compiled with all of the required libraries stored internally (preferred on)
 
-`CONSOLE=X` (requires WINDOWS=1) if 1, a console window will be created at start-up
+`CONSOLE=...` (requires WINDOWS=1) if 1, a console window will be created at start-up
 
 
 
