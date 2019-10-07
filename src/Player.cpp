@@ -20,32 +20,40 @@
 //#define FIX_ROLL_YSHIFT       //In the originals, when you roll, you're always shifted up / down globally, this can cause weird behaviour such as falling off of ceilings
 
 //Bug-fix macros
-#define YSHIFT_ON_FLOOR(shift)	\
-	uint8_t offAngle2 = angle;	\
-	if (offAngle2 < 0x80)	\
-		offAngle2--;	\
-		\
-	switch ((angle + 0x20) & 0xC0)	\
-	{	\
-		case 0x00:	\
-			if (status.reverseGravity)	\
-				y.pos -= shift;	\
-			else	\
-				y.pos += shift;	\
-			break;	\
-		case 0x40:	\
-			x.pos -= shift;	\
-			break;	\
-		case 0x80:	\
-			if (status.reverseGravity)	\
-				y.pos += shift;	\
-			else	\
-				y.pos -= shift;	\
-			break;	\
-		case 0xC0:	\
-			x.pos += shift;	\
-			break;	\
-	}
+#ifdef FIX_ROLL_YSHIFT
+	#define YSHIFT_ON_FLOOR(shift)	\
+		uint8_t offAngle2 = angle;	\
+		if (offAngle2 < 0x80)	\
+			offAngle2--;	\
+			\
+		switch ((angle + 0x20) & 0xC0)	\
+		{	\
+			case 0x00:	\
+				if (status.reverseGravity)	\
+					y.pos -= shift;	\
+				else	\
+					y.pos += shift;	\
+				break;	\
+			case 0x40:	\
+				x.pos -= shift;	\
+				break;	\
+			case 0x80:	\
+				if (status.reverseGravity)	\
+					y.pos += shift;	\
+				else	\
+					y.pos -= shift;	\
+				break;	\
+			case 0xC0:	\
+				x.pos += shift;	\
+				break;	\
+		}
+#else
+	#define YSHIFT_ON_FLOOR(shift)	\
+		if (status.reverseGravity)	\
+			y.pos -= shift;	\
+		else	\
+			y.pos += shift;
+#endif
 
 //Game differences (Uncomment all for an experience like that of Sonic 1, and comment all for the experience of Sonic 3 and Knuckles)
 //#define SONIC1_SLOPE_ANGLE        //In Sonic 2+, the floor's angle will be replaced with the player's cardinal floor angle if there's a 45+ degree difference
@@ -62,6 +70,7 @@
 //#define SONIC1_DEATH_BOUNDARY     //In Sonic 2, the death boundary code was fixed so that it doesn't use the camera's boundary but the level boundary, so that you don't die while the camera boundary is scrolling
 //#define SONIC12_DEATH_RESPAWN     //In Sonic 3, it was changed so that death respawns you once you go off-screen, not when you leave the level boundaries, since this was a very buggy check
 //#define SONIC12_SPINDASH_ANIM_BUG //In Sonic 3, the bug where landing on the ground while spindashing plays the walk animation was fixed
+//#define SONIC12_PUSH_CHECK		//In Sonic 3, it was changed so that you have to be facing towards a wall in order to start pushing into it
 
 //Animation data
 #define MAPPINGFRAME_FLIP1 0x5F
@@ -1093,7 +1102,7 @@ void PLAYER::CheckWallsOnGround()
 
 			switch ((faceAngle + 0x20) & 0xC0)
 			{
-				case 0:
+				case 0x00:
 				{
 					yVel += distance;
 					break;
@@ -1101,8 +1110,11 @@ void PLAYER::CheckWallsOnGround()
 				case 0x40:
 				{
 					xVel -= distance;
-					status.pushing = true;
 					inertia = 0;
+				#ifndef SONIC12_PUSH_CHECK
+					if (status.xFlip)
+				#endif
+						status.pushing = true;
 					break;
 				}
 				case 0x80:
@@ -1113,8 +1125,11 @@ void PLAYER::CheckWallsOnGround()
 				case 0xC0:
 				{
 					xVel += distance;
-					status.pushing = true;
 					inertia = 0;
+				#ifndef SONIC12_PUSH_CHECK
+					if (!status.xFlip)
+				#endif
+						status.pushing = true;
 					break;
 				}
 			}
@@ -1461,14 +1476,7 @@ void PLAYER::ResetOnFloor2()
 			uint8_t difference = 5;
 		#endif
 		
-		#ifndef FIX_ROLL_YSHIFT
-			if (status.reverseGravity)
-				y.pos += difference;
-			else
-				y.pos -= difference;
-		#else
-			YSHIFT_ON_FLOOR(-difference);
-		#endif
+		YSHIFT_ON_FLOOR(-difference);
 	}
 
 	ResetOnFloor3();
@@ -1522,14 +1530,7 @@ void PLAYER::ResetOnFloor3()
 					xRadius = rollXRadius;
 					yRadius = rollYRadius;
 					
-					#ifndef FIX_ROLL_YSHIFT
-						if (status.reverseGravity)
-							y.pos += (defaultYRadius - yRadius);
-						else
-							y.pos -= (defaultYRadius - yRadius);
-					#else
-						YSHIFT_ON_FLOOR(-(defaultYRadius - yRadius));
-					#endif
+					YSHIFT_ON_FLOOR(-(defaultYRadius - yRadius));
 					
 					//Play the sound and play the squish animation for the bubble
 					if (shieldObject != nullptr)
@@ -1614,14 +1615,7 @@ bool PLAYER::Spindash()
 			anim = PLAYERANIMATION_ROLL;
 			
 			//Offset our position to line up with the ground
-			#ifndef FIX_ROLL_YSHIFT
-				if (status.reverseGravity)
-					y.pos -= 5;
-				else
-					y.pos += 5;
-			#else
-				YSHIFT_ON_FLOOR(5);
-			#endif
+			YSHIFT_ON_FLOOR(5);
 			
 			//Release spindash
 			spindashing = false;
@@ -1998,14 +1992,7 @@ bool PLAYER::Jump()
 				status.inBall = true;
 				
 				//Shift us down to the ground
-				#ifndef FIX_ROLL_YSHIFT
-					if (status.reverseGravity)
-						y.pos += (yRadius - defaultYRadius);
-					else
-						y.pos -= (yRadius - defaultYRadius);
-				#else
-					YSHIFT_ON_FLOOR(-(yRadius - defaultYRadius));
-				#endif
+				YSHIFT_ON_FLOOR(-(yRadius - defaultYRadius));
 			}
 			else
 			{
@@ -2410,14 +2397,7 @@ void PLAYER::ChkRoll()
 		anim = PLAYERANIMATION_ROLL;
 		
 		//This is supposed to keep us on the ground, but when we're on a ceiling, it does... not that
-		#ifndef FIX_ROLL_YSHIFT
-			if (status.reverseGravity)
-				y.pos -= 5;
-			else
-				y.pos += 5;
-		#else
-			YSHIFT_ON_FLOOR(5);
-		#endif
+		YSHIFT_ON_FLOOR(5);
 		
 		//Play the sound
 		PlaySound(SOUNDID_ROLL);
@@ -2524,11 +2504,11 @@ void PLAYER::RollSpeed()
 		}
 		
 		//Stop if slowed down
-		#ifndef SONIC123_ROLL_DUCK
+	#ifndef SONIC123_ROLL_DUCK
 		if (abs(inertia) < 0x80)
-		#else
+	#else
 		if (inertia == 0)
-		#endif
+	#endif
 		{
 			if (!status.pinballMode)
 			{
@@ -2537,15 +2517,7 @@ void PLAYER::RollSpeed()
 				xRadius = defaultXRadius;
 				yRadius = defaultYRadius;
 				anim = PLAYERANIMATION_IDLE;
-				
-				#ifndef FIX_ROLL_YSHIFT
-					if (status.reverseGravity)
-						y.pos += 5;
-					else
-						y.pos -= 5;
-				#else
-					YSHIFT_ON_FLOOR(-5);
-				#endif
+				YSHIFT_ON_FLOOR(-5);
 			}
 			else
 			{
@@ -2709,7 +2681,7 @@ bool PLAYER::CheckHurt(void *hit)
 	}
 	
 	//Don't check for reflection if we are invincible, don't have a shield (and not using insta-shield, but... this check is fucked because isInvincible is set during the insta-shield here)
-	if ((jumpAbility == 1 || shield != SHIELD_NULL) && !item.isInvincible)
+	if ((jumpAbility == 1 || item.shieldReflect) && !item.isInvincible)
 	{
 		//If we should be reflected, reflect
 		if (object->hurtType.reflect)
@@ -3659,7 +3631,7 @@ void PLAYER::DrawToScreen()
 				for (int i = 1; i < min((speedShoesTime * 8 - (gLevel->frameCounter & 0x7)) / 2, 8); i++)
 				{
 					int x = posRecord[(recordPos - (unsigned)i) % (unsigned)PLAYER_RECORD_LENGTH].x, y = posRecord[(recordPos - (unsigned)i) % (unsigned)PLAYER_RECORD_LENGTH].y;
-					if (gLevel->frameCounter % (1 + (i / 2)) == 0)
+					if (gLevel->frameCounter % (1 + i / 2) == 0)
 						gSoftwareBuffer->DrawTexture(texture, texture->loadedPalette, mapRect, gLevel->GetObjectLayer(highPriority, priority), x - origX - alignX, y - origY - alignY, renderFlags.xFlip, renderFlags.yFlip);
 				}
 			}
@@ -4011,10 +3983,10 @@ void PLAYER::GiveShield(SOUNDID sound, SHIELD type)
 {
 	//Give us the shield and play sound
 	shield = type;
-	item.shieldReflect =	(type != SHIELD_BLUE);
-	item.immuneFire =		(type == SHIELD_FIRE);
-	item.immuneElectric =	(type == SHIELD_ELECTRIC);
-	item.immuneWater =		(type == SHIELD_BUBBLE);
+	item.shieldReflect =	type == SHIELD_NULL ? false : (type != SHIELD_BLUE);
+	item.immuneFire =		type == SHIELD_NULL ? false : (type == SHIELD_FIRE);
+	item.immuneElectric =	type == SHIELD_NULL ? false : (type == SHIELD_ELECTRIC);
+	item.immuneWater =		type == SHIELD_NULL ? false : (type == SHIELD_BUBBLE);
 	
 	if (sound != SOUNDID_NULL)
 		PlaySound(sound);

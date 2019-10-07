@@ -28,7 +28,7 @@ CAMERA::CAMERA(PLAYER *trackPlayer)
 	
 	//Move to our given player
 	x = trackPlayer->x.pos - (gRenderSpec.width / 2);
-	y = trackPlayer->y.pos - (gRenderSpec.height / 2 - 16);
+	y = trackPlayer->y.pos - (gRenderSpec.height / 2 + CAMERA_VSCROLL_OFFSET);
 	
 	//Keep inside level boundaries
 	if (x < gLevel->leftBoundary)

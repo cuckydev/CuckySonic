@@ -46,7 +46,7 @@ SOURCES = \
 	Level \
 	LevelCollision \
 	SpecialStage \
-	BackgroundScroll \
+	Background \
 	Game \
 	GM_Splash \
 	GM_Title \

@@ -4,6 +4,13 @@
 #include "Game.h"
 #include "Log.h"
 
+//#define COLLISION_DEBUG
+
+#ifdef COLLISION_DEBUG
+	PALCOLOUR inner = {0xFF0000, 255, 0, 0, 255, 0, 0};
+	PALCOLOUR outer = {0x00FF00, 0, 255, 0, 0, 255, 0};
+#endif
+
 //Get the layout tile at the given x,y coordinate
 TILE *FindTile(int16_t x, int16_t y)
 {
@@ -17,6 +24,13 @@ TILE *FindTile(int16_t x, int16_t y)
 //Floor collision function, returns Y-difference from position given and the floor or ceiling level (non-flipped checks down for floors, flipped checks up for ceilings)
 int16_t FindFloor2(int16_t x, int16_t y, COLLISIONLAYER layer, bool flipped, uint8_t *angle)
 {
+	#ifdef COLLISION_DEBUG
+		SDL_Rect inQuad = {x - 1 - gLevel->camera->x, (flipped ? y ^ 0xF : y) - 1 - gLevel->camera->y, 2, 2};
+		SDL_Rect ouQuad = {x - 2 - gLevel->camera->x, (flipped ? y ^ 0xF : y) - 2 - gLevel->camera->y, 4, 4};
+		gSoftwareBuffer->DrawQuad(0, &inQuad, &inner);
+		gSoftwareBuffer->DrawQuad(0, &ouQuad, &outer);
+	#endif
+	
 	//Get our chunk tile
 	TILE *tile = FindTile(x, y);
 	
@@ -71,6 +85,13 @@ int16_t FindFloor2(int16_t x, int16_t y, COLLISIONLAYER layer, bool flipped, uin
 
 int16_t FindFloor(int16_t x, int16_t y, COLLISIONLAYER layer, bool flipped, uint8_t *angle)
 {
+	#ifdef COLLISION_DEBUG
+		SDL_Rect inQuad = {x - 1 - gLevel->camera->x, y - 1 - gLevel->camera->y, 2, 2};
+		SDL_Rect ouQuad = {x - 2 - gLevel->camera->x, y - 2 - gLevel->camera->y, 4, 4};
+		gSoftwareBuffer->DrawQuad(0, &inQuad, &inner);
+		gSoftwareBuffer->DrawQuad(0, &ouQuad, &outer);
+	#endif
+	
 	//Flip our y-position if flipped
 	if (flipped)
 		y ^= 0xF;
@@ -131,6 +152,13 @@ int16_t FindFloor(int16_t x, int16_t y, COLLISIONLAYER layer, bool flipped, uint
 //Wall collision function, returns X-difference from position given and the wall's surface (non-flipped checks right, flipped checks left)
 int16_t FindWall2(int16_t x, int16_t y, COLLISIONLAYER layer, bool flipped, uint8_t *angle)
 {
+	#ifdef COLLISION_DEBUG
+		SDL_Rect inQuad = {(flipped ? x ^ 0xF : x) - 1 - gLevel->camera->x, y - 1 - gLevel->camera->y, 2, 2};
+		SDL_Rect ouQuad = {(flipped ? x ^ 0xF : x) - 2 - gLevel->camera->x, y - 2 - gLevel->camera->y, 4, 4};
+		gSoftwareBuffer->DrawQuad(0, &inQuad, &inner);
+		gSoftwareBuffer->DrawQuad(0, &ouQuad, &outer);
+	#endif
+	
 	//Get our chunk tile
 	TILE *tile = FindTile(x, y);
 	
@@ -184,6 +212,13 @@ int16_t FindWall2(int16_t x, int16_t y, COLLISIONLAYER layer, bool flipped, uint
 
 int16_t FindWall(int16_t x, int16_t y, COLLISIONLAYER layer, bool flipped, uint8_t *angle)
 {
+	#ifdef COLLISION_DEBUG
+		SDL_Rect inQuad = {x - 1 - gLevel->camera->x, y - 1 - gLevel->camera->y, 2, 2};
+		SDL_Rect ouQuad = {x - 2 - gLevel->camera->x, y - 2 - gLevel->camera->y, 4, 4};
+		gSoftwareBuffer->DrawQuad(0, &inQuad, &inner);
+		gSoftwareBuffer->DrawQuad(0, &ouQuad, &outer);
+	#endif
+	
 	//Flip our x-position if flipped
 	if (flipped)
 		x ^= 0xF;

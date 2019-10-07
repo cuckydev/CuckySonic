@@ -165,7 +165,7 @@ void ObjSpiral(OBJECT *object) //Also MTZ cylinder
 								#ifndef SPIRAL_OFFSET_FIX
 									int16_t yOff = player->yRadius - 19;
 								#else
-									int16_t yOff = ((player->yRadius - 19) * cosine) / 32;
+									int16_t yOff = ((player->yRadius - 19) * cosine) / (cosine < 0 ? 37 : 32);
 								#endif
 								
 								player->y.pos = (object->y.pos + cosine) - yOff;

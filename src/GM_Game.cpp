@@ -30,15 +30,7 @@ bool GM_Game(bool *noError)
 	if (gLevel->fail != nullptr)
 		return (*noError = false);
 	
-	//Initialize level fade
-	ClearControllerInput();
-	
-	if (!(*noError = gLevel->Update(false)))
-	{
-		delete gLevel;
-		return false;
-	}
-	
+	//Fade level to black
 	gLevel->SetFade(true, false);
 	
 	//Our loop
@@ -53,7 +45,7 @@ bool GM_Game(bool *noError)
 		//Update level
 		bool breakThisState = false;
 		
-		if (!(*noError = gLevel->Update(true)))
+		if (!(*noError = gLevel->Update()))
 			break;
 		
 		//Handle level fading
@@ -74,10 +66,11 @@ bool GM_Game(bool *noError)
 			}
 		}
 		
+		//Draw level to the screen
 		gLevel->Draw();
 		
-		//Render our software buffer to the screen (using the first colour of our splash texture, should be white)
-		if (!(*noError = gSoftwareBuffer->RenderToScreen(&gLevel->backgroundTexture->loadedPalette->colour[0])))
+		//Render our software buffer to the screen
+		if (!(*noError = gSoftwareBuffer->RenderToScreen((gLevel->background == nullptr || gLevel->background->texture == nullptr) ? nullptr : &gLevel->background->texture->loadedPalette->colour[0])))
 			break;
 		
 		//Go to next state if set to break this state

@@ -4,6 +4,8 @@
 #include "../Log.h"
 #include "../MathUtil.h"
 
+//#define FIX_DEPRESS_DELAY
+
 void ObjBridgeSegment(OBJECT *object)
 {
 	if (object->routine == 0)
@@ -119,6 +121,10 @@ void ObjBridge(OBJECT *object)
 							else if (standingLog > object->scratchU8[SCRATCHU8_DEPRESS_POSITION])
 								object->scratchU8[SCRATCHU8_DEPRESS_POSITION]++;
 						}
+					#ifdef FIX_DEPRESS_DELAY
+						else
+							object->scratchU8[SCRATCHU8_DEPRESS_POSITION] = standingLog;
+					#endif
 					}
 					
 					//Check next player's contact

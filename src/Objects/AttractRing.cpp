@@ -61,12 +61,12 @@ void ObjAttractRing(OBJECT *object)
 			{
 				pullX = -pullX;
 				if (object->xVel >= 0)
-					pullX *= 2;
+					pullX *= 4;
 			}
 			else
 			{
 				if (object->xVel < 0)
-					pullX *= 2;
+					pullX *= 4;
 			}
 			
 			object->xVel += pullX;
@@ -78,12 +78,12 @@ void ObjAttractRing(OBJECT *object)
 			{
 				pullY = -pullY;
 				if (object->yVel >= 0)
-					pullY *= 2;
+					pullY *= 4;
 			}
 			else
 			{
 				if (object->yVel < 0)
-					pullY *= 2;
+					pullY *= 4;
 			}
 			
 			object->yVel += pullY;

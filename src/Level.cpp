@@ -70,10 +70,10 @@ OBJECTFUNCTION objFuncSonic2[] = {
 //Our level table
 LEVELTABLE gLevelTable[LEVELID_MAX] = {
 	//ZONEID_GHZ
-		/*LEVELID_GHZ1*/ {ZONEID_GHZ, 0, "Green Hill Zone", "Act 1", LEVELFORMAT_CHUNK128_SONIC2, OBJECTFORMAT_SONIC1, ARTFORMAT_BMP, "data/Level/GHZ/ghz1", "data/Level/GHZ/ghz", "data/Level/sonic1", "data/Level/GHZ/ghz", "GHZ", objFuncSonic1, 0x0050, 0x03B0, 0x0000, 0x255F, 0x0000, 0x03E0},
-		/*LEVELID_GHZ2*/ {ZONEID_GHZ, 1, "Green Hill Zone", "Act 2", LEVELFORMAT_CHUNK128_SONIC2, OBJECTFORMAT_SONIC1, ARTFORMAT_BMP, "data/Level/GHZ/ghz2", "data/Level/GHZ/ghz", "data/Level/sonic1", "data/Level/GHZ/ghz", "GHZ", objFuncSonic1, 0x0050, 0x00FC, 0x0000, 0x214B, 0x0000, 0x03E0},
+		/*LEVELID_GHZ1*/ {ZONEID_GHZ, 0, "Green Hill Zone", "Act 1", LEVELFORMAT_CHUNK128_SONIC2, OBJECTFORMAT_SONIC1, ARTFORMAT_BMP, "data/Level/GHZ/ghz1", "data/Level/GHZ/ghz", "data/Level/sonic1", "data/Level/GHZ/ghz", &GHZ_Background, "GHZ", objFuncSonic1, 0x0050, 0x03B0, 0x0000, 0x255F, 0x0000, 0x03E0},
+		/*LEVELID_GHZ2*/ {ZONEID_GHZ, 1, "Green Hill Zone", "Act 2", LEVELFORMAT_CHUNK128_SONIC2, OBJECTFORMAT_SONIC1, ARTFORMAT_BMP, "data/Level/GHZ/ghz2", "data/Level/GHZ/ghz", "data/Level/sonic1", "data/Level/GHZ/ghz", &GHZ_Background, "GHZ", objFuncSonic1, 0x0050, 0x00FC, 0x0000, 0x214B, 0x0000, 0x03E0},
 	//ZONEID_EHZ
-		/*LEVELID_EHZ1*/ {ZONEID_EHZ, 0, "Emerald Hill Zone", "Act 1", LEVELFORMAT_CHUNK128_SONIC2, OBJECTFORMAT_SONIC2, ARTFORMAT_BMP, "data/Level/EHZ/ehz1", "data/Level/EHZ/ehz", "data/Level/sonic2", "data/Level/EHZ/ehz", "EHZ", objFuncSonic2, 0x0060, 0x028F, 0x0000, 0x2A40, 0x0000, 0x0400},
+		/*LEVELID_EHZ1*/ {ZONEID_EHZ, 0, "Emerald Hill Zone", "Act 1", LEVELFORMAT_CHUNK128_SONIC2, OBJECTFORMAT_SONIC2, ARTFORMAT_BMP, "data/Level/EHZ/ehz1", "data/Level/EHZ/ehz", "data/Level/sonic2", "data/Level/EHZ/ehz", &EHZ_Background, "EHZ", objFuncSonic2, 0x0060, 0x028F, 0x0000, 0x2A40, 0x0000, 0x0400},
 };
 
 //Loading functions
@@ -487,18 +487,8 @@ bool LEVEL::LoadArt(LEVELTABLE *tableEntry)
 	switch (tableEntry->artFormat)
 	{
 		case ARTFORMAT_BMP:
-			//Load our background image
-			GET_APPEND_PATH(backPath, tableEntry->artReferencePath, ".background.bmp");
-			
-			backgroundTexture = new TEXTURE(nullptr, backPath);
-			if (backgroundTexture->fail)
-			{
-				Error(fail = backgroundTexture->fail);
-				return true;
-			}
-			
 			//Load our foreground tilemap
-			GET_APPEND_PATH(artPath, tableEntry->artReferencePath, ".foreground.bmp");
+			GET_APPEND_PATH(artPath, tableEntry->artReferencePath, ".tileset.bmp");
 			
 			tileTexture = new TEXTURE(nullptr, artPath);
 			if (tileTexture->fail)
@@ -512,13 +502,13 @@ bool LEVEL::LoadArt(LEVELTABLE *tableEntry)
 			return true;
 	}
 	
-	//Load background scroll
-	GET_APPEND_PATH(scrollPath, tableEntry->artReferencePath, ".bsc");
+	//Load background art
+	GET_APPEND_PATH(backPath, tableEntry->artReferencePath, ".background.bmp");
 	
-	backgroundScroll = new BACKGROUNDSCROLL(scrollPath, backgroundTexture);
-	if (backgroundScroll->fail)
+	background = new BACKGROUND(backPath, tableEntry->backFunction);
+	if (background->fail)
 	{
-		Error(fail = backgroundScroll->fail);
+		Error(fail = background->fail);
 		return true;
 	}
 	
@@ -538,10 +528,8 @@ void LEVEL::UnloadAll()
 	//Unload textures
 	if (tileTexture != nullptr)
 		delete tileTexture;
-	if (backgroundTexture != nullptr)
-		delete backgroundTexture;
-	if (backgroundScroll != nullptr)
-		delete backgroundScroll;
+	if (background != nullptr)
+		delete background;
 	
 	//Unload players, objects, and camera
 	for (PLAYER *player = playerList; player != nullptr;)
@@ -731,6 +719,24 @@ LEVEL::LEVEL(int id, const char *players[])
 	//Initialize scores
 	InitializeScores();
 	
+	//Run object and player code to initialize them
+	ClearControllerInput();
+	
+	for (PLAYER *player = playerList; player != nullptr; player = player->next)
+		player->Update();
+	
+	for (OBJECT *object = objectList; object != nullptr; object = object->next)
+	{
+		if (object->Update())
+		{
+			Error(fail = object->fail);
+			UnloadAll();
+			return;
+		}
+	}
+	
+	camera->Track(playerList);
+	
 	LOG(("Success!\n"));
 }
 
@@ -753,8 +759,11 @@ void LEVEL::SetFade(bool fadeIn, bool isSpecial)
 	if (fadeIn)
 	{
 		void (*function)(PALETTE *palette) = (specialFade ? &FillPaletteWhite : &FillPaletteBlack);
-		function(tileTexture->loadedPalette);
-		function(backgroundTexture->loadedPalette);
+		
+		if (tileTexture != nullptr)
+			function(tileTexture->loadedPalette);
+		if (background != nullptr)
+			function(background->texture->loadedPalette);
 		for (TEXTURE *texture = objTextureCache; texture != nullptr; texture = texture->next)
 			function(texture->loadedPalette);
 	}
@@ -767,8 +776,10 @@ bool LEVEL::UpdateFade()
 	bool (*function)(PALETTE *palette) = (isFadingIn ? (specialFade ? &PaletteFadeInFromWhite : &PaletteFadeInFromBlack) : (specialFade ? &PaletteFadeOutToWhite : &PaletteFadeOutToBlack));
 	
 	//Fade all palettes
-	finished = function(tileTexture->loadedPalette) ? finished : false;
-	finished = function(backgroundTexture->loadedPalette) ? finished : false;
+	if (tileTexture != nullptr)
+		finished = function(tileTexture->loadedPalette) ? finished : false;
+	if (background != nullptr)
+		finished = function(background->texture->loadedPalette) ? finished : false;
 	for (TEXTURE *texture = objTextureCache; texture != nullptr; texture = texture->next)
 		finished = function(texture->loadedPalette) ? finished : false;
 	
@@ -899,7 +910,7 @@ LEVEL_RENDERLAYER LEVEL::GetObjectLayer(bool highPriority, int priority)
 	return (LEVEL_RENDERLAYER)(highPriority ? (LEVEL_RENDERLAYER_OBJECT_HIGH_0 + priority) : (LEVEL_RENDERLAYER_OBJECT_LOW_0 + priority));
 }
 
-//Palette update and background scroll
+//Palette update
 void LEVEL::PaletteUpdate()
 {
 	//Handle this stage's palette cycle
@@ -909,10 +920,10 @@ void LEVEL::PaletteUpdate()
 	switch (zone)
 	{
 		case ZONEID_GHZ: //Green Hill Zone
-			GHZ_PaletteCycle(this);
+			GHZ_PaletteCycle();
 			break;
 		case ZONEID_EHZ: //Emerald Hill Zone
-			EHZ_PaletteCycle(this);
+			EHZ_PaletteCycle();
 			break;
 	}
 }
@@ -1117,7 +1128,7 @@ void LEVEL::UpdateMusic()
 	}
 	
 	//Lock the audio device so we can safely change which song is playing and volume
-	AUDIO_UNLOCK;
+	AUDIO_LOCK;
 	
 	//If the song is temporary and has ended, resume
 	if (currentMusic->playing == false && musicIsTemporary)
@@ -1146,18 +1157,15 @@ void LEVEL::UpdateMusic()
 
 
 //Level update and draw
-bool LEVEL::Update(bool checkTitleCard)
+bool LEVEL::Update()
 {
 	//Update the music
 	UpdateMusic();
 	
 	//Update title card
-	if (checkTitleCard)
-	{
-		titleCard->UpdateAndDraw();
-		if (inTitleCard)
-			return true;
-	}
+	titleCard->UpdateAndDraw();
+	if (inTitleCard)
+		return true;
 	
 	//Quit if fading
 	if (fading)
@@ -1184,15 +1192,6 @@ bool LEVEL::Update(bool checkTitleCard)
 			//Update
 			if (object->Update())
 				return false;
-			
-			//Check for deletion
-			if (object->deleteFlag)
-			{
-				for (PLAYER *player = playerList; player != nullptr; player = player->next)
-					if (player->interact == object)
-						player->interact = nullptr;
-				delete object;
-			}
 			
 			//Advance to next object
 			object = next;
@@ -1225,25 +1224,9 @@ bool LEVEL::Update(bool checkTitleCard)
 
 void LEVEL::Draw()
 {
-	//Draw background
-	if (backgroundTexture != nullptr && backgroundScroll != nullptr && camera != nullptr)
-	{
-		//Get our background scroll
-		int16_t backX, backY;
-		backgroundScroll->GetScroll(updateStage, camera->x, camera->y, &backX, &backY);
-		
-		//Draw each line
-		int upperLine = max(backY, 0);
-		int lowerLine = min(backY + gRenderSpec.height, backgroundTexture->height);
-		
-		SDL_Rect backSrc = {0, upperLine, backgroundTexture->width, 1};
-		for (int i = upperLine; i < lowerLine; i++)
-		{
-			for (int x = -((backgroundScroll->scrollArray[i] + backX) % backgroundTexture->width); x < gRenderSpec.width; x += backgroundTexture->width)
-				gSoftwareBuffer->DrawTexture(backgroundTexture, backgroundTexture->loadedPalette, &backSrc, LEVEL_RENDERLAYER_BACKGROUND, x, i - backY, false, false);
-			backSrc.y++;
-		}
-	}
+	//Draw and scroll background
+	if (background != nullptr && camera != nullptr)
+		background->Draw(updateStage, camera->x, camera->y);
 	
 	//Draw foreground
 	if (layout.foreground != nullptr && tileTexture != nullptr && camera != nullptr)

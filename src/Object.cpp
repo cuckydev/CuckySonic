@@ -552,13 +552,23 @@ bool OBJECT::Update()
 	if (mappings != nullptr && mappings->fail != nullptr)
 		return Error(mappings->fail);
 	
-	//Update children's code
-	for (OBJECT *object = children; object != nullptr; object = object->next)
+	//Check for deletion
+	if (deleteFlag)
 	{
-		if (object->Update())
-			return true;
+		for (PLAYER *player = gLevel->playerList; player != nullptr; player = player->next)
+			if (player->interact == this)
+				player->interact = nullptr;
+		delete this;
 	}
-	
+	else
+	{
+		//Update children's code
+		for (OBJECT *object = children; object != nullptr; object = object->next)
+		{
+			if (object->Update())
+				return true;
+		}
+	}
 	return false;
 }
 

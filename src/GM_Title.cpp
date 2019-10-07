@@ -10,7 +10,6 @@
 #include "MathUtil.h"
 #include "Input.h"
 #include "Audio.h"
-#include "BackgroundScroll.h"
 
 //Title constants
 enum TITLE_LAYERS
@@ -103,23 +102,11 @@ bool GM_Title(bool *noError)
 	int sonicHandFrame = 0;
 	int sonicAnimTimer = 0;
 	
-	//Background
-	TEXTURE *backgroundTexture = new TEXTURE(nullptr, "data/TitleBackground.bmp");
-	if (backgroundTexture->fail != nullptr)
-		return (*noError = !Error(backgroundTexture->fail));
-	
-	BACKGROUNDSCROLL *backgroundScroll = new BACKGROUNDSCROLL("data/Title.bsc", backgroundTexture);
-	if (backgroundScroll->fail != nullptr)
-		return (*noError = !Error(backgroundScroll->fail));
-	
-	int backgroundX = 0;
-	
 	//Selection state
 	bool selected = false;
 	
 	//Make our palette black for fade-in
 	FillPaletteBlack(titleTexture->loadedPalette);
-	FillPaletteBlack(backgroundTexture->loadedPalette);
 	
 	//Lock audio device so we can load new music
 	AUDIO_LOCK;
@@ -148,32 +135,18 @@ bool GM_Title(bool *noError)
 		{
 			//Fade asset sheet and background palette in
 			PaletteFadeInFromBlack(titleTexture->loadedPalette);
-			PaletteFadeInFromBlack(backgroundTexture->loadedPalette);
 		}
 		else
 		{
 			//Fade asset sheet and background palette out
 			bool res1 = PaletteFadeOutToBlack(titleTexture->loadedPalette);
-			bool res2 = PaletteFadeOutToBlack(backgroundTexture->loadedPalette);
-			breakThisState = res1 && res2;
+			breakThisState = res1;
 			
 			//Fade out music
 			if (titleMusic->playing)
 				titleMusic->volume = max(titleMusic->volume - (1.0f / 32.0f), 0.0f);
 			if (menuMusic->playing)
 				menuMusic->volume = max(menuMusic->volume - (1.0f / 32.0f), 0.0f);
-		}
-		
-		//Draw background
-		backgroundScroll->GetScroll(true, backgroundX, 0, nullptr, nullptr);
-		
-		//Draw each line
-		SDL_Rect backSrc = {0, 0, backgroundTexture->width, 1};
-		for (int i = 0; i < min(gRenderSpec.height, backgroundTexture->height); i++)
-		{
-			for (int x = -(backgroundScroll->scrollArray[i] % backgroundTexture->width); x < gRenderSpec.width; x += backgroundTexture->width)
-				gSoftwareBuffer->DrawTexture(backgroundTexture, backgroundTexture->loadedPalette, &backSrc, LEVEL_RENDERLAYER_BACKGROUND, x, i, false, false);
-			backSrc.y++;
 		}
 		
 		//Move title screen at beginning
@@ -242,9 +215,6 @@ bool GM_Title(bool *noError)
 				//Update frame
 				if (sonicHandFrame + 1 < 14)
 					sonicHandFrame++;
-				
-				//Scroll background
-				backgroundX += sonicHandFrame / 2 + 1;
 			}
 		}
 		
@@ -253,7 +223,7 @@ bool GM_Title(bool *noError)
 			selected = true;
 		
 		//Render our software buffer to the screen
-		if (!(*noError = gSoftwareBuffer->RenderToScreen(&backgroundTexture->loadedPalette->colour[0])))
+		if (!(*noError = gSoftwareBuffer->RenderToScreen(nullptr)))
 			break;
 		
 		if (breakThisState)
@@ -278,8 +248,6 @@ bool GM_Title(bool *noError)
 	}
 	
 	//Unload our textures
-	delete backgroundScroll;
-	delete backgroundTexture;
 	delete titleTexture;
 	
 	//Lock audio device so we can safely unload all loaded music

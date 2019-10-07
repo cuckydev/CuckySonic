@@ -348,7 +348,7 @@ void MUSIC::PlayAtPosition(int setPosition)
 	
 	//Seek to the given position
 	if (stb_vorbis_seek_frame(file, setPosition) < 0)
-		stb_vorbis_seek_frame(file, 0); //Seek to the beginning if failed
+		stb_vorbis_seek_start(file);
 }
 
 //Functions for reading from the music file
@@ -356,7 +356,7 @@ void MUSIC::Loop()
 {
 	//Seek back to definition->loopStart
 	if (stb_vorbis_seek_frame(file, loopStart) < 0)
-		stb_vorbis_seek_frame(file, 0); //Seek to the beginning if failed
+		stb_vorbis_seek_start(file);
 }
 
 ma_uint32 MUSIC::ReadSamplesToBuffer(float *buffer, int samples)

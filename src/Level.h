@@ -1,6 +1,5 @@
 #pragma once
 #include <stdint.h>
-#include "BackgroundScroll.h"
 #include "Render.h"
 #include "GameConstants.h"
 #include "Audio.h"
@@ -10,6 +9,7 @@
 #include "Camera.h"
 #include "TitleCard.h"
 #include "Hud.h"
+#include "Background.h"
 
 #define PALETTE_CYCLES 8
 #define OSCILLATORY_VALUES 16
@@ -81,6 +81,9 @@ struct LEVELTABLE
 	const char *chunkTileReferencePath;	//For the chunk and tile definitions
 	const char *collisionReferencePath;	//For the collision data itself (height maps and angle maps)
 	const char *artReferencePath;		//For the level's art
+	
+	//Background function
+	BACKGROUNDFUNCTION backFunction;
 	
 	//Music
 	const char *music;
@@ -194,9 +197,7 @@ class LEVEL
 		//Art
 		ARTFORMAT artFormat;
 		TEXTURE *tileTexture;
-		
-		TEXTURE *backgroundTexture;
-		BACKGROUNDSCROLL *backgroundScroll;
+		BACKGROUND *background;
 		
 		PALETTECYCLE palCycle[PALETTE_CYCLES];
 		
@@ -288,7 +289,7 @@ class LEVEL
 		void UpdateMusic();
 		
 		//Update and draw functions
-		bool Update(bool checkTitleCard);
+		bool Update();
 		void Draw();
 };
 
