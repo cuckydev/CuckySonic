@@ -86,6 +86,12 @@ enum PLAYERANIMATION
 	PLAYERANIMATION_LIEDOWN,
 };
 
+//Speed definition
+struct SPEEDDEFINITION
+{
+	uint16_t top, acceleration, deceleration, rollDeceleration, jumpForce, jumpRelease;
+};
+
 //Player class
 class PLAYER
 {
@@ -230,6 +236,17 @@ class PLAYER
 		uint16_t top;
 		uint16_t acceleration;
 		uint16_t deceleration;
+		uint16_t rollDeceleration;
+		uint16_t jumpForce, jumpRelease;
+		
+		SPEEDDEFINITION normalSD;
+		SPEEDDEFINITION speedShoesSD;
+		SPEEDDEFINITION superSD;
+		SPEEDDEFINITION superSpeedShoesSD;
+		SPEEDDEFINITION underwaterNormalSD;
+		SPEEDDEFINITION underwaterSpeedShoesSD;
+		SPEEDDEFINITION underwaterSuperSD;
+		SPEEDDEFINITION underwaterSuperSpeedShoesSD;
 		
 		//Super flag
 		bool super;
@@ -289,6 +306,8 @@ class PLAYER
 	public:
 		PLAYER(PLAYER **linkedList, const char *specPath, PLAYER *myFollow, int myController);
 		~PLAYER();
+		
+		void SetSpeedFromDefinition(SPEEDDEFINITION definition);
 		
 		uint8_t AngleIn(uint8_t angleSide, int16_t *distance, int16_t *distance2);
 		void CheckFloor(COLLISIONLAYER layer, int16_t *distance, int16_t *distance2, uint8_t *outAngle);

@@ -1,7 +1,6 @@
 #include "SDL_rwops.h"
 
 #include "Level.h"
-#include "LevelSpecific.h"
 #include "Game.h"
 #include "Fade.h"
 #include "Path.h"
@@ -70,10 +69,10 @@ OBJECTFUNCTION objFuncSonic2[] = {
 //Our level table
 LEVELTABLE gLevelTable[LEVELID_MAX] = {
 	//ZONEID_GHZ
-		/*LEVELID_GHZ1*/ {ZONEID_GHZ, 0, "Green Hill Zone", "Act 1", LEVELFORMAT_CHUNK128_SONIC2, OBJECTFORMAT_SONIC1, ARTFORMAT_BMP, "data/Level/GHZ/ghz1", "data/Level/GHZ/ghz", "data/Level/sonic1", "data/Level/GHZ/ghz", &GHZ_Background, "GHZ", objFuncSonic1, 0x0050, 0x03B0, 0x0000, 0x255F, 0x0000, 0x03E0},
-		/*LEVELID_GHZ2*/ {ZONEID_GHZ, 1, "Green Hill Zone", "Act 2", LEVELFORMAT_CHUNK128_SONIC2, OBJECTFORMAT_SONIC1, ARTFORMAT_BMP, "data/Level/GHZ/ghz2", "data/Level/GHZ/ghz", "data/Level/sonic1", "data/Level/GHZ/ghz", &GHZ_Background, "GHZ", objFuncSonic1, 0x0050, 0x00FC, 0x0000, 0x214B, 0x0000, 0x03E0},
+		/*LEVELID_GHZ1*/ {ZONEID_GHZ, 0, "Green Hill Zone", "Act 1", LEVELFORMAT_CHUNK128_SONIC2, OBJECTFORMAT_SONIC1, ARTFORMAT_BMP, "data/Level/GHZ/ghz1", "data/Level/GHZ/ghz", "data/Level/sonic1", "data/Level/GHZ/ghz", &GHZ_Background, &GHZ_PaletteCycle, objFuncSonic1, "GHZ", 0x0050, 0x03B0, 0x0000, 0x255F, 0x0000, 0x03E0},
+		/*LEVELID_GHZ2*/ {ZONEID_GHZ, 1, "Green Hill Zone", "Act 2", LEVELFORMAT_CHUNK128_SONIC2, OBJECTFORMAT_SONIC1, ARTFORMAT_BMP, "data/Level/GHZ/ghz2", "data/Level/GHZ/ghz", "data/Level/sonic1", "data/Level/GHZ/ghz", &GHZ_Background, &GHZ_PaletteCycle, objFuncSonic1, "GHZ", 0x0050, 0x00FC, 0x0000, 0x214B, 0x0000, 0x03E0},
 	//ZONEID_EHZ
-		/*LEVELID_EHZ1*/ {ZONEID_EHZ, 0, "Emerald Hill Zone", "Act 1", LEVELFORMAT_CHUNK128_SONIC2, OBJECTFORMAT_SONIC2, ARTFORMAT_BMP, "data/Level/EHZ/ehz1", "data/Level/EHZ/ehz", "data/Level/sonic2", "data/Level/EHZ/ehz", &EHZ_Background, "EHZ", objFuncSonic2, 0x0060, 0x028F, 0x0000, 0x2A40, 0x0000, 0x0400},
+		/*LEVELID_EHZ1*/ {ZONEID_EHZ, 0, "Emerald Hill Zone", "Act 1", LEVELFORMAT_CHUNK128_SONIC2, OBJECTFORMAT_SONIC2, ARTFORMAT_BMP, "data/Level/EHZ/ehz1", "data/Level/EHZ/ehz", "data/Level/sonic2", "data/Level/EHZ/ehz", &EHZ_Background, &EHZ_PaletteCycle, objFuncSonic2, "EHZ", 0x0060, 0x028F, 0x0000, 0x2A40, 0x0000, 0x0400},
 };
 
 //Loading functions
@@ -512,6 +511,9 @@ bool LEVEL::LoadArt(LEVELTABLE *tableEntry)
 		return true;
 	}
 	
+	//Set palette cycle function
+	paletteFunction = tableEntry->paletteFunction;
+	
 	LOG(("Success!\n"));
 	return false;
 }
@@ -910,24 +912,6 @@ LEVEL_RENDERLAYER LEVEL::GetObjectLayer(bool highPriority, int priority)
 	return (LEVEL_RENDERLAYER)(highPriority ? (LEVEL_RENDERLAYER_OBJECT_HIGH_0 + priority) : (LEVEL_RENDERLAYER_OBJECT_LOW_0 + priority));
 }
 
-//Palette update
-void LEVEL::PaletteUpdate()
-{
-	//Handle this stage's palette cycle
-	if (tileTexture == nullptr || tileTexture->loadedPalette == nullptr)
-		return;
-	
-	switch (zone)
-	{
-		case ZONEID_GHZ: //Green Hill Zone
-			GHZ_PaletteCycle();
-			break;
-		case ZONEID_EHZ: //Emerald Hill Zone
-			EHZ_PaletteCycle();
-			break;
-	}
-}
-
 //Oscillatory Update
 static const bool oscillatoryInitialDirection[OSCILLATORY_VALUES] = {false, false, true, true, true, true, true, false, false, false, false, false, false};
 
@@ -1214,7 +1198,6 @@ bool LEVEL::Update()
 	
 	//Update all other level stuff
 	OscillatoryUpdate();
-	PaletteUpdate();
 	
 	//Increase our time
 	if (gLevel->updateTime)
@@ -1224,6 +1207,10 @@ bool LEVEL::Update()
 
 void LEVEL::Draw()
 {
+	//Update palette cycling
+	if (paletteFunction != nullptr && !fading)
+		paletteFunction();
+	
 	//Draw and scroll background
 	if (background != nullptr && camera != nullptr)
 		background->Draw(updateStage, camera->x, camera->y);

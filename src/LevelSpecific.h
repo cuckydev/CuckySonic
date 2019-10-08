@@ -1,5 +1,7 @@
 #pragma once
-#include "Level.h"
+#include "Background.h"
+
+typedef void (*PALETTECYCLEFUNCTION)();
 
 void GHZ_PaletteCycle();
 void EHZ_PaletteCycle();

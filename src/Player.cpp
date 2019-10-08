@@ -18,6 +18,7 @@
 //#define FIX_HORIZONTAL_WRAP   //In the originals, for some reason, the LevelBound uses unsigned checks, meaning if you go off to the left, you'll be sent to the right boundary
 //#define FIX_DUCK_CONDITION    //In Sonic and Knuckles, the conditions for ducking are so loose, you can duck (and spindash) in unexpected situations.
 //#define FIX_ROLL_YSHIFT       //In the originals, when you roll, you're always shifted up / down globally, this can cause weird behaviour such as falling off of ceilings
+//#define FIX_SPEED_BUGS        //In the originals, there's a lot of scenarios where the player's speed is set incorrectly
 
 //Bug-fix macros
 #ifdef FIX_ROLL_YSHIFT
@@ -531,6 +532,8 @@ void ObjShield(OBJECT *object)
 }
 
 //Player class
+#define READ_SPEEDDEFINITION(definition)	definition.top = SDL_ReadBE16(playerSpec); definition.acceleration = SDL_ReadBE16(playerSpec); definition.deceleration = SDL_ReadBE16(playerSpec); definition.rollDeceleration = SDL_ReadBE16(playerSpec); definition.jumpForce = SDL_ReadBE16(playerSpec); definition.jumpRelease = SDL_ReadBE16(playerSpec);
+
 PLAYER::PLAYER(PLAYER **linkedList, const char *specPath, PLAYER *myFollow, int myController)
 {
 	LOG(("Creating a player with spec %s and controlled by controller %d...\n", specPath, myController));
@@ -577,9 +580,34 @@ PLAYER::PLAYER(PLAYER **linkedList, const char *specPath, PLAYER *myFollow, int 
 	rollXRadius = SDL_ReadU8(playerSpec);
 	rollYRadius = SDL_ReadU8(playerSpec);
 	
-	characterType = (CHARACTERTYPE)SDL_ReadU8(playerSpec);
+	characterType = (CHARACTERTYPE)SDL_ReadBE16(playerSpec);
+	
+	READ_SPEEDDEFINITION(normalSD);
+	READ_SPEEDDEFINITION(speedShoesSD);
+	READ_SPEEDDEFINITION(superSD);
+	READ_SPEEDDEFINITION(superSpeedShoesSD);
+	READ_SPEEDDEFINITION(underwaterNormalSD);
+	READ_SPEEDDEFINITION(underwaterSpeedShoesSD);
+	READ_SPEEDDEFINITION(underwaterSuperSD);
+	READ_SPEEDDEFINITION(underwaterSuperSpeedShoesSD);
 	
 	SDL_RWclose(playerSpec);
+	
+	//Initialize speed
+	if (!super)
+	{
+		if (!item.hasSpeedShoes)
+			SetSpeedFromDefinition(status.underwater ? underwaterNormalSD : normalSD);
+		else
+			SetSpeedFromDefinition(status.underwater ? underwaterSpeedShoesSD : speedShoesSD);
+	}
+	else
+	{
+		if (!item.hasSpeedShoes)
+			SetSpeedFromDefinition(status.underwater ? underwaterSuperSD : superSD);
+		else
+			SetSpeedFromDefinition(status.underwater ? underwaterSuperSpeedShoesSD : superSpeedShoesSD);
+	}
 	
 	//Set render properties
 	priority = 2;
@@ -588,11 +616,6 @@ PLAYER::PLAYER(PLAYER **linkedList, const char *specPath, PLAYER *myFollow, int 
 	//Render flags
 	renderFlags.alignPlane = true;
 	
-	//Initialize our speeds
-	top = 0x0600;
-	acceleration = 0x000C;
-	deceleration = 0x0080;
-	
 	//Collision
 	topSolidLayer = COLLISIONLAYER_NORMAL_TOP;
 	lrbSolidLayer = COLLISIONLAYER_NORMAL_LRB;
@@ -600,8 +623,6 @@ PLAYER::PLAYER(PLAYER **linkedList, const char *specPath, PLAYER *myFollow, int 
 	//Flipping stuff
 	flipsRemaining = 0;
 	flipSpeed = 4;
-	
-	super = false;
 	
 	//Set our following person
 	follow = (void*)myFollow;
@@ -662,6 +683,16 @@ PLAYER::~PLAYER()
 			}
 		}
 	}
+}
+
+void PLAYER::SetSpeedFromDefinition(SPEEDDEFINITION definition)
+{
+	top = definition.top;
+	acceleration = definition.acceleration;
+	deceleration = definition.deceleration;
+	rollDeceleration = definition.rollDeceleration;
+	jumpForce = definition.jumpForce;
+	jumpRelease = definition.jumpRelease;
 }
 
 //Generic collision functions
@@ -825,8 +856,8 @@ int16_t PLAYER::CalcRoomOverHead(uint8_t upAngle)
 //Calculate room in front of us
 int16_t PLAYER::CalcRoomInFront(uint8_t moveAngle)
 {
-	int16_t xPos = (xPosLong + (xVel * 0x100)) / 0x10000;
-	int16_t yPos = (yPosLong + (yVel * (status.reverseGravity ? -0x100 : 0x100))) / 0x10000;
+	int16_t xPos = (xPosLong + (xVel << 8)) >> 16;
+	int16_t yPos = (yPosLong + (yVel * (status.reverseGravity ? -0x100 : 0x100))) >> 16;
 
 	primaryAngle = moveAngle;
 	secondaryAngle = moveAngle;
@@ -954,7 +985,7 @@ void PLAYER::AnglePos()
 				else if (nearestDifference > 0)
 				{
 					//Get how far we can clip down to the floor
-					uint8_t clipLength = abs(xVel / 0x100) + 4;
+					uint8_t clipLength = abs(xVel >> 8) + 4;
 					if (clipLength >= 14)
 						clipLength = 14;
 
@@ -989,7 +1020,7 @@ void PLAYER::AnglePos()
 				else if (nearestDifference > 0)
 				{
 					//Get how far we can clip down to the floor
-					uint8_t clipLength = abs(yVel / 0x100) + 4;
+					uint8_t clipLength = abs(yVel >> 8) + 4;
 					if (clipLength >= 14)
 						clipLength = 14;
 
@@ -1024,7 +1055,7 @@ void PLAYER::AnglePos()
 				else if (nearestDifference > 0)
 				{
 					//Get how far we can clip down to the floor
-					uint8_t clipLength = abs(xVel / 0x100) + 4;
+					uint8_t clipLength = abs(xVel >> 8) + 4;
 					if (clipLength >= 14)
 						clipLength = 14;
 
@@ -1059,7 +1090,7 @@ void PLAYER::AnglePos()
 				else if (nearestDifference > 0)
 				{
 					//Get how far we can clip down to the floor
-					uint8_t clipLength = abs(yVel / 0x100) + 4;
+					uint8_t clipLength = abs(yVel >> 8) + 4;
 					if (clipLength >= 14)
 						clipLength = 14;
 
@@ -1180,7 +1211,7 @@ void PLAYER::DoLevelCollision()
 			}
 			
 			//Are we touching the floor (and within clip length)
-			const int8_t clipLength = -((yVel / 0x100) + 8);
+			const int8_t clipLength = -((yVel >> 8) + 8);
 			if (distance2 < 0 && (distance2 >= clipLength || distance >= clipLength))
 			{
 				//Inherit the floor's angle
@@ -1516,8 +1547,8 @@ void PLAYER::ResetOnFloor3()
 					//Bounce us up from the ground
 					int16_t sin, cos;
 					GetSine(angle - 0x40, &sin, &cos);
-					xVel += (cos * bounceForce) / 0x100;
-					yVel += (sin * bounceForce) / 0x100;
+					xVel += (cos * bounceForce) >> 8;
+					yVel += (sin * bounceForce) >> 8;
 					
 					//Put us back into the air state
 					status.inAir = true;
@@ -1622,9 +1653,9 @@ bool PLAYER::Spindash()
 			
 			//Set our speed
 			if (super)
-				inertia = spindashSpeedSuper[spindashCounter / 0x100];
+				inertia = spindashSpeedSuper[spindashCounter >> 8];
 			else
-				inertia = spindashSpeed[spindashCounter / 0x100];
+				inertia = spindashSpeed[spindashCounter >> 8];
 			
 			//Lock the camera behind us
 			scrollDelay = (0x2000 - (inertia - 0x800) * 2) % (PLAYER_RECORD_LENGTH << 8);
@@ -1643,8 +1674,8 @@ bool PLAYER::Spindash()
 				//Convert our inertia into global speeds
 				int16_t sin, cos;
 				GetSine(angle, &sin, &cos);
-				xVel = (cos * inertia) / 0x100;
-				yVel = (sin * inertia) / 0x100;
+				xVel = (cos * inertia) >> 8;
+				yVel = (sin * inertia) >> 8;
 			#endif
 		}
 		//Charging spindash
@@ -1789,16 +1820,14 @@ void PLAYER::JumpHeight()
 	if (status.jumping)
 	{
 		//Slow us down if ABC is released when jumping
-		int16_t minVelocity = status.underwater ? -0x200 : -0x400;
-		
 		#ifndef SONIC12_NO_JUMP_ABILITY
-			if (minVelocity <= yVel)
+			if (-jumpRelease <= yVel)
 				JumpAbilities();
 			else if (!controlHeld.a && !controlHeld.b && !controlHeld.c)
-				yVel = minVelocity;
+				yVel = -jumpRelease;
 		#else
-			if (minVelocity > yVel && !controlHeld.a && !controlHeld.b && !controlHeld.c)
-				yVel = minVelocity;
+			if (-jumpRelease > yVel && !controlHeld.a && !controlHeld.b && !controlHeld.c)
+				yVel = -jumpRelease;
 		#endif
 	}
 	else
@@ -1815,19 +1844,20 @@ void PLAYER::ChgJumpDir()
 	if (!status.rollJumping)
 	{
 		int16_t newVelocity = xVel;
+		int16_t jumpAcceleration = acceleration << 1;
 		
 		//Move left if left is held
 		if (controlHeld.left)
 		{
 			//Accelerate left
 			status.xFlip = true;
-			newVelocity -= acceleration * 2;
+			newVelocity -= jumpAcceleration;
 			
 			//Don't accelerate past the top speed
 			#ifndef SONIC12_AIR_CAP
 				if (newVelocity <= -top)
 				{
-					newVelocity += acceleration * 2;
+					newVelocity += jumpAcceleration;
 					if (newVelocity >= -top)
 						newVelocity = -top;
 				}
@@ -1842,13 +1872,13 @@ void PLAYER::ChgJumpDir()
 		{
 			//Accelerate right
 			status.xFlip = false;
-			newVelocity += acceleration * 2;
+			newVelocity += jumpAcceleration;
 			
 			//Don't accelerate past the top speed
 			#ifndef SONIC12_AIR_CAP
 				if (newVelocity >= top)
 				{
-					newVelocity -= acceleration * 2;
+					newVelocity -= jumpAcceleration;
 					if (newVelocity <= top)
 						newVelocity = top;
 				}
@@ -1946,30 +1976,12 @@ bool PLAYER::Jump()
 		//Don't jump if under a low ceiling
 		if (CalcRoomOverHead(headAngle) >= 6)
 		{
-			//Get the velocity of our jump
-			int16_t jumpVelocity;
-			
-			if (characterType != CHARACTERTYPE_KNUCKLES)
-			{
-				//Normal jumping
-				jumpVelocity = super ? 0x800 : 0x680;
-				
-				//Lower our jump in water
-				if (status.underwater)
-					jumpVelocity = 0x380;
-			}
-			else
-			{
-				//Knuckles' low jumping
-				jumpVelocity = status.underwater ? 0x300 : 0x600;
-			}
-			
 			//Apply the velocity
 			int16_t sin, cos;
 			GetSine(angle - 0x40, &sin, &cos);
 			
-			xVel += (cos * jumpVelocity) / 0x100;
-			yVel += (sin * jumpVelocity) / 0x100;
+			xVel += (cos * jumpForce) >> 8;
+			yVel += (sin * jumpForce) >> 8;
 			
 			//Put us in the jump state
 			status.inAir = true;
@@ -2052,19 +2064,19 @@ void PLAYER::RollRepel()
 		//Get our slope gravity
 		int16_t sin;
 		GetSine(angle, &sin, nullptr);
-		sin = (sin * 0x50) / 0x100;
+		sin = (sin * 0x50) >> 8;
 		
 		//Apply our slope gravity (divide by 4 if opposite to our inertia sign)
 		if (inertia >= 0)
 		{
 			if (sin < 0)
-				sin /= 4;
+				sin >>= 2;
 			inertia += sin;
 		}
 		else
 		{
 			if (sin >= 0)
-				sin /= 4;
+				sin >>= 2;
 			inertia += sin;
 		}
 	}
@@ -2378,8 +2390,8 @@ void PLAYER::Move()
 	//Convert our inertia into global speeds
 	int16_t sin, cos;
 	GetSine(angle, &sin, &cos);
-	xVel = (cos * inertia) / 0x100;
-	yVel = (sin * inertia) / 0x100;
+	xVel = (cos * inertia) >> 8;
+	yVel = (sin * inertia) >> 8;
 	
 	//Collide with walls
 	CheckWallsOnGround();
@@ -2474,9 +2486,9 @@ void PLAYER::RollRight()
 void PLAYER::RollSpeed()
 {
 	//Get our friction (super has separate friction) and deceleration when pulling back
-	uint16_t friction = acceleration >> 1;
-	if (super)
-		friction = 6;
+	//uint16_t friction = acceleration >> 1;
+	//if (super)
+	//	friction = 6;
 	
 	if (!status.isSliding)
 	{
@@ -2492,13 +2504,13 @@ void PLAYER::RollSpeed()
 		//Friction
 		if (inertia > 0)
 		{
-			inertia -= friction;
+			inertia -= rollDeceleration;
 			if (inertia < 0)
 				inertia = 0;
 		}
 		else if (inertia < 0)
 		{
-			inertia += friction;
+			inertia += rollDeceleration;
 			if (inertia >= 0)
 				inertia = 0;
 		}
@@ -2533,8 +2545,8 @@ void PLAYER::RollSpeed()
 	//Convert our inertia into global speeds
 	int16_t sin, cos;
 	GetSine(angle, &sin, &cos);
-	xVel = (cos * inertia) / 0x100;
-	yVel = (sin * inertia) / 0x100;
+	xVel = (cos * inertia) >> 8;
+	yVel = (sin * inertia) >> 8;
 	
 	//Cap our global horizontal speed
 	if (xVel <= -0x1000)
@@ -2792,7 +2804,7 @@ void PLAYER::LevelBound()
 		#define lbType uint16_t
 	#endif
 	
-	lbType nextPos = (xPosLong + (xVel * 0x100)) / 0x10000;
+	lbType nextPos = (xPosLong + (xVel << 8)) >> 16;
 	lbType leftBound = gLevel->leftBoundary + 0x10;
 	lbType rightBound = gLevel->rightBoundary + 0x40 - 0x18;
 	
@@ -2968,7 +2980,7 @@ void PLAYER::Animate()
 							speedFactor = -speedFactor + 0x800;
 							if (speedFactor >= 0x8000)
 								speedFactor = 0;
-							animFrameDuration = speedFactor / 0x100;
+							animFrameDuration = speedFactor >> 8;
 							
 							//Increment frame
 							animFrame++;
@@ -2980,7 +2992,7 @@ void PLAYER::Animate()
 								speedFactor = -speedFactor + 0x800;
 								if (speedFactor >= 0x8000)
 									speedFactor = 0;
-								animFrameDuration = speedFactor / 0x100;
+								animFrameDuration = speedFactor >> 8;
 								
 								//Increment frame
 								animFrame++;
@@ -3237,7 +3249,7 @@ void PLAYER::Animate()
 			speedFactor = -speedFactor + 0x400;
 			if (speedFactor >= 0x8000)
 				speedFactor = 0;
-			animFrameDuration = speedFactor / 0x100;
+			animFrameDuration = speedFactor >> 8;
 			
 			//Advance frame
 			AdvanceFrame(animation);
@@ -3337,11 +3349,11 @@ void PLAYER::Update()
 								LevelBound();
 								
 								//Move according to our velocity
-								xPosLong += xVel * 0x100;
+								xPosLong += xVel << 8;
 								if (status.reverseGravity)
-									yPosLong -= yVel * 0x100;
+									yPosLong -= yVel << 8;
 								else
-									yPosLong += yVel * 0x100;
+									yPosLong += yVel << 8;
 								
 								//Handle collision and falling off of slopes
 								AnglePos();
@@ -3360,11 +3372,11 @@ void PLAYER::Update()
 								LevelBound();
 								
 								//Move according to our velocity
-								xPosLong += xVel * 0x100;
+								xPosLong += xVel << 8;
 								if (status.reverseGravity)
-									yPosLong -= yVel * 0x100;
+									yPosLong -= yVel << 8;
 								else
-									yPosLong += yVel * 0x100;
+									yPosLong += yVel << 8;
 								
 								//Handle collision and falling off of slopes
 								AnglePos();
@@ -3382,11 +3394,11 @@ void PLAYER::Update()
 							LevelBound();
 							
 							//Move according to our velocity
-							xPosLong += xVel * 0x100;
+							xPosLong += xVel << 8;
 							if (status.reverseGravity)
-								yPosLong -= yVel * 0x100;
+								yPosLong -= yVel << 8;
 							else
-								yPosLong += yVel * 0x100;
+								yPosLong += yVel << 8;
 							
 							//Gravity (0x38 above water, 0x10 below water)
 							yVel += 0x38;
@@ -3443,11 +3455,11 @@ void PLAYER::Update()
 					}
 					
 					//Move according to our velocity
-					xPosLong += xVel * 0x100;
+					xPosLong += xVel << 8;
 					if (status.reverseGravity)
-						yPosLong -= yVel * 0x100;
+						yPosLong -= yVel << 8;
 					else
-						yPosLong += yVel * 0x100;
+						yPosLong += yVel << 8;
 					
 					//Gravity (0x30 above water, 0x10 below water)
 					yVel += 0x30;
@@ -3484,11 +3496,11 @@ void PLAYER::Update()
 					DeadCheckRespawn();
 					
 					//Move and fall
-					xPosLong += xVel * 0x100;
+					xPosLong += xVel << 8;
 					if (status.reverseGravity)
-						yPosLong -= yVel * 0x100;
+						yPosLong -= yVel << 8;
 					else
-						yPosLong += yVel * 0x100;
+						yPosLong += yVel << 8;
 					yVel += 0x38;
 					
 					//Record pos and draw
@@ -3581,18 +3593,14 @@ void PLAYER::Display()
 		item.hasSpeedShoes = false;
 		
 		//Reset our speed
-		if (super)
-		{
-			top = 0xA00;
-			acceleration = 0x30;
-			deceleration = 0x100;
-		}
-		else
-		{
-			top = 0x600;
-			acceleration = 0xC;
-			deceleration = 0x80;
-		}
+		#ifndef FIX_SPEED_BUGS
+			SetSpeedFromDefinition(super ? superSD : normalSD);
+		#else
+			if (!super)
+				SetSpeedFromDefinition(status.underwater ? underwaterNormalSD : normalSD);
+			else
+				SetSpeedFromDefinition(status.underwater ? underwaterSuperSD : superSD);
+		#endif
 	}
 }
 
@@ -3679,19 +3687,19 @@ void PLAYER::DebugControl()
 			selectedControl = gController[controller].press;
 		
 		//Move according to our speed and direction
-		int32_t calcSpeed = (debugSpeed + 1) * 0x1000;
+		int32_t calcSpeed = (debugSpeed + 1) << 12;
 		
 		if (selectedControl.up)
 		{
 			yPosLong -= calcSpeed;
-			if (yPosLong < gLevel->topBoundaryTarget * 0x10000)
-				yPosLong = gLevel->topBoundaryTarget * 0x10000;
+			if (yPosLong < gLevel->topBoundaryTarget << 16)
+				yPosLong = gLevel->topBoundaryTarget << 16;
 		}
 		else if (selectedControl.down)
 		{
 			yPosLong += calcSpeed;
-			if (yPosLong > gLevel->bottomBoundaryTarget * 0x10000)
-				yPosLong = gLevel->bottomBoundaryTarget * 0x10000;
+			if (yPosLong > gLevel->bottomBoundaryTarget << 16)
+				yPosLong = gLevel->bottomBoundaryTarget << 16;
 		}
 		
 		if (selectedControl.left)
@@ -3970,9 +3978,14 @@ void PLAYER::GiveSpeedShoes()
 	item.hasSpeedShoes = true;
 	speedShoesTime = 150;
 	
-	top = 0xC00;
-	acceleration = 0x18;
-	deceleration = 0x80;
+	#ifndef FIX_SPEED_BUGS
+		SetSpeedFromDefinition(speedShoesSD);
+	#else
+		if (!super)
+			SetSpeedFromDefinition(status.underwater ? underwaterSpeedShoesSD : speedShoesSD);
+		else
+			SetSpeedFromDefinition(status.underwater ? underwaterSuperSpeedShoesSD : superSpeedShoesSD);
+	#endif
 	
 	//Play speed shoes music (only if lead)
 	if (follow == nullptr)

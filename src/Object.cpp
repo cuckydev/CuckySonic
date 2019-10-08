@@ -83,14 +83,14 @@ void OBJECT::ScratchAllocS32(int max) { SCRATCH_ALLOC(scratchS32,  int32_t, max)
 //Movement and gravity
 void OBJECT::Move()
 {
-	xPosLong += xVel * 0x100;
-	yPosLong += yVel * 0x100;
+	xPosLong += xVel << 8;
+	yPosLong += yVel << 8;
 }
 
 void OBJECT::MoveAndFall()
 {
-	xPosLong += xVel * 0x100;
-	yPosLong += yVel * 0x100;
+	xPosLong += xVel << 8;
+	yPosLong += yVel << 8;
 	yVel += 0x38;
 }
 

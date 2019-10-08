@@ -4,6 +4,7 @@
 #include "GameConstants.h"
 #include "Audio.h"
 
+#include "LevelSpecific.h"
 #include "Player.h"
 #include "Object.h"
 #include "Camera.h"
@@ -82,14 +83,13 @@ struct LEVELTABLE
 	const char *collisionReferencePath;	//For the collision data itself (height maps and angle maps)
 	const char *artReferencePath;		//For the level's art
 	
-	//Background function
+	//Level specific functions and object function list to refer to
 	BACKGROUNDFUNCTION backFunction;
+	PALETTECYCLEFUNCTION paletteFunction;
+	OBJECTFUNCTION *objectFunctionList;
 	
 	//Music
 	const char *music;
-	
-	//Object function list
-	OBJECTFUNCTION *objectFunctionList;
 	
 	//Start position and boundaries
 	uint16_t startX, startY;
@@ -200,6 +200,7 @@ class LEVEL
 		BACKGROUND *background;
 		
 		PALETTECYCLE palCycle[PALETTE_CYCLES];
+		PALETTECYCLEFUNCTION paletteFunction;
 		
 		//Chunk and tile data
 		int chunks, tiles;
