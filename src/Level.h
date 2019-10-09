@@ -227,6 +227,7 @@ class LEVEL
 		
 		//Players and objects
 		PLAYER *playerList;
+		OBJECT *coreObjectList;
 		OBJECT *objectList;
 		CAMERA *camera;
 		

@@ -18,7 +18,6 @@
 //#define FIX_HORIZONTAL_WRAP   //In the originals, for some reason, the LevelBound uses unsigned checks, meaning if you go off to the left, you'll be sent to the right boundary
 //#define FIX_DUCK_CONDITION    //In Sonic and Knuckles, the conditions for ducking are so loose, you can duck (and spindash) in unexpected situations.
 //#define FIX_ROLL_YSHIFT       //In the originals, when you roll, you're always shifted up / down globally, this can cause weird behaviour such as falling off of ceilings
-//#define FIX_SPEED_BUGS        //In the originals, there's a lot of scenarios where the player's speed is set incorrectly
 
 //Bug-fix macros
 #ifdef FIX_ROLL_YSHIFT
@@ -72,15 +71,16 @@
 //#define SONIC12_DEATH_RESPAWN     //In Sonic 3, it was changed so that death respawns you once you go off-screen, not when you leave the level boundaries, since this was a very buggy check
 //#define SONIC12_SPINDASH_ANIM_BUG //In Sonic 3, the bug where landing on the ground while spindashing plays the walk animation was fixed
 //#define SONIC12_PUSH_CHECK		//In Sonic 3, it was changed so that you have to be facing towards a wall in order to start pushing into it
+//#define SONIC12_SANE_AIRCOLLISION //For some reason, in Sonic 3 there was a weird modification to the airborne collision code... can't understand the purpose
 
 //Animation data
 #define MAPPINGFRAME_FLIP1 0x5F
 
-static const uint8_t animationWalk[] =			{0xFF,0x0F,0x10,0x11,0x12,0x13,0x14,0x0D,0x0E,0xFF};
+static const uint8_t animationWalk[] =			{0xFF,0x0F,0x10,0x11,0x12,0x13,0x14,0x0D,0x0E,0xFF}; //Walk and run must match in length (run is padded with 0xFF, here)
 static const uint8_t animationRun[] =			{0xFF,0x2D,0x2E,0x2F,0x30,0xFF,0xFF,0xFF,0xFF,0xFF};
-static const uint8_t animationRoll[] =			{0xFE,0x3D,0x41,0x3E,0x41,0x3F,0x41,0x40,0x41,0xFF};
+static const uint8_t animationRoll[] =			{0xFE,0x3D,0x41,0x3E,0x41,0x3F,0x41,0x40,0x41,0xFF}; //Roll and roll2 must match in length
 static const uint8_t animationRoll2[] =			{0xFE,0x3D,0x41,0x3E,0x41,0x3F,0x41,0x40,0x41,0xFF};
-static const uint8_t animationPush[] =			{0xFD,0x48,0x49,0x4A,0x4B,0xFF,0xFF,0xFF,0xFF,0xFF};
+static const uint8_t animationPush[] =			{0xFD,0x48,0x49,0x4A,0x4B,0xFF,0xFF,0xFF,0xFF,0xFF}; //Push must also match the length of run and walk (padded with 0xFF here)
 static const uint8_t animationIdle[] =			{0x05,0x01,0x01,0x01,0x01,0x01,0x01,0x01,0x01,0x01,0x01,0x01,0x01,0x01,0x01,
 												 0x01,0x01,0x01,0x01,0x01,0x01,0x01,0x01,0x01,0x01,0x01,0x01,0x01,0x01,0x01,
 												 0x01,0x02,0x03,0x03,0x03,0x03,0x03,0x04,0x04,0x04,0x05,0x05,0x05,0x04,0x04,
@@ -631,10 +631,10 @@ PLAYER::PLAYER(PLAYER **linkedList, const char *specPath, PLAYER *myFollow, int 
 	controller = myController;
 	
 	//Load our objects
-	spindashDust = new OBJECT(&gLevel->objectList, ObjSpindashDust);
+	spindashDust = new OBJECT(&gLevel->coreObjectList, ObjSpindashDust);
 	spindashDust->parent = this;
 	
-	skidDust = new OBJECT(&gLevel->objectList, ObjSkidDust);
+	skidDust = new OBJECT(&gLevel->coreObjectList, ObjSkidDust);
 	skidDust->parent = this;
 	
 	shieldObject = new OBJECT(&gLevel->objectList, ObjShield);
@@ -1276,8 +1276,10 @@ void PLAYER::DoLevelCollision()
 				
 				if (distance < 0)
 				{
+				#ifndef SONIC12_SANE_AIRCOLLISION
 					if (distance > -14)
 					{
+				#endif
 						//Clip out of ceiling
 						if (!status.reverseGravity)
 							y.pos -= distance;
@@ -1287,6 +1289,7 @@ void PLAYER::DoLevelCollision()
 						//Stop our vertical velocity
 						if (yVel < 0)
 							yVel = 0;
+				#ifndef SONIC12_SANE_AIRCOLLISION
 					}
 					else
 					{
@@ -1299,6 +1302,7 @@ void PLAYER::DoLevelCollision()
 							xVel = 0;
 						}
 					}
+				#endif
 				}
 				else if (status.windTunnel || yVel >= 0)
 				{
@@ -3593,14 +3597,10 @@ void PLAYER::Display()
 		item.hasSpeedShoes = false;
 		
 		//Reset our speed
-		#ifndef FIX_SPEED_BUGS
-			SetSpeedFromDefinition(super ? superSD : normalSD);
-		#else
-			if (!super)
-				SetSpeedFromDefinition(status.underwater ? underwaterNormalSD : normalSD);
-			else
-				SetSpeedFromDefinition(status.underwater ? underwaterSuperSD : superSD);
-		#endif
+		if (!super)
+			SetSpeedFromDefinition(status.underwater ? underwaterNormalSD : normalSD);
+		else
+			SetSpeedFromDefinition(status.underwater ? underwaterSuperSD : superSD);
 	}
 }
 
@@ -3978,14 +3978,10 @@ void PLAYER::GiveSpeedShoes()
 	item.hasSpeedShoes = true;
 	speedShoesTime = 150;
 	
-	#ifndef FIX_SPEED_BUGS
-		SetSpeedFromDefinition(speedShoesSD);
-	#else
-		if (!super)
-			SetSpeedFromDefinition(status.underwater ? underwaterSpeedShoesSD : speedShoesSD);
-		else
-			SetSpeedFromDefinition(status.underwater ? underwaterSuperSpeedShoesSD : superSpeedShoesSD);
-	#endif
+	if (!super)
+		SetSpeedFromDefinition(status.underwater ? underwaterSpeedShoesSD : speedShoesSD);
+	else
+		SetSpeedFromDefinition(status.underwater ? underwaterSuperSpeedShoesSD : superSpeedShoesSD);
 	
 	//Play speed shoes music (only if lead)
 	if (follow == nullptr)

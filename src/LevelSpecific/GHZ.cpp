@@ -32,7 +32,7 @@ void GHZ_Background(BACKGROUND *background, bool doScroll, int cameraX, int came
 	int16_t backY = -(cameraY / -0x20 + 0x20);
 	
 	//Scroll clouds
-	static unsigned int cloudScroll[3] = {0, 0, 0};
+	static uint32_t cloudScroll[3] = {0, 0, 0};
 	if (doScroll)
 	{
 		(cloudScroll[0] += 0x10) %= (background->texture->width * 0x10);
@@ -44,17 +44,17 @@ void GHZ_Background(BACKGROUND *background, bool doScroll, int cameraX, int came
 	SDL_Rect cloud1 = {0,   0, background->texture->width,  32};
 	SDL_Rect cloud2 = {0,  32, background->texture->width,  16};
 	SDL_Rect cloud3 = {0,  48, background->texture->width,  16};
-	background->DrawStrip(&cloud1, backY +   0, -((cloudScroll[0] / 0x10) + scrollBG2), -((cloudScroll[0] / 0x10) + scrollBG2));
-	background->DrawStrip(&cloud2, backY +  32, -((cloudScroll[1] / 0x10) + scrollBG2), -((cloudScroll[1] / 0x10) + scrollBG2));
-	background->DrawStrip(&cloud3, backY +  48, -((cloudScroll[2] / 0x10) + scrollBG2), -((cloudScroll[2] / 0x10) + scrollBG2));
+	background->DrawStrip(&cloud1, LEVEL_RENDERLAYER_BACKGROUND, backY +   0, -((cloudScroll[0] / 0x10) + scrollBG2), -((cloudScroll[0] / 0x10) + scrollBG2));
+	background->DrawStrip(&cloud2, LEVEL_RENDERLAYER_BACKGROUND, backY +  32, -((cloudScroll[1] / 0x10) + scrollBG2), -((cloudScroll[1] / 0x10) + scrollBG2));
+	background->DrawStrip(&cloud3, LEVEL_RENDERLAYER_BACKGROUND, backY +  48, -((cloudScroll[2] / 0x10) + scrollBG2), -((cloudScroll[2] / 0x10) + scrollBG2));
 	
 	//Draw mountains
 	SDL_Rect upperMountain = {0,  64, background->texture->width,  48};
 	SDL_Rect lowerMountain = {0, 112, background->texture->width,  40};
-	background->DrawStrip(&upperMountain, backY +  64, -scrollBG2, -scrollBG2);
-	background->DrawStrip(&lowerMountain, backY + 112, -scrollBG1, -scrollBG1);
+	background->DrawStrip(&upperMountain, LEVEL_RENDERLAYER_BACKGROUND, backY +  64, -scrollBG2, -scrollBG2);
+	background->DrawStrip(&lowerMountain, LEVEL_RENDERLAYER_BACKGROUND, backY + 112, -scrollBG1, -scrollBG1);
 	
 	//Draw water
 	SDL_Rect water = {0, 152, background->texture->width,  background->texture->height - 152};
-	background->DrawStrip(&water, backY +  152, -scrollBG1, -cameraX);
+	background->DrawStrip(&water, LEVEL_RENDERLAYER_BACKGROUND, backY +  152, -scrollBG1, -cameraX);
 }

@@ -10,6 +10,7 @@
 #include "MathUtil.h"
 #include "Input.h"
 #include "Audio.h"
+#include "Background.h"
 
 //Title constants
 enum TITLE_LAYERS
@@ -68,13 +69,79 @@ void DrawText(TEXTURE *tex, const char *text, int x, int y)
 	}
 }
 
+//Background function
+static const uint8_t scrollRipple[64] =
+{
+	1, 2, 1, 3, 1, 2, 2, 1, 2, 3, 1, 2, 1, 2, 0, 0,
+	2, 0, 3, 2, 2, 3, 2, 2, 1, 3, 0, 0, 1, 0, 1, 3,
+	1, 2, 1, 3, 1, 2, 2, 1, 2, 3, 1, 2, 1, 2, 0, 0,
+	2, 0, 3, 2, 2, 3, 2, 2, 1, 3, 0, 0, 1, 0, 1, 3,
+};
+
+void TitleBackground(BACKGROUND *background, bool doScroll, int cameraX, int cameraY)
+{
+	//Handle palette cycle
+	static int paletteTimer = 0;
+	
+	if (++paletteTimer >= 8)
+	{
+		paletteTimer = 0;
+		
+		PALCOLOUR c9 = background->texture->loadedPalette->colour[0x9];
+		PALCOLOUR cA = background->texture->loadedPalette->colour[0xA];
+		PALCOLOUR cB = background->texture->loadedPalette->colour[0xB];
+		PALCOLOUR cC = background->texture->loadedPalette->colour[0xC];
+		background->texture->loadedPalette->colour[0x9] = cC;
+		background->texture->loadedPalette->colour[0xA] = c9;
+		background->texture->loadedPalette->colour[0xB] = cA;
+		background->texture->loadedPalette->colour[0xC] = cB;
+	}
+	//Get our scroll values
+	int16_t scrollBG1 = cameraX / 24;
+	int16_t scrollBG2 = cameraX / 32;
+	int16_t scrollBG3 = cameraX / 2;
+	
+	//Draw clouds
+	static uint32_t cloudScroll = 0;
+	(cloudScroll += 0x6) %= background->texture->width * 0x10;
+	
+	SDL_Rect clouds = {0,  0, background->texture->width,  32};
+	background->DrawStrip(&clouds, TITLELAYER_BACKGROUND,   0, -(scrollBG1 + cloudScroll / 0x10), -(scrollBG1 + cloudScroll / 0x10));
+	
+	//Draw sky and mountains
+	SDL_Rect mountains = {0,  32, background->texture->width,  128};
+	background->DrawStrip(&mountains, TITLELAYER_BACKGROUND,  32, -scrollBG2, -scrollBG2);
+	
+	//Draw ocean
+	static unsigned int rippleFrame = 0, rippleTimer = 4;
+	if (++rippleTimer >= 8)
+	{
+		rippleTimer = 0;
+		rippleFrame++;
+	}
+	
+	SDL_Rect strip = {0, 160, background->texture->width, 1};
+	for (int i = 160; i < background->texture->height; i++)
+	{
+		int x = scrollBG2 + (scrollBG3 - scrollBG2) * (i - 160) / (background->texture->height - 160);
+		x += scrollRipple[(i + rippleFrame) % 64] * (i - 160) / ((background->texture->height - 160) / 2);
+		background->DrawStrip(&strip, TITLELAYER_BACKGROUND, strip.y++, -x, -x);
+	}
+	
+	//Clear screen with sky behind background
+	SDL_Rect backQuad = {0, 0, gRenderSpec.width, gRenderSpec.height};
+	gSoftwareBuffer->DrawQuad(TITLELAYER_BACKGROUND, &backQuad, &background->texture->loadedPalette->colour[0]);
+}
+
 //Gamemode code
 bool GM_Title(bool *noError)
 {
-	//Load our title sheet
+	//Load our title sheet and background
 	TEXTURE *titleTexture = new TEXTURE(nullptr, "data/Title.bmp");
 	if (titleTexture->fail != nullptr)
 		return (*noError = !Error(titleTexture->fail));
+	
+	BACKGROUND *background = new BACKGROUND("data/TitleBackground.bmp", &TitleBackground);
 	
 	//Emblem and banner positions
 	const int emblemX = (gRenderSpec.width - titleEmblem.w) / 2;
@@ -88,6 +155,8 @@ bool GM_Title(bool *noError)
 	int titleYSpeed = -0x107E;
 	int titleYGoal = 0;
 	int frame = 0;
+	
+	int16_t backgroundScroll = 0, backgroundScrollSpeed = 0;
 	
 	//Sonic's animation and position
 	int sonicTime = 54;
@@ -107,6 +176,7 @@ bool GM_Title(bool *noError)
 	
 	//Make our palette black for fade-in
 	FillPaletteBlack(titleTexture->loadedPalette);
+	FillPaletteBlack(background->texture->loadedPalette);
 	
 	//Lock audio device so we can load new music
 	AUDIO_LOCK;
@@ -135,12 +205,14 @@ bool GM_Title(bool *noError)
 		{
 			//Fade asset sheet and background palette in
 			PaletteFadeInFromBlack(titleTexture->loadedPalette);
+			PaletteFadeInFromBlack(background->texture->loadedPalette);
 		}
 		else
 		{
 			//Fade asset sheet and background palette out
 			bool res1 = PaletteFadeOutToBlack(titleTexture->loadedPalette);
-			breakThisState = res1;
+			bool res2 = PaletteFadeOutToBlack(background->texture->loadedPalette);
+			breakThisState = res1 && res2;
 			
 			//Fade out music
 			if (titleMusic->playing)
@@ -160,6 +232,9 @@ bool GM_Title(bool *noError)
 			titleYSpeed += 0x80;
 			titleYShift += titleYSpeed;
 		}
+		
+		//Render background
+		background->Draw(true, backgroundScroll, 0);
 		
 		//Render title screen banner and emblem
 		gSoftwareBuffer->DrawTexture(titleTexture, titleTexture->loadedPalette, &titleEmblem, TITLELAYER_EMBLEM, emblemX, emblemY + titleYShift / 0x100, false, false);
@@ -214,7 +289,13 @@ bool GM_Title(bool *noError)
 				
 				//Update frame
 				if (sonicHandFrame + 1 < 14)
+				{
 					sonicHandFrame++;
+					backgroundScrollSpeed++;
+				}
+				
+				//Scroll background
+				backgroundScroll += backgroundScrollSpeed;
 			}
 		}
 		
@@ -249,6 +330,7 @@ bool GM_Title(bool *noError)
 	
 	//Unload our textures
 	delete titleTexture;
+	delete background;
 	
 	//Lock audio device so we can safely unload all loaded music
 	AUDIO_LOCK;

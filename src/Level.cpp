@@ -541,6 +541,13 @@ void LEVEL::UnloadAll()
 		player = next;
 	}
 	
+	for (OBJECT *object = coreObjectList; object != nullptr;)
+	{
+		OBJECT *next = object->next;
+		delete object;
+		object = next;
+	}
+	
 	for (OBJECT *object = objectList; object != nullptr;)
 	{
 		OBJECT *next = object->next;
@@ -726,6 +733,16 @@ LEVEL::LEVEL(int id, const char *players[])
 	
 	for (PLAYER *player = playerList; player != nullptr; player = player->next)
 		player->Update();
+	
+	for (OBJECT *object = coreObjectList; object != nullptr; object = object->next)
+	{
+		if (object->Update())
+		{
+			Error(fail = object->fail);
+			UnloadAll();
+			return;
+		}
+	}
 	
 	for (OBJECT *object = objectList; object != nullptr; object = object->next)
 	{
@@ -1165,27 +1182,29 @@ bool LEVEL::Update()
 		for (PLAYER *player = playerList; player != nullptr; player = player->next)
 			player->Update();
 	
-		//Update objects
-		OBJECT *object = objectList;
-		
-		while (object != nullptr)
+		for (OBJECT *object = coreObjectList; object != nullptr; object = object->next)
 		{
-			//Remember our next object
-			OBJECT *next = object->next;
-			
-			//Update
 			if (object->Update())
-				return false;
-			
-			//Advance to next object
-			object = next;
+				return Error(fail = object->fail);
+		}
+		
+		for (OBJECT *object = objectList; object != nullptr; object = object->next)
+		{
+			if (object->Update())
+				return Error(fail = object->fail);
 		}
 	}
 	else
 	{
-		//If not to update the stage, only update players
+		//If not to update the stage, only update players and core objects
 		for (PLAYER *player = playerList; player != nullptr; player = player->next)
 			player->Update();
+		
+		for (OBJECT *object = coreObjectList; object != nullptr; object = object->next)
+		{
+			if (object->Update())
+				return Error(fail = object->fail);
+		}
 	}
 	
 	//Update camera
@@ -1245,6 +1264,9 @@ void LEVEL::Draw()
 	//Draw players and objects
 	for (PLAYER *player = playerList; player != nullptr; player = player->next)
 		player->DrawToScreen();
+	
+	for (OBJECT *object = coreObjectList; object != nullptr; object = object->next)
+		object->DrawRecursive();
 	
 	for (OBJECT *object = objectList; object != nullptr; object = object->next)
 		object->DrawRecursive();

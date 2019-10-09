@@ -27,13 +27,13 @@ BACKGROUND::~BACKGROUND()
 	delete texture;
 }
 
-void BACKGROUND::DrawStrip(SDL_Rect *src, int16_t y, int16_t fromX, int16_t toX)
+void BACKGROUND::DrawStrip(SDL_Rect *src, int layer, int16_t y, int16_t fromX, int16_t toX)
 {
 	if (toX == fromX)
 	{
 		//Just draw the strip in its entirety
 		for (int x = -(-fromX % (unsigned)texture->width); x < gRenderSpec.width; x += texture->width)
-			gSoftwareBuffer->DrawTexture(texture, texture->loadedPalette, src, LEVEL_RENDERLAYER_BACKGROUND, x, y, false, false);
+			gSoftwareBuffer->DrawTexture(texture, texture->loadedPalette, src, layer, x, y, false, false);
 	}
 	else
 	{
@@ -43,7 +43,7 @@ void BACKGROUND::DrawStrip(SDL_Rect *src, int16_t y, int16_t fromX, int16_t toX)
 		{
 			int16_t xp = fromX + ((toX - fromX) * sy / src->h);
 			for (int x = -(-xp % (unsigned)texture->width); x < gRenderSpec.width; x += texture->width)
-				gSoftwareBuffer->DrawTexture(texture, texture->loadedPalette, &strip, LEVEL_RENDERLAYER_BACKGROUND, x, y + sy, false, false);
+				gSoftwareBuffer->DrawTexture(texture, texture->loadedPalette, &strip, layer, x, y + sy, false, false);
 			strip.y++;
 		}
 	}

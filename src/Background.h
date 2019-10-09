@@ -23,7 +23,7 @@ class BACKGROUND
 		BACKGROUND(const char *name, BACKGROUNDFUNCTION setFunction);
 		~BACKGROUND();
 		
-		void DrawStrip(SDL_Rect *src, int16_t y, int16_t fromX, int16_t toX);
+		void DrawStrip(SDL_Rect *src, int layer, int16_t y, int16_t fromX, int16_t toX);
 		
 		void Draw(bool doScroll, int16_t cameraX, int16_t cameraY);
 };

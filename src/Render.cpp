@@ -15,7 +15,7 @@ SOFTWAREBUFFER *gSoftwareBuffer;
 SDL_PixelFormat *gNativeFormat;
 
 //Current render specifications
-RENDERSPEC gRenderSpec = {426, 240, 2};
+RENDERSPEC gRenderSpec = {398, 224, 2};
 
 //VSync / framerate limiter
 unsigned int vsyncMultiple = 0;
