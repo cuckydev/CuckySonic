@@ -1227,8 +1227,14 @@ bool LEVEL::Update()
 void LEVEL::Draw()
 {
 	//Update palette cycling
-	if (paletteFunction != nullptr && !fading)
-		paletteFunction();
+	if (!fading)
+	{
+		//Cycle player palettes (super)
+		for (PLAYER *player = playerList; player != nullptr; player = player->next)
+			player->SuperPaletteCycle();
+		if (paletteFunction != nullptr)
+			paletteFunction();
+	}
 	
 	//Draw and scroll background
 	if (background != nullptr && camera != nullptr)

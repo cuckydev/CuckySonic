@@ -81,9 +81,18 @@ enum PLAYERANIMATION
 	PLAYERANIMATION_NULL,
 	PLAYERANIMATION_BALANCE3,
 	PLAYERANIMATION_BALANCE4,
-	PLAYERANIMATION_TRANSFORM,
 	PLAYERANIMATION_LYING,
 	PLAYERANIMATION_LIEDOWN,
+	PLAYERANIMATION_TRANSFORM,
+};
+
+//Super palette state
+enum PALETTESTATE
+{
+	PALETTESTATE_IDLE =			 0,
+	PALETTESTATE_FADING_IN =	 1,
+	PALETTESTATE_FADING_OUT =	 2,
+	PALETTESTATE_DONE =			-1,
 };
 
 //Speed definition
@@ -248,8 +257,13 @@ class PLAYER
 		SPEEDDEFINITION underwaterSuperSD;
 		SPEEDDEFINITION underwaterSuperSpeedShoesSD;
 		
-		//Super flag
-		bool super;
+		//Super state
+		bool super, hyper;
+		int16_t superTimer;
+		
+		PALETTESTATE paletteState;
+		int16_t paletteTimer;
+		uint16_t paletteFrame;
 		
 		//In debug flag
 		uint16_t debug;
@@ -372,6 +386,9 @@ class PLAYER
 		void LevelBoundSide(int32_t bound);
 		void LevelBound();
 		
+		void SuperPaletteCycle();
+		void UpdateSuper();
+		
 		void FrameCommand(const uint8_t* animation);
 		void AdvanceFrame(const uint8_t* animation);
 		void FlipAngle();
@@ -379,6 +396,7 @@ class PLAYER
 		
 		void CPUControl();
 		
+		void ControlRoutine();
 		void Update();
 		
 		void Display();

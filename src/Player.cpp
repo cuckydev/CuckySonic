@@ -74,7 +74,10 @@
 //#define SONIC12_SANE_AIRCOLLISION //For some reason, in Sonic 3 there was a weird modification to the airborne collision code... can't understand the purpose
 
 //Animation data
-#define MAPPINGFRAME_FLIP1 0x5F
+#define WALK_FRAMES			8
+#define RUN_FRAMES			4
+
+#define MAPPINGFRAME_FLIP1 95
 
 static const uint8_t animationWalk[] =			{0xFF,0x0F,0x10,0x11,0x12,0x13,0x14,0x0D,0x0E,0xFF}; //Walk and run must match in length (run is padded with 0xFF, here)
 static const uint8_t animationRun[] =			{0xFF,0x2D,0x2E,0x2F,0x30,0xFF,0xFF,0xFF,0xFF,0xFF};
@@ -121,6 +124,18 @@ static const uint8_t animationBalance4[] =		{0x03,0xCF,0xC8,0xC9,0xCA,0xCB,0xFE,
 static const uint8_t animationLying[] =			{0x09,0x08,0x09,0xFF};
 static const uint8_t animationLieDown[] =		{0x03,0x07,0xFD,PLAYERANIMATION_WALK};
 
+//Super specific animation
+#define SUPER_FLY_FRAMES	1
+
+static const uint8_t animationSuperWalk[] =			{0xFF,0x77,0x78,0x79,0x7A,0x7B,0x7C,0x75,0x76,0xFF}; //Walk and run must match in length (run is padded with 0xFF, here)
+static const uint8_t animationSuperRun[] =			{0xFF,0xB5,0xB9,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF};
+static const uint8_t animationSuperPush[] =			{0xFD,0xBD,0xBE,0xBF,0xC0,0xFF,0xFF,0xFF,0xFF,0xFF}; //Push must also match the length of run and walk (padded with 0xFF here)
+static const uint8_t animationSuperIdle[] =			{0x07,0x72,0x73,0x74,0x73,0xFF};
+static const uint8_t animationSuperBalance[] =		{0x09,0xC2,0xC3,0xC4,0xC3,0xC5,0xC6,0xC7,0xC6,0xFF};
+static const uint8_t animationSuperDuck[] =			{0x05,0xC1,0xFF};
+static const uint8_t animationSuperTransform[] =	{0x02,0x6D,0x6D,0x6E,0x6E,0x6F,0x70,0x71,0x70,0x71,0x70,0x71,0x70,0x71,0xFD,PLAYERANIMATION_WALK};
+
+//Animation lists
 static const uint8_t* animationList[] = {
 	animationWalk,
 	animationRun,
@@ -154,18 +169,19 @@ static const uint8_t* animationList[] = {
 	animationBalance4,
 	animationLying,
 	animationLieDown,
+	animationSuperTransform,
 };
 
 static const uint8_t* animationListSuper[] = {
-	animationWalk,
-	animationRun,
+	animationSuperWalk,
+	animationSuperRun,
 	animationRoll,
 	animationRoll2,
-	animationPush,
-	animationIdle,
-	animationBalance1,
+	animationSuperPush,
+	animationSuperIdle,
+	animationSuperBalance,
 	animationLookUp,
-	animationDuck,
+	animationSuperDuck,
 	animationSpindash,
 	animationBlink,
 	animationGetUp,
@@ -189,6 +205,7 @@ static const uint8_t* animationListSuper[] = {
 	animationBalance4,
 	animationLying,
 	animationLieDown,
+	animationSuperTransform,
 };
 
 //Spindash dust
@@ -1796,15 +1813,38 @@ void PLAYER::JumpAbilities()
 					yVel = 0x800;
 					PlaySound(SOUNDID_USE_BUBBLE_SHIELD);
 				}
+			}
+			else if (1) //Super transformation
+			{
+				//Set our super state
+				paletteState = PALETTESTATE_FADING_IN;
+				paletteTimer = 15;
+				
+				superTimer = 60;
+				super = true;
+				
+				objectControl.disableOurMovement = true;
+				objectControl.disableObjectInteract = true;
+				anim = PLAYERANIMATION_TRANSFORM;
+				
+				//Super and hyper specific stuff (stars and trail stuff)
+				if (0)
+				{
+					//TODO: Super effects
+				}
 				else
 				{
-					//Presumably the blue shield, which has no abilities
-					jumpAbility = 1;
+					//TODO: Hyper effects
 				}
-			}
-			else if (0 /*super checks*/) //Super transformation
-			{
 				
+				//Become invincible and set speed
+				invincibilityTime = 0;
+				item.isInvincible = true;
+				
+				if (!item.hasSpeedShoes)
+					SetSpeedFromDefinition(status.underwater ? underwaterSuperSD : superSD);
+				else
+					SetSpeedFromDefinition(status.underwater ? underwaterSuperSpeedShoesSD : superSpeedShoesSD);
 			}
 			else //Insta-shield
 			{
@@ -2819,17 +2859,139 @@ void PLAYER::LevelBound()
 		LevelBoundSide(rightBound);
 	
 	//Die if reached bottom boundary
-	#ifndef SONIC1_DEATH_BOUNDARY
+#ifndef SONIC1_DEATH_BOUNDARY
 	if (status.reverseGravity ? (y.pos <= gLevel->topBoundaryTarget) : (y.pos >= gLevel->bottomBoundaryTarget))
-	#else
+#else
 	if (status.reverseGravity ? (y.pos <= gLevel->topBoundary) : (y.pos >= gLevel->bottomBoundary))
-	#endif
+#endif
 	{
 		x.pos = nextPos;
 		x.sub = 0;
 		xVel = 0;
 		inertia = 0;
 		KillCharacter(SOUNDID_HURT);
+	}
+}
+
+//Super and hyper code
+static const uint8_t sonicPalette[16][4][3] = {
+	{{0x24, 0x24, 0xB6}, {0x24, 0x48, 0xDA}, {0x48, 0x48, 0xFF}, {0x6C, 0x6C, 0xFF}},
+	{{0x48, 0x48, 0x91}, {0x48, 0x6D, 0xB6}, {0x6D, 0x6D, 0xFF}, {0x91, 0x91, 0xFF}},
+	{{0x6D, 0x6D, 0x6D}, {0x6D, 0x91, 0xB6}, {0x91, 0x91, 0xFF}, {0xB6, 0xB6, 0xFF}},
+	{{0x91, 0x91, 0x48}, {0x91, 0xB6, 0xB6}, {0xB6, 0xB6, 0xFF}, {0xDF, 0xDF, 0xFF}},
+	{{0xB6, 0xB6, 0x48}, {0xB6, 0xDF, 0xB6}, {0xDA, 0xDA, 0xFF}, {0xFF, 0xFF, 0xFF}},
+	{{0xDA, 0xDA, 0x48}, {0xDA, 0xFF, 0xB6}, {0xFF, 0xFF, 0xFF}, {0xFF, 0xFF, 0xFF}},
+	{{0xFF, 0xFF, 0x48}, {0xFF, 0xFF, 0xB6}, {0xFF, 0xFF, 0xFF}, {0xFF, 0xFF, 0xFF}},
+	{{0xFF, 0xFF, 0x6D}, {0xFF, 0xFF, 0xFF}, {0xFF, 0xFF, 0xFF}, {0xFF, 0xFF, 0xFF}},
+	{{0xFF, 0xFF, 0x91}, {0xFF, 0xFF, 0xFF}, {0xFF, 0xFF, 0xFF}, {0xFF, 0xFF, 0xFF}},
+	{{0xFF, 0xFF, 0x6D}, {0xFF, 0xFF, 0xDA}, {0xFF, 0xFF, 0xFF}, {0xFF, 0xFF, 0xFF}},
+	{{0xFF, 0xFF, 0x48}, {0xFF, 0xFF, 0xB6}, {0xFF, 0xFF, 0xFF}, {0xFF, 0xFF, 0xFF}},
+	{{0xFF, 0xFF, 0x24}, {0xFF, 0xFF, 0x91}, {0xFF, 0xFF, 0xDA}, {0xFF, 0xFF, 0xFF}},
+	{{0xFF, 0xFF, 0x00}, {0xFF, 0xFF, 0x6D}, {0xFF, 0xFF, 0xB6}, {0xFF, 0xFF, 0xFF}},
+	{{0xFF, 0xFF, 0x00}, {0xFF, 0xFF, 0x48}, {0xFF, 0xFF, 0x91}, {0xFF, 0xFF, 0xDA}},
+	{{0xFF, 0xFF, 0x00}, {0xFF, 0xFF, 0x6D}, {0xFF, 0xFF, 0xB6}, {0xFF, 0xFF, 0xFF}},
+	{{0xFF, 0xFF, 0x24}, {0xFF, 0xFF, 0x91}, {0xFF, 0xFF, 0xDA}, {0xFF, 0xFF, 0xFF}},
+};
+
+#define SET_PALETTE_FROM_ENTRY(entry)	ModifyPaletteColour(&texture->loadedPalette->colour[0x2], entry[0][0], entry[0][1], entry[0][2]);	\
+										ModifyPaletteColour(&texture->loadedPalette->colour[0x3], entry[1][0], entry[1][1], entry[1][2]);	\
+										ModifyPaletteColour(&texture->loadedPalette->colour[0x4], entry[2][0], entry[2][1], entry[2][2]);	\
+										ModifyPaletteColour(&texture->loadedPalette->colour[0x5], entry[3][0], entry[3][1], entry[3][2]);
+
+void PLAYER::SuperPaletteCycle()
+{
+	switch (paletteState)
+	{
+		case PALETTESTATE_IDLE:
+		{
+			SET_PALETTE_FROM_ENTRY(sonicPalette[0]);
+			break;
+		}
+		case PALETTESTATE_FADING_IN:
+		{
+			//Wait for 4 frames before updating
+			if (--paletteTimer >= 0)
+				break;
+			paletteTimer = 3;
+			
+			//Increment frame and check for fade-in completion
+			int16_t prevFrame = paletteFrame++;
+			
+			if (paletteFrame >= 6)
+			{
+				paletteState = PALETTESTATE_DONE;
+				memset(&objectControl, 0, sizeof(objectControl));
+			}
+			
+			SET_PALETTE_FROM_ENTRY(sonicPalette[prevFrame]);
+			break;
+		}
+		case PALETTESTATE_DONE:
+		{
+			//Wait for 8 frames before updating
+			if (--paletteTimer >= 0)
+				break;
+			paletteTimer = 8;
+			
+			//Increment frame and set palette
+			int16_t prevFrame = paletteFrame++;
+			if (paletteFrame >= 15)
+				paletteFrame = 6;
+			SET_PALETTE_FROM_ENTRY(sonicPalette[prevFrame]);
+			break;
+		}
+		case PALETTESTATE_FADING_OUT:
+		{
+			//Wait for 4 frames before updating
+			if (--paletteTimer >= 0)
+				break;
+			paletteTimer = 3;
+			
+			//Decrement frame and check for fade-out completion
+			int16_t prevFrame = paletteFrame--;
+			
+			if (paletteFrame >= prevFrame)
+			{
+				paletteState = PALETTESTATE_IDLE;
+				paletteFrame = 0;
+			}
+			
+			SET_PALETTE_FROM_ENTRY(sonicPalette[prevFrame]);
+			break;
+		}
+	}
+}
+
+void PLAYER::UpdateSuper()
+{
+	if (super)
+	{
+		if (gLevel->updateTime)
+		{
+			//Wait about 60 frames (61) before depleting rings
+			if (--superTimer >= 0)
+				return;
+			superTimer = 60;
+			
+			//Check if we've run out of rings
+			if (gRings != 0)
+			{
+				if (--gRings > 0)
+					return;
+			}
+		}
+		
+		//Revert to regular
+		paletteState = PALETTESTATE_FADING_OUT;
+		paletteFrame = 5;
+		super = false;
+		prevAnim = PLAYERANIMATION_RUN;
+		invincibilityTime = 1;
+		
+		if (!item.hasSpeedShoes)
+			SetSpeedFromDefinition(status.underwater ? underwaterNormalSD : normalSD);
+		else
+			SetSpeedFromDefinition(status.underwater ? underwaterSpeedShoesSD : speedShoesSD);
 	}
 }
 
@@ -2963,14 +3125,14 @@ void PLAYER::Animate()
 						if (speedFactor >= 0x600)
 						{
 							//Run animation (at or above 0x600 speed)
-							animation = animationList[PLAYERANIMATION_RUN];
-							angleIncrement *= 4;
+							animation = aniList[PLAYERANIMATION_RUN];
+							angleIncrement *= RUN_FRAMES;
 						}
 						else
 						{
 							//Walk animation (below 0x600 speed)
-							animation = animationList[PLAYERANIMATION_WALK];
-							angleIncrement *= 8;
+							animation = aniList[PLAYERANIMATION_WALK];
+							angleIncrement *= WALK_FRAMES;
 						}
 						
 						//Check if our animation is going to loop
@@ -3006,7 +3168,52 @@ void PLAYER::Animate()
 					}
 					else
 					{
-						//Super walk and running (no super frames atm)
+						//Get the animation to use
+						if (speedFactor >= 0x800)
+						{
+							//Run animation (at or above 0x600 speed)
+							animation = aniList[PLAYERANIMATION_RUN];
+							angleIncrement *= SUPER_FLY_FRAMES;
+						}
+						else
+						{
+							//Walk animation (below 0x600 speed)
+							animation = aniList[PLAYERANIMATION_WALK];
+							angleIncrement *= WALK_FRAMES;
+						}
+						
+						//Check if our animation is going to loop
+						if (animation[1 + animFrame] == 0xFF)
+							animFrame = 0;
+						
+						//Set frame
+						mappingFrame = animation[1 + animFrame] + angleIncrement;
+						if (animation == aniList[PLAYERANIMATION_WALK] && gLevel->frameCounter & 0x3)
+							mappingFrame += WALK_FRAMES * 4;
+
+						#ifdef SONIC1_WALK_ANIMATION
+							//Set our frame duration
+							speedFactor = -speedFactor + 0x800;
+							if (speedFactor >= 0x8000)
+								speedFactor = 0;
+							animFrameDuration = speedFactor >> 8;
+							
+							//Increment frame
+							animFrame++;
+						#else
+							//Wait for the next frame
+							if (--animFrameDuration < 0)
+							{
+								//Set our frame duration
+								speedFactor = -speedFactor + 0x800;
+								if (speedFactor >= 0x8000)
+									speedFactor = 0;
+								animFrameDuration = speedFactor >> 8;
+								
+								//Increment frame
+								animFrame++;
+							}
+						#endif
 						return;
 					}
 				}
@@ -3273,6 +3480,107 @@ void PLAYER::CPUControl()
 }
 
 //Update
+void PLAYER::ControlRoutine()
+{
+	//Standing / walking on ground
+	if (status.inBall == false && status.inAir == false)
+	{
+		//Handle transitioning from Sonic's idle animations to movement
+		if (!(controlPress.a || controlPress.b || controlPress.c))
+		{
+			//If we're still getting up / blinking, don't update this frame
+			if (anim == PLAYERANIMATION_BLINK || anim == PLAYERANIMATION_GETUP)
+				return;
+			
+			//Check if we're trying to move out of an idle animation
+			if (anim == PLAYERANIMATION_IDLE && animFrame >= 30)
+			{
+				if (!(controlHeld.left || controlHeld.up || controlHeld.right || controlHeld.down || controlHeld.a || controlHeld.b || controlHeld.c))
+					return;
+				
+				if (animFrame >= 172)
+					anim = PLAYERANIMATION_GETUP;
+				else
+					anim = PLAYERANIMATION_BLINK;
+				return;
+			}
+		}
+		
+		if (Spindash() && Jump())
+		{
+			//Handle slope gravity and our movement
+			SlopeResist();
+			Move();
+			Roll();
+			
+			//Keep us in level bounds
+			LevelBound();
+			
+			//Move according to our velocity
+			xPosLong += xVel << 8;
+			if (status.reverseGravity)
+				yPosLong -= yVel << 8;
+			else
+				yPosLong += yVel << 8;
+			
+			//Handle collision and falling off of slopes
+			AnglePos();
+			SlopeRepel();
+		}
+	}
+	else if (status.inBall == true && status.inAir == false)
+	{
+		if (status.pinballMode || Jump())
+		{
+			//Handle slope gravity and our movement
+			RollRepel();
+			RollSpeed();
+			
+			//Keep us in level bounds
+			LevelBound();
+			
+			//Move according to our velocity
+			xPosLong += xVel << 8;
+			if (status.reverseGravity)
+				yPosLong -= yVel << 8;
+			else
+				yPosLong += yVel << 8;
+			
+			//Handle collision and falling off of slopes
+			AnglePos();
+			SlopeRepel();
+		}
+	}
+	//In mid-air
+	else if (status.inAir == true)
+	{
+		//Handle our movement
+		JumpHeight();
+		ChgJumpDir();
+		
+		//Keep us in level bounds
+		LevelBound();
+		
+		//Move according to our velocity
+		xPosLong += xVel << 8;
+		if (status.reverseGravity)
+			yPosLong -= yVel << 8;
+		else
+			yPosLong += yVel << 8;
+		
+		//Gravity (0x38 above water, 0x10 below water)
+		yVel += 0x38;
+		if (status.underwater)
+			yVel -= 0x28;
+		
+		//Handle our angle receding when we run / jump off of a ledge
+		JumpAngle();
+		
+		//Handle collision
+		DoLevelCollision();
+	}
+}
+
 void PLAYER::Update()
 {
 	//Clear drawing flag
@@ -3339,87 +3647,12 @@ void PLAYER::Update()
 					else
 					{
 						//The original uses the two bits for a jump table, but we can't do that because it'd be horrible
-						//Standing / walking on ground
-						if (status.inBall == false && status.inAir == false)
-						{
-							if (Spindash() && Jump())
-							{
-								//Handle slope gravity and our movement
-								SlopeResist();
-								Move();
-								Roll();
-								
-								//Keep us in level bounds
-								LevelBound();
-								
-								//Move according to our velocity
-								xPosLong += xVel << 8;
-								if (status.reverseGravity)
-									yPosLong -= yVel << 8;
-								else
-									yPosLong += yVel << 8;
-								
-								//Handle collision and falling off of slopes
-								AnglePos();
-								SlopeRepel();
-							}
-						}
-						else if (status.inBall == true && status.inAir == false)
-						{
-							if (status.pinballMode || Jump())
-							{
-								//Handle slope gravity and our movement
-								RollRepel();
-								RollSpeed();
-								
-								//Keep us in level bounds
-								LevelBound();
-								
-								//Move according to our velocity
-								xPosLong += xVel << 8;
-								if (status.reverseGravity)
-									yPosLong -= yVel << 8;
-								else
-									yPosLong += yVel << 8;
-								
-								//Handle collision and falling off of slopes
-								AnglePos();
-								SlopeRepel();
-							}
-						}
-						//In mid-air
-						else if (status.inAir == true)
-						{
-							//Handle our movement
-							JumpHeight();
-							ChgJumpDir();
-							
-							//Keep us in level bounds
-							LevelBound();
-							
-							//Move according to our velocity
-							xPosLong += xVel << 8;
-							if (status.reverseGravity)
-								yPosLong -= yVel << 8;
-							else
-								yPosLong += yVel << 8;
-							
-							//Gravity (0x38 above water, 0x10 below water)
-							yVel += 0x38;
-							if (status.underwater)
-								yVel -= 0x28;
-							
-							//Handle our angle receding when we run / jump off of a ledge
-							JumpAngle();
-							
-							//Handle collision
-							DoLevelCollision();
-						}
+						ControlRoutine();
 					}
 					
 					//Draw, record position, and handle super and water
 					Display();
-					//bsr.w	SonicKnux_SuperHyper
+					UpdateSuper();
 					RecordPos();
 					//bsr.w	Sonic_Water
 					
