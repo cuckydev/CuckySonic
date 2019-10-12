@@ -1,3 +1,5 @@
+#include <string.h>
+
 #include "SDL_rwops.h"
 
 #include "Player.h"

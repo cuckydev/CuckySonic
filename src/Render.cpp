@@ -1,3 +1,7 @@
+#include <stdlib.h>
+#include <string.h>
+#include <cmath>
+
 #include "SDL_render.h"
 #include "SDL_timer.h"
 

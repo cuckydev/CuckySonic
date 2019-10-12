@@ -1,3 +1,6 @@
+#include <stdlib.h>
+#include <string.h>
+
 #include "SDL_rwops.h"
 #include "Mappings.h"
 #include "Path.h"
