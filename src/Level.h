@@ -111,6 +111,7 @@ struct TILE
 	
 	//Tile index
 	uint16_t tile : 10;
+	uint8_t srcChunk;
 };
 
 struct CHUNKMAPPING
@@ -172,6 +173,7 @@ class LEVEL
 		
 		MUSIC *speedShoesMusic;
 		MUSIC *invincibilityMusic;
+		MUSIC *superMusic;
 		MUSIC *extraLifeMusic;
 		MUSIC *goalMusic;
 		MUSIC *gameoverMusic;
@@ -181,8 +183,6 @@ class LEVEL
 		MUSIC *secondaryMusic;	//speedShoesMusic, invincibilityMusic, goalMusic, or gameoverMusic	(played below jingles)
 		
 		MUSIC *currentMusic;	//Any of the loaded songs
-		bool musicIsTemporary;	//If set, when the song ends, it will go back to playing primaryMusic, or secondaryMusic if not null
-		bool musicFadeAtEnd;	//If set, when the song ends, the next song playing will start from being faded out
 		
 		//Game update stuff
 		int frameCounter; //Frames the level has been loaded
@@ -262,7 +262,7 @@ class LEVEL
 		void SetFade(bool fadeIn, bool isSpecial);
 		bool UpdateFade();
 		
-		//Dynamic events (TODO: move to external file)
+		//Dynamic events
 		void DynamicEvents();
 		
 		//Object texture and mapping cache functions
@@ -282,7 +282,7 @@ class LEVEL
 		//Music functions
 		void SetPlayingMusic(MUSIC *music, bool resumeLastPosition, bool fade);
 		void ChangePrimaryMusic(MUSIC *music);
-		void ChangeSecondaryMusic(MUSIC *music, bool isTemporary);
+		void ChangeSecondaryMusic(MUSIC *music);
 		void PlayJingleMusic(MUSIC *music);
 		
 		void StopSecondaryMusic();

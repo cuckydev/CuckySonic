@@ -57,7 +57,7 @@ void ObjGoalpost(OBJECT *object)
 			
 			//Initialize other properties
 			object->renderFlags.alignPlane = true;
-			object->widthPixels = 0x18;
+			object->widthPixels = 24;
 			object->priority = 4;
 		}
 //Fallthrough

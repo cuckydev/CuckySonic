@@ -60,6 +60,7 @@ void ObjBouncingRing_Routine0(OBJECT *object)
 		ring->routine = 1;
 		ring->xRadius = 8;
 		ring->yRadius = 8;
+		ring->widthPixels = 8;
 		ring->x.pos = object->x.pos;
 		ring->y.pos = object->y.pos;
 		ring->texture = gLevel->GetObjectTexture("data/Object/Ring.bmp");
@@ -67,8 +68,6 @@ void ObjBouncingRing_Routine0(OBJECT *object)
 		ring->renderFlags.xFlip = false;
 		ring->renderFlags.yFlip = false;
 		ring->renderFlags.alignPlane = true;
-		ring->renderFlags.alignBackground = false;
-		ring->renderFlags.assumePixelHeight = false;
 		ring->renderFlags.onScreen = true;
 		ring->priority = 3;
 		ring->collisionType = COLLISIONTYPE_OTHER;

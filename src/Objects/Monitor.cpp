@@ -214,6 +214,7 @@ void ObjMonitor(OBJECT *object)
 			object->renderFlags.alignPlane = true;
 			object->priority = 3;
 			object->widthPixels = 15;
+			object->heightPixels = 14;
 			
 			//Setup our collision
 			object->collisionType = COLLISIONTYPE_MONITOR;

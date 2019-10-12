@@ -60,6 +60,8 @@ SOUNDDEFINITION soundDefinition[SOUNDID_MAX] = {
 	{SOUNDCHANNEL_FM4,	"data/Audio/Sound/UseElectricShield.wav", SOUNDID_NULL},
 	{SOUNDCHANNEL_FM4,	"data/Audio/Sound/UseBubbleShield.wav", SOUNDID_NULL},
 	
+	{SOUNDCHANNEL_FM4,	"data/Audio/Sound/SuperTransform.wav", SOUNDID_NULL},
+	
 	{SOUNDCHANNEL_DAC,	"data/Audio/Sound/SplashJingle.wav", SOUNDID_NULL},
 };
 

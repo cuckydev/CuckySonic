@@ -39,6 +39,7 @@ void ObjMotobug(OBJECT *object)
 			object->routine++;
 			object->renderFlags.alignPlane = true;
 			object->widthPixels = 24;
+			object->heightPixels = 14;
 			object->priority = 4;
 			
 			//Collision

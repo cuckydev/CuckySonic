@@ -51,8 +51,7 @@ class OBJECT
 			bool xFlip : 1;
 			bool yFlip : 1;
 			bool alignPlane : 1;
-			bool alignBackground : 1; //Basically, align to background if above is set
-			bool assumePixelHeight : 1;
+			bool onScreenUseHeightPixels : 1;
 			bool onScreen : 1;
 		} renderFlags;
 		
@@ -88,9 +87,9 @@ class OBJECT
 		} hurtType;
 		
 		//Sprite properties
-		bool highPriority;		//Drawn above the foreground
-		uint8_t priority;		//Priority of sprite when drawing
-		uint8_t widthPixels;	//Width of sprite in pixels
+		bool highPriority;					//Drawn above the foreground
+		uint8_t priority;					//Priority of sprite when drawing
+		uint8_t widthPixels, heightPixels;	//Width and height of sprite in pixels (used for on screen checking and balancing)
 		
 		//Animation and mapping
 		uint16_t mappingFrame;

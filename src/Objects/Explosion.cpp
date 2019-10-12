@@ -32,8 +32,6 @@ void ObjExplosion(OBJECT *object)
 			object->renderFlags.xFlip = false;
 			object->renderFlags.yFlip = false;
 			object->renderFlags.alignPlane = true;
-			object->renderFlags.alignBackground = false;
-			object->renderFlags.assumePixelHeight = false;
 			object->renderFlags.onScreen = false;
 			object->priority = 1;
 			

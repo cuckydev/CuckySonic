@@ -72,6 +72,7 @@
 //#define SONIC12_SPINDASH_ANIM_BUG //In Sonic 3, the bug where landing on the ground while spindashing plays the walk animation was fixed
 //#define SONIC12_PUSH_CHECK		//In Sonic 3, it was changed so that you have to be facing towards a wall in order to start pushing into it
 //#define SONIC12_SANE_AIRCOLLISION //For some reason, in Sonic 3 there was a weird modification to the airborne collision code... can't understand the purpose
+//#define SONIC123_WALL_COLLISION   //In Sonic and Knuckles, the wall collision on the ground was changed to have collision even on walls and ceilings (as long as they're cardinal directions)
 
 //Animation data
 #define WALK_FRAMES			8
@@ -231,7 +232,7 @@ void ObjSpindashDust(OBJECT *object)
 			object->mappings = gLevel->GetObjectMappings("data/Object/SpindashDust.map");
 			
 			object->priority = 1;
-			object->widthPixels = 16;
+			object->widthPixels = 24;
 			object->renderFlags.alignPlane = true;
 			
 			//Increment routine
@@ -398,154 +399,243 @@ static const uint8_t* animationListBubbleShield[] = {
 //Shield object
 void ObjShield(OBJECT *object)
 {
-	PLAYER *player = (PLAYER*)object->parent;
+	//Scratch
+	enum SCRATCH
+	{
+		//U8
+		SCRATCHU8_MOVING =		0,
+		SCRATCHU8_NO_COPY_POS =	1,
+		SCRATCHU8_MAX =			2,
+	};
 	
-	//If the player has invincibility, don't exist please
-	if (player->item.isInvincible)
+	object->ScratchAllocU8(SCRATCHU8_MAX);
+	
+	//Get our parent player
+	PLAYER *player = (PLAYER*)object->parent;
+	if (player == nullptr)
 		return;
 	
-	//Copy player position and high priority flag
-	object->highPriority = player->highPriority;
-	object->x.pos = player->x.pos;
-	object->y.pos = player->y.pos;
-	
-	//Do shield specific code (this includes getting our things)
-	const char *useMapping = nullptr;
-	const uint8_t **useAniList = nullptr;
-	
-	switch (player->shield)
+	//Handle super stars
+	if (player->super)
 	{
-		case SHIELD_BLUE:
-			//Use blue shield mappings and animations
-			useMapping = "data/Object/BlueShield.map";
-			useAniList = animationListBlueShield;
-			
-			//Set our render properties
-			object->priority = 1;
-			object->widthPixels = 24;
-			object->renderFlags.alignPlane = true;
-			break;
-		case SHIELD_FIRE:
-			//Use fire shield mappings and animations
-			useMapping = "data/Object/FireShield.map";
-			useAniList = animationListFireShield;
-			
-			//Copy orientation (if not in dash state)
-			if (object->anim == 0)
+		//Load the given mappings and textures
+		object->texture = gLevel->GetObjectTexture("data/Object/InvincibilitySuperStars.bmp");
+		object->mappings = gLevel->GetObjectMappings("data/Object/SuperStars.map");
+		
+		//Set our render properties
+		object->priority = 1;
+		object->widthPixels = 24;
+		object->heightPixels = 24;
+		object->renderFlags.alignPlane = true;
+		object->highPriority = player->highPriority;
+		
+		if (object->scratchU8[SCRATCHU8_MOVING])
+		{
+			//Run animation
+			if (--object->animFrameDuration < 0)
 			{
+				//Run next animation frame, and check for looping (and handle it appropriately)
+				object->animFrameDuration = 1;
+				
+				if (++object->mappingFrame >= 6)
+				{
+					//Loop to first frame and update our state
+					object->mappingFrame = 0;
+					object->scratchU8[SCRATCHU8_MOVING] = 0;
+					object->scratchU8[SCRATCHU8_NO_COPY_POS] = 1;
+				}
+			}
+			
+			//Copy position (if SCRATCHU8_NO_COPY_POS is clear), and draw to screen
+			if (!object->scratchU8[SCRATCHU8_NO_COPY_POS])
+			{
+				object->x.pos = player->x.pos;
+				object->y.pos = player->y.pos;
+			}
+			
+			object->Draw();
+		}
+		else
+		{
+			//Wait for the player to have a high enough ground velocity
+			if (player->objectControl.disableOurMovement || player->objectControl.disableObjectInteract || abs(player->inertia) < 0x800)
+			{
+				//Stay inactive
+				object->scratchU8[SCRATCHU8_MOVING] = 0;
+				object->scratchU8[SCRATCHU8_NO_COPY_POS] = 0;
+			}
+			else
+			{
+				//Become active, and draw to screen at player position
+				object->mappingFrame = 0;
+				object->scratchU8[SCRATCHU8_MOVING] = 1;
+				object->x.pos = player->x.pos;
+				object->y.pos = player->y.pos;
+				object->Draw();
+			}
+		}
+	}
+	//TODO: Invincibility stars
+	else if (player->item.isInvincible)
+	{
+		
+	}
+	//Shield
+	else
+	{
+		//Copy player position and high priority flag
+		object->highPriority = player->highPriority;
+		object->x.pos = player->x.pos;
+		object->y.pos = player->y.pos;
+		
+		//Do shield specific code (this includes getting our things)
+		const char *useMapping = nullptr;
+		const uint8_t **useAniList = nullptr;
+		
+		switch (player->shield)
+		{
+			case SHIELD_BLUE:
+				//Use blue shield mappings and animations
+				useMapping = "data/Object/BlueShield.map";
+				useAniList = animationListBlueShield;
+				
+				//Set our render properties
+				object->priority = 1;
+				object->widthPixels = 24;
+				object->heightPixels = 24;
+				object->renderFlags.alignPlane = true;
+				break;
+			case SHIELD_FIRE:
+				//Use fire shield mappings and animations
+				useMapping = "data/Object/FireShield.map";
+				useAniList = animationListFireShield;
+				
+				//Set our render properties
+				object->priority = 1;
+				object->widthPixels = 24;
+				object->heightPixels = 24;
+				object->renderFlags.alignPlane = true;
+				
+				//Copy orientation (if not in dash state)
+				if (object->anim == 0)
+				{
+					object->status.xFlip = player->status.xFlip;
+					object->status.yFlip = player->status.reverseGravity;
+				}
+				
+				//Extinguish once in water
+				if (player->status.underwater)
+				{
+					player->shield = SHIELD_NULL;
+					player->item.shieldReflect = false;
+					player->item.immuneFire = false;
+					return;
+				}
+				break;
+			case SHIELD_ELECTRIC:
+				//Use electric shield mappings and animations
+				useMapping = "data/Object/ElectricShield.map";
+				useAniList = animationListElectricShield;
+				
+				//Set our render properties
+				object->priority = 1;
+				object->widthPixels = 24;
+				object->heightPixels = 24;
+				object->renderFlags.alignPlane = true;
+				
+				//Copy orientation
 				object->status.xFlip = player->status.xFlip;
 				object->status.yFlip = player->status.reverseGravity;
-			}
-			
-			//Extinguish once in water
-			if (player->status.underwater)
-			{
-				player->shield = SHIELD_NULL;
-				player->item.shieldReflect = false;
-				player->item.immuneFire = false;
-				return;
-			}
-			break;
-		case SHIELD_ELECTRIC:
-			//Use electric shield mappings and animations
-			useMapping = "data/Object/ElectricShield.map";
-			useAniList = animationListElectricShield;
-			
-			//Set our render properties
-			object->priority = 1;
-			object->widthPixels = 24;
-			object->renderFlags.alignPlane = true;
-			
-			//Copy orientation
-			object->status.xFlip = player->status.xFlip;
-			object->status.yFlip = player->status.reverseGravity;
-			
-			//Clear animation if non-zero
-			if (object->anim)
-				object->anim = 0;
-			
-			//Extinguish once in water
-			if (player->status.underwater)
-			{
-				player->shield = SHIELD_NULL;
-				player->item.shieldReflect = false;
-				player->item.immuneFire = false;
-				return;
-			}
-			break;
-		case SHIELD_BUBBLE:
-			//Use bubble shield mappings and animations
-			useMapping = "data/Object/BubbleShield.map";
-			useAniList = animationListBubbleShield;
-			
-			//Set our render properties
-			object->priority = 1;
-			object->widthPixels = 24;
-			object->renderFlags.alignPlane = true;
-			break;
-		default: //Insta-shield
-			//Use insta-shield mappings and animations
-			useMapping = "data/Object/InstaShield.map";
-			useAniList = animationListInstaShield;
-			
-			//Set our render properties
-			object->priority = 1;
-			object->widthPixels = 24;
-			object->renderFlags.alignPlane = true;
-			
-			//Copy orientation
-			object->status.xFlip = player->status.xFlip;
-			object->status.yFlip = player->status.reverseGravity;
-			
-			//When we reach the end of the animation, end our attack
-			if (object->mappingFrame == 7 && player->jumpAbility == 1)
-				player->jumpAbility = 2;
-			break;
-	}
-	
-	//Load the given mappings and textures
-	object->texture = gLevel->GetObjectTexture("data/Object/Shield.bmp");
-	object->mappings = gLevel->GetObjectMappings(useMapping);
-	
-	//Reset animation state if shield has changed and remember our current shield
-	if ((SHIELD)object->routine != player->shield)
-	{
-		//Copy our current shield
-		object->routine = player->shield;
+				
+				//Clear animation if non-zero
+				if (object->anim)
+					object->anim = 0;
+				
+				//Extinguish once in water
+				if (player->status.underwater)
+				{
+					player->shield = SHIELD_NULL;
+					player->item.shieldReflect = false;
+					player->item.immuneFire = false;
+					return;
+				}
+				break;
+			case SHIELD_BUBBLE:
+				//Use bubble shield mappings and animations
+				useMapping = "data/Object/BubbleShield.map";
+				useAniList = animationListBubbleShield;
+				
+				//Set our render properties
+				object->priority = 1;
+				object->widthPixels = 24;
+				object->heightPixels = 24;
+				object->renderFlags.alignPlane = true;
+				break;
+			default: //Insta-shield
+				//Use insta-shield mappings and animations
+				useMapping = "data/Object/InstaShield.map";
+				useAniList = animationListInstaShield;
+				
+				//Set our render properties
+				object->priority = 1;
+				object->widthPixels = 24;
+				object->heightPixels = 24;
+				object->renderFlags.alignPlane = true;
+				
+				//Copy orientation
+				object->status.xFlip = player->status.xFlip;
+				object->status.yFlip = player->status.reverseGravity;
+				
+				//When we reach the end of the animation, end our attack
+				if (object->mappingFrame == 7 && player->jumpAbility == 1)
+					player->jumpAbility = 2;
+				break;
+		}
 		
-		//Reset animation state
-		object->anim = 0;
-		object->prevAnim = 0;
-		object->animFrame = 0;
-		object->animFrameDuration = 0;
+		//Load the given mappings and textures
+		object->texture = gLevel->GetObjectTexture("data/Object/Shield.bmp");
+		object->mappings = gLevel->GetObjectMappings(useMapping);
+		
+		//Reset animation state if shield has changed and remember our current shield
+		if ((SHIELD)object->routine != player->shield)
+		{
+			//Copy our current shield
+			object->routine = player->shield;
+			
+			//Reset animation state
+			object->anim = 0;
+			object->prevAnim = 0;
+			object->animFrame = 0;
+			object->animFrameDuration = 0;
+		}
+		
+		//Animate
+		object->Animate(useAniList);
+		
+		//Do post-animation shield specific code (specifically priority stuff)
+		switch (player->shield)
+		{
+			case SHIELD_FIRE:
+				//Check if we should be drawn behind the player
+				if (object->mappingFrame < 0x0F)
+					object->priority = 1;
+				else
+					object->priority = 4;
+				break;
+			case SHIELD_ELECTRIC:
+				//Check if we should be drawn behind the player
+				if (object->mappingFrame < 0x0E)
+					object->priority = 1;
+				else
+					object->priority = 4;
+				break;
+			default:
+				break;
+		}
+		
+		//Draw to screen
+		object->Draw();
 	}
-	
-	//Animate
-	object->Animate(useAniList);
-	
-	//Do post-animation shield specific code (specifically priority stuff)
-	switch (player->shield)
-	{
-		case SHIELD_FIRE:
-			//Check if we should be drawn behind the player
-			if (object->mappingFrame < 0x0F)
-				object->priority = 1;
-			else
-				object->priority = 4;
-			break;
-		case SHIELD_ELECTRIC:
-			//Check if we should be drawn behind the player
-			if (object->mappingFrame < 0x0E)
-				object->priority = 1;
-			else
-				object->priority = 4;
-			break;
-		default:
-			break;
-	}
-	
-	//Draw to screen
-	object->Draw();
 }
 
 //Player class
@@ -628,7 +718,8 @@ PLAYER::PLAYER(PLAYER **linkedList, const char *specPath, PLAYER *myFollow, int 
 	
 	//Set render properties
 	priority = 2;
-	widthPixels = 0x18;
+	widthPixels = 24;
+	heightPixels = 24;
 	
 	//Render flags
 	renderFlags.alignPlane = true;
@@ -1139,7 +1230,11 @@ void PLAYER::CheckWallsOnGround()
 	if (objectControl.disableWallCollision)
 		return;
 	
+#ifndef SONIC123_WALL_COLLISION
 	if (((angle & 0x3F) == 0 || ((angle + 0x40) & 0xFF) < 0x80) && inertia != 0)
+#else
+	if (((angle + 0x40) & 0xFF) < 0x80 && inertia != 0)
+#endif
 	{
 		uint8_t faceAngle = angle + (inertia < 0 ? 0x40 : -0x40);
 		int16_t distance = CalcRoomInFront(faceAngle);
@@ -1814,7 +1909,7 @@ void PLAYER::JumpAbilities()
 					PlaySound(SOUNDID_USE_BUBBLE_SHIELD);
 				}
 			}
-			else if (1) //Super transformation
+			else if (gLevel->updateTime && gRings >= 50) //Super transformation
 			{
 				//Set our super state
 				paletteState = PALETTESTATE_FADING_IN;
@@ -1845,6 +1940,11 @@ void PLAYER::JumpAbilities()
 					SetSpeedFromDefinition(status.underwater ? underwaterSuperSD : superSD);
 				else
 					SetSpeedFromDefinition(status.underwater ? underwaterSuperSpeedShoesSD : superSpeedShoesSD);
+				
+				//Play super theme (if lead) and transformation sound
+				if (follow == nullptr)
+					gLevel->ChangeSecondaryMusic(gLevel->superMusic);
+				PlaySound(SOUNDID_SUPER_TRANSFORM);
 			}
 			else //Insta-shield
 			{
@@ -2308,42 +2408,58 @@ void PLAYER::Move()
 						
 						if (xDiff < 2)
 						{
-							if (status.xFlip)
+							if (!super)
 							{
-								if (xDiff < -4)
-									anim = PLAYERANIMATION_BALANCE2;	//Balancing on the edge
+								if (status.xFlip)
+								{
+									if (xDiff < -4)
+										anim = PLAYERANIMATION_BALANCE2;	//Balancing on the edge
+									else
+										anim = PLAYERANIMATION_BALANCE1;	//Far over the edge
+								}
 								else
-									anim = PLAYERANIMATION_BALANCE1;	//Far over the edge
+								{
+									if (xDiff < -4)
+									{
+										anim = PLAYERANIMATION_BALANCE4;	//Turn around to the "far over the edge" balancing animation
+										status.xFlip = true;
+									}
+									else
+										anim = PLAYERANIMATION_BALANCE3;	//Balancing on the edge backwards
+								}
 							}
 							else
 							{
-								if (xDiff < -4)
-								{
-									anim = PLAYERANIMATION_BALANCE4;	//Turn around to the "far over the edge" balancing animation
-									status.xFlip = true;
-								}
-								else
-									anim = PLAYERANIMATION_BALANCE3;	//Balancing on the edge backwards
+								anim = PLAYERANIMATION_BALANCE1;	//Super sonic balance animation
+								status.xFlip = true;
 							}
 						}
 						else if (xDiff >= width)
 						{
-							if (!status.xFlip)
+							if (!super)
 							{
-								if (xDiff >= width + 6)
-									anim = PLAYERANIMATION_BALANCE2;	//Balancing on the edge
+								if (!status.xFlip)
+								{
+									if (xDiff >= width + 6)
+										anim = PLAYERANIMATION_BALANCE2;	//Balancing on the edge
+									else
+										anim = PLAYERANIMATION_BALANCE1;	//Far over the edge
+								}
 								else
-									anim = PLAYERANIMATION_BALANCE1;	//Far over the edge
+								{
+									if (xDiff >= width + 6)
+									{
+										anim = PLAYERANIMATION_BALANCE4;	//Turn around to the "far over the edge" balancing animation
+										status.xFlip = false;
+									}
+									else
+										anim = PLAYERANIMATION_BALANCE3;	//Balancing on the edge backwards
+								}
 							}
 							else
 							{
-								if (xDiff >= width + 6)
-								{
-									anim = PLAYERANIMATION_BALANCE4;	//Turn around to the "far over the edge" balancing animation
-									status.xFlip = false;
-								}
-								else
-									anim = PLAYERANIMATION_BALANCE3;	//Balancing on the edge backwards
+								anim = PLAYERANIMATION_BALANCE1;	//Super sonic balance animation
+								status.xFlip = false;
 							}
 						}
 					}
@@ -2355,44 +2471,60 @@ void PLAYER::Move()
 					{
 						if (nextTilt == 3) //If there's no floor to the left of us
 						{
-							if (!status.xFlip)
+							if (!super)
 							{
-								if (ChkFloorEdge(topSolidLayer, x.pos - 6, y.pos, nullptr) >= 12)
-									anim = PLAYERANIMATION_BALANCE2;	//Far over the edge
+								if (!status.xFlip)
+								{
+									if (ChkFloorEdge(topSolidLayer, x.pos - 6, y.pos, nullptr) >= 12)
+										anim = PLAYERANIMATION_BALANCE2;	//Far over the edge
+									else
+										anim = PLAYERANIMATION_BALANCE1;	//Balancing on the edge
+								}
 								else
-									anim = PLAYERANIMATION_BALANCE1;	//Balancing on the edge
+								{
+									//Facing right on ledge to the left of us...
+									if (ChkFloorEdge(topSolidLayer, x.pos - 6, y.pos, nullptr) >= 12)
+									{
+										anim = PLAYERANIMATION_BALANCE4;	//Turn around to the "far over the edge" balancing animation
+										status.xFlip = false;
+									}
+									else
+										anim = PLAYERANIMATION_BALANCE3;	//Balancing on the edge backwards
+								}
 							}
 							else
 							{
-								//Facing right on ledge to the left of us...
-								if (ChkFloorEdge(topSolidLayer, x.pos - 6, y.pos, nullptr) >= 12)
-								{
-									anim = PLAYERANIMATION_BALANCE4;	//Turn around to the "far over the edge" balancing animation
-									status.xFlip = false;
-								}
-								else
-									anim = PLAYERANIMATION_BALANCE3;	//Balancing on the edge backwards
+								anim = PLAYERANIMATION_BALANCE1;	//Super sonic balance animation
+								status.xFlip = false;
 							}
 						}
 						else if (tilt == 3) //If there's no floor to the right of us
 						{
-							if (status.xFlip)
+							if (!super)
 							{
-								if (ChkFloorEdge(topSolidLayer, x.pos + 6, y.pos, nullptr) >= 12)
-									anim = PLAYERANIMATION_BALANCE2;	//Far over the edge
+								if (status.xFlip)
+								{
+									if (ChkFloorEdge(topSolidLayer, x.pos + 6, y.pos, nullptr) >= 12)
+										anim = PLAYERANIMATION_BALANCE2;	//Far over the edge
+									else
+										anim = PLAYERANIMATION_BALANCE1;	//Balancing on the edge
+								}
 								else
-									anim = PLAYERANIMATION_BALANCE1;	//Balancing on the edge
+								{
+									//Facing right on ledge to the left of us...
+									if (ChkFloorEdge(topSolidLayer, x.pos + 6, y.pos, nullptr) >= 12)
+									{
+										anim = PLAYERANIMATION_BALANCE4;	//Turn around to the "far over the edge" balancing animation
+										status.xFlip = true;
+									}
+									else
+										anim = PLAYERANIMATION_BALANCE3;	//Balancing on the edge backwards
+								}
 							}
 							else
 							{
-								//Facing right on ledge to the left of us...
-								if (ChkFloorEdge(topSolidLayer, x.pos + 6, y.pos, nullptr) >= 12)
-								{
-									anim = PLAYERANIMATION_BALANCE4;	//Turn around to the "far over the edge" balancing animation
-									status.xFlip = true;
-								}
-								else
-									anim = PLAYERANIMATION_BALANCE3;	//Balancing on the edge backwards
+								anim = PLAYERANIMATION_BALANCE1;	//Super sonic balance animation
+								status.xFlip = true;
 							}
 						}
 					}
@@ -2902,7 +3034,7 @@ void PLAYER::SuperPaletteCycle()
 {
 	switch (paletteState)
 	{
-		case PALETTESTATE_IDLE:
+		case PALETTESTATE_REGULAR:
 		{
 			SET_PALETTE_FROM_ENTRY(sonicPalette[0]);
 			break;
@@ -2919,14 +3051,14 @@ void PLAYER::SuperPaletteCycle()
 			
 			if (paletteFrame >= 6)
 			{
-				paletteState = PALETTESTATE_DONE;
+				paletteState = PALETTESTATE_SUPER;
 				memset(&objectControl, 0, sizeof(objectControl));
 			}
 			
 			SET_PALETTE_FROM_ENTRY(sonicPalette[prevFrame]);
 			break;
 		}
-		case PALETTESTATE_DONE:
+		case PALETTESTATE_SUPER:
 		{
 			//Wait for 8 frames before updating
 			if (--paletteTimer >= 0)
@@ -2952,7 +3084,7 @@ void PLAYER::SuperPaletteCycle()
 			
 			if (paletteFrame >= prevFrame)
 			{
-				paletteState = PALETTESTATE_IDLE;
+				paletteState = PALETTESTATE_REGULAR;
 				paletteFrame = 0;
 			}
 			
@@ -3812,8 +3944,13 @@ void PLAYER::Display()
 	if (item.isInvincible && invincibilityTime != 0 && (gLevel->frameCounter & 0x7) == 0 && --invincibilityTime == 0)
 	{
 		//Resume music
-		if (follow == nullptr && gLevel->secondaryMusic == gLevel->invincibilityMusic)
-			gLevel->StopSecondaryMusic();
+		if (follow == nullptr && (gLevel->secondaryMusic == gLevel->invincibilityMusic || gLevel->secondaryMusic == gLevel->superMusic))
+		{
+			if (super)
+				gLevel->ChangeSecondaryMusic(gLevel->superMusic);
+			else
+				gLevel->StopSecondaryMusic();
+		}
 		
 		//Lose invincibility
 		item.isInvincible = false;
@@ -3824,7 +3961,12 @@ void PLAYER::Display()
 	{
 		//Resume music
 		if (follow == nullptr && gLevel->secondaryMusic == gLevel->speedShoesMusic)
-			gLevel->StopSecondaryMusic();
+		{
+			if (super)
+				gLevel->ChangeSecondaryMusic(gLevel->superMusic);
+			else
+				gLevel->StopSecondaryMusic();
+		}
 		
 		//Lose speed shoes
 		item.hasSpeedShoes = false;
@@ -3845,7 +3987,6 @@ void PLAYER::Draw()
 
 void PLAYER::DrawToScreen()
 {
-	//Draw us
 	if (isDrawing)
 	{
 		//Don't draw if we don't have textures or mappings
@@ -3864,6 +4005,21 @@ void PLAYER::DrawToScreen()
 			
 			int alignX = renderFlags.alignPlane ? gLevel->camera->x : 0;
 			int alignY = renderFlags.alignPlane ? gLevel->camera->y : 0;
+			
+			//Check if on-screen
+			renderFlags.onScreen = false;
+			
+			//Horizontal check, uses widthPixels
+			if (x.pos - alignX < -widthPixels || x.pos - alignX > gRenderSpec.width + widthPixels)
+				return;
+			
+			//Vertical check, uses 32 pixels for height or heightPixels
+			int16_t heightCheck = renderFlags.onScreenUseHeightPixels ? heightPixels : 32;
+			if (y.pos - alignY < -heightCheck || y.pos - alignY > gRenderSpec.height + heightCheck)
+				return;
+			
+			//We're on-screen, now set flag and draw
+			renderFlags.onScreen = true;
 			gSoftwareBuffer->DrawTexture(texture, texture->loadedPalette, mapRect, gLevel->GetObjectLayer(highPriority, priority), x.pos - origX - alignX, y.pos - origY - alignY, renderFlags.xFlip, renderFlags.yFlip);
 			
 			//Draw trail when using speed shoes
@@ -4218,7 +4374,7 @@ void PLAYER::GiveSpeedShoes()
 	
 	//Play speed shoes music (only if lead)
 	if (follow == nullptr)
-		gLevel->ChangeSecondaryMusic(gLevel->speedShoesMusic, true);
+		gLevel->ChangeSecondaryMusic(gLevel->speedShoesMusic);
 }
 
 void PLAYER::GiveShield(SOUNDID sound, SHIELD type)

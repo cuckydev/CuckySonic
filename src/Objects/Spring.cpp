@@ -64,6 +64,7 @@ void ObjSpring(OBJECT *object)
 			//Set render properties
 			object->renderFlags.alignPlane = true;
 			object->widthPixels = 16;
+			object->heightPixels = 16;
 			object->priority = 4;
 			
 			//Subtype specific initialization

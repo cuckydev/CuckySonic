@@ -91,7 +91,7 @@ void ObjSpiral(OBJECT *object) //Also MTZ cylinder
 	if (object->routine == 0)
 	{
 		object->routine = (object->subtype < 0x80) ? 1 : 2;
-		object->widthPixels = 0xD0;
+		object->widthPixels = 208;
 	}
 	
 	switch (object->routine)

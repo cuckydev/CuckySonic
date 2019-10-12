@@ -26,7 +26,7 @@ void ObjPurpleRock(OBJECT *object)
 		case 1:
 		{
 			//Act as solid and draw to screen
-			object->SolidObject(27, 15, 16, object->x.pos);
+			object->SolidObject(27, 16, 16, object->x.pos);
 			object->Draw();
 			break;
 		}

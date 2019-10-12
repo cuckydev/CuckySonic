@@ -121,6 +121,7 @@ bool LEVEL::LoadMappings(LEVELTABLE *tableEntry)
 					chunkMapping[i].tile[v].yFlip	= (tmap & 0x0800) != 0;
 					chunkMapping[i].tile[v].xFlip	= (tmap & 0x0400) != 0;
 					chunkMapping[i].tile[v].tile	= (tmap & 0x3FF);
+					chunkMapping[i].tile[v].srcChunk = i;
 				}
 			}
 			
@@ -590,11 +591,12 @@ void LEVEL::UnloadAll()
 		delete speedShoesMusic;
 	if (invincibilityMusic != nullptr)
 		delete invincibilityMusic;
+	if (superMusic != nullptr)
+		delete superMusic;
 	if (goalMusic != nullptr)
 		delete goalMusic;
 	if (gameoverMusic != nullptr)
 		delete gameoverMusic;
-	
 	if (extraLifeMusic != nullptr)
 		delete extraLifeMusic;
 	
@@ -606,6 +608,7 @@ void LEVEL::UnloadAll()
 const char *preloadTexture[] = {
 	"data/Object/Explosion.bmp",
 	"data/Object/Shield.bmp",
+	"data/Object/InvincibilitySuperStars.bmp",
 	nullptr,
 };
 
@@ -617,6 +620,8 @@ const char *preloadMappings[] = {
 	"data/Object/FireShield.map",
 	"data/Object/ElectricShield.map",
 	"data/Object/BubbleShield.map",
+	"data/Object/InvincibilityStars.map",
+	"data/Object/SuperStars.map",
 	nullptr,
 };
 
@@ -705,13 +710,13 @@ LEVEL::LEVEL(int id, const char *players[])
 	
 	speedShoesMusic = new MUSIC("SpeedShoes", 0, 1.0f);
 	invincibilityMusic = new MUSIC("Invincibility", 0, 1.0f);
+	superMusic = new MUSIC("Super", 0, 1.0f);
 	goalMusic = new MUSIC("Goal", 0, 1.0f);
 	gameoverMusic = new MUSIC("GameOver", 0, 1.0f);
-	
 	extraLifeMusic = new MUSIC("ExtraLife", 0, 1.0f);
 	
 	//Check if any music failed to load...
-	if (stageMusic->fail || speedShoesMusic->fail || invincibilityMusic->fail || goalMusic->fail || gameoverMusic->fail || extraLifeMusic->fail)
+	if (stageMusic->fail || speedShoesMusic->fail || invincibilityMusic->fail || superMusic->fail || goalMusic->fail || gameoverMusic->fail || extraLifeMusic->fail)
 	{
 		fail = "Failed to load music";
 		UnloadAll();
@@ -821,7 +826,42 @@ bool LEVEL::UpdateFade()
 //Dynamic events
 void LEVEL::DynamicEvents()
 {
-	//Get our bottom boundary
+	//Zone specific events
+	switch (zone)
+	{
+		case ZONEID_GHZ:
+			//Handle S-Tube force rolling
+			for (PLAYER *player = playerList; player != nullptr; player = player->next)
+			{
+				//Get which tile we're on
+				if (player->x.pos < 0 || player->x.pos >= gLevel->layout.width * 16 || player->y.pos < 0 || player->y.pos >= gLevel->layout.height * 16)
+					continue;
+				TILE *tile = &gLevel->layout.foreground[(player->y.pos / 16) * gLevel->layout.width + (player->x.pos / 16)];;
+				
+				//If this is an S-tube chunk tile, roll
+				bool doRoll = false;
+				
+				switch (tile->srcChunk)
+				{
+					case 0x75: case 0x76: case 0x77: case 0x78:
+					case 0x79: case 0x7A: case 0x7B: case 0x7C:
+						doRoll = true;
+						break;
+				}
+				
+				if (doRoll)
+				{
+					if (!player->status.pinballMode)
+						player->ChkRoll();
+					player->status.pinballMode = true;
+				}
+				else
+					player->status.pinballMode = false;
+			}
+			break;
+	}
+	
+	//Level specific events
 	int16_t checkX = camera->x + (gRenderSpec.width - 320) / 2;
 	
 	switch (levelId)
@@ -1042,32 +1082,24 @@ void LEVEL::ChangePrimaryMusic(MUSIC *music)
 	
 	//Check if we should play or not...
 	if (currentMusic == nullptr || currentMusic == primaryMusic)
-		SetPlayingMusic(primaryMusic = music, true, false); //If was already playing primary music, start playing this music
+		SetPlayingMusic(primaryMusic = music, !(currentMusic == primaryMusic || currentMusic == secondaryMusic), false); //If was already playing primary music, start playing this music
 	else
 		primaryMusic = music; //Set primary music to be this music
-	
-	//Update our music state
-	musicIsTemporary = false;
-	musicFadeAtEnd = false;
 	
 	//Unlock audio device
 	AUDIO_UNLOCK;
 }
 
-void LEVEL::ChangeSecondaryMusic(MUSIC *music, bool isTemporary)
+void LEVEL::ChangeSecondaryMusic(MUSIC *music)
 {
 	//Lock the audio device so we can safely change which song is playing and volume
 	AUDIO_LOCK;
 	
 	//Check if we should play or not...
 	if (currentMusic == nullptr || currentMusic == primaryMusic || currentMusic == secondaryMusic)
-		SetPlayingMusic(secondaryMusic = music, true, false); //If was already playing primary or secondary music (secondary music overrides primary music), start playing this music
+		SetPlayingMusic(secondaryMusic = music, !(currentMusic == primaryMusic || currentMusic == secondaryMusic), false); //If was already playing primary or secondary music (secondary music overrides primary music), start playing this music
 	else
 		secondaryMusic = music; //Set secondary music to be this music
-	
-	//Update our music state
-	musicIsTemporary = isTemporary;
-	musicFadeAtEnd = false;
 	
 	//Unlock audio device
 	AUDIO_UNLOCK;
@@ -1080,8 +1112,6 @@ void LEVEL::PlayJingleMusic(MUSIC *music)
 	
 	//Play this song and update our music state
 	SetPlayingMusic(music, false, false);
-	musicIsTemporary = true;
-	musicFadeAtEnd = true;
 	
 	//Unlock audio device
 	AUDIO_UNLOCK;
@@ -1132,20 +1162,16 @@ void LEVEL::UpdateMusic()
 	AUDIO_LOCK;
 	
 	//If the song is temporary and has ended, resume
-	if (currentMusic->playing == false && musicIsTemporary)
+	if (currentMusic->playing == false)
 	{
 		//Play the previous song
-		if (currentMusic == secondaryMusic)
+		if (currentMusic != primaryMusic && currentMusic != secondaryMusic)
 		{
-			SetPlayingMusic(primaryMusic, true, false);		//secondaryMusic to primaryMusic
-			secondaryMusic = nullptr;
+			if (secondaryMusic != nullptr)
+				SetPlayingMusic(secondaryMusic, true, true);	//Jingle to secondaryMusic
+			else if (primaryMusic != nullptr)
+				SetPlayingMusic(primaryMusic, true, true);		//Jingle to primaryMusic
 		}
-		else if (secondaryMusic != nullptr)
-			SetPlayingMusic(secondaryMusic, true, true);	//Jingle to secondaryMusic
-		else if (primaryMusic != nullptr)
-			SetPlayingMusic(primaryMusic, true, true);		//Jingle to primaryMusic
-		else
-			currentMusic = nullptr;
 	}
 	
 	//Fade in the currently playing music

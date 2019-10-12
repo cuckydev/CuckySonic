@@ -61,6 +61,7 @@ void ObjSwingingPlatform(OBJECT *object)
 			
 			//Get our collision size
 			object->widthPixels = 24;
+			object->heightPixels = 8;
 			object->yRadius = 8;
 			
 			//Remember our origin position

@@ -596,6 +596,21 @@ void OBJECT::DrawToScreen()
 		
 		int alignX = renderFlags.alignPlane ? gLevel->camera->x : 0;
 		int alignY = renderFlags.alignPlane ? gLevel->camera->y : 0;
+		
+		//Check if on-screen
+		renderFlags.onScreen = false;
+		
+		//Horizontal check, uses widthPixels
+		if (x.pos - alignX < -widthPixels || x.pos - alignX > gRenderSpec.width + widthPixels)
+			return;
+		
+		//Vertical check, uses 32 pixels for height or heightPixels
+		int16_t heightCheck = renderFlags.onScreenUseHeightPixels ? heightPixels : 32;
+		if (y.pos - alignY < -heightCheck || y.pos - alignY > gRenderSpec.height + heightCheck)
+			return;
+		
+		//We're on-screen, now set flag and draw
+		renderFlags.onScreen = true;
 		gSoftwareBuffer->DrawTexture(texture, texture->loadedPalette, mapRect, gLevel->GetObjectLayer(highPriority, priority), x.pos - origX - alignX, y.pos - origY - alignY, renderFlags.xFlip, renderFlags.yFlip);
 	}
 }

@@ -29,6 +29,7 @@ void ObjMinecart(OBJECT *object)
 			object->routine++;
 			object->renderFlags.alignPlane = true;
 			object->widthPixels = 20;
+			object->heightPixels = 16;
 			object->priority = 1;
 			
 			object->xRadius = 18;

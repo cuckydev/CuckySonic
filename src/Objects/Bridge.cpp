@@ -13,7 +13,7 @@ void ObjBridgeSegment(OBJECT *object)
 		//Set our properties
 		object->routine++;
 		object->renderFlags.alignPlane = true;
-		object->widthPixels = 0x40;
+		object->widthPixels = 8;
 		object->priority = 3;
 		
 		//Load graphics
@@ -59,7 +59,7 @@ void ObjBridge(OBJECT *object)
 			object->routine++;
 			object->priority = 3;
 			object->renderFlags.alignPlane = true;
-			object->widthPixels = 0x80;
+			object->widthPixels = 128;
 			
 			//Get our type properties
 			int16_t bridgeLeft = object->x.pos - (object->subtype * 8);
