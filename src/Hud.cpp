@@ -1,3 +1,5 @@
+#include <string.h>
+
 #include "Hud.h"
 #include "Level.h"
 #include "Game.h"

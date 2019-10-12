@@ -1,3 +1,4 @@
+#include <string.h>
 #include "Input.h"
 #include "Path.h"
 #include "Log.h"

@@ -1,3 +1,5 @@
+#include <string.h>
+
 #include "Camera.h"
 #include "Game.h"
 #include "Level.h"
