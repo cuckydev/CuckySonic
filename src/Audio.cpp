@@ -287,7 +287,7 @@ MUSIC::MUSIC(const char *name, int initialPosition, float initialVolume)
 	if (file == nullptr)
 	{
 		char error[0x40];
-		sprintf(error, "Error: %d", error);
+		sprintf(error, "Error: %s", error);
 		Warn(error);
 		return;
 	}

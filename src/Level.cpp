@@ -1083,9 +1083,10 @@ void LEVEL::ChangePrimaryMusic(MUSIC *music)
 	//Lock the audio device so we can safely change which song is playing and volume
 	AUDIO_LOCK;
 	
-	//Check if we should play or not...
+	//Check if we should play or not
+	bool doRestore = !(currentMusic == primaryMusic || currentMusic == secondaryMusic);
 	if (currentMusic == nullptr || currentMusic == primaryMusic)
-		SetPlayingMusic(primaryMusic = music, !(currentMusic == primaryMusic || currentMusic == secondaryMusic), false); //If was already playing primary music, start playing this music
+		SetPlayingMusic(primaryMusic = music, doRestore, false); //If was already playing primary music, start playing this music
 	else
 		primaryMusic = music; //Set primary music to be this music
 	
@@ -1098,7 +1099,7 @@ void LEVEL::ChangeSecondaryMusic(MUSIC *music)
 	//Lock the audio device so we can safely change which song is playing and volume
 	AUDIO_LOCK;
 	
-	//Check if we should play or not...
+	//Check if we should play or not
 	if (currentMusic == nullptr || currentMusic == primaryMusic || currentMusic == secondaryMusic)
 		SetPlayingMusic(secondaryMusic = music, !(currentMusic == primaryMusic || currentMusic == secondaryMusic), false); //If was already playing primary or secondary music (secondary music overrides primary music), start playing this music
 	else
@@ -1125,7 +1126,7 @@ void LEVEL::StopSecondaryMusic()
 	//Lock the audio device so we can safely change which song is playing and volume
 	AUDIO_LOCK;
 	
-	//Check if we should play the primary song or not...
+	//Check if we should play the primary song or not
 	if (currentMusic == secondaryMusic)
 		SetPlayingMusic(primaryMusic, true, false);
 	secondaryMusic = nullptr;
