@@ -2,9 +2,6 @@
 #include "SDL_render.h"
 #include "SDL_pixels.h"
 #include <stdint.h>
-
-//Pixel function
-typedef void (*PIXELFUNCTION)(uint8_t*, uint32_t);
 	
 //Palette line
 struct PALCOLOUR
@@ -23,7 +20,7 @@ void SetPaletteColour(PALCOLOUR *palColour, uint8_t r, uint8_t g, uint8_t b);
 void ModifyPaletteColour(PALCOLOUR *palColour, uint8_t r, uint8_t g, uint8_t b);
 void RegenPaletteColour(PALCOLOUR *palColour);
 
-//Texture class
+//Texture classes
 class TEXTURE
 {
 	public:
@@ -50,13 +47,37 @@ class TEXTURE
 		TEXTURE(TEXTURE **linkedList, uint8_t *data, int dWidth, int dHeight);
 		~TEXTURE();
 };
-	
+
+class TEXTURE_FULLCOLOUR
+{
+	public:
+		//Status
+		const char *fail;
+		
+		//Source file (if applicable)
+		const char *source;
+		
+		//Texture data
+		uint32_t *texture;
+		int width;
+		int height;
+		
+		//For linked lists (if applicable)
+		TEXTURE_FULLCOLOUR **list;
+		TEXTURE_FULLCOLOUR *next;
+		
+	public:
+		TEXTURE_FULLCOLOUR(TEXTURE_FULLCOLOUR **linkedList, const char *path);
+		~TEXTURE_FULLCOLOUR();
+};
+
 //Render queue structure
 #define RENDERLAYERS 0x100
 
 enum RENDERQUEUE_TYPE
 {
 	RENDERQUEUE_TEXTURE,
+	RENDERQUEUE_TEXTURE_FULLCOLOUR,
 	RENDERQUEUE_SOLID,
 };
 
@@ -76,6 +97,12 @@ struct RENDERQUEUE
 			TEXTURE *texture;
 			bool xFlip, yFlip;
 		} texture;
+		struct
+		{
+			int srcX, srcY;
+			TEXTURE_FULLCOLOUR *texture;
+			bool xFlip, yFlip;
+		} textureFullColour;
 		struct
 		{
 			PALCOLOUR *colour;
@@ -110,6 +137,7 @@ class SOFTWAREBUFFER
 		void DrawPoint(int layer, int x, int y, PALCOLOUR *colour);
 		void DrawQuad(int layer, const SDL_Rect *quad, PALCOLOUR *colour);
 		void DrawTexture(TEXTURE *texture, PALETTE *palette, const SDL_Rect *src, int layer, int x, int y, bool xFlip, bool yFlip);
+		void DrawTexture(TEXTURE_FULLCOLOUR *texture, const SDL_Rect *src, int layer, int x, int y, bool xFlip, bool yFlip);
 		
 		void Blit8 (PALCOLOUR *backgroundColour, uint8_t  *buffer, int pitch);
 		void Blit16(PALCOLOUR *backgroundColour, uint16_t *buffer, int pitch);

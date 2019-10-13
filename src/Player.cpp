@@ -401,6 +401,12 @@ static const uint8_t* animationListBubbleShield[] = {
 //Shield object
 void ObjShield(OBJECT *object)
 {
+	enum ROUTINE
+	{
+		ROUTINE_SUPERSTAR =			(uint8_t)-1,
+		ROUTINE_INVINCIBILITYSTAR =	(uint8_t)-2,
+	};
+	
 	//Scratch
 	enum SCRATCH
 	{
@@ -420,6 +426,15 @@ void ObjShield(OBJECT *object)
 	//Handle super stars
 	if (player->super)
 	{
+		//Restart if wasn't super stars
+		if (object->routine != ROUTINE_SUPERSTAR)
+		{
+			object->routine = ROUTINE_SUPERSTAR;
+			object->mappingFrame = 0;
+			object->scratchU8[SCRATCHU8_MOVING] = 0;
+			object->scratchU8[SCRATCHU8_NO_COPY_POS] = 0;
+		}
+		
 		//Load the given mappings and textures
 		object->texture = gLevel->GetObjectTexture("data/Object/InvincibilitySuperStars.bmp");
 		object->mappings = gLevel->GetObjectMappings("data/Object/SuperStars.map");
@@ -480,11 +495,26 @@ void ObjShield(OBJECT *object)
 	//TODO: Invincibility stars
 	else if (player->item.isInvincible)
 	{
-		
+		//Restart if wasn't invincibility stars
+		if (object->routine != ROUTINE_INVINCIBILITYSTAR)
+			object->routine = ROUTINE_INVINCIBILITYSTAR;
 	}
 	//Shield
 	else
 	{
+		//Reset if wasn't the shield we are now
+		if ((SHIELD)object->routine != player->shield)
+		{
+			//Copy our current shield
+			object->routine = player->shield;
+			
+			//Reset animation state
+			object->anim = 0;
+			object->prevAnim = 0;
+			object->animFrame = 0;
+			object->animFrameDuration = 0;
+		}
+		
 		//Copy player position and high priority flag
 		object->highPriority = player->highPriority;
 		object->x.pos = player->x.pos;
@@ -597,19 +627,6 @@ void ObjShield(OBJECT *object)
 		//Load the given mappings and textures
 		object->texture = gLevel->GetObjectTexture("data/Object/Shield.bmp");
 		object->mappings = gLevel->GetObjectMappings(useMapping);
-		
-		//Reset animation state if shield has changed and remember our current shield
-		if ((SHIELD)object->routine != player->shield)
-		{
-			//Copy our current shield
-			object->routine = player->shield;
-			
-			//Reset animation state
-			object->anim = 0;
-			object->prevAnim = 0;
-			object->animFrame = 0;
-			object->animFrameDuration = 0;
-		}
 		
 		//Animate
 		object->Animate(useAniList);
