@@ -16,10 +16,11 @@
 #include "Objects.h"
 
 //Bug-fixes
-//#define FIX_SPINDASH_JUMP     //When you jump the frame after you spindash, you'll jump straight upwards
-//#define FIX_HORIZONTAL_WRAP   //In the originals, for some reason, the LevelBound uses unsigned checks, meaning if you go off to the left, you'll be sent to the right boundary
-//#define FIX_DUCK_CONDITION    //In Sonic and Knuckles, the conditions for ducking are so loose, you can duck (and spindash) in unexpected situations.
-//#define FIX_ROLL_YSHIFT       //In the originals, when you roll, you're always shifted up / down globally, this can cause weird behaviour such as falling off of ceilings
+//#define FIX_SPINDASH_JUMP      //When you jump the frame after you spindash, you'll jump straight upwards
+//#define FIX_HORIZONTAL_WRAP    //In the originals, for some reason, the LevelBound uses unsigned checks, meaning if you go off to the left, you'll be sent to the right boundary
+//#define FIX_DUCK_CONDITION     //In Sonic and Knuckles, the conditions for ducking are so loose, you can duck (and spindash) in unexpected situations.
+//#define FIX_ROLL_YSHIFT        //In the originals, when you roll, you're always shifted up / down globally, this can cause weird behaviour such as falling off of ceilings
+#define FIX_ROLLJUMP_COLLISION //In the originals, for some reason, jumping from a roll will maintain Sonic's regular collision hitbox, rather than switching to the smaller hitbox, which causes weird issues.
 
 //Bug-fix macros
 #ifdef FIX_ROLL_YSHIFT
@@ -57,24 +58,36 @@
 			y.pos += shift;
 #endif
 
-//Game differences (Uncomment all for an experience like that of Sonic 1, and comment all for the experience of Sonic 3 and Knuckles)
-//#define SONIC1_SLOPE_ANGLE        //In Sonic 2+, the floor's angle will be replaced with the player's cardinal floor angle if there's a 45+ degree difference
-//#define SONIC1_WALK_ANIMATION     //For some reason, in Sonic 2+, the animation code was messed up, making the first frame of the walk animation last only one frame
-//#define SONIC1_SLOPE_ROTATION     //In Sonic 2+, a few lines were added to the animation code to make the floor rotation more consistent
-//#define SONIC12_SLOPE_RESIST      //In Sonic 3, they made it so you're always affected by slope gravity unless you're on a shallow floor
-//#define SONIC12_SLOPE_REPEL       //In Sonic 3, the code to make it so you fall off of walls and ceilings when going too slow was completely redone
-//#define SONIC1_GROUND_CAP         //In Sonic 1, your speed on the ground is capped to your top speed when above it, even if you're already above it
-//#define SONIC12_AIR_CAP           //In Sonic 1 and 2, your speed in the air is capped to your top speed when above it, even if you're already above it
-//#define SONIC123_ROLL_DUCK        //In Sonic and Knuckles, they added a greater margin of speed for ducking and rolling, so you can duck while moving
-//#define SONIC12_ROLLJUMP_LAND     //In Sonic 3, they fixed the roll jump landing bug, where you'd land 5 pixels above the ground after jumping from a roll
-//#define SONIC1_NO_SPINDASH        //The spindash, it needs no introduction
-//#define SONIC12_NO_JUMP_ABILITY   //Jump abilities from Sonic 3, such as the insta-shield and elemental shields
-//#define SONIC1_DEATH_BOUNDARY     //In Sonic 2, the death boundary code was fixed so that it doesn't use the camera's boundary but the level boundary, so that you don't die while the camera boundary is scrolling
-//#define SONIC12_DEATH_RESPAWN     //In Sonic 3, it was changed so that death respawns you once you go off-screen, not when you leave the level boundaries, since this was a very buggy check
-//#define SONIC12_SPINDASH_ANIM_BUG //In Sonic 3, the bug where landing on the ground while spindashing plays the walk animation was fixed
-//#define SONIC12_PUSH_CHECK		//In Sonic 3, it was changed so that you have to be facing towards a wall in order to start pushing into it
-//#define SONIC12_SANE_AIRCOLLISION //For some reason, in Sonic 3 there was a weird modification to the airborne collision code... can't understand the purpose
-//#define SONIC123_WALL_COLLISION   //In Sonic and Knuckles, the wall collision on the ground was changed to have collision even on walls and ceilings (as long as they're cardinal directions)
+//Game differences
+//#define SONIC1_SLOPE_ANGLE          //In Sonic 2+, the floor's angle will be replaced with the player's cardinal floor angle if there's a 45+ degree difference
+//#define SONIC12_PUSH_CHECK          //In Sonic 3, it was changed so that you have to be facing towards a wall in order to start pushing into it
+//#define SONIC12_SANE_AIRCOLLISION   //For some reason, in Sonic 3 there was a weird modification to the airborne collision code... can't understand the purpose
+//#define SONIC123_WALL_COLLISION     //In Sonic and Knuckles, the wall collision on the ground was changed to have collision even on walls and ceilings (as long as they're cardinal directions)
+//#define SONIC12_ROLLJUMP_LAND       //In Sonic 3, they fixed the roll jump landing bug, where you'd land 5 pixels above the ground after jumping from a roll
+
+//#define SONIC1_WALK_ANIMATION       //For some reason, in Sonic 2+, the animation code was messed up, making the first frame of the walk animation last only one frame
+//#define SONIC1_SLOPE_ROTATION       //In Sonic 2+, a few lines were added to the animation code to make the floor rotation more consistent
+
+//#define SONIC12_SLOPE_RESIST        //In Sonic 3, they made it so you're always affected by slope gravity unless you're on a shallow floor
+//#define SONIC12_SLOPE_REPEL         //In Sonic 3, the code to make it so you fall off of walls and ceilings when going too slow was completely redone
+//#define SONIC1_GROUND_CAP           //In Sonic 1, your speed on the ground is capped to your top speed when above it, even if you're already above it
+//#define SONIC12_AIR_CAP             //In Sonic 1 and 2, your speed in the air is capped to your top speed when above it, even if you're already above it
+//#define SONIC123_ROLL_DUCK          //In Sonic and Knuckles, they added a greater margin of speed for ducking and rolling, so you can duck while moving
+
+//#define SONIC1_NO_SPINDASH          //The spindash, it needs no introduction
+//#define SONIC1_NO_SUPER             //Super Sonic wasn't in Sonic 1
+//#define SONIC123_NO_HYPER           //DOES NOTHING, UNIMPLEMENTED! - Hyper Sonic wasn't introduced until S3K
+//#define SONIC2_SUPER_AT_PEAK        //In Sonic 2, you'd turn super at the peak of a jump, no matter what, while in Sonic 3, this was moved to the jump ability code
+//#define SONIC12_NO_INSTASHIELD      //Insta-shield
+//#define SONIC12_NO_SHIELD_ABILITIES //Other shield abilities
+
+//#define SONIC1_DEATH_BOUNDARY       //In Sonic 2, the death boundary code was fixed so that it doesn't use the camera's boundary but the level boundary, so that you don't die while the camera boundary is scrolling
+//#define SONIC12_DEATH_RESPAWN       //In Sonic 3, it was changed so that death respawns you once you go off-screen, not when you leave the level boundaries, since this was a very buggy check
+//#define SONIC12_SPINDASH_ANIM_BUG   //In Sonic 3, the bug where landing on the ground while spindashing plays the walk animation was fixed
+
+//Other control options
+//#define CONTROL_NO_ROLLJUMP_LOCK          //In the originals, jumping from a roll will lock your controls
+//#define CONTROL_JA_DONT_CLEAR_ROLLJUMP    //When you use a jump ability in the original, it clears the roll-jump flag
 
 //Animation data
 #define WALK_FRAMES			8
@@ -752,10 +765,13 @@ PLAYER::PLAYER(PLAYER **linkedList, const char *specPath, PLAYER *myFollow, int 
 	flipSpeed = 4;
 	
 	//Set our following person
-	follow = (void*)myFollow;
+	follow = myFollow;
 	
 	//Set the controller to use
 	controller = myController;
+	
+	//Initialize our record arrays
+	ResetRecords(x.pos - 0x20, y.pos - 0x04);
 	
 	//Load our objects
 	spindashDust = new OBJECT(&gLevel->coreObjectList, ObjSpindashDust);
@@ -764,11 +780,8 @@ PLAYER::PLAYER(PLAYER **linkedList, const char *specPath, PLAYER *myFollow, int 
 	skidDust = new OBJECT(&gLevel->coreObjectList, ObjSkidDust);
 	skidDust->parent = this;
 	
-	shieldObject = new OBJECT(&gLevel->objectList, ObjShield);
+	shieldObject = new OBJECT(&gLevel->coreObjectList, ObjShield);
 	shieldObject->parent = this;
-	
-	//Initialize our record arrays
-	ResetRecords(x.pos - 0x20, y.pos - 0x04);
 	
 	//Attach to linked list (if applicable)
 	if (linkedList != nullptr)
@@ -1860,8 +1873,10 @@ void PLAYER::JumpAbilities()
 {
 	if (jumpAbility == 0 && (controlPress.a || controlPress.b || controlPress.c))
 	{
-		//Clear the roll jump flag, so we regain horizontal control
-		status.rollJumping = false;
+		#ifndef CONTROL_JA_DONT_CLEAR_ROLLJUMP
+			//Clear the roll jump flag, so we regain horizontal control
+			status.rollJumping = false;
+		#endif
 		
 		//Perform our ability
 		if (super)
@@ -1878,6 +1893,7 @@ void PLAYER::JumpAbilities()
 		}
 		else if (!item.isInvincible)
 		{
+		#ifndef SONIC12_NO_SHIELD_ABILITIES
 			//Check and handle shield abilities
 			if (shield != SHIELD_NULL)
 			{
@@ -1927,52 +1943,21 @@ void PLAYER::JumpAbilities()
 					yVel = 0x800;
 					PlaySound(SOUNDID_USE_BUBBLE_SHIELD);
 				}
+				
+				return;
 			}
-			else if (gLevel->updateTime && gRings >= 50) //Super transformation
-			{
-				//Set our super state
-				paletteState = PALETTESTATE_FADING_IN;
-				paletteTimer = 15;
-				
-				superTimer = 60;
-				super = true;
-				
-				objectControl.disableOurMovement = true;
-				objectControl.disableObjectInteract = true;
-				anim = PLAYERANIMATION_TRANSFORM;
-				
-				//Super and hyper specific stuff (stars and trail stuff)
-				if (0)
-				{
-					//TODO: Super effects
-				}
-				else
-				{
-					//TODO: Hyper effects
-				}
-				
-				//Become invincible and set speed
-				invincibilityTime = 0;
-				item.isInvincible = true;
-				
-				if (!item.hasSpeedShoes)
-					SetSpeedFromDefinition(status.underwater ? underwaterSuperSD : superSD);
-				else
-					SetSpeedFromDefinition(status.underwater ? underwaterSuperSpeedShoesSD : superSpeedShoesSD);
-				
-				//Play super theme (if lead) and transformation sound
-				if (follow == nullptr)
-					gLevel->ChangeSecondaryMusic(gLevel->superMusic);
-				PlaySound(SOUNDID_SUPER_TRANSFORM);
-			}
-			else //Insta-shield
-			{
-				//Update our shield and ability flag
-				if (shieldObject != nullptr)
-						shieldObject->anim = 1;
-				jumpAbility = 1;
-				PlaySound(SOUNDID_USE_INSTA_SHIELD);
-			}
+		#endif
+		#if !(defined(SONIC1_NO_SUPER) || defined(SONIC2_SUPER_AT_PEAK))
+			if (SuperTransform())
+				return;
+		#endif
+		#ifndef SONIC12_NO_INSTASHIELD
+			//Update our shield and ability flag
+			if (shieldObject != nullptr)
+					shieldObject->anim = 1;
+			jumpAbility = 1;
+			PlaySound(SOUNDID_USE_INSTA_SHIELD);
+		#endif
 		}
 	}
 }
@@ -1983,7 +1968,7 @@ void PLAYER::JumpHeight()
 	if (status.jumping)
 	{
 		//Slow us down if ABC is released when jumping
-		#ifndef SONIC12_NO_JUMP_ABILITY
+		#if (!defined(SONIC2_SUPER_AT_PEAK) || !defined(SONIC12_NO_INSTASHIELD) || !defined(SONIC12_NO_SHIELD_ABILITIES))
 			if (-jumpRelease <= yVel)
 				JumpAbilities();
 			else if (!controlHeld.a && !controlHeld.b && !controlHeld.c)
@@ -1991,6 +1976,11 @@ void PLAYER::JumpHeight()
 		#else
 			if (-jumpRelease > yVel && !controlHeld.a && !controlHeld.b && !controlHeld.c)
 				yVel = -jumpRelease;
+		#endif
+		
+		#if (!defined(SONIC1_NO_SUPER) && defined(SONIC2_SUPER_AT_PEAK))
+			if (!(yVel & 0xFF00))
+				SuperTransform();
 		#endif
 	}
 	else
@@ -2155,25 +2145,37 @@ bool PLAYER::Jump()
 			PlaySound(SOUNDID_JUMP);
 			
 			//Handle our collision and roll state
-			xRadius = defaultXRadius;
-			yRadius = defaultYRadius;
-			
-			if (!status.inBall)
-			{
-				//Go into ball form
+			#ifndef FIX_ROLLJUMP_COLLISION
+				xRadius = defaultXRadius;
+				yRadius = defaultYRadius;
+			#else
 				xRadius = rollXRadius;
 				yRadius = rollYRadius;
-				anim = PLAYERANIMATION_ROLL;
-				status.inBall = true;
-				
-				//Shift us down to the ground
-				YSHIFT_ON_FLOOR(-(yRadius - defaultYRadius));
-			}
-			else
-			{
-				//Set our roll jump flag (also we use the regular non-roll collision size for some reason)
-				status.rollJumping = true;
-			}
+			#endif
+			
+			#ifndef CONTROL_NO_ROLLJUMP_LOCK
+				if (!status.inBall)
+				{
+			#endif
+					//Go into ball form
+					#ifndef FIX_ROLLJUMP_COLLISION
+						xRadius = rollXRadius;
+						yRadius = rollYRadius;
+					#endif
+					
+					anim = PLAYERANIMATION_ROLL;
+					status.inBall = true;
+					
+					//Shift us down to the ground
+					YSHIFT_ON_FLOOR(-(yRadius - defaultYRadius));
+			#ifndef CONTROL_NO_ROLLJUMP_LOCK
+				}
+				else
+				{
+					//Set our roll jump flag (also we use the regular non-roll collision size for some reason)
+					status.rollJumping = true;
+				}
+			#endif
 			return false;
 		}
 	}
@@ -3111,6 +3113,50 @@ void PLAYER::SuperPaletteCycle()
 			break;
 		}
 	}
+}
+
+bool PLAYER::SuperTransform()
+{
+	if (!super && gLevel->updateTime && gRings >= 50) //Super transformation
+	{
+		//Set our super state
+		paletteState = PALETTESTATE_FADING_IN;
+		paletteTimer = 15;
+		
+		superTimer = 60;
+		super = true;
+		
+		objectControl.disableOurMovement = true;
+		objectControl.disableObjectInteract = true;
+		anim = PLAYERANIMATION_TRANSFORM;
+		
+		//Super and hyper specific stuff (stars and trail stuff)
+		if (0)
+		{
+			//TODO: Super effects
+		}
+		else
+		{
+			//TODO: Hyper effects
+		}
+		
+		//Become invincible and set speed
+		invincibilityTime = 0;
+		item.isInvincible = true;
+		
+		if (!item.hasSpeedShoes)
+			SetSpeedFromDefinition(status.underwater ? underwaterSuperSD : superSD);
+		else
+			SetSpeedFromDefinition(status.underwater ? underwaterSuperSpeedShoesSD : superSpeedShoesSD);
+		
+		//Play super theme (if lead) and transformation sound
+		if (follow == nullptr)
+			gLevel->ChangeSecondaryMusic(gLevel->superMusic);
+		PlaySound(SOUNDID_SUPER_TRANSFORM);
+		return true;
+	}
+	
+	return false;
 }
 
 void PLAYER::UpdateSuper()

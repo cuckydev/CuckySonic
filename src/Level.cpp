@@ -1212,13 +1212,13 @@ bool LEVEL::Update()
 		for (PLAYER *player = playerList; player != nullptr; player = player->next)
 			player->Update();
 	
-		for (OBJECT *object = coreObjectList; object != nullptr; object = object->next)
+		for (OBJECT *object = objectList; object != nullptr; object = object->next)
 		{
 			if (object->Update())
 				return Error(fail = object->fail);
 		}
 		
-		for (OBJECT *object = objectList; object != nullptr; object = object->next)
+		for (OBJECT *object = coreObjectList; object != nullptr; object = object->next)
 		{
 			if (object->Update())
 				return Error(fail = object->fail);

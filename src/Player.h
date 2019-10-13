@@ -386,6 +386,7 @@ class PLAYER
 		void LevelBound();
 		
 		void SuperPaletteCycle();
+		bool SuperTransform();
 		void UpdateSuper();
 		
 		void FrameCommand(const uint8_t* animation);
