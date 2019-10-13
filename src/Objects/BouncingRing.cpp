@@ -7,6 +7,8 @@
 #include "../Audio.h"
 #include "../MathUtil.h"
 
+//#define BOUNCINGRING_BLINK	//When set, the rings will blink shortly before it despawns
+
 static const uint8_t animationCollect[] =	{0x05,0x04,0x05,0x06,0x07,0xFC};
 
 static const uint8_t *animationList[] = {
@@ -205,7 +207,10 @@ void ObjBouncingRing(OBJECT *object)
 			if (object->scratchU8[SCRATCHU8_ANIM_COUNT] == 0)
 				object->deleteFlag = true;
 			else
-				object->Draw();
+			#ifdef BOUNCINGRING_BLINK
+				if (object->scratchU8[SCRATCHU8_ANIM_COUNT] > 60 || gLevel->frameCounter & (object->scratchU8[SCRATCHU8_ANIM_COUNT] > 30 ? 0x4 : 0x2))
+			#endif
+					object->Draw();
 			break;
 		}
 		case 2: //Touched player, collect a ring

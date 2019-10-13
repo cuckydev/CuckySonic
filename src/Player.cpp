@@ -20,7 +20,7 @@
 //#define FIX_HORIZONTAL_WRAP    //In the originals, for some reason, the LevelBound uses unsigned checks, meaning if you go off to the left, you'll be sent to the right boundary
 //#define FIX_DUCK_CONDITION     //In Sonic and Knuckles, the conditions for ducking are so loose, you can duck (and spindash) in unexpected situations.
 //#define FIX_ROLL_YSHIFT        //In the originals, when you roll, you're always shifted up / down globally, this can cause weird behaviour such as falling off of ceilings
-#define FIX_ROLLJUMP_COLLISION //In the originals, for some reason, jumping from a roll will maintain Sonic's regular collision hitbox, rather than switching to the smaller hitbox, which causes weird issues.
+//#define FIX_ROLLJUMP_COLLISION //In the originals, for some reason, jumping from a roll will maintain Sonic's regular collision hitbox, rather than switching to the smaller hitbox, which causes weird issues.
 
 //Bug-fix macros
 #ifdef FIX_ROLL_YSHIFT
@@ -73,8 +73,12 @@
 //#define SONIC1_GROUND_CAP           //In Sonic 1, your speed on the ground is capped to your top speed when above it, even if you're already above it
 //#define SONIC12_AIR_CAP             //In Sonic 1 and 2, your speed in the air is capped to your top speed when above it, even if you're already above it
 //#define SONIC123_ROLL_DUCK          //In Sonic and Knuckles, they added a greater margin of speed for ducking and rolling, so you can duck while moving
+//#define SONICCD_ROLLING             //In Sonic CD, rolling to the right is weird
+//#define SONICCD_ROLLJUMP            //In Sonic CD, rolljumping was *partially* removed, the above "CONTROL_NO_ROLLJUMP_LOCK" would act differently
 
 //#define SONIC1_NO_SPINDASH          //The spindash, it needs no introduction
+//#define SONICCD_SPINDASH            //INCOMPLETE - CD spindash
+//#define SONICCD_PEELOUT             //INCOMPLETE - CD super-peelout
 //#define SONIC1_NO_SUPER             //Super Sonic wasn't in Sonic 1
 //#define SONIC123_NO_HYPER           //DOES NOTHING, UNIMPLEMENTED! - Hyper Sonic wasn't introduced until S3K
 //#define SONIC2_SUPER_AT_PEAK        //In Sonic 2, you'd turn super at the peak of a jump, no matter what, while in Sonic 3, this was moved to the jump ability code
@@ -1756,7 +1760,7 @@ const uint16_t spindashSpeedSuper[9] =	{0xB00, 0xB80, 0xC00, 0xC80, 0xD00, 0xD80
 		
 bool PLAYER::Spindash()
 {
-	#ifdef SONIC1_NO_SPINDASH
+	#if (defined(SONIC1_NO_SPINDASH) || defined(SONICCD_SPINDASH))
 		return true;
 	#else
 		if (spindashing == false)
@@ -1868,6 +1872,17 @@ bool PLAYER::Spindash()
 	#endif
 }
 
+//CD Peelout and Spindash
+bool PLAYER::CDSpindash()
+{
+	return false;
+}
+
+bool PLAYER::CDPeelout()
+{
+	return false;
+}
+
 //Jump ability functions
 void PLAYER::JumpAbilities()
 {
@@ -1893,71 +1908,71 @@ void PLAYER::JumpAbilities()
 		}
 		else if (!item.isInvincible)
 		{
-		#ifndef SONIC12_NO_SHIELD_ABILITIES
-			//Check and handle shield abilities
-			if (shield != SHIELD_NULL)
-			{
-				if (shield == SHIELD_FIRE)
+			#ifndef SONIC12_NO_SHIELD_ABILITIES
+				//Check and handle shield abilities
+				if (shield != SHIELD_NULL)
 				{
-					//Update our shield and ability flag
-					if (shieldObject != nullptr)
-						shieldObject->anim = 1;
-					jumpAbility = 1;
+					if (shield == SHIELD_FIRE)
+					{
+						//Update our shield and ability flag
+						if (shieldObject != nullptr)
+							shieldObject->anim = 1;
+						jumpAbility = 1;
+						
+						//Dash in our facing direction
+						int16_t speed = 0x800;
+						if (status.xFlip)
+							speed = -speed;
+						
+						xVel = speed;
+						inertia = speed;
+						yVel = 0;
+						
+						//Make the camera lag behind us
+						scrollDelay = 0x2000;
+						ResetRecords(x.pos, y.pos);
+						PlaySound(SOUNDID_USE_FIRE_SHIELD);
+					}
+					else if (shield == SHIELD_ELECTRIC)
+					{
+						//Update our shield and ability flag
+						if (shieldObject != nullptr)
+							shieldObject->anim = 1;
+						jumpAbility = 1;
+						
+						//Electric shield double jump
+						yVel = -0x680;
+						status.jumping = false;
+						PlaySound(SOUNDID_USE_ELECTRIC_SHIELD);
+					}
+					else if (shield == SHIELD_BUBBLE)
+					{
+						//Update our shield and ability flag
+						if (shieldObject != nullptr)
+							shieldObject->anim = 1;
+						jumpAbility = 1;
+						
+						//Shoot down to the ground
+						xVel = 0;
+						inertia = 0;
+						yVel = 0x800;
+						PlaySound(SOUNDID_USE_BUBBLE_SHIELD);
+					}
 					
-					//Dash in our facing direction
-					int16_t speed = 0x800;
-					if (status.xFlip)
-						speed = -speed;
-					
-					xVel = speed;
-					inertia = speed;
-					yVel = 0;
-					
-					//Make the camera lag behind us
-					scrollDelay = 0x2000;
-					ResetRecords(x.pos, y.pos);
-					PlaySound(SOUNDID_USE_FIRE_SHIELD);
+					return;
 				}
-				else if (shield == SHIELD_ELECTRIC)
-				{
-					//Update our shield and ability flag
-					if (shieldObject != nullptr)
+			#endif
+			#if !(defined(SONIC1_NO_SUPER) || defined(SONIC2_SUPER_AT_PEAK))
+				if (SuperTransform())
+					return;
+			#endif
+			#ifndef SONIC12_NO_INSTASHIELD
+				//Update our shield and ability flag
+				if (shieldObject != nullptr)
 						shieldObject->anim = 1;
-					jumpAbility = 1;
-					
-					//Electric shield double jump
-					yVel = -0x680;
-					status.jumping = false;
-					PlaySound(SOUNDID_USE_ELECTRIC_SHIELD);
-				}
-				else if (shield == SHIELD_BUBBLE)
-				{
-					//Update our shield and ability flag
-					if (shieldObject != nullptr)
-						shieldObject->anim = 1;
-					jumpAbility = 1;
-					
-					//Shoot down to the ground
-					xVel = 0;
-					inertia = 0;
-					yVel = 0x800;
-					PlaySound(SOUNDID_USE_BUBBLE_SHIELD);
-				}
-				
-				return;
-			}
-		#endif
-		#if !(defined(SONIC1_NO_SUPER) || defined(SONIC2_SUPER_AT_PEAK))
-			if (SuperTransform())
-				return;
-		#endif
-		#ifndef SONIC12_NO_INSTASHIELD
-			//Update our shield and ability flag
-			if (shieldObject != nullptr)
-					shieldObject->anim = 1;
-			jumpAbility = 1;
-			PlaySound(SOUNDID_USE_INSTA_SHIELD);
-		#endif
+				jumpAbility = 1;
+				PlaySound(SOUNDID_USE_INSTA_SHIELD);
+			#endif
 		}
 	}
 }
@@ -1994,7 +2009,9 @@ void PLAYER::JumpHeight()
 void PLAYER::ChgJumpDir()
 {
 	//Move left and right
+#ifndef SONICCD_ROLLJUMP
 	if (!status.rollJumping)
+#endif
 	{
 		int16_t newVelocity = xVel;
 		int16_t jumpAcceleration = acceleration << 1;
@@ -2118,6 +2135,25 @@ void PLAYER::JumpAngle()
 
 bool PLAYER::Jump()
 {
+	#if defined(SONICCD_PEELOUT) || defined(SONICCD_SPINDASH)
+		//Get if we should filter up/down input (peelout / spindash)
+		bool upOrDownFilter = false;
+		
+		#ifdef SONICCD_PEELOUT
+			if (controlHeld.up)
+				upOrDownFilter = true;
+		#endif
+		#ifdef SONICCD_SPINDASH
+			if (controlHeld.down)
+				upOrDownFilter = true;
+		#endif
+		
+		//Check if we can jump (CD spindash)
+		if (cdSPTimer != 0 ||
+			((upOrDownFilter) && !inertia))
+			return true;
+	#endif
+	
 	if (controlPress.a || controlPress.b || controlPress.c)
 	{
 		//Get the angle of our head
@@ -2154,28 +2190,26 @@ bool PLAYER::Jump()
 			#endif
 			
 			#ifndef CONTROL_NO_ROLLJUMP_LOCK
-				if (!status.inBall)
-				{
+			if (!status.inBall)
 			#endif
-					//Go into ball form
-					#ifndef FIX_ROLLJUMP_COLLISION
-						xRadius = rollXRadius;
-						yRadius = rollYRadius;
-					#endif
-					
-					anim = PLAYERANIMATION_ROLL;
-					status.inBall = true;
-					
-					//Shift us down to the ground
-					YSHIFT_ON_FLOOR(-(yRadius - defaultYRadius));
-			#ifndef CONTROL_NO_ROLLJUMP_LOCK
-				}
-				else
-				{
-					//Set our roll jump flag (also we use the regular non-roll collision size for some reason)
-					status.rollJumping = true;
-				}
-			#endif
+			{
+				//Go into ball form
+				#ifndef FIX_ROLLJUMP_COLLISION
+					xRadius = rollXRadius;
+					yRadius = rollYRadius;
+				#endif
+				
+				anim = PLAYERANIMATION_ROLL;
+				status.inBall = true;
+				
+				//Shift us down to the ground
+				YSHIFT_ON_FLOOR(-(yRadius - defaultYRadius));
+			}
+			else
+			{
+				//Set our roll jump flag (also we use the regular non-roll collision size for some reason)
+				status.rollJumping = true;
+			}
 			return false;
 		}
 	}
@@ -2551,13 +2585,17 @@ void PLAYER::Move()
 					}
 				}
 				
-				//Look up and down
 				if (anim == PLAYERANIMATION_IDLE)
 				{
-					if (controlHeld.up)
-						anim = PLAYERANIMATION_LOOKUP;
-					else if (controlHeld.down)
-						anim = PLAYERANIMATION_DUCK; //This is done in Roll too
+					#if (defined(SONICCD_PEELOUT) || defined(SONICCD_SPINDASH))
+						//TODO
+					#else
+						//Look up and down
+						if (controlHeld.up)
+							anim = PLAYERANIMATION_LOOKUP;
+						else if (controlHeld.down)
+							anim = PLAYERANIMATION_DUCK; //This is done in Roll too
+					#endif
 				}
 			}
 		}
@@ -2608,12 +2646,19 @@ void PLAYER::ChkRoll()
 		//This is supposed to keep us on the ground, but when we're on a ceiling, it does... not that
 		YSHIFT_ON_FLOOR(5);
 		
-		//Play the sound
-		PlaySound(SOUNDID_ROLL);
+		//Play the sound (if not charging a CD spindash)
+		if (!cdSPTimer)
+			PlaySound(SOUNDID_ROLL);
 		
-		//Code that doesn't trigger (leftover from Sonic 1's S-tubes)
-		if (inertia == 0)
-			inertia = 0x200;
+		#ifndef SONICCD_ROLLING
+			//Leftover from Sonic 1's S-tubes
+			if (inertia == 0)
+				inertia = 0x200;
+		#else
+			//I don't know why it's like this in CD
+			if (inertia >= 0 && inertia < 0x200)
+				inertia = 0x200;
+		#endif
 	}
 }
 
@@ -3787,6 +3832,34 @@ void PLAYER::Update()
 	switch (debug & 0xFF)
 	{
 		case 0:
+		{
+			#if (defined(SONICCD_PEELOUT) || defined(SONICCD_SPINDASH))
+				//Update peelout / spindash
+				uint8_t nextSPTimer;
+				
+				if ((nextSPTimer = cdSPTimer) != 0)
+				{
+					//Increment and cap appropriately
+					nextSPTimer++;
+					
+					if (status.inBall)
+					{
+						//Spindash cap
+						if (nextSPTimer >= 45)
+							nextSPTimer = 45;
+					}
+					else
+					{
+						//Peelout cap
+						if (nextSPTimer >= 30)
+							nextSPTimer = 30;
+					}
+					
+					//Copy our next value
+					cdSPTimer = nextSPTimer;
+				}
+			#endif
+			
 			//Run main player code
 			switch (routine)
 			{
@@ -3954,13 +4027,15 @@ void PLAYER::Update()
 					break;
 			}
 			break;
-		
+		}
 		case 1: //Object placement mode
+		{
 			DebugMode();
 			Draw();
 			break;
-			
+		}	
 		case 2: //Mapping test mode
+		{
 			//Exit if B is pressed
 			if (gController[controller].press.b)
 				debug = 0;
@@ -3972,6 +4047,7 @@ void PLAYER::Update()
 			//Draw
 			Draw();
 			break;
+		}
 	}
 	
 	//Restart if start + a
@@ -4087,15 +4163,19 @@ void PLAYER::DrawToScreen()
 			renderFlags.onScreen = true;
 			gSoftwareBuffer->DrawTexture(texture, texture->loadedPalette, mapRect, gLevel->GetObjectLayer(highPriority, priority), x.pos - origX - alignX, y.pos - origY - alignY, renderFlags.xFlip, renderFlags.yFlip);
 			
-			//Draw trail when using speed shoes
-			if (item.hasSpeedShoes)
+			//Draw trail when using speed shoes or hyper
+			if (item.hasSpeedShoes || hyper)
 			{
-				for (int i = 1; i < min((speedShoesTime * 8 - (gLevel->frameCounter & 0x7)) / 2, 8); i++)
-				{
-					int x = posRecord[(recordPos - (unsigned)i) % (unsigned)PLAYER_RECORD_LENGTH].x, y = posRecord[(recordPos - (unsigned)i) % (unsigned)PLAYER_RECORD_LENGTH].y;
-					if (gLevel->frameCounter % (1 + i / 2) == 0)
-						gSoftwareBuffer->DrawTexture(texture, texture->loadedPalette, mapRect, gLevel->GetObjectLayer(highPriority, priority), x - origX - alignX, y - origY - alignY, renderFlags.xFlip, renderFlags.yFlip);
-				}
+				//If an even frame, use the position from 3 frames ago, odd frame, 5 frames ago
+				int trailSeek = (gLevel->frameCounter & 0x1) ? 5 : 3;
+				
+				//Shorten if running out of speed shoes time
+				if (hyper == false && item.hasSpeedShoes && speedShoesTime <= 1)
+					trailSeek /= 2;
+				
+				//Draw at the position from the frame above
+				int x = posRecord[(recordPos - trailSeek) % (unsigned)PLAYER_RECORD_LENGTH].x, y = posRecord[(recordPos - trailSeek) % (unsigned)PLAYER_RECORD_LENGTH].y;
+				gSoftwareBuffer->DrawTexture(texture, texture->loadedPalette, mapRect, gLevel->GetObjectLayer(highPriority, priority), x - origX - alignX, y - origY - alignY, renderFlags.xFlip, renderFlags.yFlip);
 			}
 		}
 	}
@@ -4208,16 +4288,18 @@ void PLAYER::DebugMode()
 }
 
 //Ring attraction check
+#define RING_ATTRACT_RADIUS 64
+
 void PLAYER::RingAttractCheck(OBJECT *object)
 {
 	//Check object
 	if (object->function == ObjRing && object->routine)
 	{
 		//If we're within range, change the object to the attraction type
-		int xDiff = object->x.pos - x.pos + 64;
-		int yDiff = object->y.pos - y.pos + 64;
+		int xDiff = object->x.pos - x.pos + RING_ATTRACT_RADIUS;
+		int yDiff = object->y.pos - y.pos + RING_ATTRACT_RADIUS;
 		
-		if (xDiff >= 0 && xDiff <= 128 && yDiff >= 0 && yDiff <= 128)
+		if (xDiff >= 0 && xDiff <= RING_ATTRACT_RADIUS * 2 && yDiff >= 0 && yDiff <= RING_ATTRACT_RADIUS * 2)
 		{
 			//Turn this ring into an attracted ring
 			object->function = ObjAttractRing;
