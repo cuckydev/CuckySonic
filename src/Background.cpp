@@ -29,7 +29,7 @@ BACKGROUND::~BACKGROUND()
 	delete texture;
 }
 
-void BACKGROUND::DrawStrip(SDL_Rect *src, int layer, int16_t y, int16_t fromX, int16_t toX)
+void BACKGROUND::DrawStrip(SDL_Rect *src, int layer, int y, int fromX, int toX)
 {
 	if (toX == fromX)
 	{
@@ -43,7 +43,7 @@ void BACKGROUND::DrawStrip(SDL_Rect *src, int layer, int16_t y, int16_t fromX, i
 		SDL_Rect strip = {src->x, src->y, src->w, 1};
 		for (int sy = 0; sy < src->h; sy++)
 		{
-			int16_t xp = fromX + ((toX - fromX) * sy / src->h);
+			int xp = fromX + ((toX - fromX) * sy / src->h);
 			for (int x = -(-xp % (unsigned)texture->width); x < gRenderSpec.width; x += texture->width)
 				gSoftwareBuffer->DrawTexture(texture, texture->loadedPalette, &strip, layer, x, y + sy, false, false);
 			strip.y++;
@@ -51,7 +51,7 @@ void BACKGROUND::DrawStrip(SDL_Rect *src, int layer, int16_t y, int16_t fromX, i
 	}
 }
 
-void BACKGROUND::Draw(bool doScroll, int16_t cameraX, int16_t cameraY)
+void BACKGROUND::Draw(bool doScroll, int cameraX, int cameraY)
 {
 	//Run our given function
 	if (function != nullptr)

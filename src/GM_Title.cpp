@@ -97,13 +97,13 @@ void TitleBackground(BACKGROUND *background, bool doScroll, int cameraX, int cam
 		background->texture->loadedPalette->colour[0xC] = cB;
 	}
 	//Get our scroll values
-	int16_t scrollBG1 = cameraX / 24;
-	int16_t scrollBG2 = cameraX / 32;
-	int16_t scrollBG3 = cameraX / 2;
+	int scrollBG1 = cameraX / 24;
+	int scrollBG2 = cameraX / 32;
+	int scrollBG3 = cameraX / 2;
 	
 	//Draw clouds
-	static uint32_t cloudScroll = 0;
-	(cloudScroll += 0x6) %= background->texture->width * 0x10;
+	static unsigned int cloudScroll = 0;
+	(cloudScroll += 0x6) %= (background->texture->width * 0x10);
 	
 	SDL_Rect clouds = {0,  0, background->texture->width,  32};
 	background->DrawStrip(&clouds, TITLELAYER_BACKGROUND,   0, -(scrollBG1 + cloudScroll / 0x10), -(scrollBG1 + cloudScroll / 0x10));
@@ -156,7 +156,7 @@ bool GM_Title(bool *noError)
 	int titleYGoal = 0;
 	int frame = 0;
 	
-	int16_t backgroundScroll = 0, backgroundScrollSpeed = 0;
+	int backgroundScroll = 0, backgroundScrollSpeed = 0;
 	
 	//Sonic's animation and position
 	int sonicTime = 54;
@@ -295,7 +295,7 @@ bool GM_Title(bool *noError)
 				}
 				
 				//Scroll background
-				backgroundScroll += backgroundScrollSpeed;
+				(backgroundScroll += backgroundScrollSpeed) %= background->texture->width * 96;
 			}
 		}
 		
