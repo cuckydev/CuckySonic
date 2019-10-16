@@ -11,6 +11,10 @@ endif
 FILENAME ?= $(FILENAME_DEF)
 
 ifeq ($(OS), Windows_NT)
+	WINDOWS ?= 1
+endif
+
+ifeq ($(WINDOWS), 1)
 	CXXFLAGS += -DWINDOWS
 	
 	ifneq ($(RELEASE), 1)
@@ -93,7 +97,7 @@ OBJECTS = $(addprefix obj/$(FILENAME)/, $(addsuffix .o, $(SOURCES)))
 DEPENDENCIES = $(addprefix obj/$(FILENAME)/, $(addsuffix .o.d, $(SOURCES)))
 
 #If compiling a windows build, add the Windows icon object into our executable
-ifeq ($(OS), Windows_NT)
+ifeq ($(WINDOWS), 1)
 	OBJECTS += obj/$(FILENAME)/WindowsIcon.o
 endif
 

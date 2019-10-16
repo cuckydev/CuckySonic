@@ -32,6 +32,8 @@ More information can be found in build/Info.txt
 
 `BACKEND=...` This sets which backend to use, the only implemented backend at the moment is SDL2, leaving this blank will probably cause big issues
 
+`WINDOWS=...` This will overwrite the default option for Windows, this is mainly for cross-compilation support
+
 The compiled executable will be in the build folder.
 
 If you have any questions, Google is your friends, but you can always ask on the CuckySonic Discord server
