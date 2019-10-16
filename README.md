@@ -28,17 +28,11 @@ More information can be found in build/Info.txt
 
 `RELEASE=...` if 0, a debug build will be created, if 1, an optimized release build will be created
 
-`WINDOWS=...` if 1, the build will be optimized for Windows (music loading, .exe icon)
-
 `STATIC=...` if 1, the .exe will be compiled with all of the required libraries stored internally (preferred on)
 
-`CONSOLE=...` (requires WINDOWS=1) if 1, a console window will be created at start-up
-
-
+`BACKEND=...` This sets which backend to use, the only implemented backend at the moment is SDL2, leaving this blank will probably cause big issues
 
 The compiled executable will be in the build folder.
-
-
 
 If you have any questions, Google is your friends, but you can always ask on the CuckySonic Discord server
 https://discord.gg/XreGMxf
