@@ -32,7 +32,7 @@ More information can be found in build/Info.txt
 
 `BACKEND=...` This sets which backend to use, the only implemented backend at the moment is SDL2, leaving this blank will probably cause big issues
 
-`WINDOWS=...` This will overwrite the default option for Windows, this is mainly for cross-compilation support
+`WINDOWS=...` This will overwrite what's determined by the makefile, you won't need to set this unless you're doing cross-compilation, or it's just not setting properly for any other reason
 
 The compiled executable will be in the build folder.
 
