@@ -29,7 +29,7 @@ HUD::~HUD()
 //Drawing functions
 void HUD::DrawCharacter(int xPos, int yPos, int srcX)
 {
-	SDL_Rect src = {192 + srcX * 8, 0, 8, 16};
+	RECT src = {192 + srcX * 8, 0, 8, 16};
 	gSoftwareBuffer->DrawTexture(texture, texture->loadedPalette, &src, LEVEL_RENDERLAYER_HUD, xPos, yPos, false, false);
 }
 
@@ -88,7 +88,7 @@ void HUD::DrawNumber(int xPos, int yPos, int number, unsigned int forceDigits, b
 
 void HUD::DrawElement(int xPos, int yPos, int srcX, int srcY)
 {
-	SDL_Rect src = {srcX * 48, srcY * 16, 48, 16};
+	RECT src = {srcX * 48, srcY * 16, 48, 16};
 	gSoftwareBuffer->DrawTexture(texture, texture->loadedPalette, &src, LEVEL_RENDERLAYER_HUD, xPos, yPos, false, false);
 }
 

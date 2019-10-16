@@ -10,34 +10,32 @@ endif
 
 FILENAME ?= $(FILENAME_DEF)
 
-ifeq ($(WINDOWS), 1)
+ifeq ($(OS), Windows_NT)
 	CXXFLAGS += -DWINDOWS
 	
-	ifeq ($(CONSOLE), 1)
+	ifneq ($(RELEASE), 1)
 		CXXFLAGS += -mconsole
 	endif
 endif
 
-#CXX flags and libraries
-CXXFLAGS += `pkg-config --cflags sdl2` -MMD -MP -MF $@.d 
+#Backend flags and libraries
+ifeq ($(BACKEND), SDL2)
+	CXXFLAGS += `pkg-config --cflags sdl2` -DBACKEND_SDL2
 
-ifeq ($(STATIC), 1)
-	LDFLAGS += -static
-	LIBS += `pkg-config --libs sdl2 --static`
-else
-	LIBS += `pkg-config --libs sdl2`
+	ifeq ($(STATIC), 1)
+		LDFLAGS += -static
+		LIBS += `pkg-config --libs sdl2 --static`
+	else
+		LIBS += `pkg-config --libs sdl2`
+	endif
 endif
+
+#Other CXX flags
+CXXFLAGS += -MMD -MP -MF $@.d
 
 #Sources to compile
 SOURCES = \
 	Main \
-	Error \
-	Path \
-	Render \
-	Render_Blit \
-	Event \
-	Input \
-	Audio \
 	Audio_stb_vorbis \
 	Audio_miniaudio \
 	MathUtil \
@@ -76,14 +74,26 @@ SOURCES = \
 	Objects/PurpleRock \
 	Objects/Monitor \
 	Objects/Spring \
-	Objects/Minecart \
+	Objects/Minecart
+
+#Backend source files
+ifeq ($(BACKEND), SDL2)
+	SOURCES += \
+		Backend_SDL2/Error \
+		Backend_SDL2/Filesystem \
+		Backend_SDL2/Render \
+		Backend_SDL2/Render_Blit \
+		Backend_SDL2/Event \
+		Backend_SDL2/Input \
+		Backend_SDL2/Audio
+endif
 
 #What to compile
 OBJECTS = $(addprefix obj/$(FILENAME)/, $(addsuffix .o, $(SOURCES)))
 DEPENDENCIES = $(addprefix obj/$(FILENAME)/, $(addsuffix .o.d, $(SOURCES)))
 
 #If compiling a windows build, add the Windows icon object into our executable
-ifeq ($(WINDOWS), 1)
+ifeq ($(OS), Windows_NT)
 	OBJECTS += obj/$(FILENAME)/WindowsIcon.o
 endif
 

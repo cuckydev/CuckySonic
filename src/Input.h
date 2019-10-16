@@ -1,8 +1,19 @@
 #pragma once
-#include "SDL_gamecontroller.h"
-#include "SDL_events.h"
+#include <stdint.h>
 
 #define CONTROLLERS 4
+#define CONTROLLER_DEADZONE 0x200
+
+#ifdef BACKEND_SDL2
+	#include "SDL_gamecontroller.h"
+	#include "SDL_events.h"
+
+	struct BUTTONBIND
+	{
+		SDL_Scancode key;
+		SDL_GameControllerButton button;
+	};
+#endif
 
 struct CONTROLMASK
 {
@@ -14,12 +25,6 @@ struct CONTROLMASK
 	bool left : 1;
 	bool down : 1;
 	bool up : 1;
-};
-
-struct BUTTONBIND
-{
-	SDL_Scancode key;
-	SDL_GameControllerButton button;
 };
 
 struct BUTTONBINDS
@@ -58,5 +63,4 @@ bool InitializeInput();
 void QuitInput();
 
 void ClearControllerInput();
-void HandleInputEvent(SDL_Event *event);
 void UpdateInput();

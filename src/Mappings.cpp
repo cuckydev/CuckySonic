@@ -1,9 +1,7 @@
 #include <stdlib.h>
 #include <string.h>
-
-#include "SDL_rwops.h"
+#include "Filesystem.h"
 #include "Mappings.h"
-#include "Path.h"
 #include "Log.h"
 
 MAPPINGS::MAPPINGS(MAPPINGS **linkedList, const char *path)
@@ -15,18 +13,20 @@ MAPPINGS::MAPPINGS(MAPPINGS **linkedList, const char *path)
 	//Open the file given
 	source = path;
 	
-	GET_GLOBAL_PATH(filepath, path);
-	SDL_RWops *fp = SDL_RWFromFile(filepath, "rb");
+	char *filepath = AllocPath(gBasePath, path, nullptr);
+	BACKEND_FILE *fp = OpenFile(filepath, "rb");
+	free(filepath);
+	
 	if (fp == nullptr)
 	{
-		fail = SDL_GetError();
+		fail = GetFileError();
 		return;
 	}
 	
 	//Allocate our frames
-	size = SDL_RWsize(fp) / (6 * 2);
-	rect = (SDL_Rect*)calloc(size, sizeof(SDL_Rect));
-	origin = (SDL_Point*)calloc(size, sizeof(SDL_Point));
+	size = GetFileSize(fp) / (6 * 2);
+	rect = (RECT*)calloc(size, sizeof(RECT));
+	origin = (POINT*)calloc(size, sizeof(POINT));
 	
 	if (rect == nullptr || origin == nullptr)
 	{
@@ -40,15 +40,15 @@ MAPPINGS::MAPPINGS(MAPPINGS **linkedList, const char *path)
 	//Read from the file
 	for (int i = 0; i < size; i++)
 	{
-		rect[i].x = SDL_ReadBE16(fp);
-		rect[i].y = SDL_ReadBE16(fp);
-		rect[i].w = SDL_ReadBE16(fp);
-		rect[i].h = SDL_ReadBE16(fp);
-		origin[i].x = (int16_t)SDL_ReadBE16(fp);
-		origin[i].y = (int16_t)SDL_ReadBE16(fp);
+		rect[i].x = ReadFile_BE16(fp);
+		rect[i].y = ReadFile_BE16(fp);
+		rect[i].w = ReadFile_BE16(fp);
+		rect[i].h = ReadFile_BE16(fp);
+		origin[i].x = (int16_t)ReadFile_BE16(fp);
+		origin[i].y = (int16_t)ReadFile_BE16(fp);
 	}
 	
-	SDL_RWclose(fp);
+	CloseFile(fp);
 	
 	//Attach to linked list if given
 	if (linkedList != nullptr)

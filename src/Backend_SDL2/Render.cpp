@@ -5,18 +5,18 @@
 #include "SDL_render.h"
 #include "SDL_timer.h"
 
-#include "Render.h"
-#include "Error.h"
-#include "Log.h"
-#include "Path.h"
-#include "GameConstants.h"
+#include "../Log.h"
+#include "../GameConstants.h"
+#include "../Render.h"
+#include "../Error.h"
+#include "../Filesystem.h"
 
 //Window and renderer
-SDL_Window *gWindow;
-SDL_Renderer *gRenderer;
+SDL_Window *window;
+SDL_Renderer *renderer;
 SOFTWAREBUFFER *gSoftwareBuffer;
 
-SDL_PixelFormat *gNativeFormat;
+SDL_PixelFormat *nativeFormat;
 
 //Current render specifications
 RENDERSPEC gRenderSpec = {398, 224, 2};
@@ -34,9 +34,10 @@ TEXTURE::TEXTURE(TEXTURE **linkedList, const char *path)
 	//Load bitmap
 	source = path;
 	
-	GET_GLOBAL_PATH(filepath, path);
-	
+	char *filepath = AllocPath(gBasePath, path, nullptr);
 	SDL_Surface *bitmap = SDL_LoadBMP(filepath);
+	free(filepath);
+	
 	if (bitmap == nullptr)
 	{
 		fail = SDL_GetError();
@@ -170,9 +171,10 @@ TEXTURE_FULLCOLOUR::TEXTURE_FULLCOLOUR(TEXTURE_FULLCOLOUR **linkedList, const ch
 	//Load bitmap
 	source = path;
 	
-	GET_GLOBAL_PATH(filepath, path);
-	
+	char *filepath = AllocPath(gBasePath, path, nullptr);
 	SDL_Surface *bitmap = SDL_LoadBMP(filepath);
+	free(filepath);
+	
 	if (bitmap == nullptr)
 	{
 		fail = SDL_GetError();
@@ -218,7 +220,7 @@ TEXTURE_FULLCOLOUR::TEXTURE_FULLCOLOUR(TEXTURE_FULLCOLOUR **linkedList, const ch
 		
 		uint8_t r, g, b;
 		SDL_GetRGB(pixel, bitmap->format, &r, &g, &b);
-		texture[v] = SDL_MapRGB(gNativeFormat, r, g, b);
+		texture[v] = SDL_MapRGB(nativeFormat, r, g, b);
 	}
 	
 	//Free bitmap surface
@@ -268,7 +270,7 @@ TEXTURE_FULLCOLOUR::~TEXTURE_FULLCOLOUR()
 void SetPaletteColour(PALCOLOUR *palColour, uint8_t r, uint8_t g, uint8_t b)
 {
 	//Set formatted colour
-	palColour->colour = SDL_MapRGB(gNativeFormat, r, g, b);
+	palColour->colour = SDL_MapRGB(nativeFormat, r, g, b);
 	
 	//Set colours
 	palColour->r = r;
@@ -284,7 +286,7 @@ void SetPaletteColour(PALCOLOUR *palColour, uint8_t r, uint8_t g, uint8_t b)
 void ModifyPaletteColour(PALCOLOUR *palColour, uint8_t r, uint8_t g, uint8_t b)
 {
 	//Set formatted colour
-	palColour->colour = SDL_MapRGB(gNativeFormat, r, g, b);
+	palColour->colour = SDL_MapRGB(nativeFormat, r, g, b);
 	
 	//Set colours
 	palColour->r = r;
@@ -295,7 +297,7 @@ void ModifyPaletteColour(PALCOLOUR *palColour, uint8_t r, uint8_t g, uint8_t b)
 void RegenPaletteColour(PALCOLOUR *palColour)
 {
 	//Set formatted colour
-	palColour->colour = SDL_MapRGB(gNativeFormat, palColour->r, palColour->g, palColour->b);
+	palColour->colour = SDL_MapRGB(nativeFormat, palColour->r, palColour->g, palColour->b);
 }
 
 //Software buffer class
@@ -307,7 +309,7 @@ SOFTWAREBUFFER::SOFTWAREBUFFER(int bufWidth, int bufHeight)
 	height = bufHeight;
 	
 	//Create the render texture
-	if ((texture = SDL_CreateTexture(gRenderer, gNativeFormat->format, SDL_TEXTUREACCESS_STREAMING, width, height)) == nullptr)
+	if ((texture = SDL_CreateTexture(renderer, nativeFormat->format, SDL_TEXTUREACCESS_STREAMING, width, height)) == nullptr)
 	{
 		fail = SDL_GetError();
 		return;
@@ -321,18 +323,18 @@ SOFTWAREBUFFER::~SOFTWAREBUFFER()
 }
 
 //Drawing functions
-void SOFTWAREBUFFER::DrawPoint(int layer, int x, int y, PALCOLOUR *colour)
+void SOFTWAREBUFFER::DrawPoint(int layer, const POINT *point, PALCOLOUR *colour)
 {
 	//Check if this is in view bounds (if not, just return, no point in clogging the queue with stuff that will not be rendered)
-	if (x < 0 || x >= width)
+	if (point->x < 0 || point->x >= width)
 		return;
-	if (y < 0 || y >= height)
+	if (point->y < 0 || point->y >= height)
 		return;
 	
 	//Allocate our new queue entry
 	RENDERQUEUE *newEntry = new RENDERQUEUE;
 	newEntry->type = RENDERQUEUE_SOLID;
-	newEntry->dest = {x, y, 1, 1};
+	newEntry->dest = {point->x, point->y, 1, 1};
 	newEntry->solid.colour = colour;
 	
 	//Link to the queue
@@ -340,7 +342,7 @@ void SOFTWAREBUFFER::DrawPoint(int layer, int x, int y, PALCOLOUR *colour)
 	queue[layer] = newEntry;
 }
 
-void SOFTWAREBUFFER::DrawQuad(int layer, const SDL_Rect *quad, PALCOLOUR *colour)
+void SOFTWAREBUFFER::DrawQuad(int layer, const RECT *quad, PALCOLOUR *colour)
 {
 	//Allocate our new queue entry
 	RENDERQUEUE *newEntry = new RENDERQUEUE;
@@ -378,10 +380,10 @@ void SOFTWAREBUFFER::DrawQuad(int layer, const SDL_Rect *quad, PALCOLOUR *colour
 	queue[layer] = newEntry;
 }
 
-void SOFTWAREBUFFER::DrawTexture(TEXTURE *texture, PALETTE *palette, const SDL_Rect *src, int layer, int x, int y, bool xFlip, bool yFlip)
+void SOFTWAREBUFFER::DrawTexture(TEXTURE *texture, PALETTE *palette, const RECT *src, int layer, int x, int y, bool xFlip, bool yFlip)
 {
 	//Get the source rect to use (nullptr = entire texture)
-	SDL_Rect newSrc;
+	RECT newSrc;
 	if (src != nullptr)
 		newSrc = *src;
 	else
@@ -440,10 +442,10 @@ void SOFTWAREBUFFER::DrawTexture(TEXTURE *texture, PALETTE *palette, const SDL_R
 	queue[layer] = newEntry;
 }
 
-void SOFTWAREBUFFER::DrawTexture(TEXTURE_FULLCOLOUR *texture, const SDL_Rect *src, int layer, int x, int y, bool xFlip, bool yFlip)
+void SOFTWAREBUFFER::DrawTexture(TEXTURE_FULLCOLOUR *texture, const RECT *src, int layer, int x, int y, bool xFlip, bool yFlip)
 {
 	//Get the source rect to use (nullptr = entire texture)
-	SDL_Rect newSrc;
+	RECT newSrc;
 	if (src != nullptr)
 		newSrc = *src;
 	else
@@ -509,7 +511,7 @@ bool SOFTWAREBUFFER::RenderToScreen(PALCOLOUR *backgroundColour)
 		return Error(SDL_GetError());
 	
 	//Render to our buffer
-	const uint8_t bpp = gNativeFormat->BytesPerPixel;
+	const uint8_t bpp = nativeFormat->BytesPerPixel;
 	
 	switch (bpp)
 	{
@@ -545,20 +547,20 @@ bool SOFTWAREBUFFER::RenderToScreen(PALCOLOUR *backgroundColour)
 	SDL_UnlockTexture(texture);
 	
 	//Copy to renderer (this is also where the scaling happens, incidentally)
-	if (SDL_RenderCopy(gRenderer, texture, nullptr, nullptr) < 0)
+	if (SDL_RenderCopy(renderer, texture, nullptr, nullptr) < 0)
 		return Error(SDL_GetError());
 	
 	//Present renderer then wait for next frame (either use VSync if applicable, or just wait)
 	if (vsyncMultiple != 0)
 	{
-		//Present gRenderer X amount of times, to call VSync that many times (hack-ish)
+		//Present renderer X amount of times, to call VSync that many times (hack-ish)
 		for (unsigned int iteration = 0; iteration < vsyncMultiple; iteration++)
-			SDL_RenderPresent(gRenderer);
+			SDL_RenderPresent(renderer);
 	}
 	else
 	{
-		//Present gRenderer, then wait for next frame
-		SDL_RenderPresent(gRenderer);
+		//Present renderer, then wait for next frame
+		SDL_RenderPresent(renderer);
 		
 		//Framerate limiter
 		static long double timePrev;
@@ -586,11 +588,11 @@ bool RefreshRenderer()
 	//Destroy old renderer and software buffer
 	if (gSoftwareBuffer)
 		delete gSoftwareBuffer;
-	if (gRenderer != nullptr)
-		SDL_DestroyRenderer(gRenderer);
+	if (renderer != nullptr)
+		SDL_DestroyRenderer(renderer);
 	
 	//Create the renderer based off of our VSync settings
-	if ((gRenderer = SDL_CreateRenderer(gWindow, -1, SDL_RENDERER_ACCELERATED | (vsyncMultiple > 0 ? SDL_RENDERER_PRESENTVSYNC : 0))) == nullptr)
+	if ((renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | (vsyncMultiple > 0 ? SDL_RENDERER_PRESENTVSYNC : 0))) == nullptr)
 		return Error(SDL_GetError());
 	
 	//Create our software buffer
@@ -604,7 +606,7 @@ bool RenderCheckVSync()
 {
 	//Use display mode to detect VSync
 	SDL_DisplayMode mode;
-	if (SDL_GetWindowDisplayMode(gWindow, &mode) < 0)
+	if (SDL_GetWindowDisplayMode(window, &mode) < 0)
 		return Error(SDL_GetError());
 	
 	long double refreshIntegral;
@@ -618,11 +620,11 @@ bool RenderCheckVSync()
 bool RefreshWindow()
 {
 	//Destroy old window
-	if (gWindow != nullptr)
-		SDL_DestroyWindow(gWindow);
+	if (window != nullptr)
+		SDL_DestroyWindow(window);
 	
 	//Create our window
-	if ((gWindow = SDL_CreateWindow(WINDOW_TITLE, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, gRenderSpec.width * gRenderSpec.scale, gRenderSpec.height * gRenderSpec.scale, 0)) == nullptr)
+	if ((window = SDL_CreateWindow(WINDOW_TITLE, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, gRenderSpec.width * gRenderSpec.scale, gRenderSpec.height * gRenderSpec.scale, 0)) == nullptr)
 		return Error(SDL_GetError());
 	
 	//Check our vsync
@@ -630,9 +632,9 @@ bool RefreshWindow()
 		return false;
 	
 	//Free old window pixel format and get new one
-	if (gNativeFormat != nullptr)
-		SDL_FreeFormat(gNativeFormat);
-	if ((gNativeFormat = SDL_AllocFormat(SDL_GetWindowPixelFormat(gWindow))) == nullptr)
+	if (nativeFormat != nullptr)
+		SDL_FreeFormat(nativeFormat);
+	if ((nativeFormat = SDL_AllocFormat(SDL_GetWindowPixelFormat(window))) == nullptr)
 		return Error(SDL_GetError());
 	
 	//Regenerate our renderer and software buffer
@@ -658,9 +660,9 @@ void QuitRender()
 	//Destroy window, renderer, and software buffer
 	if (gSoftwareBuffer)
 		delete gSoftwareBuffer;
-	SDL_DestroyRenderer(gRenderer);
-	SDL_DestroyWindow(gWindow);
-	SDL_FreeFormat(gNativeFormat);
+	SDL_DestroyRenderer(renderer);
+	SDL_DestroyWindow(window);
+	SDL_FreeFormat(nativeFormat);
 	
 	LOG(("Success!\n"));
 }

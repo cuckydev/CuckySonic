@@ -25,8 +25,8 @@ TILE *FindTile(int16_t x, int16_t y)
 int16_t FindFloor2(int16_t x, int16_t y, COLLISIONLAYER layer, bool flipped, uint8_t *angle)
 {
 	#ifdef COLLISION_DEBUG
-		SDL_Rect inQuad = {x - 1 - gLevel->camera->x, (flipped ? y ^ 0xF : y) - 1 - gLevel->camera->y, 2, 2};
-		SDL_Rect ouQuad = {x - 2 - gLevel->camera->x, (flipped ? y ^ 0xF : y) - 2 - gLevel->camera->y, 4, 4};
+		RECT inQuad = {x - 1 - gLevel->camera->x, (flipped ? y ^ 0xF : y) - 1 - gLevel->camera->y, 2, 2};
+		RECT ouQuad = {x - 2 - gLevel->camera->x, (flipped ? y ^ 0xF : y) - 2 - gLevel->camera->y, 4, 4};
 		gSoftwareBuffer->DrawQuad(0, &inQuad, &inner);
 		gSoftwareBuffer->DrawQuad(0, &ouQuad, &outer);
 	#endif
@@ -86,8 +86,8 @@ int16_t FindFloor2(int16_t x, int16_t y, COLLISIONLAYER layer, bool flipped, uin
 int16_t FindFloor(int16_t x, int16_t y, COLLISIONLAYER layer, bool flipped, uint8_t *angle)
 {
 	#ifdef COLLISION_DEBUG
-		SDL_Rect inQuad = {x - 1 - gLevel->camera->x, y - 1 - gLevel->camera->y, 2, 2};
-		SDL_Rect ouQuad = {x - 2 - gLevel->camera->x, y - 2 - gLevel->camera->y, 4, 4};
+		RECT inQuad = {x - 1 - gLevel->camera->x, y - 1 - gLevel->camera->y, 2, 2};
+		RECT ouQuad = {x - 2 - gLevel->camera->x, y - 2 - gLevel->camera->y, 4, 4};
 		gSoftwareBuffer->DrawQuad(0, &inQuad, &inner);
 		gSoftwareBuffer->DrawQuad(0, &ouQuad, &outer);
 	#endif
@@ -153,8 +153,8 @@ int16_t FindFloor(int16_t x, int16_t y, COLLISIONLAYER layer, bool flipped, uint
 int16_t FindWall2(int16_t x, int16_t y, COLLISIONLAYER layer, bool flipped, uint8_t *angle)
 {
 	#ifdef COLLISION_DEBUG
-		SDL_Rect inQuad = {(flipped ? x ^ 0xF : x) - 1 - gLevel->camera->x, y - 1 - gLevel->camera->y, 2, 2};
-		SDL_Rect ouQuad = {(flipped ? x ^ 0xF : x) - 2 - gLevel->camera->x, y - 2 - gLevel->camera->y, 4, 4};
+		RECT inQuad = {(flipped ? x ^ 0xF : x) - 1 - gLevel->camera->x, y - 1 - gLevel->camera->y, 2, 2};
+		RECT ouQuad = {(flipped ? x ^ 0xF : x) - 2 - gLevel->camera->x, y - 2 - gLevel->camera->y, 4, 4};
 		gSoftwareBuffer->DrawQuad(0, &inQuad, &inner);
 		gSoftwareBuffer->DrawQuad(0, &ouQuad, &outer);
 	#endif
@@ -213,8 +213,8 @@ int16_t FindWall2(int16_t x, int16_t y, COLLISIONLAYER layer, bool flipped, uint
 int16_t FindWall(int16_t x, int16_t y, COLLISIONLAYER layer, bool flipped, uint8_t *angle)
 {
 	#ifdef COLLISION_DEBUG
-		SDL_Rect inQuad = {x - 1 - gLevel->camera->x, y - 1 - gLevel->camera->y, 2, 2};
-		SDL_Rect ouQuad = {x - 2 - gLevel->camera->x, y - 2 - gLevel->camera->y, 4, 4};
+		RECT inQuad = {x - 1 - gLevel->camera->x, y - 1 - gLevel->camera->y, 2, 2};
+		RECT ouQuad = {x - 2 - gLevel->camera->x, y - 2 - gLevel->camera->y, 4, 4};
 		gSoftwareBuffer->DrawQuad(0, &inQuad, &inner);
 		gSoftwareBuffer->DrawQuad(0, &ouQuad, &outer);
 	#endif

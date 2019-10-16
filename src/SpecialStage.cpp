@@ -1,9 +1,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "SDL_rwops.h"
 #include "SpecialStage.h"
-#include "Path.h"
+#include "Filesystem.h"
 #include "Log.h"
 #include "Error.h"
 #include "Audio.h"
@@ -31,8 +30,10 @@ SPECIALSTAGE::SPECIALSTAGE(const char *name)
 	}
 	
 	//Load the background texture (stage-specific)
-	GET_APPEND_PATH(backTexture, name, ".background.bmp");
+	char *backTexture = AllocPath(name, ".background.bmp", nullptr);
 	backgroundTexture = new TEXTURE(nullptr, backTexture);
+	free(backTexture);
+	
 	if (backgroundTexture->fail != nullptr)
 	{
 		Error(fail = backgroundTexture->fail);
@@ -40,19 +41,19 @@ SPECIALSTAGE::SPECIALSTAGE(const char *name)
 	}
 	
 	//Open the layout file
-	GET_APPEND_PATH(layoutName, name, ".ssl");
-	GET_GLOBAL_PATH(layoutPath, layoutName);
+	char *layoutPath = AllocPath(gBasePath, name, ".ssl");
+	BACKEND_FILE *fp = OpenFile(layoutPath, "rb");
+	free(layoutPath);
 	
-	SDL_RWops *fp = SDL_RWFromFile(layoutPath, "rb");
 	if (fp == nullptr)
 	{
-		Error(fail = SDL_GetError());
+		Error(fail = GetFileError());
 		return;
 	}
 	
 	//Read layout header
-	width = SDL_ReadBE16(fp);
-	height = SDL_ReadBE16(fp);
+	width = ReadFile_BE16(fp);
+	height = ReadFile_BE16(fp);
 	
 	layout = (uint8_t*)malloc(width * height);
 	if (layout == nullptr)
@@ -62,40 +63,41 @@ SPECIALSTAGE::SPECIALSTAGE(const char *name)
 	}
 	
 	//Read and update the stage's palette
-	uint8_t r1 = SDL_ReadU8(fp); uint8_t g1 = SDL_ReadU8(fp); uint8_t b1 = SDL_ReadU8(fp);
-	uint8_t r2 = SDL_ReadU8(fp); uint8_t g2 = SDL_ReadU8(fp); uint8_t b2 = SDL_ReadU8(fp);
+	uint8_t r1 = ReadFile_Byte(fp); uint8_t g1 = ReadFile_Byte(fp); uint8_t b1 = ReadFile_Byte(fp);
+	uint8_t r2 = ReadFile_Byte(fp); uint8_t g2 = ReadFile_Byte(fp); uint8_t b2 = ReadFile_Byte(fp);
 	SetPaletteColour(&tile1, r1, g1, b1);
 	SetPaletteColour(&tile2, r2, g2, b2);
 	PalCycle();
 	
 	//Read the layout data
-	SDL_RWread(fp, layout, width * height, 1);			//Actual sphere map on the stage
-	playerState.direction = (SDL_ReadBE16(fp)) >> 8;	//Original game sucks, read as a word into the byte's address (68000 is big-endian, so it only uses the high byte)
-	playerState.xPosLong =   SDL_ReadBE16(fp)  << 8;	//The original game stores the positions in the native 8.8 format, extend to 16.16
-	playerState.yPosLong =   SDL_ReadBE16(fp)  << 8;
-	spheresLeft = SDL_ReadBE16(fp);
-	SDL_RWclose(fp);
+	ReadFile(fp, layout, width * height, 1);			//Actual sphere map on the stage
+	playerState.direction = (ReadFile_BE16(fp)) >> 8;	//Original game sucks, read as a word into the byte's address (68000 is big-endian, so it only uses the high byte)
+	playerState.xPosLong =   ReadFile_BE16(fp)  << 8;	//The original game stores the positions in the native 8.8 format, extend to 16.16
+	playerState.yPosLong =   ReadFile_BE16(fp)  << 8;
+	spheresLeft = ReadFile_BE16(fp);
+	CloseFile(fp);
 	
 	//Open the perspective map file
-	GET_GLOBAL_PATH(perspectivePath, "data/SpecialStage/Perspective.bin");
+	char *perspectivePath = AllocPath(gBasePath, "data/SpecialStage/Perspective.bin", nullptr);
+	BACKEND_FILE *perspectiveFile = OpenFile(perspectivePath, "rb");
+	free(perspectivePath);
 	
-	SDL_RWops *perspectiveFile = SDL_RWFromFile(perspectivePath, "rb");
 	if (perspectiveFile == nullptr)
 	{
-		Error(fail = SDL_GetError());
+		Error(fail = GetFileError());
 		return;
 	}
 	
 	//Read perspective data
-	perspectiveMap = (uint8_t*)malloc(SDL_RWsize(perspectiveFile));
+	perspectiveMap = new uint8_t[GetFileSize(perspectiveFile)];
 	if (perspectiveMap == nullptr)
 	{
 		Error(fail = "Failed to allocate memory for the perspective map");
 		return;
 	}
 	
-	SDL_RWread(perspectiveFile, perspectiveMap, SDL_RWsize(perspectiveFile), 1);
-	SDL_RWclose(perspectiveFile);
+	ReadFile(perspectiveFile, perspectiveMap, GetFileSize(perspectiveFile), 1);
+	CloseFile(perspectiveFile);
 	
 	//Initialize state
 	rate = 0x1000;
@@ -110,8 +112,8 @@ SPECIALSTAGE::~SPECIALSTAGE()
 	delete stageTexture;
 	delete sphereTexture;
 	delete backgroundTexture;
-	free(layout);
-	free(perspectiveMap);
+	delete layout;
+	delete perspectiveMap;
 }
 
 //Stage update code
@@ -176,6 +178,6 @@ void SPECIALSTAGE::Draw()
 	if (animFrame >= 16)
 		stageFrame = (animFrame - 16) + 1;
 	
-	SDL_Rect stageRect = {0, stageFrame * 240, stageTexture->width, 240};
+	RECT stageRect = {0, stageFrame * 240, stageTexture->width, 240};
 	gSoftwareBuffer->DrawTexture(stageTexture, stageTexture->loadedPalette, &stageRect, SPECIALSTAGE_RENDERLAYER_STAGE, xCenter - stageTexture->width / 2, yCenter - 240 / 2, false, false);
 }

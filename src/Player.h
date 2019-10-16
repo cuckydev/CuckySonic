@@ -350,9 +350,9 @@ class PLAYER
 		
 		void DoLevelCollision();
 		
-		void ResetOnFloor();
-		void ResetOnFloor2();
-		void ResetOnFloor3();
+		void LandOnFloor();
+		void LandOnFloor_ExitBall();
+		void LandOnFloor_SetState();
 		
 		void RecordPos();
 		void ResetRecords(int16_t xPos, int16_t yPos);

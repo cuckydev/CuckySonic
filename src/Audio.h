@@ -1,17 +1,18 @@
 #pragma once
-#include "SDL_audio.h"
 #include <stdint.h>
+
+#ifdef BACKEND_SDL2
+	#include "SDL_audio.h"
+	
+	//Audio lock / unlock access
+	extern SDL_AudioDeviceID gAudioDevice;
+	#define AUDIO_LOCK		SDL_LockAudioDevice(gAudioDevice)
+	#define AUDIO_UNLOCK	SDL_UnlockAudioDevice(gAudioDevice)
+#endif
 
 //Constant defines
 #define AUDIO_FREQUENCY 44100
 #define AUDIO_SAMPLES	0x200
-
-//Audio device
-extern SDL_AudioDeviceID gAudioDevice;
-
-//Nice little lock things to help us
-#define AUDIO_LOCK		SDL_LockAudioDevice(gAudioDevice)
-#define AUDIO_UNLOCK	SDL_UnlockAudioDevice(gAudioDevice)
 
 //Sound ids
 enum SOUNDID
@@ -175,6 +176,5 @@ void StopSound(SOUNDID id);
 extern bool gAudioYield;
 
 void YieldAudio(bool yield);
-
 bool InitializeAudio();
 void QuitAudio();

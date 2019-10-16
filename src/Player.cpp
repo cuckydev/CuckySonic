@@ -1,11 +1,9 @@
 #include <string.h>
 
-#include "SDL_rwops.h"
-
 #include "Player.h"
 #include "MathUtil.h"
 #include "Audio.h"
-#include "Path.h"
+#include "Filesystem.h"
 #include "Log.h"
 #include "Error.h"
 #include "Level.h"
@@ -74,7 +72,7 @@
 //#define SONIC12_AIR_CAP             //In Sonic 1 and 2, your speed in the air is capped to your top speed when above it, even if you're already above it
 //#define SONIC123_ROLL_DUCK          //In Sonic and Knuckles, they added a greater margin of speed for ducking and rolling, so you can duck while moving
 //#define SONICCD_ROLLING             //In Sonic CD, rolling to the right is weird
-//#define SONICCD_ROLLJUMP            //In Sonic CD, rolljumping was *partially* removed, the above "CONTROL_NO_ROLLJUMP_LOCK" would act differently
+//#define SONICCD_ROLLJUMP            //In Sonic CD, rolljumping was *partially* removed, the below "CONTROL_NO_ROLLJUMP_LOCK" would act differently
 
 //#define SONIC1_NO_SPINDASH          //The spindash, it needs no introduction
 //#define SONICCD_SPINDASH            //INCOMPLETE - CD spindash
@@ -87,7 +85,7 @@
 
 //#define SONIC1_DEATH_BOUNDARY       //In Sonic 2, the death boundary code was fixed so that it doesn't use the camera's boundary but the level boundary, so that you don't die while the camera boundary is scrolling
 //#define SONIC12_DEATH_RESPAWN       //In Sonic 3, it was changed so that death respawns you once you go off-screen, not when you leave the level boundaries, since this was a very buggy check
-//#define SONIC12_SPINDASH_ANIM_BUG   //In Sonic 3, the bug where landing on the ground while spindashing plays the walk animation was fixed
+//#define SONIC2_SPINDASH_ANIM_BUG   //In Sonic 3, the bug where landing on the ground while spindashing plays the walk animation was fixed
 
 //Other control options
 //#define CONTROL_NO_ROLLJUMP_LOCK          //In the originals, jumping from a roll will lock your controls
@@ -415,7 +413,9 @@ static const uint8_t* animationListBubbleShield[] = {
 	animationBubbleShieldSquish,
 };
 
-//Shield object
+//Shield, invincibility stars, and super stars object
+//#define FIX_WEIRD_SUPER_STAR_TRACKING   //For some reason, when the super stars first appear when you reach the required speed, they follow the player until it loops, where it then trails behind
+
 void ObjShield(OBJECT *object)
 {
 	enum ROUTINE
@@ -503,6 +503,9 @@ void ObjShield(OBJECT *object)
 				//Become active, and draw to screen at player position
 				object->mappingFrame = 0;
 				object->scratchU8[SCRATCHU8_MOVING] = 1;
+				#ifdef FIX_WEIRD_SUPER_STAR_TRACKING
+					object->scratchU8[SCRATCHU8_NO_COPY_POS] = 1;
+				#endif
 				object->x.pos = player->x.pos;
 				object->y.pos = player->y.pos;
 				object->Draw();
@@ -675,7 +678,7 @@ void ObjShield(OBJECT *object)
 }
 
 //Player class
-#define READ_SPEEDDEFINITION(definition)	definition.top = SDL_ReadBE16(playerSpec); definition.acceleration = SDL_ReadBE16(playerSpec); definition.deceleration = SDL_ReadBE16(playerSpec); definition.rollDeceleration = SDL_ReadBE16(playerSpec); definition.jumpForce = SDL_ReadBE16(playerSpec); definition.jumpRelease = SDL_ReadBE16(playerSpec);
+#define READ_SPEEDDEFINITION(definition)	definition.top = ReadFile_BE16(playerSpec); definition.acceleration = ReadFile_BE16(playerSpec); definition.deceleration = ReadFile_BE16(playerSpec); definition.rollDeceleration = ReadFile_BE16(playerSpec); definition.jumpForce = ReadFile_BE16(playerSpec); definition.jumpRelease = ReadFile_BE16(playerSpec);
 
 PLAYER::PLAYER(PLAYER **linkedList, const char *specPath, PLAYER *myFollow, int myController)
 {
@@ -686,17 +689,22 @@ PLAYER::PLAYER(PLAYER **linkedList, const char *specPath, PLAYER *myFollow, int 
 	routine = PLAYERROUTINE_CONTROL;
 	
 	//Load art and mappings
-	GET_APPEND_PATH(texPath, specPath, ".bmp");
-	GET_APPEND_PATH(mapPath, specPath, ".map");
+	char *texPath = AllocPath(specPath, ".bmp", nullptr);
+	char *mapPath = AllocPath(specPath, ".map", nullptr);
 	
 	texture = gLevel->GetObjectTexture(texPath);
+	free(texPath);
+	
 	if (texture->fail != nullptr)
 	{
 		Error(fail = texture->fail);
+		free(mapPath);
 		return;
 	}
 	
 	mappings = gLevel->GetObjectMappings(mapPath);
+	free(mapPath);
+	
 	if (mappings->fail != nullptr)
 	{
 		Error(fail = mappings->fail);
@@ -704,26 +712,25 @@ PLAYER::PLAYER(PLAYER **linkedList, const char *specPath, PLAYER *myFollow, int 
 	}
 	
 	//Read properties from the specifications
-	GET_APPEND_PATH(plrSpecPathNG, specPath, ".psp");
-	GET_GLOBAL_PATH(plrSpecPath, plrSpecPathNG);
-	
-	SDL_RWops *playerSpec = SDL_RWFromFile(plrSpecPath, "rb");
+	char *plrSpecPath = AllocPath(gBasePath, specPath, ".psp");
+	BACKEND_FILE *playerSpec = OpenFile(plrSpecPath, "rb");
+	free(plrSpecPath);
 	
 	if (playerSpec == nullptr)
 	{
-		Error(fail = SDL_GetError());
+		Error(fail = GetFileError());
 		return;
 	}
 	
-	xRadius = SDL_ReadU8(playerSpec);
-	yRadius = SDL_ReadU8(playerSpec);
+	xRadius = ReadFile_Byte(playerSpec);
+	yRadius = ReadFile_Byte(playerSpec);
 	
 	defaultXRadius = xRadius;
 	defaultYRadius = yRadius;
-	rollXRadius = SDL_ReadU8(playerSpec);
-	rollYRadius = SDL_ReadU8(playerSpec);
+	rollXRadius = ReadFile_Byte(playerSpec);
+	rollYRadius = ReadFile_Byte(playerSpec);
 	
-	characterType = (CHARACTERTYPE)SDL_ReadBE16(playerSpec);
+	characterType = (CHARACTERTYPE)ReadFile_BE16(playerSpec);
 	
 	READ_SPEEDDEFINITION(normalSD);
 	READ_SPEEDDEFINITION(speedShoesSD);
@@ -1395,7 +1402,7 @@ void PLAYER::DoLevelCollision()
 				}
 				
 				//Land on floor
-				ResetOnFloor();
+				LandOnFloor();
 			}
 			break;
 		}
@@ -1482,7 +1489,7 @@ void PLAYER::DoLevelCollision()
 						inertia = xVel;
 						
 						//Land on floor
-						ResetOnFloor();
+						LandOnFloor();
 					}
 				}
 			}
@@ -1539,7 +1546,7 @@ void PLAYER::DoLevelCollision()
 				{
 					//Land on ceiling
 					angle = ceilingAngle;
-					ResetOnFloor();
+					LandOnFloor();
 					inertia = ceilingAngle >= 0x80 ? -yVel : yVel;
 				}
 			}
@@ -1610,7 +1617,7 @@ void PLAYER::DoLevelCollision()
 						inertia = xVel;
 						
 						//Land on floor
-						ResetOnFloor();
+						LandOnFloor();
 					}
 				}
 			}
@@ -1620,26 +1627,26 @@ void PLAYER::DoLevelCollision()
 }
 
 //Functions for landing on the ground
-void PLAYER::ResetOnFloor()
+void PLAYER::LandOnFloor()
 {
-#ifndef SONIC12_SPINDASH_ANIM_BUG
+#ifndef SONIC2_SPINDASH_ANIM_BUG
 	if (status.pinballMode || spindashing)
 #else
 	if (status.pinballMode)
 #endif
 	{
 		//Do not exit ball form if in pinball mode
-		ResetOnFloor3();
+		LandOnFloor_SetState();
 	}
 	else
 	{
 		//Exit ball form
 		anim = PLAYERANIMATION_WALK;
-		ResetOnFloor2();
+		LandOnFloor_ExitBall();
 	}
 }
 
-void PLAYER::ResetOnFloor2()
+void PLAYER::LandOnFloor_ExitBall()
 {
 	//Keep track of our previous height
 	uint8_t oldYRadius = yRadius;
@@ -1662,10 +1669,10 @@ void PLAYER::ResetOnFloor2()
 		YSHIFT_ON_FLOOR(-difference);
 	}
 
-	ResetOnFloor3();
+	LandOnFloor_SetState();
 }
 
-void PLAYER::ResetOnFloor3()
+void PLAYER::LandOnFloor_SetState()
 {
 	//Exit airborne state
 	status.inAir = false;
@@ -2897,7 +2904,7 @@ bool PLAYER::KillCharacter(SOUNDID soundId)
 		item.immuneWater = false;
 		
 		routine = PLAYERROUTINE_DEATH;
-		ResetOnFloor2();
+		LandOnFloor_ExitBall();
 		status.inAir = true;
 		
 		//Clear shield animation so it doesn't show during death
@@ -3006,7 +3013,7 @@ bool PLAYER::HurtCharacter(void *hit)
 	
 	//Enter hurt routine
 	routine = PLAYERROUTINE_HURT;
-	ResetOnFloor2();
+	LandOnFloor_ExitBall();
 	status.inAir = true;
 	
 	//Get our hurt velocity
@@ -4134,8 +4141,8 @@ void PLAYER::DrawToScreen()
 		if (texture != nullptr && mappings != nullptr)
 		{
 			//Draw our sprite
-			SDL_Rect *mapRect = &mappings->rect[mappingFrame];
-			SDL_Point *mapOrig = &mappings->origin[mappingFrame];
+			RECT *mapRect = &mappings->rect[mappingFrame];
+			POINT *mapOrig = &mappings->origin[mappingFrame];
 			
 			int origX = mapOrig->x;
 			int origY = mapOrig->y;
@@ -4482,7 +4489,7 @@ void PLAYER::AttachToObject(OBJECT *object, bool *standingBit)
 	if (status.inAir)
 	{
 		status.inAir = false;
-		ResetOnFloor2();
+		LandOnFloor_ExitBall();
 	}
 }
 

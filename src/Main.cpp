@@ -1,11 +1,19 @@
-#include "SDL.h"
-#include "Error.h"
-#include "Log.h"
-#include "Path.h"
+#include "Filesystem.h"
 #include "Render.h"
 #include "Audio.h"
 #include "Input.h"
 #include "Game.h"
+#include "Error.h"
+#include "Log.h"
+
+//Backend usage
+#ifdef BACKEND_SDL2
+	#include "SDL.h"
+	
+	#define BACKEND_INIT	SDL_Init(SDL_INIT_EVERYTHING) < 0
+	#define BACKEND_ERROR	SDL_GetError()
+	#define BACKEND_QUIT	SDL_Quit()
+#endif
 
 int main(int argc, char *argv[])
 {
@@ -14,12 +22,12 @@ int main(int argc, char *argv[])
 	for (int i = 0; i < argc; i++)
 		LOG(("    %s\n", argv[i]));
 	
-	//Initialize SDL2
-	LOG(("Initializing SDL2... "));
+	//Initialize our backend
+	LOG(("Initializing backend... "));
 	
-	if (SDL_Init(SDL_INIT_EVERYTHING) < 0)
+	if (BACKEND_INIT)
 	{
-		Error(SDL_GetError());
+		Error(BACKEND_ERROR);
 		return -1; //Nothing to clean up, we can just return our failure
 	}
 	
@@ -37,9 +45,9 @@ int main(int argc, char *argv[])
 	QuitRender();
 	QuitPath();
 	
-	//Quit SDL2
-	LOG(("Ending SDL2... "));
-	SDL_Quit();
+	//Quit backend
+	LOG(("Ending backend... "));
+	BACKEND_QUIT;
 	LOG(("Success!\n"));
 	
 	//Failed exit

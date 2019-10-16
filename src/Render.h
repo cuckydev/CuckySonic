@@ -1,7 +1,16 @@
 #pragma once
-#include "SDL_render.h"
-#include "SDL_pixels.h"
 #include <stdint.h>
+
+#ifdef BACKEND_SDL2
+	#include "SDL_render.h"
+	#include "SDL_pixels.h"
+	#define BACKEND_TEXTURE		SDL_Texture
+	#define BACKEND_PIXELFORMAT	SDL_PixelFormat
+#endif
+
+//Rect and point structures
+struct RECT { int x, y, w, h; };
+struct POINT { int x, y; };
 	
 //Palette line
 struct PALCOLOUR
@@ -85,7 +94,7 @@ struct RENDERQUEUE
 {
 	//Shared
 	RENDERQUEUE_TYPE type;
-	SDL_Rect dest;
+	RECT dest;
 	
 	//Our union for different types
 	union
@@ -128,16 +137,16 @@ class SOFTWAREBUFFER
 		int height;
 		
 	private:
-		SDL_Texture *texture;
+		BACKEND_TEXTURE *texture;
 		
 	public:
 		SOFTWAREBUFFER(int bufWidth, int bufHeight);
 		~SOFTWAREBUFFER();
 		
-		void DrawPoint(int layer, int x, int y, PALCOLOUR *colour);
-		void DrawQuad(int layer, const SDL_Rect *quad, PALCOLOUR *colour);
-		void DrawTexture(TEXTURE *texture, PALETTE *palette, const SDL_Rect *src, int layer, int x, int y, bool xFlip, bool yFlip);
-		void DrawTexture(TEXTURE_FULLCOLOUR *texture, const SDL_Rect *src, int layer, int x, int y, bool xFlip, bool yFlip);
+		void DrawPoint(int layer, const POINT *point, PALCOLOUR *colour);
+		void DrawQuad(int layer, const RECT *quad, PALCOLOUR *colour);
+		void DrawTexture(TEXTURE *texture, PALETTE *palette, const RECT *src, int layer, int x, int y, bool xFlip, bool yFlip);
+		void DrawTexture(TEXTURE_FULLCOLOUR *texture, const RECT *src, int layer, int x, int y, bool xFlip, bool yFlip);
 		
 		void Blit8 (PALCOLOUR *backgroundColour, uint8_t  *buffer, int pitch);
 		void Blit16(PALCOLOUR *backgroundColour, uint16_t *buffer, int pitch);
@@ -153,15 +162,8 @@ struct RENDERSPEC
 };
 
 //Globals
-extern SDL_Window *gWindow;
-extern SDL_Renderer *gRenderer;
 extern SOFTWAREBUFFER *gSoftwareBuffer;
-
-extern SDL_PixelFormat *gNativeFormat;
-
 extern RENDERSPEC gRenderSpec;
 
-bool RefreshRenderer();
-bool RenderCheckVSync();
 bool InitializeRender();
 void QuitRender();

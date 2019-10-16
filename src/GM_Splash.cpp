@@ -52,7 +52,7 @@ bool GM_Splash(bool *noError)
 			PlaySound(SOUNDID_SPLASHJINGLE);
 		
 		//Render our splash texture
-		SDL_Rect src = {0, 0, splashTexture->width, splashTexture->height};
+		RECT src = {0, 0, splashTexture->width, splashTexture->height};
 		gSoftwareBuffer->DrawTexture(splashTexture, splashTexture->loadedPalette, &src, 0, (gRenderSpec.width - splashTexture->width) / 2, (gRenderSpec.height - splashTexture->height) / 2, false, false);
 		
 		//Render our software buffer to the screen (using the first colour of our splash texture, should be white)

@@ -1,5 +1,5 @@
 #pragma once
-#include "SDL_render.h"
+#include "Render.h"
 
 class MAPPINGS
 {
@@ -12,8 +12,8 @@ class MAPPINGS
 		
 		//Mappings
 		int size;
-		SDL_Rect *rect;
-		SDL_Point *origin;
+		RECT *rect;
+		POINT *origin;
 		
 		//Linked list
 		MAPPINGS **list;

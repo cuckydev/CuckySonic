@@ -1,9 +1,6 @@
 #include <string.h>
-
-#include "SDL_rwops.h"
 #include "Background.h"
 #include "Game.h"
-#include "Path.h"
 #include "Error.h"
 
 BACKGROUND::BACKGROUND(const char *name, BACKGROUNDFUNCTION backFunction)
@@ -29,7 +26,7 @@ BACKGROUND::~BACKGROUND()
 	delete texture;
 }
 
-void BACKGROUND::DrawStrip(SDL_Rect *src, int layer, int y, int fromX, int toX)
+void BACKGROUND::DrawStrip(RECT *src, int layer, int y, int fromX, int toX)
 {
 	if (toX == fromX)
 	{
@@ -40,7 +37,7 @@ void BACKGROUND::DrawStrip(SDL_Rect *src, int layer, int y, int fromX, int toX)
 	else
 	{
 		//Draw a strip with shearing from fromX to toX
-		SDL_Rect strip = {src->x, src->y, src->w, 1};
+		RECT strip = {src->x, src->y, src->w, 1};
 		for (int sy = 0; sy < src->h; sy++)
 		{
 			int xp = fromX + ((toX - fromX) * sy / src->h);

@@ -1,16 +1,14 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "SDL_rwops.h"
-
+#include "Filesystem.h"
+#include "Audio.h"
 #include "Level.h"
+#include "MathUtil.h"
 #include "Game.h"
 #include "Fade.h"
-#include "Path.h"
-#include "Log.h"
-#include "Audio.h"
-#include "MathUtil.h"
 #include "Error.h"
+#include "Log.h"
 
 //Object function lists
 #include "Objects.h"
@@ -90,24 +88,24 @@ bool LEVEL::LoadMappings(LEVELTABLE *tableEntry)
 		case LEVELFORMAT_CHUNK128:
 		{
 			//Open our chunk mapping file
-			GET_GLOBAL_PATH(globalPath, tableEntry->chunkTileReferencePath);
-			GET_APPEND_PATH(mappingPath, globalPath, ".chk");
+			char *mappingPath = AllocPath(gBasePath, tableEntry->chunkTileReferencePath, ".chk");
+			BACKEND_FILE *mappingFile = OpenFile(mappingPath, "rb");
+			free(mappingPath);
 			
-			SDL_RWops *mappingFile = SDL_RWFromFile(mappingPath, "rb");
 			if (mappingFile == nullptr)
 			{
-				Error(fail = SDL_GetError());
+				Error(fail = GetFileError());
 				return true;
 			}
 			
 			//Allocate the chunk mappings in memory
-			chunks = (SDL_RWsize(mappingFile) / 2 / (8 * 8));
+			chunks = (GetFileSize(mappingFile) / 2 / (8 * 8));
 			chunkMapping = (CHUNKMAPPING*)malloc(sizeof(CHUNKMAPPING) * chunks);
 			
 			if (chunkMapping == nullptr)
 			{
 				Error(fail = "Failed to allocate chunk mappings in memory");
-				SDL_RWclose(mappingFile);
+				CloseFile(mappingFile);
 				return true;
 			}
 			
@@ -116,7 +114,7 @@ bool LEVEL::LoadMappings(LEVELTABLE *tableEntry)
 			{
 				for (int v = 0; v < (8 * 8); v++)
 				{
-					uint16_t tmap = SDL_ReadBE16(mappingFile);
+					uint16_t tmap = ReadFile_BE16(mappingFile);
 					chunkMapping[i].tile[v].altLRB	= (tmap & 0x8000) != 0;
 					chunkMapping[i].tile[v].altTop	= (tmap & 0x4000) != 0;
 					chunkMapping[i].tile[v].norLRB	= (tmap & 0x2000) != 0;
@@ -128,7 +126,7 @@ bool LEVEL::LoadMappings(LEVELTABLE *tableEntry)
 				}
 			}
 			
-			SDL_RWclose(mappingFile);
+			CloseFile(mappingFile);
 			break;
 		}
 		
@@ -146,13 +144,13 @@ bool LEVEL::LoadLayout(LEVELTABLE *tableEntry)
 	LOG(("Loading layout... "));
 	
 	//Open our layout file
-	GET_GLOBAL_PATH(globalPath, tableEntry->levelReferencePath);
-	GET_APPEND_PATH(layoutPath, globalPath, ".lay");
+	char *layoutPath = AllocPath(gBasePath, tableEntry->levelReferencePath, ".lay");
+	BACKEND_FILE *layoutFile = OpenFile(layoutPath, "rb");
+	free(layoutPath);
 	
-	SDL_RWops *layoutFile = SDL_RWFromFile(layoutPath, "rb");
 	if (layoutFile == nullptr)
 	{
-		Error(fail = SDL_GetError());
+		Error(fail = GetFileError());
 		return true;
 	}
 	
@@ -164,8 +162,8 @@ bool LEVEL::LoadLayout(LEVELTABLE *tableEntry)
 			//Get our level dimensions (upscaled to tiles)
 			if (format == LEVELFORMAT_CHUNK128)
 			{
-				layout.width = SDL_ReadBE16(layoutFile) * 8;
-				layout.height = SDL_ReadBE16(layoutFile) * 8;
+				layout.width = ReadFile_BE16(layoutFile) * 8;
+				layout.height = ReadFile_BE16(layoutFile) * 8;
 			}
 			else
 			{
@@ -179,7 +177,7 @@ bool LEVEL::LoadLayout(LEVELTABLE *tableEntry)
 			if (layout.foreground == nullptr)
 			{
 				Error(fail = "Failed to allocate layout in memory");
-				SDL_RWclose(layoutFile);
+				CloseFile(layoutFile);
 				return true;
 			}
 			
@@ -190,7 +188,7 @@ bool LEVEL::LoadLayout(LEVELTABLE *tableEntry)
 				for (int cx = 0; cx < layout.width; cx += 8)
 				{
 					//Read our chunk index
-					uint8_t chunk = SDL_ReadU8(layoutFile);
+					uint8_t chunk = ReadFile_Byte(layoutFile);
 					
 					//Get our tiles
 					for (int tv = 0; tv < 8 * 8; tv++)
@@ -198,15 +196,15 @@ bool LEVEL::LoadLayout(LEVELTABLE *tableEntry)
 				}
 				
 				//Skip background line (not used)
-				SDL_RWseek(layoutFile, layout.width / 8, RW_SEEK_CUR);
+				SeekFile(layoutFile, layout.width / 8, FILESEEK_CUR);
 			}
 			
-			SDL_RWclose(layoutFile);
+			CloseFile(layoutFile);
 			break;
 		case LEVELFORMAT_TILE:
 			//Get our level dimensions
-			layout.width = SDL_ReadBE32(layoutFile);
-			layout.height = SDL_ReadBE32(layoutFile);
+			layout.width = ReadFile_BE32(layoutFile);
+			layout.height = ReadFile_BE32(layoutFile);
 			
 			//Allocate our layout
 			layout.foreground = (TILE*)malloc(sizeof(TILE) * layout.width * layout.height);
@@ -214,14 +212,14 @@ bool LEVEL::LoadLayout(LEVELTABLE *tableEntry)
 			if (layout.foreground == nullptr)
 			{
 				Error(fail = "Failed to allocate layout in memory");
-				SDL_RWclose(layoutFile);
+				CloseFile(layoutFile);
 				return true;
 			}
 			
 			//Read our layout file
 			for (int tv = 0; tv < layout.width * layout.height; tv++)
 			{
-				uint16_t tmap = SDL_ReadBE16(layoutFile);
+				uint16_t tmap = ReadFile_BE16(layoutFile);
 				layout.foreground[tv].altLRB	= (tmap & 0x8000) != 0;
 				layout.foreground[tv].altTop	= (tmap & 0x4000) != 0;
 				layout.foreground[tv].norLRB	= (tmap & 0x2000) != 0;
@@ -231,11 +229,11 @@ bool LEVEL::LoadLayout(LEVELTABLE *tableEntry)
 				layout.foreground[tv].tile		= (tmap & 0x3FF);
 			}
 			
-			SDL_RWclose(layoutFile);
+			CloseFile(layoutFile);
 			break;
 		default:
 			Error(fail = "Unimplemented level format");
-			SDL_RWclose(layoutFile);
+			CloseFile(layoutFile);
 			return true;
 	}
 	
@@ -259,89 +257,90 @@ bool LEVEL::LoadCollisionTiles(LEVELTABLE *tableEntry)
 	LOG(("Loading collision tiles... "));
 	
 	//Open our tile collision map files
-	GET_GLOBAL_PATH(globalPath, tableEntry->chunkTileReferencePath);
-	GET_APPEND_PATH(normalMapPath, globalPath, ".nor");
-	GET_APPEND_PATH(alternateMapPath, globalPath, ".alt");
-	
-	SDL_RWops *norMapFile = SDL_RWFromFile(normalMapPath, "rb");
-	SDL_RWops *altMapFile = SDL_RWFromFile(alternateMapPath, "rb");
+	char *normalMapPath = AllocPath(gBasePath, tableEntry->chunkTileReferencePath, ".nor");
+	char *alternateMapPath = AllocPath(gBasePath, tableEntry->chunkTileReferencePath, ".alt");
+	BACKEND_FILE *norMapFile = OpenFile(normalMapPath, "rb");
+	BACKEND_FILE *altMapFile = OpenFile(alternateMapPath, "rb");
+	free(alternateMapPath);
+	free(normalMapPath);
 	
 	if (norMapFile == nullptr || altMapFile == nullptr)
 	{
-		Error(fail = SDL_GetError());
+		Error(fail = GetFileError());
 		if (norMapFile)
-			SDL_RWclose(norMapFile);
+			CloseFile(norMapFile);
 		if (altMapFile)
-			SDL_RWclose(altMapFile);
+			CloseFile(altMapFile);
 		return true;
 	}
 	
 	//Read our tile collision map data
-	tiles = SDL_RWsize(norMapFile);
+	tiles = GetFileSize(norMapFile);
 	tileMapping = (TILEMAPPING*)malloc(sizeof(TILEMAPPING) * tiles);
 	
-	if (SDL_RWsize(norMapFile) != SDL_RWsize(altMapFile))
+	if (GetFileSize(norMapFile) != GetFileSize(altMapFile))
 	{
 		Error(fail = "Normal map and alternate map files don't match in size");
 		if (norMapFile)
-			SDL_RWclose(norMapFile);
+			CloseFile(norMapFile);
 		if (altMapFile)
-			SDL_RWclose(altMapFile);
+			CloseFile(altMapFile);
 		return true;
 	}
 	
 	for (int i = 0; i < tiles; i++)
 	{
-		tileMapping[i].normalColTile = SDL_ReadU8(norMapFile);
-		tileMapping[i].alternateColTile = SDL_ReadU8(altMapFile);
+		tileMapping[i].normalColTile = ReadFile_Byte(norMapFile);
+		tileMapping[i].alternateColTile = ReadFile_Byte(altMapFile);
 	}
 	
-	SDL_RWclose(norMapFile);
-	SDL_RWclose(altMapFile);
+	CloseFile(norMapFile);
+	CloseFile(altMapFile);
 	
 	//Open our collision tile files
-	GET_GLOBAL_PATH(globalPath2, tableEntry->collisionReferencePath);
-	GET_APPEND_PATH(collisionNormalPath, globalPath2, ".can");
-	GET_APPEND_PATH(collisionRotatedPath, globalPath2, ".car");
-	GET_APPEND_PATH(collisionAnglePath, globalPath2, ".ang");
-	
-	SDL_RWops *colNormalFile = SDL_RWFromFile(collisionNormalPath, "rb");
-	SDL_RWops *colRotatedFile = SDL_RWFromFile(collisionRotatedPath, "rb");
-	SDL_RWops *colAngleFile = SDL_RWFromFile(collisionAnglePath, "rb");
+	char *collisionNormalPath = AllocPath(gBasePath, tableEntry->chunkTileReferencePath, ".can");
+	char *collisionRotatedPath = AllocPath(gBasePath, tableEntry->chunkTileReferencePath, ".car");
+	char *collisionAnglePath = AllocPath(gBasePath, tableEntry->chunkTileReferencePath, ".ang");
+	BACKEND_FILE *colNormalFile = OpenFile(collisionNormalPath, "rb");
+	BACKEND_FILE *colRotatedFile = OpenFile(collisionRotatedPath, "rb");
+	BACKEND_FILE *colAngleFile = OpenFile(collisionAnglePath, "rb");
+	free(colAngleFile);
+	free(colRotatedFile);
+	free(colNormalFile);
 	
 	if (colNormalFile == nullptr || colRotatedFile == nullptr || colAngleFile == nullptr)
 	{
-		Error(fail = SDL_GetError());
-		if (colNormalFile)
-			SDL_RWclose(colNormalFile);
-		if (colRotatedFile)
-			SDL_RWclose(colRotatedFile);
-		if (colAngleFile)
-			SDL_RWclose(colAngleFile);
+		Error(fail = GetFileError());
+		if (colNormalFile != nullptr)
+			CloseFile(colNormalFile);
+		if (colRotatedFile != nullptr)
+			CloseFile(colRotatedFile);
+		if (colAngleFile != nullptr)
+			CloseFile(colAngleFile);
 		return true;
 	}
 	
 	//Allocate our collision tile data in memory
-	if ((SDL_RWsize(colNormalFile) != SDL_RWsize(colRotatedFile)) || (SDL_RWsize(colAngleFile) != (SDL_RWsize(colNormalFile) / 0x10)))
+	if ((GetFileSize(colNormalFile) != GetFileSize(colRotatedFile)) || (GetFileSize(colAngleFile) != (GetFileSize(colNormalFile) / 0x10)))
 	{
 		Error(fail = "Collision tile data file sizes don't match each-other\n(Are the files compressed?)");
 		
 		free(layout.foreground);
-		SDL_RWclose(colNormalFile);
-		SDL_RWclose(colRotatedFile);
-		SDL_RWclose(colAngleFile);
+		CloseFile(colNormalFile);
+		CloseFile(colRotatedFile);
+		CloseFile(colAngleFile);
 		return true;
 	}
 	
-	collisionTiles = SDL_RWsize(colNormalFile) / 0x10;
+	collisionTiles = GetFileSize(colNormalFile) / 0x10;
 	collisionTile = (COLLISIONTILE*)malloc(sizeof(COLLISIONTILE) * collisionTiles);
 	
 	if (collisionTile == nullptr)
 	{
 		Error(fail = "Failed to allocate collision tile data in memory");
-		SDL_RWclose(colNormalFile);
-		SDL_RWclose(colRotatedFile);
-		SDL_RWclose(colAngleFile);
+		CloseFile(colNormalFile);
+		CloseFile(colRotatedFile);
+		CloseFile(colAngleFile);
 		return true;
 	}
 	
@@ -350,16 +349,16 @@ bool LEVEL::LoadCollisionTiles(LEVELTABLE *tableEntry)
 	{
 		for (int v = 0; v < 0x10; v++)
 		{
-			collisionTile[i].normal[v] = SDL_ReadU8(colNormalFile);
-			collisionTile[i].rotated[v] = SDL_ReadU8(colRotatedFile);
+			collisionTile[i].normal[v] = ReadFile_Byte(colNormalFile);
+			collisionTile[i].rotated[v] = ReadFile_Byte(colRotatedFile);
 		}
 		
-		collisionTile[i].angle = SDL_ReadU8(colAngleFile);
+		collisionTile[i].angle = ReadFile_Byte(colAngleFile);
 	}
 	
-	SDL_RWclose(colNormalFile);
-	SDL_RWclose(colRotatedFile);
-	SDL_RWclose(colAngleFile);
+	CloseFile(colNormalFile);
+	CloseFile(colRotatedFile);
+	CloseFile(colAngleFile);
 	LOG(("Success!\n"));
 	return false;
 }
@@ -369,14 +368,13 @@ bool LEVEL::LoadObjects(LEVELTABLE *tableEntry)
 	LOG(("Loading objects... "));
 	
 	//Open our object file
-	GET_GLOBAL_PATH(globalPath, tableEntry->levelReferencePath);
-	GET_APPEND_PATH(objectPath, globalPath, ".obj");
-	
-	SDL_RWops *objectFile = SDL_RWFromFile(objectPath, "rb");
+	char *objectPath = AllocPath(gBasePath, tableEntry->levelReferencePath, ".obj");
+	BACKEND_FILE *objectFile = OpenFile(objectPath, "rb");
+	free(objectPath);
 	
 	if (objectFile == nullptr)
 	{
-		Error(fail = SDL_GetError());
+		Error(fail = GetFileError());
 		return true;
 	}
 	
@@ -386,27 +384,24 @@ bool LEVEL::LoadObjects(LEVELTABLE *tableEntry)
 		case OBJECTFORMAT_SONIC1:
 		case OBJECTFORMAT_SONIC2:
 		{
-			int objects = SDL_RWsize(objectFile) / 6;
+			int objects = GetFileSize(objectFile) / 6;
 			
 			for (int i = 0; i < objects; i++)
 			{
-				int16_t xPos = SDL_ReadBE16(objectFile);
-				int16_t word2 = SDL_ReadBE16(objectFile);
+				int16_t xPos = ReadFile_BE16(objectFile);
+				int16_t word2 = ReadFile_BE16(objectFile);
 				int16_t yPos = word2 & 0x0FFF;
 				
-				uint8_t id = SDL_ReadU8(objectFile);
-				uint8_t subtype = SDL_ReadU8(objectFile);
+				uint8_t id = ReadFile_Byte(objectFile);
+				uint8_t subtype = ReadFile_Byte(objectFile);
 				
 				if (tableEntry->objectFormat == OBJECTFORMAT_SONIC1)
 					id &= 0x7F;
 				
 				OBJECT *newObject = new OBJECT(&objectList, tableEntry->objectFunctionList[id]);
-				if (newObject == nullptr || newObject->fail)
+				if (newObject->fail)
 				{
-					if (newObject == nullptr)
-						Error(fail = "Failed to create object");
-					else
-						Error(fail = newObject->fail);
+					Error(fail = newObject->fail);
 					return true;
 				}
 				
@@ -430,26 +425,26 @@ bool LEVEL::LoadObjects(LEVELTABLE *tableEntry)
 		}
 	}
 	
-	SDL_RWclose(objectFile);
+	CloseFile(objectFile);
 	
 	//Open external ring file
-	GET_APPEND_PATH(ringPath, globalPath, ".ring");
-	
-	SDL_RWops *ringFile = SDL_RWFromFile(ringPath, "rb");
+	char *ringPath = AllocPath(gBasePath, tableEntry->levelReferencePath, ".ring");
+	BACKEND_FILE *ringFile = OpenFile(ringPath, "rb");
+	free(ringPath);
 	
 	if (ringFile == nullptr)
 	{
-		Error(fail = SDL_GetError());
+		Error(fail = GetFileError());
 		return true;
 	}
 	
 	//Read external ring data
-	int rings = SDL_RWsize(ringFile) / 4;
+	int rings = GetFileSize(ringFile) / 4;
 	
 	for (int i = 0; i < rings; i++)
 	{
-		int16_t xPos = SDL_ReadBE16(ringFile);
-		int16_t word2 = SDL_ReadBE16(ringFile);
+		int16_t xPos = ReadFile_BE16(ringFile);
+		int16_t word2 = ReadFile_BE16(ringFile);
 		int16_t yPos = word2 & 0x0FFF;
 		
 		int type = (word2 & 0xF000) >> 12;
@@ -458,12 +453,10 @@ bool LEVEL::LoadObjects(LEVELTABLE *tableEntry)
 		{
 			//Create ring object
 			OBJECT *newObject = new OBJECT(&objectList, &ObjRing);
-			if (newObject == nullptr || newObject->fail)
+			if (newObject->fail)
 			{
-				if (newObject == nullptr)
-					Error(fail = "Failed to create object");
-				else
-					Error(fail = newObject->fail);
+				Error(fail = newObject->fail);
+				CloseFile(ringFile);
 				return true;
 			}
 			
@@ -478,6 +471,7 @@ bool LEVEL::LoadObjects(LEVELTABLE *tableEntry)
 		}
 	}
 	
+	CloseFile(ringFile);
 	LOG(("Success!\n"));
 	return false;
 }
@@ -490,25 +484,31 @@ bool LEVEL::LoadArt(LEVELTABLE *tableEntry)
 	switch (tableEntry->artFormat)
 	{
 		case ARTFORMAT_BMP:
+		{
 			//Load our foreground tilemap
-			GET_APPEND_PATH(artPath, tableEntry->artReferencePath, ".tileset.bmp");
-			
+			char *artPath = AllocPath(tableEntry->artReferencePath, ".tileset.bmp", nullptr);
 			tileTexture = new TEXTURE(nullptr, artPath);
+			free(artPath);
+			
 			if (tileTexture->fail)
 			{
 				Error(fail = tileTexture->fail);
 				return true;
 			}
 			break;
+		}
 		default:
+		{
 			Error(fail = "Unimplemented art format");
 			return true;
+		}
 	}
 	
 	//Load background art
-	GET_APPEND_PATH(backPath, tableEntry->artReferencePath, ".background.bmp");
-	
+	char *backPath = AllocPath(tableEntry->artReferencePath, ".background.bmp", nullptr);
 	background = new BACKGROUND(backPath, tableEntry->backFunction);
+	free(backPath);
+	
 	if (background->fail)
 	{
 		Error(fail = background->fail);
@@ -1289,8 +1289,8 @@ void LEVEL::Draw()
 					continue;
 				
 				//Draw tile
-				SDL_Rect backSrc = {0, tile->tile * 16, 16, 16};
-				SDL_Rect frontSrc = {16, tile->tile * 16, 16, 16};
+				RECT backSrc = {0, tile->tile * 16, 16, 16};
+				RECT frontSrc = {16, tile->tile * 16, 16, 16};
 				gSoftwareBuffer->DrawTexture(tileTexture, tileTexture->loadedPalette, &backSrc, LEVEL_RENDERLAYER_FOREGROUND_LOW, tx * 16 - camera->x, ty * 16 - camera->y, tile->xFlip, tile->yFlip);
 				gSoftwareBuffer->DrawTexture(tileTexture, tileTexture->loadedPalette, &frontSrc, LEVEL_RENDERLAYER_FOREGROUND_HIGH, tx * 16 - camera->x, ty * 16 - camera->y, tile->xFlip, tile->yFlip);
 			}

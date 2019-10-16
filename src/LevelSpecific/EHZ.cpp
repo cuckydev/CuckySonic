@@ -42,7 +42,7 @@ void EHZ_Background(BACKGROUND *background, bool doScroll, int cameraX, int came
 	int16_t scrollBG5 = cameraX / 0x02;
 	
 	//Clouds, sky, and islands
-	SDL_Rect sky = {0,  0, background->texture->width,  80};
+	RECT sky = {0,  0, background->texture->width,  80};
 	background->DrawStrip(&sky, LEVEL_RENDERLAYER_BACKGROUND, 0, -scrollBG1, -scrollBG1);
 	
 	//Rippling water at the horizon (change ripple every 8 frames)
@@ -55,7 +55,7 @@ void EHZ_Background(BACKGROUND *background, bool doScroll, int cameraX, int came
 			--horWaterRipple;
 	}
 	
-	SDL_Rect waterRipple = {0,  80, background->texture->width,  1};
+	RECT waterRipple = {0,  80, background->texture->width,  1};
 	for (int i = 0; i < 21; i++)
 	{
 		int x = -(scrollBG1 + ehzScrollRipple[(horWaterRipple & 0x1F) + i]);
@@ -63,12 +63,12 @@ void EHZ_Background(BACKGROUND *background, bool doScroll, int cameraX, int came
 	}
 	
 	//Water
-	SDL_Rect water = {0, 101, background->texture->width,  11};
+	RECT water = {0, 101, background->texture->width,  11};
 	background->DrawStrip(&water, LEVEL_RENDERLAYER_BACKGROUND, 101, 0, 0);
 	
 	//Draw mountains
-	SDL_Rect upperMountain = {0, 112, background->texture->width,  16};
-	SDL_Rect lowerMountain = {0, 128, background->texture->width,  16};
+	RECT upperMountain = {0, 112, background->texture->width,  16};
+	RECT lowerMountain = {0, 128, background->texture->width,  16};
 	background->DrawStrip(&upperMountain, LEVEL_RENDERLAYER_BACKGROUND, 112, -scrollBG3, -scrollBG3);
 	background->DrawStrip(&lowerMountain, LEVEL_RENDERLAYER_BACKGROUND, 128, -scrollBG2, -scrollBG2);
 	
@@ -76,7 +76,7 @@ void EHZ_Background(BACKGROUND *background, bool doScroll, int cameraX, int came
 	uint32_t delta = (((scrollBG5 - scrollBG4) * 0x100) / 0x30) * 0x100;
 	uint32_t accumulate = (cameraX / 8) * 0x10000;
 	
-	SDL_Rect strip = {0, 144, background->texture->width, 1};
+	RECT strip = {0, 144, background->texture->width, 1};
 	for (int i = 144; i < background->texture->height;)
 	{
 		int mult = (i >= 177) ? 3 : (i >= 159 ? 2 : 1);

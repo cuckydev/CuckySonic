@@ -587,8 +587,8 @@ void OBJECT::DrawToScreen()
 	if (texture != nullptr && mappings != nullptr)
 	{
 		//Draw our sprite
-		SDL_Rect *mapRect = &mappings->rect[mappingFrame];
-		SDL_Point *mapOrig = &mappings->origin[mappingFrame];
+		RECT *mapRect = &mappings->rect[mappingFrame];
+		POINT *mapOrig = &mappings->origin[mappingFrame];
 		
 		int origX = mapOrig->x;
 		int origY = mapOrig->y;

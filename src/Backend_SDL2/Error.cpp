@@ -2,7 +2,7 @@
 #include <string.h>
 #include <time.h>
 #include "SDL_messagebox.h"
-#include "Audio.h"
+#include "../Audio.h"
 
 bool Error(const char *error)
 {

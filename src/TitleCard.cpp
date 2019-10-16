@@ -58,7 +58,7 @@ void TITLECARD::DrawText(const char *text, int x, int y)
 	
 	for (current = text; *current != 0; current++)
 	{
-		SDL_Rect thisCharRect = {((*current - 0x20) % 0x20) * 16, ((*current - 0x20) / 0x20) * 16, 16, 16};
+		RECT thisCharRect = {((*current - 0x20) % 0x20) * 16, ((*current - 0x20) / 0x20) * 16, 16, 16};
 		gSoftwareBuffer->DrawTexture(fontTexture, fontTexture->loadedPalette, &thisCharRect, LEVEL_RENDERLAYER_TITLECARD, dx, y, false, false);
 		dx += 16;
 	}
@@ -102,13 +102,13 @@ void TITLECARD::UpdateAndDraw()
 	DrawText(subtitle, subtitlePosition + (gRenderSpec.width / 2 + 32), drawY + 12);
 	
 	//Draw the "CUCKYSONIC" label
-	SDL_Rect labelSrc = {0, 0, 64, 8};
+	RECT labelSrc = {0, 0, 64, 8};
 	gSoftwareBuffer->DrawTexture(texture, texture->loadedPalette, &labelSrc, LEVEL_RENDERLAYER_TITLECARD, namePosition * -2, gRenderSpec.height - 8, false, false);
 	
 	//Draw the strip behind the name text
 	for (int x = 0; x < gRenderSpec.width; x += 16)
 	{
-		SDL_Rect stripSrc = {0, 8, 16, 16};
+		RECT stripSrc = {0, 8, 16, 16};
 		gSoftwareBuffer->DrawTexture(texture, texture->loadedPalette, &stripSrc, LEVEL_RENDERLAYER_TITLECARD, x + namePosition, drawY - 12, false, false);
 	}
 	
@@ -122,10 +122,10 @@ void TITLECARD::UpdateAndDraw()
 	int16_t xg = gLevel->playerList->x.pos - gLevel->camera->x;
 	int16_t yg = (gLevel->playerList->y.pos + (gLevel->playerList->yRadius - gLevel->playerList->defaultYRadius)) - gLevel->camera->y;
 	
-	SDL_Rect left = {0, 0, xg - gap, gRenderSpec.height};
-	SDL_Rect top = {0, 0, gRenderSpec.width, yg - gap};
-	SDL_Rect right = {xg + gap, 0, gRenderSpec.width - xg - gap, gRenderSpec.height};
-	SDL_Rect bottom = {0, yg + gap, gRenderSpec.width, gRenderSpec.height - yg - gap};
+	RECT left = {0, 0, xg - gap, gRenderSpec.height};
+	RECT top = {0, 0, gRenderSpec.width, yg - gap};
+	RECT right = {xg + gap, 0, gRenderSpec.width - xg - gap, gRenderSpec.height};
+	RECT bottom = {0, yg + gap, gRenderSpec.width, gRenderSpec.height - yg - gap};
 	
 	gSoftwareBuffer->DrawQuad(LEVEL_RENDERLAYER_TITLECARD, &left, &titleCardBackground);
 	gSoftwareBuffer->DrawQuad(LEVEL_RENDERLAYER_TITLECARD, &right, &titleCardBackground);
@@ -133,7 +133,7 @@ void TITLECARD::UpdateAndDraw()
 	gSoftwareBuffer->DrawQuad(LEVEL_RENDERLAYER_TITLECARD, &bottom, &titleCardBackground);
 	
 	//Draw corners
-	SDL_Rect cornerSrc = {16, 8, 32, 32};
+	RECT cornerSrc = {16, 8, 32, 32};
 	gSoftwareBuffer->DrawTexture(texture, texture->loadedPalette, &cornerSrc, LEVEL_RENDERLAYER_TITLECARD, xg - gap, yg - gap, false, false);
 	gSoftwareBuffer->DrawTexture(texture, texture->loadedPalette, &cornerSrc, LEVEL_RENDERLAYER_TITLECARD, xg + gap - 32, yg - gap, true, false);
 	gSoftwareBuffer->DrawTexture(texture, texture->loadedPalette, &cornerSrc, LEVEL_RENDERLAYER_TITLECARD, xg - gap, yg + gap - 32, false, true);

@@ -24,13 +24,13 @@ enum TITLE_LAYERS
 };
 
 //Emblem and banner
-const SDL_Rect titleEmblem = {0, 89, 256, 144};
-const SDL_Rect titleBanner = {257, 106, 224, 74};
+const RECT titleEmblem = {0, 89, 256, 144};
+const RECT titleBanner = {257, 106, 224, 74};
 const int titleBannerJoin = 70;
 const int titleBannerClipY = 10;
 
 //Selection cursor
-const SDL_Rect titleSelectionCursor[4] = {
+const RECT titleSelectionCursor[4] = {
 	{257, 89, 8, 8},
 	{266, 89, 8, 8},
 	{275, 89, 8, 8},
@@ -38,7 +38,7 @@ const SDL_Rect titleSelectionCursor[4] = {
 };
 
 //Sonic
-const SDL_Rect titleSonicBody[4] = {
+const RECT titleSonicBody[4] = {
 	{0,   0, 80, 72},
 	{81,  0, 80, 88},
 	{162, 0, 80, 80},
@@ -47,8 +47,8 @@ const SDL_Rect titleSonicBody[4] = {
 
 const struct
 {
-	SDL_Rect framerect;
-	SDL_Point jointPos;
+	RECT framerect;
+	POINT jointPos;
 } titleSonicHand[3] = {
 	{{316, 0, 40, 40}, {36, 36}},
 	{{357, 0, 32, 48}, {18, 40}},
@@ -63,7 +63,7 @@ void DrawText(TEXTURE *tex, const char *text, int x, int y)
 	int dx = x;
 	for (const char *current = text; *current != 0; current++)
 	{
-		SDL_Rect thisCharRect = {((*current - 0x20) % 0x20) * 8, 234 + ((*current - 0x20) / 0x20) * 8, 8, 8};
+		RECT thisCharRect = {((*current - 0x20) % 0x20) * 8, 234 + ((*current - 0x20) / 0x20) * 8, 8, 8};
 		gSoftwareBuffer->DrawTexture(tex, tex->loadedPalette, &thisCharRect, TITLELAYER_MENU, dx, y, false, false);
 		dx += 8;
 	}
@@ -105,11 +105,11 @@ void TitleBackground(BACKGROUND *background, bool doScroll, int cameraX, int cam
 	static unsigned int cloudScroll = 0;
 	(cloudScroll += 0x6) %= (background->texture->width * 0x10);
 	
-	SDL_Rect clouds = {0,  0, background->texture->width,  32};
+	RECT clouds = {0,  0, background->texture->width,  32};
 	background->DrawStrip(&clouds, TITLELAYER_BACKGROUND,   0, -(scrollBG1 + cloudScroll / 0x10), -(scrollBG1 + cloudScroll / 0x10));
 	
 	//Draw sky and mountains
-	SDL_Rect mountains = {0,  32, background->texture->width,  128};
+	RECT mountains = {0,  32, background->texture->width,  128};
 	background->DrawStrip(&mountains, TITLELAYER_BACKGROUND,  32, -scrollBG2, -scrollBG2);
 	
 	//Draw ocean
@@ -120,7 +120,7 @@ void TitleBackground(BACKGROUND *background, bool doScroll, int cameraX, int cam
 		rippleFrame++;
 	}
 	
-	SDL_Rect strip = {0, 160, background->texture->width, 1};
+	RECT strip = {0, 160, background->texture->width, 1};
 	for (int i = 160; i < background->texture->height; i++)
 	{
 		int x = scrollBG2 + (scrollBG3 - scrollBG2) * (i - 160) / (background->texture->height - 160);
@@ -129,7 +129,7 @@ void TitleBackground(BACKGROUND *background, bool doScroll, int cameraX, int cam
 	}
 	
 	//Clear screen with sky behind background
-	SDL_Rect backQuad = {0, 0, gRenderSpec.width, gRenderSpec.height};
+	RECT backQuad = {0, 0, gRenderSpec.width, gRenderSpec.height};
 	gSoftwareBuffer->DrawQuad(TITLELAYER_BACKGROUND, &backQuad, &background->texture->loadedPalette->colour[0]);
 }
 
@@ -266,7 +266,7 @@ bool GM_Title(bool *noError)
 			}
 			
 			//Render Sonic
-			SDL_Rect bodyRect = titleSonicBody[sonicFrame];
+			RECT bodyRect = titleSonicBody[sonicFrame];
 			
 			const int midX = sonicX / 0x100;
 			const int topY = sonicY / 0x100;

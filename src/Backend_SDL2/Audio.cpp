@@ -1,16 +1,14 @@
+#include <math.h>
 #include <stdlib.h>
 #include <string.h>
-#include <cmath>
 
-#include "SDL_audio.h"
 #include "SDL_timer.h"
 
-#include "Audio.h"
-#include "Log.h"
-#include "Error.h"
-#include "Path.h"
-
-#include "MathUtil.h"
+#include "../Audio.h"
+#include "../Filesystem.h"
+#include "../MathUtil.h"
+#include "../Log.h"
+#include "../Error.h"
 
 //The current audio device
 SDL_AudioDeviceID gAudioDevice;
@@ -77,13 +75,13 @@ SOUND::SOUND(const char *path)
 	memset(this, 0, sizeof(SOUND));
 	
 	//Read the file given
-	GET_GLOBAL_PATH(filepath, path);
-	
 	SDL_AudioSpec wavSpec;
 	uint8_t *wavBuffer;
 	uint32_t wavLength;
 	
+	char *filepath = AllocPath(gBasePath, path, nullptr);
 	SDL_AudioSpec *audioSpec = SDL_LoadWAV(filepath, &wavSpec, &wavBuffer, &wavLength);
+	free(filepath);
 	
 	if (audioSpec == nullptr)
 	{
@@ -252,31 +250,30 @@ MUSIC::MUSIC(const char *name, int initialPosition, float initialVolume)
 	//Get our paths
 	source = name;
 	
-	GET_GLOBAL_PATH(basePath, "data/Audio/Music/");
-	GET_APPEND_PATH(musicPath, basePath, name);
-	
-	GET_APPEND_PATH(oggPath, musicPath, ".ogg");
-	GET_APPEND_PATH(metaPath, musicPath, ".mmt");
+	char *basePath = AllocPath(gBasePath, "data/Audio/Music/", name);
+	char *oggPath = AllocPath(basePath, ".ogg", nullptr);
+	char *metaPath = AllocPath(basePath, ".mmt", nullptr);
 	
 	//Open the given file (different between Windows and non-Windows, because Windows hates UTF-8)
 	#ifdef WINDOWS
 		//Convert to UTF-16
-		wchar_t wcharBuffer[0x200];
+		wchar_t *wcharBuffer = new wchar_t[strlen(oggPath) * 4 + 1];
 		MultiByteToWideChar(CP_UTF8, 0, oggPath, -1, wcharBuffer, 0x200);
 		
 		//Open the file with our newly converted path
 		FILE *fp = _wfopen(wcharBuffer, L"rb");
+		delete wcharBuffer;
+		free(oggPath);
 	#else
 		//Open file
 		FILE *fp = fopen(oggPath, "rb");
+		free(oggPath);
 	#endif
 	
 	//If the file failed to open...
 	if (fp == nullptr)
 	{
-		char error[0x300];
-		sprintf(error, "Failed to open %s\n", oggPath);
-		Error(fail = error);
+		Error(fail = "Failed to open .ogg file");
 		return;
 	}
 	
@@ -286,9 +283,7 @@ MUSIC::MUSIC(const char *name, int initialPosition, float initialVolume)
 	
 	if (file == nullptr)
 	{
-		char error[0x40];
-		sprintf(error, "Error: %s", error);
-		Warn(error);
+		Error(fail = "stb_vorbis failed to open .ogg file");
 		return;
 	}
 	
@@ -301,7 +296,7 @@ MUSIC::MUSIC(const char *name, int initialPosition, float initialVolume)
 	SDL_RWops *metafp = SDL_RWFromFile(metaPath, "rb");
 	if (metafp == nullptr)
 	{
-		Error(fail = "Failed to open the meta file");
+		Error(fail = "Failed to open meta file");
 		stb_vorbis_close(file);
 		return;
 	}
