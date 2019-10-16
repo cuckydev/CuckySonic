@@ -36,7 +36,7 @@ TEXTURE::TEXTURE(TEXTURE **linkedList, const char *path)
 	
 	char *filepath = AllocPath(gBasePath, path, nullptr);
 	SDL_Surface *bitmap = SDL_LoadBMP(filepath);
-	free(filepath);
+	delete filepath;
 	
 	if (bitmap == nullptr)
 	{
@@ -173,7 +173,7 @@ TEXTURE_FULLCOLOUR::TEXTURE_FULLCOLOUR(TEXTURE_FULLCOLOUR **linkedList, const ch
 	
 	char *filepath = AllocPath(gBasePath, path, nullptr);
 	SDL_Surface *bitmap = SDL_LoadBMP(filepath);
-	free(filepath);
+	delete filepath;
 	
 	if (bitmap == nullptr)
 	{

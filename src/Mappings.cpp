@@ -15,7 +15,7 @@ MAPPINGS::MAPPINGS(MAPPINGS **linkedList, const char *path)
 	
 	char *filepath = AllocPath(gBasePath, path, nullptr);
 	BACKEND_FILE *fp = OpenFile(filepath, "rb");
-	free(filepath);
+	delete filepath;
 	
 	if (fp == nullptr)
 	{
@@ -30,7 +30,7 @@ MAPPINGS::MAPPINGS(MAPPINGS **linkedList, const char *path)
 	
 	if (rect == nullptr || origin == nullptr)
 	{
-		SDL_RWclose(fp);
+		CloseFile(fp);
 		free(rect);
 		free(origin);
 		fail = "Failed to allocate rect and origin arrays";

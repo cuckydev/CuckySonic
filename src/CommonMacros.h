@@ -1,7 +1,7 @@
 #pragma once
-#include "SDL_endian.h"
+#include "Endianness.h"
 
-#if (SDL_BYTEORDER == SDL_BIGENDIAN)
+#ifdef CPU_BIGENDIAN
 	#define POSDEF(axis)	\
 		union	\
 		{	\

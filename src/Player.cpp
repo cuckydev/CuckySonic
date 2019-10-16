@@ -57,35 +57,35 @@
 #endif
 
 //Game differences
-//#define SONIC1_SLOPE_ANGLE          //In Sonic 2+, the floor's angle will be replaced with the player's cardinal floor angle if there's a 45+ degree difference
-//#define SONIC12_PUSH_CHECK          //In Sonic 3, it was changed so that you have to be facing towards a wall in order to start pushing into it
-//#define SONIC12_SANE_AIRCOLLISION   //For some reason, in Sonic 3 there was a weird modification to the airborne collision code... can't understand the purpose
-//#define SONIC123_WALL_COLLISION     //In Sonic and Knuckles, the wall collision on the ground was changed to have collision even on walls and ceilings (as long as they're cardinal directions)
-//#define SONIC12_ROLLJUMP_LAND       //In Sonic 3, they fixed the roll jump landing bug, where you'd land 5 pixels above the ground after jumping from a roll
+#define SONIC1_SLOPE_ANGLE          //In Sonic 2+, the floor's angle will be replaced with the player's cardinal floor angle if there's a 45+ degree difference
+#define SONIC12_PUSH_CHECK          //In Sonic 3, it was changed so that you have to be facing towards a wall in order to start pushing into it
+#define SONIC12_SANE_AIRCOLLISION   //For some reason, in Sonic 3 there was a weird modification to the airborne collision code... can't understand the purpose
+#define SONIC123_WALL_COLLISION     //In Sonic and Knuckles, the wall collision on the ground was changed to have collision even on walls and ceilings (as long as they're cardinal directions)
+#define SONIC12_ROLLJUMP_LAND       //In Sonic 3, they fixed the roll jump landing bug, where you'd land 5 pixels above the ground after jumping from a roll
 
-//#define SONIC1_WALK_ANIMATION       //For some reason, in Sonic 2+, the animation code was messed up, making the first frame of the walk animation last only one frame
-//#define SONIC1_SLOPE_ROTATION       //In Sonic 2+, a few lines were added to the animation code to make the floor rotation more consistent
+#define SONIC1_WALK_ANIMATION       //For some reason, in Sonic 2+, the animation code was messed up, making the first frame of the walk animation last only one frame
+#define SONIC1_SLOPE_ROTATION       //In Sonic 2+, a few lines were added to the animation code to make the floor rotation more consistent
 
-//#define SONIC12_SLOPE_RESIST        //In Sonic 3, they made it so you're always affected by slope gravity unless you're on a shallow floor
-//#define SONIC12_SLOPE_REPEL         //In Sonic 3, the code to make it so you fall off of walls and ceilings when going too slow was completely redone
-//#define SONIC1_GROUND_CAP           //In Sonic 1, your speed on the ground is capped to your top speed when above it, even if you're already above it
-//#define SONIC12_AIR_CAP             //In Sonic 1 and 2, your speed in the air is capped to your top speed when above it, even if you're already above it
-//#define SONIC123_ROLL_DUCK          //In Sonic and Knuckles, they added a greater margin of speed for ducking and rolling, so you can duck while moving
+#define SONIC12_SLOPE_RESIST        //In Sonic 3, they made it so you're always affected by slope gravity unless you're on a shallow floor
+#define SONIC12_SLOPE_REPEL         //In Sonic 3, the code to make it so you fall off of walls and ceilings when going too slow was completely redone
+#define SONIC1_GROUND_CAP           //In Sonic 1, your speed on the ground is capped to your top speed when above it, even if you're already above it
+#define SONIC12_AIR_CAP             //In Sonic 1 and 2, your speed in the air is capped to your top speed when above it, even if you're already above it
+#define SONIC123_ROLL_DUCK          //In Sonic and Knuckles, they added a greater margin of speed for ducking and rolling, so you can duck while moving
 //#define SONICCD_ROLLING             //In Sonic CD, rolling to the right is weird
 //#define SONICCD_ROLLJUMP            //In Sonic CD, rolljumping was *partially* removed, the below "CONTROL_NO_ROLLJUMP_LOCK" would act differently
 
-//#define SONIC1_NO_SPINDASH          //The spindash, it needs no introduction
+#define SONIC1_NO_SPINDASH          //The spindash, it needs no introduction
 //#define SONICCD_SPINDASH            //INCOMPLETE - CD spindash
 //#define SONICCD_PEELOUT             //INCOMPLETE - CD super-peelout
-//#define SONIC1_NO_SUPER             //Super Sonic wasn't in Sonic 1
-//#define SONIC123_NO_HYPER           //DOES NOTHING, UNIMPLEMENTED! - Hyper Sonic wasn't introduced until S3K
-//#define SONIC2_SUPER_AT_PEAK        //In Sonic 2, you'd turn super at the peak of a jump, no matter what, while in Sonic 3, this was moved to the jump ability code
-//#define SONIC12_NO_INSTASHIELD      //Insta-shield
-//#define SONIC12_NO_SHIELD_ABILITIES //Other shield abilities
+#define SONIC1_NO_SUPER             //Super Sonic wasn't in Sonic 1
+#define SONIC123_NO_HYPER           //DOES NOTHING, UNIMPLEMENTED! - Hyper Sonic wasn't introduced until S3K
+#define SONIC2_SUPER_AT_PEAK        //In Sonic 2, you'd turn super at the peak of a jump, no matter what, while in Sonic 3, this was moved to the jump ability code
+#define SONIC12_NO_INSTASHIELD      //Insta-shield
+#define SONIC12_NO_SHIELD_ABILITIES //Other shield abilities
 
-//#define SONIC1_DEATH_BOUNDARY       //In Sonic 2, the death boundary code was fixed so that it doesn't use the camera's boundary but the level boundary, so that you don't die while the camera boundary is scrolling
-//#define SONIC12_DEATH_RESPAWN       //In Sonic 3, it was changed so that death respawns you once you go off-screen, not when you leave the level boundaries, since this was a very buggy check
-//#define SONIC2_SPINDASH_ANIM_BUG   //In Sonic 3, the bug where landing on the ground while spindashing plays the walk animation was fixed
+#define SONIC1_DEATH_BOUNDARY       //In Sonic 2, the death boundary code was fixed so that it doesn't use the camera's boundary but the level boundary, so that you don't die while the camera boundary is scrolling
+#define SONIC12_DEATH_RESPAWN       //In Sonic 3, it was changed so that death respawns you once you go off-screen, not when you leave the level boundaries, since this was a very buggy check
+#define SONIC2_SPINDASH_ANIM_BUG    //In Sonic 3, the bug where landing on the ground while spindashing plays the walk animation was fixed
 
 //Other control options
 //#define CONTROL_NO_ROLLJUMP_LOCK          //In the originals, jumping from a roll will lock your controls
@@ -690,20 +690,18 @@ PLAYER::PLAYER(PLAYER **linkedList, const char *specPath, PLAYER *myFollow, int 
 	
 	//Load art and mappings
 	char *texPath = AllocPath(specPath, ".bmp", nullptr);
-	char *mapPath = AllocPath(specPath, ".map", nullptr);
-	
 	texture = gLevel->GetObjectTexture(texPath);
-	free(texPath);
+	delete texPath;
 	
 	if (texture->fail != nullptr)
 	{
 		Error(fail = texture->fail);
-		free(mapPath);
 		return;
 	}
 	
+	char *mapPath = AllocPath(specPath, ".map", nullptr);
 	mappings = gLevel->GetObjectMappings(mapPath);
-	free(mapPath);
+	delete mapPath;
 	
 	if (mappings->fail != nullptr)
 	{
@@ -714,7 +712,7 @@ PLAYER::PLAYER(PLAYER **linkedList, const char *specPath, PLAYER *myFollow, int 
 	//Read properties from the specifications
 	char *plrSpecPath = AllocPath(gBasePath, specPath, ".psp");
 	BACKEND_FILE *playerSpec = OpenFile(plrSpecPath, "rb");
-	free(plrSpecPath);
+	delete plrSpecPath;
 	
 	if (playerSpec == nullptr)
 	{
@@ -741,7 +739,7 @@ PLAYER::PLAYER(PLAYER **linkedList, const char *specPath, PLAYER *myFollow, int 
 	READ_SPEEDDEFINITION(underwaterSuperSD);
 	READ_SPEEDDEFINITION(underwaterSuperSpeedShoesSD);
 	
-	SDL_RWclose(playerSpec);
+	CloseFile(playerSpec);
 	
 	//Initialize speed
 	if (!super)

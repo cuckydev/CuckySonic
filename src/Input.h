@@ -13,6 +13,8 @@
 		SDL_Scancode key;
 		SDL_GameControllerButton button;
 	};
+	
+	#define BACKEND_CONTROLLER SDL_GameController
 #endif
 
 struct CONTROLMASK
@@ -52,7 +54,7 @@ struct CONTROLLER
 	BUTTONBINDS binds;
 	
 	//Our game controller
-	SDL_GameController *controller;
+	BACKEND_CONTROLLER *controller;
 	int16_t axisX;
 	int16_t axisY;
 };

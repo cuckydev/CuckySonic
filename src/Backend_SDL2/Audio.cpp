@@ -81,7 +81,7 @@ SOUND::SOUND(const char *path)
 	
 	char *filepath = AllocPath(gBasePath, path, nullptr);
 	SDL_AudioSpec *audioSpec = SDL_LoadWAV(filepath, &wavSpec, &wavBuffer, &wavLength);
-	free(filepath);
+	delete filepath;
 	
 	if (audioSpec == nullptr)
 	{
@@ -257,17 +257,18 @@ MUSIC::MUSIC(const char *name, int initialPosition, float initialVolume)
 	//Open the given file (different between Windows and non-Windows, because Windows hates UTF-8)
 	#ifdef WINDOWS
 		//Convert to UTF-16
-		wchar_t *wcharBuffer = new wchar_t[strlen(oggPath) * 4 + 1];
-		MultiByteToWideChar(CP_UTF8, 0, oggPath, -1, wcharBuffer, 0x200);
+		size_t bufferSize = MultiByteToWideChar(CP_UTF8, 0, oggPath, -1, nullptr, 0);
+		wchar_t *wcharBuffer = new wchar_t[bufferSize];
+		MultiByteToWideChar(CP_UTF8, 0, oggPath, -1, wcharBuffer, bufferSize);
 		
 		//Open the file with our newly converted path
 		FILE *fp = _wfopen(wcharBuffer, L"rb");
 		delete wcharBuffer;
-		free(oggPath);
+		delete oggPath;
 	#else
 		//Open file
 		FILE *fp = fopen(oggPath, "rb");
-		free(oggPath);
+		delete oggPath;
 	#endif
 	
 	//If the file failed to open...
@@ -293,17 +294,19 @@ MUSIC::MUSIC(const char *name, int initialPosition, float initialVolume)
 	channels = info.channels;
 	
 	//Open meta file
-	SDL_RWops *metafp = SDL_RWFromFile(metaPath, "rb");
+	BACKEND_FILE *metafp = OpenFile(metaPath, "rb");
+	delete metaPath;
+	
 	if (metafp == nullptr)
 	{
-		Error(fail = "Failed to open meta file");
+		Error(fail = GetFileError());
 		stb_vorbis_close(file);
 		return;
 	}
 	
 	//Read meta data
-	loopStart = (int64_t)SDL_ReadBE64(metafp);
-	SDL_RWclose(metafp);
+	loopStart = (int64_t)ReadFile_BE64(metafp);
+	CloseFile(metafp);
 	
 	//Initialize the resampler
 	const ma_pcm_converter_config config = ma_pcm_converter_config_init(ma_format_f32, channels, frequency, ma_format_f32, 2, AUDIO_FREQUENCY, MusicReadSamples, this);

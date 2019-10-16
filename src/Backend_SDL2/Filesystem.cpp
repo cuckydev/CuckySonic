@@ -53,12 +53,16 @@ size_t TellFile(BACKEND_FILE *file) { return SDL_RWtell(file); }
 //Core file path stuff
 char *AllocPath(const char *base, const char *name, const char *append)
 {
-	//Allocate the correct amount of memory to fit base, name, append (if non-null), and a terminator key
-	char *newString = (char*)malloc(strlen(base) + (name == nullptr ? 0 : strlen(name)) + (append == nullptr ? 0 : strlen(append)) + 1);
+	char *newString = new char[
+								strlen(base) //base (if not null)
+								+ (name == nullptr ? 0 : strlen(name)) //name (if not null)
+								+ (append == nullptr ? 0 : strlen(append)) //append (if not null)
+								+ 1
+							];
 	strcpy(newString, base);
-	if (name)
+	if (name != nullptr)
 		strcat(newString, name);
-	if (append)
+	if (append != nullptr)
 		strcat(newString, append);
 	return newString;
 }
@@ -66,21 +70,35 @@ char *AllocPath(const char *base, const char *name, const char *append)
 bool InitializePath()
 {
 	LOG(("Initializing paths... "));
-	gBasePath = SDL_GetBasePath();
-	gPrefPath = SDL_GetPrefPath(GAME_ORGANIZATION, GAME_TITLE);
+	char *basePath = SDL_GetBasePath();
+	char *prefPath = SDL_GetPrefPath(GAME_ORGANIZATION, GAME_TITLE);
 	
 	//Get base (executable's) path
-	if (gBasePath == nullptr)
+	if (basePath == nullptr)
 	{
+		//Use "./" as a placeholder
 		gBasePath = AllocPath("./", nullptr, nullptr);
 		Warn("Couldn't get a path to the executable from SDL, may cause undefined behaviour");
 	}
+	else
+	{
+		//Copy basePath
+		gBasePath = AllocPath(basePath, nullptr, nullptr);
+		SDL_free(basePath);
+	}
 	
 	//Get pref (save data) path
-	if (gPrefPath == nullptr)
+	if (prefPath == nullptr)
 	{
-		gPrefPath = gBasePath;
+		//Copy gBasePath as a placeholder
+		gPrefPath = AllocPath(gBasePath, nullptr, nullptr);
 		Warn("Couldn't get a path to pref directory from SDL, executable's path will be used instead");
+	}
+	else
+	{
+		//Copy prefPath
+		gPrefPath = AllocPath(prefPath, nullptr, nullptr);
+		SDL_free(prefPath);
 	}
 	
 	LOG(("Success!\n"));
@@ -90,7 +108,7 @@ bool InitializePath()
 void QuitPath()
 {
 	LOG(("Ending paths... "));
-	free(gBasePath);
-	free(gPrefPath);
+	delete gBasePath;
+	delete gPrefPath;
 	LOG(("Success!\n"));
 }

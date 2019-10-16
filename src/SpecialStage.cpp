@@ -30,9 +30,9 @@ SPECIALSTAGE::SPECIALSTAGE(const char *name)
 	}
 	
 	//Load the background texture (stage-specific)
-	char *backTexture = AllocPath(name, ".background.bmp", nullptr);
-	backgroundTexture = new TEXTURE(nullptr, backTexture);
-	free(backTexture);
+	char *backgroundPath = AllocPath(name, ".background.bmp", nullptr);
+	backgroundTexture = new TEXTURE(nullptr, backgroundPath);
+	delete backgroundPath;
 	
 	if (backgroundTexture->fail != nullptr)
 	{
@@ -43,7 +43,7 @@ SPECIALSTAGE::SPECIALSTAGE(const char *name)
 	//Open the layout file
 	char *layoutPath = AllocPath(gBasePath, name, ".ssl");
 	BACKEND_FILE *fp = OpenFile(layoutPath, "rb");
-	free(layoutPath);
+	delete layoutPath;
 	
 	if (fp == nullptr)
 	{
@@ -80,7 +80,7 @@ SPECIALSTAGE::SPECIALSTAGE(const char *name)
 	//Open the perspective map file
 	char *perspectivePath = AllocPath(gBasePath, "data/SpecialStage/Perspective.bin", nullptr);
 	BACKEND_FILE *perspectiveFile = OpenFile(perspectivePath, "rb");
-	free(perspectivePath);
+	delete perspectivePath;
 	
 	if (perspectiveFile == nullptr)
 	{

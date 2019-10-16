@@ -3,8 +3,6 @@
 #include "Error.h"
 #include "GM.h"
 
-#include "SDL_events.h"
-
 //Debug bool
 bool gDebugEnabled = false;
 

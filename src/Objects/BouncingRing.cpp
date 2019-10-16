@@ -1,4 +1,5 @@
 #include <stdint.h>
+#include "../Endianness.h"
 #include "../Level.h"
 #include "../LevelCollision.h"
 #include "../Game.h"
@@ -35,7 +36,7 @@ void ObjBouncingRing_Routine0(OBJECT *object)
 	//Spawn the given amount of rings
 	union
 	{
-		#if SDL_BYTEORDER == SDL_BIGENDIAN
+		#ifdef CPU_BIGENDIAN
 			struct
 			{
 				uint8_t speed;
