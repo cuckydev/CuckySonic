@@ -36,5 +36,5 @@ More information can be found in build/Info.txt
 
 The compiled executable will be in the build folder.
 
-If you have any questions, Google is your friends, but you can always ask on the CuckySonic Discord server
+If you have any questions, Google is your friend, but you can always ask on the CuckySonic Discord server
 https://discord.gg/XreGMxf
