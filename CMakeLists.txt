@@ -7,6 +7,7 @@ endif()
 set(BUILD_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/build")
 
 option(FORCE_LOCAL_LIBS "Compile the built-in versions of SDL2 instead of using the system-provided ones" OFF)
+set(BACKEND "SDL2" CACHE STRING "Which backend system to use: currently the only options is 'SDL2'")
 
 project(CuckySonic LANGUAGES C CXX)
 
@@ -20,59 +21,53 @@ if(MSVC)
 endif()
 
 add_executable(CuckySonic
-	src/Main.cpp
-	src/Error.cpp
-	src/Error.h
-	src/Path.cpp
-	src/Path.h
-	src/Render.cpp
-	src/Render.h
-	src/Render_Blit.cpp
-	src/Event.cpp
-	src/Event.h
-	src/Input.cpp
-	src/Input.h
-	src/Audio.cpp
 	src/Audio.h
-	src/Audio_stb_vorbis.cpp
 	src/Audio_miniaudio.cpp
 	src/Audio_miniaudio.h
-	src/MathUtil.cpp
-	src/MathUtil.h
+	src/Audio_stb_vorbis.cpp
+	src/Background.cpp
+	src/Background.h
+	src/Camera.cpp
+	src/Camera.h
+	src/CommonMacros.h
+	src/Endianness.h
+	src/Error.h
+	src/Event.h
 	src/Fade.cpp
 	src/Fade.h
-	src/Mappings.cpp
-	src/Mappings.h
+	src/Filesystem.h
+	src/Game.cpp
+	src/Game.h
+	src/GameConstants.h
+	src/GM.h
+	src/GM_Game.cpp
+	src/GM_SpecialStage.cpp
+	src/GM_Splash.cpp
+	src/GM_Title.cpp
+	src/Hud.cpp
+	src/Hud.h
+	src/Input.h
 	src/Level.cpp
 	src/Level.h
 	src/LevelCollision.cpp
 	src/LevelCollision.h
-	src/SpecialStage.cpp
-	src/SpecialStage.h
-	src/Background.cpp
-	src/Background.h
-	src/Game.cpp
-	src/Game.h
-	src/GM_Splash.cpp
-	src/GM_Title.cpp
-	src/GM_Game.cpp
-	src/GM_SpecialStage.cpp
-	src/GM.h
-	src/Player.cpp
-	src/Player.h
-	src/Object.cpp
-	src/Object.h
-	src/Camera.cpp
-	src/Camera.h
-	src/TitleCard.cpp
-	src/TitleCard.h
-	src/Hud.cpp
-	src/Hud.h
-	src/CommonMacros.h
-	src/GameConstants.h
 	src/LevelSpecific.h
 	src/Log.h
+	src/Main.cpp
+	src/Mappings.cpp
+	src/Mappings.h
+	src/MathUtil.cpp
+	src/MathUtil.h
+	src/Object.cpp
+	src/Object.h
 	src/Objects.h
+	src/Player.cpp
+	src/Player.h
+	src/Render.h
+	src/SpecialStage.cpp
+	src/SpecialStage.h
+	src/TitleCard.cpp
+	src/TitleCard.h
 	src/LevelSpecific/GHZ.cpp
 	src/LevelSpecific/EHZ.cpp
 	src/Objects/PathSwitcher.cpp
@@ -94,6 +89,23 @@ add_executable(CuckySonic
 	src/Objects/Spring.cpp
 	src/Objects/Minecart.cpp
 )
+
+# Enable the SDL2 backend if it's selected
+if(BACKEND MATCHES "SDL2")
+	target_sources(CuckySonic PRIVATE
+		src/Backend_SDL2/Audio.cpp
+		src/Backend_SDL2/Error.cpp
+		src/Backend_SDL2/Event.cpp
+		src/Backend_SDL2/Filesystem.cpp
+		src/Backend_SDL2/Input.cpp
+		src/Backend_SDL2/Render.cpp
+		src/Backend_SDL2/Render_Blit.cpp
+	)
+
+	target_compile_definitions(CuckySonic PRIVATE BACKEND_SDL2)
+else()
+	message(FATAL_ERROR "Invalid BACKEND selected")
+endif()
 
 # Make some tweaks if we're targetting Windows
 if(WIN32)
@@ -134,30 +146,33 @@ endif()
 
 # Find dependencies
 
-if(NOT FORCE_LOCAL_LIBS)
-	find_package(SDL2)
-endif()
-
-if(TARGET SDL2::SDL2)
-	# CMake-generated config (Arch, vcpkg, Raspbian)
-	message(STATUS "Using system SDL2")
-	target_link_libraries(CuckySonic SDL2::SDL2 SDL2::SDL2main)
-elseif(TARGET SDL2::SDL2-static)
-	# CMake-generated config (Arch, vcpkg, Raspbian)
-	message(STATUS "Using system SDL2")
-	target_link_libraries(CuckySonic SDL2::SDL2-static SDL2::SDL2main)
-elseif(SDL2_FOUND)
-	# Autotools-generated config (MSYS2)
-	message(STATUS "Using system SDL2")
-	target_include_directories(CuckySonic PRIVATE ${SDL2_INCLUDE_DIRS})
-	target_link_libraries(CuckySonic ${SDL2_LIBRARIES})
-else()
-	# Compile it ourselves
-	message(STATUS "Using local SDL2")
-	set(SDL_SHARED_ENABLED_BY_DEFAULT OFF)
-	if(MSVC)
-		set(LIBC ON)	# Needed to prevent possible 'symbol already defined' errors
+# The SDL2 backend needs SDL2, obviously
+if(BACKEND MATCHES "SDL2")
+	if(NOT FORCE_LOCAL_LIBS)
+		find_package(SDL2)
 	endif()
-	add_subdirectory("SDL2" EXCLUDE_FROM_ALL)
-	target_link_libraries(CuckySonic SDL2-static SDL2main)
+
+	if(TARGET SDL2::SDL2)
+		# CMake-generated config (Arch, vcpkg, Raspbian)
+		message(STATUS "Using system SDL2")
+		target_link_libraries(CuckySonic SDL2::SDL2 SDL2::SDL2main)
+	elseif(TARGET SDL2::SDL2-static)
+		# CMake-generated config (Arch, vcpkg, Raspbian)
+		message(STATUS "Using system SDL2")
+		target_link_libraries(CuckySonic SDL2::SDL2-static SDL2::SDL2main)
+	elseif(SDL2_FOUND)
+		# Autotools-generated config (MSYS2)
+		message(STATUS "Using system SDL2")
+		target_include_directories(CuckySonic PRIVATE ${SDL2_INCLUDE_DIRS})
+		target_link_libraries(CuckySonic ${SDL2_LIBRARIES})
+	else()
+		# Compile it ourselves
+		message(STATUS "Using local SDL2")
+		set(SDL_SHARED_ENABLED_BY_DEFAULT OFF)
+		if(MSVC)
+			set(LIBC ON)	# Needed to prevent possible 'symbol already defined' errors
+		endif()
+		add_subdirectory("SDL2" EXCLUDE_FROM_ALL)
+		target_link_libraries(CuckySonic SDL2-static SDL2main)
+	endif()
 endif()
