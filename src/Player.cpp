@@ -75,8 +75,8 @@
 //#define SONICCD_ROLLJUMP            //In Sonic CD, rolljumping was *partially* removed, the below "CONTROL_NO_ROLLJUMP_LOCK" would act differently
 
 //#define SONIC1_NO_SPINDASH          //The spindash, it needs no introduction
-//#define SONICCD_SPINDASH            //INCOMPLETE - CD spindash
-//#define SONICCD_PEELOUT             //INCOMPLETE - CD super-peelout
+//#define SONICCD_SPINDASH            //CD spindash
+//#define SONICCD_PEELOUT             //CD super-peelout
 //#define SONIC1_NO_SUPER             //Super Sonic wasn't in Sonic 1
 //#define SONIC123_NO_HYPER           //DOES NOTHING, UNIMPLEMENTED! - Hyper Sonic wasn't introduced until S3K
 //#define SONIC2_SUPER_AT_PEAK        //In Sonic 2, you'd turn super at the peak of a jump, no matter what, while in Sonic 3, this was moved to the jump ability code
@@ -1878,14 +1878,161 @@ bool PLAYER::Spindash()
 }
 
 //CD Peelout and Spindash
-bool PLAYER::CDSpindash()
+bool PLAYER::CDPeeloutSpindash(bool *moveRet) //return false = branch to updatespeed, true = branch to resetscr
 {
-	return false;
-}
-
-bool PLAYER::CDPeelout()
-{
-	return false;
+#ifdef SONICCD_PEELOUT
+	if (!(cdChargeDelay & 0x80))
+	{
+		if (!((cdChargeDelay & 0x40) || controlHeld.down))
+		{
+			//Handle how up input gets used
+			if (cdChargeDelay &= 0x0F)
+			{
+				if (controlPress.up)
+				{
+					cdChargeDelay |= 0x80;
+					return false;
+				}
+			}
+			else
+			{
+				if (controlPress.up)
+				{
+					cdChargeDelay = 0x01;
+					return false;
+				}
+			}
+			
+			//Check if we should peelout or already are
+			if (controlHeld.up)
+			{
+				anim = PLAYERANIMATION_LOOKUP;
+				
+				if (cdSPTimer != 0)
+				{
+					//Charge peelout
+					anim = PLAYERANIMATION_WALK;
+					
+					int16_t peeloutAccel = 0x64;
+					int16_t peeloutCap = top << 1;
+					
+					if (item.hasSpeedShoes)
+						peeloutCap -= (top >> 1);
+					
+					//Reverse if facing left
+					if (status.xFlip)
+					{
+						peeloutAccel = -peeloutAccel;
+						peeloutCap = -peeloutCap;
+					}
+					
+					//Increase peelout speed
+					inertia += peeloutAccel;
+					
+					//Cap our inertia
+					if (!status.xFlip)
+					{
+						if (inertia > peeloutCap)
+							inertia = peeloutCap;
+					}
+					else
+					{
+						if (inertia < peeloutCap)
+							inertia = peeloutCap;
+					}
+					
+					//NOTE: this cuts the movement sub-routine short
+					*moveRet = true;
+					return true;
+				}
+				else
+				{
+					//Check if we should start a peelout
+					if (controlPress.a || controlPress.b || controlPress.c)
+					{
+						cdSPTimer = 1;
+						PlaySound(SOUNDID_SPINDASH_REV);
+					}
+					
+					return false;
+				}
+			}
+			else
+			{
+				//Release peelout
+				if (cdSPTimer != 30)
+				{
+					//Failed peelout
+					cdSPTimer = 0;
+					inertia = 0;
+				}
+				else
+				{
+					//Successful peelout
+					cdSPTimer = 0;
+					PlaySound(SOUNDID_SPINDASH_RELEASE);
+					return true;
+				}
+			}
+		}
+	}
+	else
+#endif
+	{
+		//Handle looking up
+		if (controlHeld.up)
+			anim = PLAYERANIMATION_LOOKUP;
+	}
+	
+#ifdef SONICCD_SPINDASH
+	if (!(cdChargeDelay & 0x40))
+	{
+		//Handle how down input gets used
+		if (cdChargeDelay &= 0x0F)
+		{
+			if (controlPress.down)
+			{
+				cdChargeDelay |= 0x40;
+				return false;
+			}
+		}
+		else
+		{
+			if (controlPress.down)
+			{
+				cdChargeDelay = 0x01;
+				return false;
+			}
+		}
+		
+		//Check if we should spindash or already are
+		if (!controlHeld.down)
+			return true;
+		anim = PLAYERANIMATION_DUCK;
+		if (cdSPTimer != 0 || !(controlPress.a || controlPress.b || controlPress.c))
+			return false;
+		
+		//Start spindashing
+		PlaySound(SOUNDID_SPINDASH_REV);
+		cdSPTimer = 1;
+		inertia = 0x16;
+		if (status.xFlip)
+			inertia = -inertia;
+		
+		ChkRoll();
+		return false;
+	}
+	else
+#endif
+	{
+		//Handle ducking
+		if (!controlHeld.down)
+			return true;
+		anim = PLAYERANIMATION_DUCK;
+		return false;
+	}
+	
+	return true;
 }
 
 //Jump ability functions
@@ -2443,157 +2590,173 @@ void PLAYER::Move()
 		if (!moveLock)
 		{
 			//Move left and right
-			if (controlHeld.left)
-				MoveLeft();
-			if (controlHeld.right)
-				MoveRight();
-			
-			if (((angle + 0x20) & 0xC0) == 0 && inertia == 0)
+			if (cdSPTimer == 0)
 			{
-				//Do idle animation
-				status.pushing = false;
-				anim = PLAYERANIMATION_IDLE;
-				
-				//Balancing
-				if (status.shouldNotFall)
+				if (controlHeld.left)
+					MoveLeft();
+				if (controlHeld.right)
+					MoveRight();
+			}
+			
+			if (((angle + 0x20) & 0xC0) == 0 && (inertia == 0 || cdSPTimer != 0))
+			{
+				if (cdSPTimer == 0)
 				{
-					OBJECT *object = (OBJECT*)interact;
+					//Do idle animation
+					status.pushing = false;
+					anim = PLAYERANIMATION_IDLE;
 					
-					//Balancing on an object
-					if (object != nullptr && !object->status.noBalance)
+					//Balancing
+					if (status.shouldNotFall)
 					{
-						//Get our area we stand on
-						int width = (object->widthPixels * 2) - 4;
-						int xDiff = (object->widthPixels + x.pos) - object->x.pos;
+						OBJECT *object = (OBJECT*)interact;
 						
-						if (xDiff < 2)
+						//Balancing on an object
+						if (object != nullptr && !object->status.noBalance)
 						{
-							if (!super)
+							//Get our area we stand on
+							int width = (object->widthPixels * 2) - 4;
+							int xDiff = (object->widthPixels + x.pos) - object->x.pos;
+							
+							if (xDiff < 2)
 							{
-								if (status.xFlip)
+								if (!super)
 								{
-									if (xDiff < -4)
-										anim = PLAYERANIMATION_BALANCE2;	//Balancing on the edge
+									if (status.xFlip)
+									{
+										if (xDiff < -4)
+											anim = PLAYERANIMATION_BALANCE2;	//Balancing on the edge
+										else
+											anim = PLAYERANIMATION_BALANCE1;	//Far over the edge
+									}
 									else
-										anim = PLAYERANIMATION_BALANCE1;	//Far over the edge
+									{
+										if (xDiff < -4)
+										{
+											anim = PLAYERANIMATION_BALANCE4;	//Turn around to the "far over the edge" balancing animation
+											status.xFlip = true;
+										}
+										else
+											anim = PLAYERANIMATION_BALANCE3;	//Balancing on the edge backwards
+									}
 								}
 								else
 								{
-									if (xDiff < -4)
-									{
-										anim = PLAYERANIMATION_BALANCE4;	//Turn around to the "far over the edge" balancing animation
-										status.xFlip = true;
-									}
-									else
-										anim = PLAYERANIMATION_BALANCE3;	//Balancing on the edge backwards
+									anim = PLAYERANIMATION_BALANCE1;	//Super sonic balance animation
+									status.xFlip = true;
 								}
 							}
-							else
+							else if (xDiff >= width)
 							{
-								anim = PLAYERANIMATION_BALANCE1;	//Super sonic balance animation
-								status.xFlip = true;
-							}
-						}
-						else if (xDiff >= width)
-						{
-							if (!super)
-							{
-								if (!status.xFlip)
+								if (!super)
 								{
-									if (xDiff >= width + 6)
-										anim = PLAYERANIMATION_BALANCE2;	//Balancing on the edge
+									if (!status.xFlip)
+									{
+										if (xDiff >= width + 6)
+											anim = PLAYERANIMATION_BALANCE2;	//Balancing on the edge
+										else
+											anim = PLAYERANIMATION_BALANCE1;	//Far over the edge
+									}
 									else
-										anim = PLAYERANIMATION_BALANCE1;	//Far over the edge
+									{
+										if (xDiff >= width + 6)
+										{
+											anim = PLAYERANIMATION_BALANCE4;	//Turn around to the "far over the edge" balancing animation
+											status.xFlip = false;
+										}
+										else
+											anim = PLAYERANIMATION_BALANCE3;	//Balancing on the edge backwards
+									}
 								}
 								else
 								{
-									if (xDiff >= width + 6)
-									{
-										anim = PLAYERANIMATION_BALANCE4;	//Turn around to the "far over the edge" balancing animation
-										status.xFlip = false;
-									}
-									else
-										anim = PLAYERANIMATION_BALANCE3;	//Balancing on the edge backwards
+									anim = PLAYERANIMATION_BALANCE1;	//Super sonic balance animation
+									status.xFlip = false;
 								}
-							}
-							else
-							{
-								anim = PLAYERANIMATION_BALANCE1;	//Super sonic balance animation
-								status.xFlip = false;
 							}
 						}
 					}
-				}
-				else
-				{
-					//If Sonic's middle bottom point is 12 pixels away from the floor, start balancing
-					if (ChkFloorEdge(topSolidLayer, x.pos, y.pos, nullptr) >= 12)
+					else
 					{
-						if (nextTilt == 3) //If there's no floor to the left of us
+						//If Sonic's middle bottom point is 12 pixels away from the floor, start balancing
+						if (ChkFloorEdge(topSolidLayer, x.pos, y.pos, nullptr) >= 12)
 						{
-							if (!super)
+							if (nextTilt == 3) //If there's no floor to the left of us
 							{
-								if (!status.xFlip)
+								if (!super)
 								{
-									if (ChkFloorEdge(topSolidLayer, x.pos - 6, y.pos, nullptr) >= 12)
-										anim = PLAYERANIMATION_BALANCE2;	//Far over the edge
+									if (!status.xFlip)
+									{
+										if (ChkFloorEdge(topSolidLayer, x.pos - 6, y.pos, nullptr) >= 12)
+											anim = PLAYERANIMATION_BALANCE2;	//Far over the edge
+										else
+											anim = PLAYERANIMATION_BALANCE1;	//Balancing on the edge
+									}
 									else
-										anim = PLAYERANIMATION_BALANCE1;	//Balancing on the edge
+									{
+										//Facing right on ledge to the left of us...
+										if (ChkFloorEdge(topSolidLayer, x.pos - 6, y.pos, nullptr) >= 12)
+										{
+											anim = PLAYERANIMATION_BALANCE4;	//Turn around to the "far over the edge" balancing animation
+											status.xFlip = false;
+										}
+										else
+											anim = PLAYERANIMATION_BALANCE3;	//Balancing on the edge backwards
+									}
 								}
 								else
 								{
-									//Facing right on ledge to the left of us...
-									if (ChkFloorEdge(topSolidLayer, x.pos - 6, y.pos, nullptr) >= 12)
-									{
-										anim = PLAYERANIMATION_BALANCE4;	//Turn around to the "far over the edge" balancing animation
-										status.xFlip = false;
-									}
-									else
-										anim = PLAYERANIMATION_BALANCE3;	//Balancing on the edge backwards
+									anim = PLAYERANIMATION_BALANCE1;	//Super sonic balance animation
+									status.xFlip = false;
 								}
 							}
-							else
+							else if (tilt == 3) //If there's no floor to the right of us
 							{
-								anim = PLAYERANIMATION_BALANCE1;	//Super sonic balance animation
-								status.xFlip = false;
-							}
-						}
-						else if (tilt == 3) //If there's no floor to the right of us
-						{
-							if (!super)
-							{
-								if (status.xFlip)
+								if (!super)
 								{
-									if (ChkFloorEdge(topSolidLayer, x.pos + 6, y.pos, nullptr) >= 12)
-										anim = PLAYERANIMATION_BALANCE2;	//Far over the edge
+									if (status.xFlip)
+									{
+										if (ChkFloorEdge(topSolidLayer, x.pos + 6, y.pos, nullptr) >= 12)
+											anim = PLAYERANIMATION_BALANCE2;	//Far over the edge
+										else
+											anim = PLAYERANIMATION_BALANCE1;	//Balancing on the edge
+									}
 									else
-										anim = PLAYERANIMATION_BALANCE1;	//Balancing on the edge
+									{
+										//Facing right on ledge to the left of us...
+										if (ChkFloorEdge(topSolidLayer, x.pos + 6, y.pos, nullptr) >= 12)
+										{
+											anim = PLAYERANIMATION_BALANCE4;	//Turn around to the "far over the edge" balancing animation
+											status.xFlip = true;
+										}
+										else
+											anim = PLAYERANIMATION_BALANCE3;	//Balancing on the edge backwards
+									}
 								}
 								else
 								{
-									//Facing right on ledge to the left of us...
-									if (ChkFloorEdge(topSolidLayer, x.pos + 6, y.pos, nullptr) >= 12)
-									{
-										anim = PLAYERANIMATION_BALANCE4;	//Turn around to the "far over the edge" balancing animation
-										status.xFlip = true;
-									}
-									else
-										anim = PLAYERANIMATION_BALANCE3;	//Balancing on the edge backwards
+									anim = PLAYERANIMATION_BALANCE1;	//Super sonic balance animation
+									status.xFlip = true;
 								}
-							}
-							else
-							{
-								anim = PLAYERANIMATION_BALANCE1;	//Super sonic balance animation
-								status.xFlip = true;
 							}
 						}
 					}
 				}
 				
-				if (anim == PLAYERANIMATION_IDLE)
+				if (anim == PLAYERANIMATION_IDLE || cdSPTimer != 0)
 				{
 					#if (defined(SONICCD_PEELOUT) || defined(SONICCD_SPINDASH))
-						//TODO
+						//Handle charge delay
+						if (cdChargeDelay & 0x0F)
+							cdChargeDelay = (cdChargeDelay + 0x01) & 0xCF;
+						
+						bool moveRet = false;
+						bool checkChargeClear = CDPeeloutSpindash(&moveRet);
+						if (moveRet)
+							return;
+						
+						if (checkChargeClear && !(cdChargeDelay & 0x0F))
+							cdChargeDelay = 0;
 					#else
 						//Look up and down
 						if (controlHeld.up)
@@ -2601,6 +2764,12 @@ void PLAYER::Move()
 						else if (controlHeld.down)
 							anim = PLAYERANIMATION_DUCK; //This is done in Roll too
 					#endif
+				}
+				else
+				{
+					//Reset charge delay
+					if (!(cdChargeDelay & 0x0F))
+						cdChargeDelay = 0;
 				}
 			}
 		}
@@ -2676,7 +2845,7 @@ void PLAYER::Roll()
 			{
 				if (abs(inertia) >= 0x100)
 					ChkRoll();
-				else
+				else if (cdSPTimer == 0)
 				{
 					#ifndef FIX_DUCK_CONDITION
 						anim = PLAYERANIMATION_DUCK;
@@ -2732,11 +2901,6 @@ void PLAYER::RollRight()
 
 void PLAYER::RollSpeed()
 {
-	//Get our friction (super has separate friction) and deceleration when pulling back
-	//uint16_t friction = acceleration >> 1;
-	//if (super)
-	//	friction = 6;
-	
 	if (!status.isSliding)
 	{
 		//Decelerate if pulling back
@@ -2747,6 +2911,75 @@ void PLAYER::RollSpeed()
 			if (controlHeld.right)
 				RollRight();
 		}
+		
+		#ifdef SONICCD_SPINDASH
+			//Check if we're doing a CD spindash
+			if (cdSPTimer != 0)
+			{
+				//Handle CD spindash
+				int16_t spindashAccel = 0x4B;
+				int16_t spindashCap = top << 1;
+				
+				if (item.hasSpeedShoes)
+					spindashCap -= (top >> 1);
+				
+				//Reverse if facing left
+				if (status.xFlip)
+				{
+					spindashAccel = -spindashAccel;
+					spindashCap = -spindashCap;
+				}
+				
+				//Increase spindash speed
+				inertia += spindashAccel;
+				
+				//Cap our inertia
+				if (!status.xFlip)
+				{
+					if (inertia > spindashCap)
+						inertia = spindashCap;
+				}
+				else
+				{
+					if (inertia < spindashCap)
+						inertia = spindashCap;
+				}
+				
+				//Check if we're still holding down
+				if (!controlHeld.down)
+				{
+					if (cdSPTimer != 45)
+					{
+						//Failed to spindash
+						cdSPTimer = 0;
+						inertia = 0;
+						xVel = 0;
+						yVel = 0;
+						return;
+					}
+					else
+					{
+						//Successfully spindashed
+						PlaySound(SOUNDID_SPINDASH_RELEASE);
+						cdSPTimer = 0;
+						
+						if (status.xFlip)
+							RollLeft();
+						else
+							RollRight();
+					}
+				}
+				else
+					return;
+			}
+		#else
+			//Cancel peelout
+			if (cdSPTimer)
+			{
+				inertia = 0;
+				cdSPTimer = 0;
+			}
+		#endif
 		
 		//Friction
 		if (inertia > 0)
@@ -3786,12 +4019,15 @@ void PLAYER::ControlRoutine()
 			//Keep us in level bounds
 			LevelBound();
 			
-			//Move according to our velocity
-			xPosLong += xVel << 8;
-			if (status.reverseGravity)
-				yPosLong -= yVel << 8;
-			else
-				yPosLong += yVel << 8;
+			if (cdSPTimer == 0)
+			{
+				//Move according to our velocity
+				xPosLong += xVel << 8;
+				if (status.reverseGravity)
+					yPosLong -= yVel << 8;
+				else
+					yPosLong += yVel << 8;
+			}
 			
 			//Handle collision and falling off of slopes
 			AnglePos();
@@ -3840,9 +4076,9 @@ void PLAYER::Update()
 		{
 			#if (defined(SONICCD_PEELOUT) || defined(SONICCD_SPINDASH))
 				//Update peelout / spindash
-				uint8_t nextSPTimer;
+				uint8_t nextSPTimer = cdSPTimer;
 				
-				if ((nextSPTimer = cdSPTimer) != 0)
+				if (nextSPTimer != 0)
 				{
 					//Increment and cap appropriately
 					nextSPTimer++;

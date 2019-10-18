@@ -226,7 +226,7 @@ class PLAYER
 		
 		//CD Spindash/Peelout
 		uint8_t cdSPTimer;
-		uint16_t cdChargeDelay;
+		uint8_t cdChargeDelay;
 		
 		//Flipping (hit a spring that causes the player to spin about, or running off of that curved ramp in Angel Island Zone)
 		uint8_t flipType;
@@ -358,9 +358,7 @@ class PLAYER
 		void ResetRecords(int16_t xPos, int16_t yPos);
 		
 		bool Spindash();
-		
-		bool CDSpindash();
-		bool CDPeelout();
+		bool CDPeeloutSpindash(bool *moveRet);
 		
 		void JumpAbilities();
 		void JumpHeight();

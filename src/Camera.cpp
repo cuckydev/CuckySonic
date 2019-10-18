@@ -87,6 +87,10 @@ void CAMERA::Track(PLAYER *trackPlayer)
 			lookPan = max(lookPan - LOOK_PANSPEED, 0);
 	}
 	
+	//Don't move if locked
+	if (trackPlayer->cameraLock)
+		return;
+	
 	//Get our height shifting (shorter players and/or rolling)
 	int8_t shift = trackPlayer->defaultYRadius - trackPlayer->yRadius;
 	int16_t xShift = 0, yShift = shift;
@@ -96,10 +100,6 @@ void CAMERA::Track(PLAYER *trackPlayer)
 	xShift = (xShift * shift) / 0x100;
 	yShift = (yShift * shift) / 0x100;
 #endif
-	
-	//Don't move if locked
-	if (trackPlayer->cameraLock)
-		return;
 	
 	//Scroll horizontally to the player
 	int16_t trackX = trackPlayer->x.pos;
