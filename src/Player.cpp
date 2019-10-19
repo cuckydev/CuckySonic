@@ -54,7 +54,7 @@
 //#define SONIC2_SUPER_AT_PEAK        //In Sonic 2, you'd turn super at the peak of a jump, no matter what, while in Sonic 3, this was moved to the jump ability code
 //#define SONIC12_NO_INSTASHIELD      //Insta-shield
 //#define SONIC12_NO_SHIELD_ABILITIES //Other shield abilities
-//#define SONICMANIA_DROPDASH         //Sonic Mania's dropdash (overwrites insta-shield)
+//#define SONICMANIA_DROPDASH         //Sonic Mania's dropdash
 
 //#define SONIC1_DEATH_BOUNDARY       //In Sonic 2, the death boundary code was fixed so that it doesn't use the camera's boundary but the level boundary, so that you don't die while the camera boundary is scrolling
 //#define SONIC12_DEATH_RESPAWN       //In Sonic 3, it was changed so that death respawns you once you go off-screen, not when you leave the level boundaries, since this was a very buggy check
@@ -2094,7 +2094,7 @@ bool PLAYER::CDPeeloutSpindash()
 void PLAYER::CheckDropdashRelease()
 {
 	//If landed and charging a dropdash
-	if (abilityProperty != 0 && status.inAir == false)
+	if (abilityProperty == (DROPDASH_CHARGE + 2) && status.inAir == false)
 	{
 		//Clear charging state and face in held direction
 		abilityProperty = 0;
@@ -2183,25 +2183,23 @@ void PLAYER::CheckDropdashRelease()
 void PLAYER::JumpAbilities()
 {
 	#ifdef SONICMANIA_DROPDASH
-		if (abilityProperty)
+		if (abilityProperty > (DROPDASH_CHARGE + 1))
 		{
 			//Check for releasing the already started dropdash
 			if (!(controlHeld.a || controlHeld.b || controlHeld.c))
 			{
 				//Release dropdash
-				jumpAbility = 0xFF;
-				abilityProperty = 0;
+				abilityProperty = 0xFF;
 				anim = PLAYERANIMATION_ROLL;
 				return;
 			}
 		}
-		else if (jumpAbility >= 2 && jumpAbility != 0xFF)
+		else if (abilityProperty >= 2 && abilityProperty <= (DROPDASH_CHARGE + 1))
 		{
 			//Wait for the dropdash to have charged up (DROPDASH_CHARGE frames of holding ABC)
-			if ((controlHeld.a || controlHeld.b || controlHeld.c) && ++jumpAbility > (DROPDASH_CHARGE + 1))
+			if ((controlHeld.a || controlHeld.b || controlHeld.c) && ++abilityProperty > (DROPDASH_CHARGE + 1))
 			{
 				//Start dropdash
-				abilityProperty = 1;
 				anim = PLAYERANIMATION_DROPDASH;
 				PlaySound(SOUNDID_DROPDASH);
 				return;
@@ -2296,17 +2294,23 @@ void PLAYER::JumpAbilities()
 		else if (!super)
 			return; //Invincible, but not super
 		
-		#ifdef SONICMANIA_DROPDASH
-			//Initiate dropdash
-			jumpAbility = 2;
-		#else
-			#ifndef SONIC12_NO_INSTASHIELD
+		#ifndef SONIC12_NO_INSTASHIELD
+			if (!super)
+			{
 				//Update our shield and ability flag
 				if (shieldObject != nullptr)
 						shieldObject->anim = 1;
 				jumpAbility = 1;
 				PlaySound(SOUNDID_USE_INSTA_SHIELD);
-			#endif
+			}
+			else
+				jumpAbility = 1;
+		#endif
+		
+		#ifdef SONICMANIA_DROPDASH
+			//Check if we should initiate a dropdash
+			if (characterType == CHARACTERTYPE_SONIC)
+				abilityProperty = 2;
 		#endif
 	}
 }
@@ -4925,13 +4929,13 @@ void PLAYER::AttachToObject(OBJECT *object, bool *standingBit)
 		#ifndef SONICMANIA_DROPDASH
 			LandOnFloor_ExitBall();
 		#else
-			if (characterType != CHARACTERTYPE_SONIC || !abilityProperty)
+			if (characterType != CHARACTERTYPE_SONIC || abilityProperty <= (DROPDASH_CHARGE + 1))
 				LandOnFloor_ExitBall();
 			else
 			{
 				//If charging a dropdash, release it
 				LandOnFloor_SetState();
-				abilityProperty = 1;
+				abilityProperty = (DROPDASH_CHARGE + 2);
 				CheckDropdashRelease();
 			}
 		#endif
