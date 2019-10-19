@@ -7,7 +7,7 @@
 #include "Log.h"
 
 //Define things
-#define CAMERA_CD_PAN
+//#define CAMERA_CD_PAN
 //#define CAMERA_ROLL_SHIFT_FIX
 
 //Constants
