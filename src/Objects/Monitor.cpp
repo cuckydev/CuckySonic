@@ -33,7 +33,7 @@ void ObjMonitor_SolidObject_Lead(OBJECT *object, OBJECT_SOLIDTOUCH *solidTouch, 
 	//Basically, act as a solid if we're either already on top of the monitor, or not in ball form
 	if (object->playerContact[i].standing)
 		ObjMonitor_ChkOverEdge(object, i, player);
-	else if (player->anim != PLAYERANIMATION_ROLL)
+	else if (player->anim != PLAYERANIMATION_ROLL && player->anim != PLAYERANIMATION_DROPDASH)
 		object->SolidObjectCont(solidTouch, player, i, MONITOR_WIDTH, MONITOR_HEIGHT, object->x.pos);
 }
 

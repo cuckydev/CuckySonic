@@ -16,6 +16,7 @@
 //Constants
 #define PEELOUT_CHARGE	30
 #define SPINDASH_CHARGE	45
+#define DROPDASH_CHARGE	20
 
 //Bug-fixes
 //#define FIX_SPINDASH_JUMP      //When you jump the frame after you spindash, you'll jump straight upwards
@@ -34,6 +35,7 @@
 
 //#define SONIC1_WALK_ANIMATION       //For some reason, in Sonic 2+, the animation code was messed up, making the first frame of the walk animation last only one frame
 //#define SONIC1_SLOPE_ROTATION       //In Sonic 2+, a few lines were added to the animation code to make the floor rotation more consistent
+//#define SONICCD_DASH_ANIMATION      //Sonic CD gives Sonic a third running animation, a dash animation
 
 //#define SONIC12_SLOPE_RESIST        //In Sonic 3, they made it so you're always affected by slope gravity unless you're on a shallow floor
 //#define SONIC12_SLOPE_REPEL         //In Sonic 3, the code to make it so you fall off of walls and ceilings when going too slow was completely redone
@@ -58,7 +60,7 @@
 
 //Other control options
 //#define CONTROL_NO_ROLLJUMP_LOCK          //In the originals, jumping from a roll will lock your controls
-//#define CONTROL_JA_DONT_CLEAR_ROLLJUMP    //When you use a jump ability in the original, it clears the roll-jump flag
+//#define CONTROL_JA_DONT_CLEAR_ROLLJUMP    //When you use a jump ability in the original, it clears the roll-jump fla
 
 //Common macros
 #ifdef FIX_ROLL_YSHIFT
@@ -99,13 +101,16 @@
 //Animation data
 #define WALK_FRAMES			8
 #define RUN_FRAMES			4
+#define DASH_FRAMES			4
 
-#define MAPPINGFRAME_FLIP1 95
+#define MAPPINGFRAME_FLIP1	95
 
 static const uint8_t animationWalk[] =			{0xFF,0x0F,0x10,0x11,0x12,0x13,0x14,0x0D,0x0E,0xFF}; //Walk and run must match in length (run is padded with 0xFF, here)
 static const uint8_t animationRun[] =			{0xFF,0x2D,0x2E,0x2F,0x30,0xFF,0xFF,0xFF,0xFF,0xFF};
+static const uint8_t animationDash[] =			{0xFF,0xD6,0xD7,0xD8,0xD9,0xFF,0xFF,0xFF,0xFF,0xFF};
 static const uint8_t animationRoll[] =			{0xFE,0x3D,0x41,0x3E,0x41,0x3F,0x41,0x40,0x41,0xFF}; //Roll and roll2 must match in length
 static const uint8_t animationRoll2[] =			{0xFE,0x3D,0x41,0x3E,0x41,0x3F,0x41,0x40,0x41,0xFF};
+static const uint8_t animationDropdash[] =		{0x00,0xE6,0xE8,0xE7,0xE9,0xE6,0xEA,0xE7,0xEB,0xE6,0xEC,0xE7,0xED,0xE6,0xEE,0xE7,0xEF,0xFF};
 static const uint8_t animationPush[] =			{0xFD,0x48,0x49,0x4A,0x4B,0xFF,0xFF,0xFF,0xFF,0xFF}; //Push must also match the length of run and walk (padded with 0xFF here)
 static const uint8_t animationIdle[] =			{0x05,0x01,0x01,0x01,0x01,0x01,0x01,0x01,0x01,0x01,0x01,0x01,0x01,0x01,0x01,
 												 0x01,0x01,0x01,0x01,0x01,0x01,0x01,0x01,0x01,0x01,0x01,0x01,0x01,0x01,0x01,
@@ -148,7 +153,9 @@ static const uint8_t animationLying[] =			{0x09,0x08,0x09,0xFF};
 static const uint8_t animationLieDown[] =		{0x03,0x07,0xFD,PLAYERANIMATION_WALK};
 
 //Super specific animation
-#define SUPER_FLY_FRAMES	1
+#define SUPER_WALK_FRAMES	8
+#define SUPER_RUN_FRAMES	1
+#define SUPER_DASH_FRAMES	1
 
 static const uint8_t animationSuperWalk[] =			{0xFF,0x77,0x78,0x79,0x7A,0x7B,0x7C,0x75,0x76,0xFF}; //Walk and run must match in length (run is padded with 0xFF, here)
 static const uint8_t animationSuperRun[] =			{0xFF,0xB5,0xB9,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF};
@@ -162,8 +169,10 @@ static const uint8_t animationSuperTransform[] =	{0x02,0x6D,0x6D,0x6E,0x6E,0x6F,
 static const uint8_t* animationList[] = {
 	animationWalk,
 	animationRun,
+	animationDash,
 	animationRoll,
 	animationRoll2,
+	animationDropdash,
 	animationPush,
 	animationIdle,
 	animationBalance1,
@@ -198,8 +207,10 @@ static const uint8_t* animationList[] = {
 static const uint8_t* animationListSuper[] = {
 	animationSuperWalk,
 	animationSuperRun,
+	animationSuperRun,
 	animationRoll,
 	animationRoll2,
+	animationDropdash,
 	animationSuperPush,
 	animationSuperIdle,
 	animationSuperBalance,
@@ -1696,10 +1707,10 @@ void PLAYER::LandOnFloor_SetState()
 		if (jumpAbility != 0)
 		{
 			//Handle jump abilities on landing
-			if (characterType == CHARACTERTYPE_SONIC && super == false)
+			if (characterType == CHARACTERTYPE_SONIC)
 			{
 				//Bubble shield bounce
-				if (shield == SHIELD_BUBBLE)
+				if (shield == SHIELD_BUBBLE && super == false)
 				{
 					//Get the force of our bounce
 					int16_t bounceForce = 0x780;
@@ -2062,7 +2073,7 @@ void PLAYER::JumpAbilities()
 		//Perform our ability
 		if (super)
 		{
-			if (0 /*hyper*/)
+			if (hyper)
 			{
 				//Hyper dash
 			}
@@ -2070,6 +2081,7 @@ void PLAYER::JumpAbilities()
 			{
 				//Super cannot use any jump abilities, just clear jump ability
 				jumpAbility = 1;
+				return;
 			}
 		}
 		else if (!item.isInvincible)
@@ -2132,14 +2144,17 @@ void PLAYER::JumpAbilities()
 				if (SuperTransform())
 					return;
 			#endif
-			#ifndef SONIC12_NO_INSTASHIELD
-				//Update our shield and ability flag
-				if (shieldObject != nullptr)
-						shieldObject->anim = 1;
-				jumpAbility = 1;
-				PlaySound(SOUNDID_USE_INSTA_SHIELD);
-			#endif
 		}
+		else if (!super)
+			return; //Invincible, but not super
+		
+		#ifndef SONIC12_NO_INSTASHIELD
+			//Update our shield and ability flag
+			if (shieldObject != nullptr)
+					shieldObject->anim = 1;
+			jumpAbility = 1;
+			PlaySound(SOUNDID_USE_INSTA_SHIELD);
+		#endif
 	}
 }
 
@@ -3611,6 +3626,15 @@ void PLAYER::Animate()
 					if (!super)
 					{
 						//Get the animation to use
+					#ifdef SONICCD_DASH_ANIMATION
+						if (speedFactor >= 0xA00)
+						{
+							//Dash animation (at or above 0xA00 speed)
+							animation = aniList[PLAYERANIMATION_DASH];
+							angleIncrement *= DASH_FRAMES;
+						}
+						else
+					#endif
 						if (speedFactor >= 0x600)
 						{
 							//Run animation (at or above 0x600 speed)
@@ -3658,17 +3682,26 @@ void PLAYER::Animate()
 					else
 					{
 						//Get the animation to use
+					#ifdef SONICCD_DASH_ANIMATION
+						if (speedFactor >= 0xD80)
+						{
+							//Dash animation (at or above 0xA00 speed)
+							animation = aniList[PLAYERANIMATION_DASH];
+							angleIncrement *= SUPER_DASH_FRAMES;
+						}
+						else
+					#endif
 						if (speedFactor >= 0x800)
 						{
 							//Run animation (at or above 0x600 speed)
 							animation = aniList[PLAYERANIMATION_RUN];
-							angleIncrement *= SUPER_FLY_FRAMES;
+							angleIncrement *= SUPER_RUN_FRAMES;
 						}
 						else
 						{
 							//Walk animation (below 0x600 speed)
 							animation = aniList[PLAYERANIMATION_WALK];
-							angleIncrement *= WALK_FRAMES;
+							angleIncrement *= SUPER_WALK_FRAMES;
 						}
 						
 						//Check if our animation is going to loop
@@ -4582,7 +4615,7 @@ bool PLAYER::TouchResponseObject(OBJECT *object, int16_t playerLeft, int16_t pla
 				case COLLISIONTYPE_ENEMY:
 				case COLLISIONTYPE_BOSS:
 					//Check if we're gonna hurt the enemy, or ourselves
-					if (item.isInvincible || anim == PLAYERANIMATION_SPINDASH || anim == PLAYERANIMATION_ROLL)
+					if (item.isInvincible || anim == PLAYERANIMATION_SPINDASH || anim == PLAYERANIMATION_ROLL|| anim == PLAYERANIMATION_DROPDASH)
 						return object->Hurt(this);
 					
 					//Check character specific states
@@ -4636,7 +4669,7 @@ bool PLAYER::TouchResponseObject(OBJECT *object, int16_t playerLeft, int16_t pla
 						}
 					}
 					//Check if we're the lead, and only break the monitor if so and if in the rolling animation
-					else if (follow == nullptr && anim == PLAYERANIMATION_ROLL)
+					else if (follow == nullptr && (anim == PLAYERANIMATION_ROLL || anim == PLAYERANIMATION_DROPDASH))
 					{
 						//Reverse our y-velocity and destroy the monitor
 						yVel = -yVel;
