@@ -36,7 +36,7 @@
 
 //#define SONIC1_WALK_ANIMATION       //For some reason, in Sonic 2+, the animation code was messed up, making the first frame of the walk animation last only one frame
 //#define SONIC1_SLOPE_ROTATION       //In Sonic 2+, a few lines were added to the animation code to make the floor rotation more consistent
-#define SONICCD_DASH_ANIMATION      //Sonic CD gives Sonic a third running animation, a dash animation
+//#define SONICCD_DASH_ANIMATION      //Sonic CD gives Sonic a third running animation, a dash animation
 
 //#define SONIC12_SLOPE_RESIST        //In Sonic 3, they made it so you're always affected by slope gravity unless you're on a shallow floor
 //#define SONIC12_SLOPE_REPEL         //In Sonic 3, the code to make it so you fall off of walls and ceilings when going too slow was completely redone
@@ -47,21 +47,21 @@
 //#define SONICCD_ROLLJUMP            //In Sonic CD, rolljumping was *partially* removed, the below "CONTROL_NO_ROLLJUMP_LOCK" would act differently
 
 //#define SONIC1_NO_SPINDASH          //The spindash, it needs no introduction
-#define SONICCD_SPINDASH            //CD spindash
-#define SONICCD_PEELOUT             //CD super-peelout
+//#define SONICCD_SPINDASH            //CD spindash
+//#define SONICCD_PEELOUT             //CD super-peelout
 //#define SONIC1_NO_SUPER             //Super Sonic wasn't in Sonic 1
 //#define SONIC123_NO_HYPER           //DOES NOTHING, UNIMPLEMENTED! - Hyper Sonic wasn't introduced until S3K
 //#define SONIC2_SUPER_AT_PEAK        //In Sonic 2, you'd turn super at the peak of a jump, no matter what, while in Sonic 3, this was moved to the jump ability code
 //#define SONIC12_NO_INSTASHIELD      //Insta-shield
 //#define SONIC12_NO_SHIELD_ABILITIES //Other shield abilities
-#define SONICMANIA_DROPDASH         //Sonic Mania's dropdash
+//#define SONICMANIA_DROPDASH         //Sonic Mania's dropdash
 
 //#define SONIC1_DEATH_BOUNDARY       //In Sonic 2, the death boundary code was fixed so that it doesn't use the camera's boundary but the level boundary, so that you don't die while the camera boundary is scrolling
 //#define SONIC12_DEATH_RESPAWN       //In Sonic 3, it was changed so that death respawns you once you go off-screen, not when you leave the level boundaries, since this was a very buggy check
 //#define SONIC2_SPINDASH_ANIM_BUG    //In Sonic 3, the bug where landing on the ground while spindashing plays the walk animation was fixed
 
 //Other control options
-#define CONTROL_NO_ROLLJUMP_LOCK          //In the originals, jumping from a roll will lock your controls
+//#define CONTROL_NO_ROLLJUMP_LOCK          //In the originals, jumping from a roll will lock your controls
 //#define CONTROL_JA_DONT_CLEAR_ROLLJUMP    //When you use a jump ability in the original, it clears the roll-jump flag
 
 //Common macros
