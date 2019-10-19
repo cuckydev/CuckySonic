@@ -1912,7 +1912,7 @@ bool PLAYER::Spindash()
 }
 
 //CD Peelout and Spindash
-bool PLAYER::CDPeeloutSpindash(bool *moveRet) //return false = branch to updatespeed, true = branch to resetscr
+bool PLAYER::CDPeeloutSpindash()
 {
 #ifdef SONICCD_PEELOUT
 	if (!(cdChargeDelay & 0x80))
@@ -1976,8 +1976,6 @@ bool PLAYER::CDPeeloutSpindash(bool *moveRet) //return false = branch to updates
 							inertia = peeloutCap;
 					}
 					
-					//NOTE: this cuts the movement sub-routine short
-					*moveRet = true;
 					return true;
 				}
 				else
@@ -2006,7 +2004,9 @@ bool PLAYER::CDPeeloutSpindash(bool *moveRet) //return false = branch to updates
 					//Successful peelout
 					cdSPTimer = 0;
 					PlaySound(SOUNDID_SPINDASH_RELEASE);
-					return true;
+					if (!(cdChargeDelay & 0x0F))
+						cdChargeDelay = 0;
+					return false;
 				}
 			}
 		}
@@ -2024,7 +2024,10 @@ bool PLAYER::CDPeeloutSpindash(bool *moveRet) //return false = branch to updates
 	{
 		//Handle looking up
 		if (controlHeld.up)
+		{
 			anim = PLAYERANIMATION_LOOKUP;
+			return false;
+		}
 	}
 	
 #ifdef SONICCD_SPINDASH
@@ -2050,7 +2053,11 @@ bool PLAYER::CDPeeloutSpindash(bool *moveRet) //return false = branch to updates
 		
 		//Check if we should spindash or already are
 		if (!controlHeld.down)
-			return true;
+		{
+			if (!(cdChargeDelay & 0x0F))
+				cdChargeDelay = 0;
+			return false;
+		}
 		anim = PLAYERANIMATION_DUCK;
 		if (cdSPTimer != 0 || !(controlPress.a || controlPress.b || controlPress.c))
 			return false;
@@ -2070,12 +2077,18 @@ bool PLAYER::CDPeeloutSpindash(bool *moveRet) //return false = branch to updates
 	{
 		//Handle ducking
 		if (!controlHeld.down)
-			return true;
+		{
+			if (!(cdChargeDelay & 0x0F))
+				cdChargeDelay = 0;
+			return false;
+		}
 		anim = PLAYERANIMATION_DUCK;
 		return false;
 	}
 	
-	return true;
+	if (!(cdChargeDelay & 0x0F))
+		cdChargeDelay = 0;
+	return false;
 }
 
 void PLAYER::CheckDropdashRelease()
@@ -2927,14 +2940,9 @@ void PLAYER::Move()
 						//Handle charge delay
 						if (cdChargeDelay & 0x0F)
 							cdChargeDelay = (cdChargeDelay + 0x01) & 0xCF;
-						
-						bool moveRet = false;
-						bool checkChargeClear = CDPeeloutSpindash(&moveRet);
-						if (moveRet)
+						//Update peelout / spindash and looking up / down
+						if (CDPeeloutSpindash())
 							return;
-						
-						if (checkChargeClear && !(cdChargeDelay & 0x0F))
-							cdChargeDelay = 0;
 					#else
 						//Look up and down
 						if (controlHeld.up)

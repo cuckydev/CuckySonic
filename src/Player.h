@@ -361,7 +361,7 @@ class PLAYER
 		void ResetRecords(int16_t xPos, int16_t yPos);
 		
 		bool Spindash();
-		bool CDPeeloutSpindash(bool *moveRet);
+		bool CDPeeloutSpindash();
 		void CheckDropdashRelease();
 		
 		void JumpAbilities();
