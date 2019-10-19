@@ -190,6 +190,7 @@ class PLAYER
 		
 		SHIELD shield;				//Our shield type
 		uint8_t jumpAbility;		//Our jump ability (can we use shield ability, insta-shield, dropdash, etc.)
+		uint8_t abilityProperty;	//Tails's flying time, Knuckles' gliding speed(?)
 		
 		uint16_t invulnerabilityTime;
 		uint16_t invincibilityTime;
@@ -361,6 +362,8 @@ class PLAYER
 		
 		bool Spindash();
 		bool CDPeeloutSpindash(bool *moveRet);
+		void DropdashRelease();
+		void CheckDropdashRelease();
 		
 		void JumpAbilities();
 		void JumpHeight();

@@ -35,7 +35,7 @@
 
 //#define SONIC1_WALK_ANIMATION       //For some reason, in Sonic 2+, the animation code was messed up, making the first frame of the walk animation last only one frame
 //#define SONIC1_SLOPE_ROTATION       //In Sonic 2+, a few lines were added to the animation code to make the floor rotation more consistent
-//#define SONICCD_DASH_ANIMATION      //Sonic CD gives Sonic a third running animation, a dash animation
+#define SONICCD_DASH_ANIMATION      //Sonic CD gives Sonic a third running animation, a dash animation
 
 //#define SONIC12_SLOPE_RESIST        //In Sonic 3, they made it so you're always affected by slope gravity unless you're on a shallow floor
 //#define SONIC12_SLOPE_REPEL         //In Sonic 3, the code to make it so you fall off of walls and ceilings when going too slow was completely redone
@@ -47,19 +47,20 @@
 
 //#define SONIC1_NO_SPINDASH          //The spindash, it needs no introduction
 //#define SONICCD_SPINDASH            //CD spindash
-//#define SONICCD_PEELOUT             //CD super-peelout
+#define SONICCD_PEELOUT             //CD super-peelout
 //#define SONIC1_NO_SUPER             //Super Sonic wasn't in Sonic 1
 //#define SONIC123_NO_HYPER           //DOES NOTHING, UNIMPLEMENTED! - Hyper Sonic wasn't introduced until S3K
 //#define SONIC2_SUPER_AT_PEAK        //In Sonic 2, you'd turn super at the peak of a jump, no matter what, while in Sonic 3, this was moved to the jump ability code
 //#define SONIC12_NO_INSTASHIELD      //Insta-shield
 //#define SONIC12_NO_SHIELD_ABILITIES //Other shield abilities
+#define SONICMANIA_DROPDASH         //Sonic Mania's dropdash (overwrites insta-shield)
 
 //#define SONIC1_DEATH_BOUNDARY       //In Sonic 2, the death boundary code was fixed so that it doesn't use the camera's boundary but the level boundary, so that you don't die while the camera boundary is scrolling
 //#define SONIC12_DEATH_RESPAWN       //In Sonic 3, it was changed so that death respawns you once you go off-screen, not when you leave the level boundaries, since this was a very buggy check
 //#define SONIC2_SPINDASH_ANIM_BUG    //In Sonic 3, the bug where landing on the ground while spindashing plays the walk animation was fixed
 
 //Other control options
-//#define CONTROL_NO_ROLLJUMP_LOCK          //In the originals, jumping from a roll will lock your controls
+#define CONTROL_NO_ROLLJUMP_LOCK          //In the originals, jumping from a roll will lock your controls
 //#define CONTROL_JA_DONT_CLEAR_ROLLJUMP    //When you use a jump ability in the original, it clears the roll-jump fla
 
 //Common macros
@@ -1159,7 +1160,7 @@ void PLAYER::AnglePos()
 						//If we're running off of a ledge, enter air state
 						status.inAir = true;
 						status.pushing = false;
-						prevAnim = PLAYERANIMATION_RUN;
+						prevAnim = (PLAYERANIMATION)1;
 					}
 					else
 					{
@@ -1194,7 +1195,7 @@ void PLAYER::AnglePos()
 						//If we're running off of a ledge, enter air state
 						status.inAir = true;
 						status.pushing = false;
-						prevAnim = PLAYERANIMATION_RUN;
+						prevAnim = (PLAYERANIMATION)1;
 					}
 					else
 					{
@@ -1229,7 +1230,7 @@ void PLAYER::AnglePos()
 						//If we're running off of a ledge, enter air state
 						status.inAir = true;
 						status.pushing = false;
-						prevAnim = PLAYERANIMATION_RUN;
+						prevAnim = (PLAYERANIMATION)1;
 					}
 					else
 					{
@@ -1264,7 +1265,7 @@ void PLAYER::AnglePos()
 						//If we're running off of a ledge, enter air state
 						status.inAir = true;
 						status.pushing = false;
-						prevAnim = PLAYERANIMATION_RUN;
+						prevAnim = (PLAYERANIMATION)1;
 					}
 					else
 					{
@@ -1340,6 +1341,9 @@ void PLAYER::CheckWallsOnGround()
 //Air collision functions
 void PLAYER::DoLevelCollision()
 {
+	//Remember our previous jump ability property
+	uint8_t prevProperty = abilityProperty;
+	
 	//Get the primary angle we're moving in
 	uint8_t moveAngle = GetAtan(xVel, yVel);
 	
@@ -1638,6 +1642,10 @@ void PLAYER::DoLevelCollision()
 			break;
 		}
 	}
+	
+	//Check for dropdash release
+	abilityProperty = prevProperty;
+	CheckDropdashRelease();
 }
 
 //Functions for landing on the ground
@@ -1693,6 +1701,7 @@ void PLAYER::LandOnFloor_SetState()
 	status.pushing = false;
 	status.rollJumping = false;
 	status.jumping = false;
+	abilityProperty = 0;
 	
 	//Clear chain point counter
 	chainPointCounter = 0;
@@ -1710,7 +1719,7 @@ void PLAYER::LandOnFloor_SetState()
 			if (characterType == CHARACTERTYPE_SONIC)
 			{
 				//Bubble shield bounce
-				if (shield == SHIELD_BUBBLE && super == false)
+				if (shield == SHIELD_BUBBLE && abilityProperty == 0)
 				{
 					//Get the force of our bounce
 					int16_t bounceForce = 0x780;
@@ -1876,7 +1885,7 @@ bool PLAYER::Spindash()
 			{
 				//Restart the spindash animation and play the rev sound
 				anim = PLAYERANIMATION_SPINDASH;
-				prevAnim = PLAYERANIMATION_WALK;
+				prevAnim = (PLAYERANIMATION)0;
 				PlaySound(SOUNDID_SPINDASH_REV);
 				
 				//Increase our spindash counter
@@ -2060,9 +2069,50 @@ bool PLAYER::CDPeeloutSpindash(bool *moveRet) //return false = branch to updates
 	return true;
 }
 
+void PLAYER::DropdashRelease()
+{
+	
+}
+
+void PLAYER::CheckDropdashRelease()
+{
+	//If landed and charging a dropdash
+	if (abilityProperty != 0 && status.inAir == false)
+	{
+		
+	}
+}
+
 //Jump ability functions
 void PLAYER::JumpAbilities()
 {
+	#ifdef SONICMANIA_DROPDASH
+		if (abilityProperty)
+		{
+			//Check for releasing the already started dropdash
+			if (!(controlHeld.a || controlHeld.b || controlHeld.c))
+			{
+				//Release dropdash
+				jumpAbility = 0xFF;
+				abilityProperty = 0;
+				anim = PLAYERANIMATION_ROLL;
+				return;
+			}
+		}
+		else if (jumpAbility >= 2 && jumpAbility != 0xFF)
+		{
+			//Wait for the dropdash to have charged up (DROPDASH_CHARGE frames of holding ABC)
+			if ((controlHeld.a || controlHeld.b || controlHeld.c) && ++jumpAbility > (DROPDASH_CHARGE + 1))
+			{
+				//Start dropdash
+				abilityProperty = 1;
+				anim = PLAYERANIMATION_DROPDASH;
+				//PlaySound(SOUNDID_DROPDASH_CHARGE);
+				return;
+			}
+		}
+	#endif
+	
 	if (jumpAbility == 0 && (controlPress.a || controlPress.b || controlPress.c))
 	{
 		#ifndef CONTROL_JA_DONT_CLEAR_ROLLJUMP
@@ -2077,12 +2127,14 @@ void PLAYER::JumpAbilities()
 			{
 				//Hyper dash
 			}
+		#ifndef SONICMANIA_DROPDASH
 			else
 			{
 				//Super cannot use any jump abilities, just clear jump ability
 				jumpAbility = 1;
 				return;
 			}
+		#endif
 		}
 		else if (!item.isInvincible)
 		{
@@ -2148,12 +2200,17 @@ void PLAYER::JumpAbilities()
 		else if (!super)
 			return; //Invincible, but not super
 		
-		#ifndef SONIC12_NO_INSTASHIELD
-			//Update our shield and ability flag
-			if (shieldObject != nullptr)
-					shieldObject->anim = 1;
-			jumpAbility = 1;
-			PlaySound(SOUNDID_USE_INSTA_SHIELD);
+		#ifdef SONICMANIA_DROPDASH
+			//Initiate dropdash
+			jumpAbility = 2;
+		#else
+			#ifndef SONIC12_NO_INSTASHIELD
+				//Update our shield and ability flag
+				if (shieldObject != nullptr)
+						shieldObject->anim = 1;
+				jumpAbility = 1;
+				PlaySound(SOUNDID_USE_INSTA_SHIELD);
+			#endif
 		#endif
 	}
 }
@@ -2372,9 +2429,7 @@ bool PLAYER::Jump()
 				#endif
 			#endif
 			
-		#ifndef CONTROL_NO_ROLLJUMP_LOCK
 			if (!status.inBall)
-		#endif
 			{
 				//Go into ball form
 				#ifndef FIX_ROLLJUMP_COLLISION
@@ -2390,8 +2445,17 @@ bool PLAYER::Jump()
 			}
 			else
 			{
-				//Set our roll jump flag (also we use the regular non-roll collision size for some reason)
-				status.rollJumping = true;
+				#ifndef CONTROL_NO_ROLLJUMP_LOCK
+					//Set our roll jump flag (also we use the regular non-roll collision size for some reason)
+					status.rollJumping = true;
+				#else
+					//Make sure we stay in ballform
+					#ifndef FIX_ROLLJUMP_COLLISION
+						xRadius = rollXRadius;
+						yRadius = rollYRadius;
+					#endif
+					anim = PLAYERANIMATION_ROLL;
+				#endif
 			}
 			return false;
 		}
@@ -2515,7 +2579,7 @@ void PLAYER::MoveLeft()
 		{
 			status.xFlip = true;
 			status.pushing = false;
-			prevAnim = PLAYERANIMATION_RUN;
+			prevAnim = (PLAYERANIMATION)1;
 		}
 		
 		//Accelerate
@@ -2570,7 +2634,7 @@ void PLAYER::MoveRight()
 		{
 			status.xFlip = false;
 			status.pushing = false;
-			prevAnim = PLAYERANIMATION_RUN;
+			prevAnim = (PLAYERANIMATION)1;
 		}
 		
 		//Accelerate
@@ -3489,7 +3553,7 @@ void PLAYER::UpdateSuper()
 		paletteState = PALETTESTATE_FADING_OUT;
 		paletteFrame = 5;
 		super = false;
-		prevAnim = PLAYERANIMATION_RUN;
+		prevAnim = (PLAYERANIMATION)1;
 		invincibilityTime = 1;
 		
 		if (!item.hasSpeedShoes)
