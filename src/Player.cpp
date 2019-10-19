@@ -2094,91 +2094,94 @@ bool PLAYER::CDPeeloutSpindash()
 void PLAYER::CheckDropdashRelease()
 {
 	//If landed and charging a dropdash
-	if (abilityProperty == (DROPDASH_CHARGE + 2) && status.inAir == false)
+	if (status.inAir == false)
 	{
-		//Clear charging state and face in held direction
-		if (controlHeld.right)
-			status.xFlip = false;
-		if (controlHeld.left)
-			status.xFlip = true;
-		
-		//Get our speed to dropdash at (super is faster)
-		int16_t dashspeed, maxspeed;
-		if (super)
+		if (abilityProperty == (DROPDASH_CHARGE + 2))
 		{
-			dashspeed = 0xC00;
-			maxspeed = 0xD00;
-		}
-		else
-		{
-			dashspeed = 0x800;
-			maxspeed = 0xC00;
-		}
-		
-		//Set our speed and release
-		if (status.xFlip)
-		{
-			//Dashing to the left, moving left
-			if (xVel <= 0)
+			//Clear charging state and face in held direction
+			if (controlHeld.right)
+				status.xFlip = false;
+			if (controlHeld.left)
+				status.xFlip = true;
+			
+			//Get our speed to dropdash at (super is faster)
+			int16_t dashspeed, maxspeed;
+			if (super)
 			{
-				//Halve current speed and apply dash speed
-				inertia = (inertia >> 2) - dashspeed;
-				if (inertia < -maxspeed)
-					inertia = -maxspeed;
+				dashspeed = 0xC00;
+				maxspeed = 0xD00;
 			}
-			//Dashing to the left, moving right, but on a sloped surface
-			else if (angle)
-			{
-				//Halve current speed and apply dash speed
-				inertia = (inertia >> 1) - dashspeed;
-			}
-			//Dashing to the left, moving right
 			else
 			{
-				//Set our speed to the dash speed
-				inertia = -dashspeed;
+				dashspeed = 0x800;
+				maxspeed = 0xC00;
 			}
-		}
-		else
-		{
-			//Dashing to the right, moving right
-			if (xVel <= 0)
+			
+			//Set our speed and release
+			if (status.xFlip)
 			{
-				//Halve current speed and apply dash speed
-				inertia = (inertia >> 2) + dashspeed;
-				if (inertia > maxspeed)
-					inertia = maxspeed;
+				//Dashing to the left, moving left
+				if (xVel <= 0)
+				{
+					//Halve current speed and apply dash speed
+					inertia = (inertia >> 2) - dashspeed;
+					if (inertia < -maxspeed)
+						inertia = -maxspeed;
+				}
+				//Dashing to the left, moving right, but on a sloped surface
+				else if (angle)
+				{
+					//Halve current speed and apply dash speed
+					inertia = (inertia >> 1) - dashspeed;
+				}
+				//Dashing to the left, moving right
+				else
+				{
+					//Set our speed to the dash speed
+					inertia = -dashspeed;
+				}
 			}
-			//Dashing to the right, moving left, but on a sloped surface
-			else if (angle)
-			{
-				//Halve current speed and apply dash speed
-				inertia = (inertia >> 1) + dashspeed;
-			}
-			//Dashing to the right, moving left
 			else
 			{
-				//Set our speed to the dash speed
-				inertia = dashspeed;
+				//Dashing to the right, moving right
+				if (xVel <= 0)
+				{
+					//Halve current speed and apply dash speed
+					inertia = (inertia >> 2) + dashspeed;
+					if (inertia > maxspeed)
+						inertia = maxspeed;
+				}
+				//Dashing to the right, moving left, but on a sloped surface
+				else if (angle)
+				{
+					//Halve current speed and apply dash speed
+					inertia = (inertia >> 1) + dashspeed;
+				}
+				//Dashing to the right, moving left
+				else
+				{
+					//Set our speed to the dash speed
+					inertia = dashspeed;
+				}
 			}
+			
+			//Ensure we're still in ballform
+			status.inBall = true;
+			xRadius = rollXRadius;
+			yRadius = rollYRadius;
+			anim = PLAYERANIMATION_ROLL;
+			prevAnim = (PLAYERANIMATION)0;
+			YSHIFT_ON_FLOOR(5);
+			PlaySound(SOUNDID_SPINDASH_RELEASE);
+			
+			//Lag screen behind us
+			ResetRecords(x.pos, y.pos);
+			scrollDelay = 0x2000 - (abs(inertia) - 0x800) * 2;
 		}
 		
-		//Ensure we're still in ballform
-		status.inBall = true;
-		xRadius = rollXRadius;
-		yRadius = rollYRadius;
-		anim = PLAYERANIMATION_ROLL;
-		prevAnim = (PLAYERANIMATION)0;
-		YSHIFT_ON_FLOOR(5);
-		PlaySound(SOUNDID_SPINDASH_RELEASE);
-		
-		//Lag screen behind us
-		ResetRecords(x.pos, y.pos);
-		scrollDelay = 0x2000 - (abs(inertia) - 0x800) * 2;
+		//Clear ability property
+		abilityProperty = 0;
 	}
-	
-	//Clear ability property
-	abilityProperty = 0;
 }
 
 //Jump ability functions
