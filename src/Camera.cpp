@@ -7,7 +7,7 @@
 #include "Log.h"
 
 //Define things
-//#define CAMERA_CD_PAN
+#define CAMERA_CD_PAN
 //#define CAMERA_ROLL_SHIFT_FIX
 
 //Constants
@@ -55,6 +55,32 @@ CAMERA::~CAMERA()
 
 void CAMERA::Track(PLAYER *trackPlayer)
 {
+	#ifdef CAMERA_CD_PAN
+		//Handle CD panning
+		if (trackPlayer->spindashing)
+		{
+			if (trackPlayer->status.xFlip)
+				xPan = min(xPan + CD_PAN_SCROLL,  CD_PAN_LEFT);
+			else
+				xPan = max(xPan - CD_PAN_SCROLL, -CD_PAN_RIGHT);
+		}
+		else if (abs(trackPlayer->inertia) >= 0x600)
+		{
+			if (trackPlayer->inertia < 0)
+				xPan = min(xPan + CD_PAN_SCROLL,  CD_PAN_LEFT);
+			else
+				xPan = max(xPan - CD_PAN_SCROLL, -CD_PAN_RIGHT);
+		}
+		else
+		{
+			//Pan back to the center
+			if (xPan > 0)
+				xPan = max(xPan - CD_PAN_SCROLL,   0);
+			else if (xPan < 0)
+				xPan = min(xPan + CD_PAN_SCROLL,   0);
+		}
+	#endif
+	
 	//Handle panning while player is looking up / down
 	if (trackPlayer->status.inAir == false && trackPlayer->anim == PLAYERANIMATION_LOOKUP)
 	{
@@ -191,30 +217,4 @@ void CAMERA::Track(PLAYER *trackPlayer)
 		if (y + gRenderSpec.height > gLevel->bottomBoundary)
 			y = gLevel->bottomBoundary - gRenderSpec.height;
 	}
-	
-	#ifdef CAMERA_CD_PAN
-		//Handle CD panning
-		if (trackPlayer->spindashing)
-		{
-			if (trackPlayer->status.xFlip)
-				xPan = min(xPan + CD_PAN_SCROLL,  CD_PAN_LEFT);
-			else
-				xPan = max(xPan - CD_PAN_SCROLL, -CD_PAN_RIGHT);
-		}
-		else if (abs(trackPlayer->inertia) >= 0x600)
-		{
-			if (trackPlayer->inertia < 0)
-				xPan = min(xPan + CD_PAN_SCROLL,  CD_PAN_LEFT);
-			else
-				xPan = max(xPan - CD_PAN_SCROLL, -CD_PAN_RIGHT);
-		}
-		else
-		{
-			//Pan back to the center
-			if (xPan > 0)
-				xPan = max(xPan - CD_PAN_SCROLL,   0);
-			else if (xPan < 0)
-				xPan = min(xPan + CD_PAN_SCROLL,   0);
-		}
-	#endif
 }
