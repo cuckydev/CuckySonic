@@ -35,7 +35,7 @@
 
 //#define SONIC1_WALK_ANIMATION       //For some reason, in Sonic 2+, the animation code was messed up, making the first frame of the walk animation last only one frame
 //#define SONIC1_SLOPE_ROTATION       //In Sonic 2+, a few lines were added to the animation code to make the floor rotation more consistent
-#define SONICCD_DASH_ANIMATION      //Sonic CD gives Sonic a third running animation, a dash animation
+//#define SONICCD_DASH_ANIMATION      //Sonic CD gives Sonic a third running animation, a dash animation
 
 //#define SONIC12_SLOPE_RESIST        //In Sonic 3, they made it so you're always affected by slope gravity unless you're on a shallow floor
 //#define SONIC12_SLOPE_REPEL         //In Sonic 3, the code to make it so you fall off of walls and ceilings when going too slow was completely redone
@@ -47,20 +47,20 @@
 
 //#define SONIC1_NO_SPINDASH          //The spindash, it needs no introduction
 //#define SONICCD_SPINDASH            //CD spindash
-#define SONICCD_PEELOUT             //CD super-peelout
+//#define SONICCD_PEELOUT             //CD super-peelout
 //#define SONIC1_NO_SUPER             //Super Sonic wasn't in Sonic 1
 //#define SONIC123_NO_HYPER           //DOES NOTHING, UNIMPLEMENTED! - Hyper Sonic wasn't introduced until S3K
 //#define SONIC2_SUPER_AT_PEAK        //In Sonic 2, you'd turn super at the peak of a jump, no matter what, while in Sonic 3, this was moved to the jump ability code
 //#define SONIC12_NO_INSTASHIELD      //Insta-shield
 //#define SONIC12_NO_SHIELD_ABILITIES //Other shield abilities
-#define SONICMANIA_DROPDASH         //Sonic Mania's dropdash (overwrites insta-shield)
+//#define SONICMANIA_DROPDASH         //Sonic Mania's dropdash (overwrites insta-shield)
 
 //#define SONIC1_DEATH_BOUNDARY       //In Sonic 2, the death boundary code was fixed so that it doesn't use the camera's boundary but the level boundary, so that you don't die while the camera boundary is scrolling
 //#define SONIC12_DEATH_RESPAWN       //In Sonic 3, it was changed so that death respawns you once you go off-screen, not when you leave the level boundaries, since this was a very buggy check
 //#define SONIC2_SPINDASH_ANIM_BUG    //In Sonic 3, the bug where landing on the ground while spindashing plays the walk animation was fixed
 
 //Other control options
-#define CONTROL_NO_ROLLJUMP_LOCK          //In the originals, jumping from a roll will lock your controls
+//#define CONTROL_NO_ROLLJUMP_LOCK          //In the originals, jumping from a roll will lock your controls
 //#define CONTROL_JA_DONT_CLEAR_ROLLJUMP    //When you use a jump ability in the original, it clears the roll-jump fla
 
 //Common macros
@@ -1840,7 +1840,7 @@ bool PLAYER::Spindash()
 				inertia = spindashSpeed[spindashCounter >> 8];
 			
 			//Lock the camera behind us
-			scrollDelay = (0x2000 - (inertia - 0x800) * 2) % (PLAYER_RECORD_LENGTH << 8);
+			scrollDelay = 0x2000 - (inertia - 0x800) * 2;
 			
 			//Revert if facing left
 			if (status.xFlip)
@@ -2069,23 +2069,6 @@ bool PLAYER::CDPeeloutSpindash(bool *moveRet) //return false = branch to updates
 	return true;
 }
 
-void PLAYER::DropdashRelease()
-{
-	//Ensure we're still in ballform
-	status.inBall = true;
-	xRadius = rollXRadius;
-	yRadius = rollYRadius;
-	anim = PLAYERANIMATION_ROLL;
-	prevAnim = (PLAYERANIMATION)0;
-	YSHIFT_ON_FLOOR(5);
-	//PlaySound(SOUNDID_DROPDASH_RELEASE);
-	
-	//Lag screen behind us
-	ResetRecords(x.pos, y.pos);
-	scrollDelay = (0x2000 - (inertia - 0x800) * 2) % (PLAYER_RECORD_LENGTH << 8);
-	
-}
-
 void PLAYER::CheckDropdashRelease()
 {
 	//If landed and charging a dropdash
@@ -2121,47 +2104,56 @@ void PLAYER::CheckDropdashRelease()
 				inertia = (inertia >> 2) - dashspeed;
 				if (inertia < -maxspeed)
 					inertia = -maxspeed;
-				DropdashRelease();
-				return;
 			}
 			//Dashing to the left, moving right, but on a sloped surface
-			if (angle)
+			else if (angle)
 			{
 				//Halve current speed and apply dash speed
 				inertia = (inertia >> 1) - dashspeed;
-				DropdashRelease();
-				return;
 			}
 			//Dashing to the left, moving right
-			inertia = -dashspeed;
-			DropdashRelease();
-			return;
+			else
+			{
+				//Set our speed to the dash speed
+				inertia = -dashspeed;
+			}
 		}
 		else
 		{
-			//Dashing to the left, moving left
-			if (xVel >= 0)
+			//Dashing to the right, moving right
+			if (xVel <= 0)
 			{
 				//Halve current speed and apply dash speed
 				inertia = (inertia >> 2) + dashspeed;
 				if (inertia > maxspeed)
 					inertia = maxspeed;
-				DropdashRelease();
-				return;
 			}
-			//Dashing to the left, moving right, but on a sloped surface
-			if (angle)
+			//Dashing to the right, moving left, but on a sloped surface
+			else if (angle)
 			{
 				//Halve current speed and apply dash speed
 				inertia = (inertia >> 1) + dashspeed;
-				DropdashRelease();
-				return;
 			}
-			//Dashing to the left, moving right
-			inertia = -dashspeed;
-			DropdashRelease();
-			return;
+			//Dashing to the right, moving left
+			else
+			{
+				//Set our speed to the dash speed
+				inertia = dashspeed;
+			}
 		}
+		
+		//Ensure we're still in ballform
+		status.inBall = true;
+		xRadius = rollXRadius;
+		yRadius = rollYRadius;
+		anim = PLAYERANIMATION_ROLL;
+		prevAnim = (PLAYERANIMATION)0;
+		YSHIFT_ON_FLOOR(5);
+		//PlaySound(SOUNDID_DROPDASH_RELEASE);
+		
+		//Lag screen behind us
+		ResetRecords(x.pos, y.pos);
+		scrollDelay = 0x2000 - (abs(inertia) - 0x800) * 2;
 	}
 }
 
@@ -4913,7 +4905,19 @@ void PLAYER::AttachToObject(OBJECT *object, bool *standingBit)
 	if (status.inAir)
 	{
 		status.inAir = false;
-		LandOnFloor_ExitBall();
+		#ifndef SONICMANIA_DROPDASH
+			LandOnFloor_ExitBall();
+		#else
+			if (characterType != CHARACTERTYPE_SONIC || !abilityProperty)
+				LandOnFloor_ExitBall();
+			else
+			{
+				//If charging a dropdash, release it
+				LandOnFloor_SetState();
+				abilityProperty = 1;
+				CheckDropdashRelease();
+			}
+		#endif
 	}
 }
 

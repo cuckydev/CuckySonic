@@ -362,7 +362,6 @@ class PLAYER
 		
 		bool Spindash();
 		bool CDPeeloutSpindash(bool *moveRet);
-		void DropdashRelease();
 		void CheckDropdashRelease();
 		
 		void JumpAbilities();
