@@ -2071,6 +2071,18 @@ bool PLAYER::CDPeeloutSpindash(bool *moveRet) //return false = branch to updates
 
 void PLAYER::DropdashRelease()
 {
+	//Ensure we're still in ballform
+	status.inBall = true;
+	xRadius = rollXRadius;
+	yRadius = rollYRadius;
+	anim = PLAYERANIMATION_ROLL;
+	prevAnim = (PLAYERANIMATION)0;
+	YSHIFT_ON_FLOOR(5);
+	//PlaySound(SOUNDID_DROPDASH_RELEASE);
+	
+	//Lag screen behind us
+	ResetRecords(x.pos, y.pos);
+	scrollDelay = (0x2000 - (inertia - 0x800) * 2) % (PLAYER_RECORD_LENGTH << 8);
 	
 }
 
@@ -2079,7 +2091,77 @@ void PLAYER::CheckDropdashRelease()
 	//If landed and charging a dropdash
 	if (abilityProperty != 0 && status.inAir == false)
 	{
+		//Clear charging state and face in held direction
+		abilityProperty = 0;
+		if (controlHeld.right)
+			status.xFlip = false;
+		if (controlHeld.left)
+			status.xFlip = true;
 		
+		//Get our speed to dropdash at (super is faster)
+		int16_t dashspeed, maxspeed;
+		if (super)
+		{
+			dashspeed = 0xC00;
+			maxspeed = 0xD00;
+		}
+		else
+		{
+			dashspeed = 0x800;
+			maxspeed = 0xC00;
+		}
+		
+		//Set our speed and release
+		if (status.xFlip)
+		{
+			//Dashing to the left, moving left
+			if (xVel <= 0)
+			{
+				//Halve current speed and apply dash speed
+				inertia = (inertia >> 2) - dashspeed;
+				if (inertia < -maxspeed)
+					inertia = -maxspeed;
+				DropdashRelease();
+				return;
+			}
+			//Dashing to the left, moving right, but on a sloped surface
+			if (angle)
+			{
+				//Halve current speed and apply dash speed
+				inertia = (inertia >> 1) - dashspeed;
+				DropdashRelease();
+				return;
+			}
+			//Dashing to the left, moving right
+			inertia = -dashspeed;
+			DropdashRelease();
+			return;
+		}
+		else
+		{
+			//Dashing to the left, moving left
+			if (xVel >= 0)
+			{
+				//Halve current speed and apply dash speed
+				inertia = (inertia >> 2) + dashspeed;
+				if (inertia > maxspeed)
+					inertia = maxspeed;
+				DropdashRelease();
+				return;
+			}
+			//Dashing to the left, moving right, but on a sloped surface
+			if (angle)
+			{
+				//Halve current speed and apply dash speed
+				inertia = (inertia >> 1) + dashspeed;
+				DropdashRelease();
+				return;
+			}
+			//Dashing to the left, moving right
+			inertia = -dashspeed;
+			DropdashRelease();
+			return;
+		}
 	}
 }
 
