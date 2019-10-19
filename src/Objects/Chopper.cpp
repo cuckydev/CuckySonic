@@ -81,7 +81,7 @@ void ObjChopper(OBJECT *object)
 			}
 			
 			//Draw
-			object->Draw();
+			object->DrawInstance(object->renderFlags, object->texture, object->mappings, object->highPriority, object->priority, object->mappingFrame, object->x.pos, object->y.pos);
 			break;
 		}
 	}

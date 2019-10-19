@@ -150,5 +150,5 @@ void ObjGoalpost(OBJECT *object)
 	
 	//Animate and draw sprite
 	object->Animate(animationList);
-	object->Draw();
+	object->DrawInstance(object->renderFlags, object->texture, object->mappings, object->highPriority, object->priority, object->mappingFrame, object->x.pos, object->y.pos);
 }

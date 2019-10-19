@@ -180,7 +180,7 @@ void ObjMonitorContents(OBJECT *object)
 				}
 			}
 			
-			object->Draw();
+			object->DrawInstance(object->renderFlags, object->texture, object->mappings, object->highPriority, object->priority, object->mappingFrame, object->x.pos, object->y.pos);
 			break;
 		}
 		case 2: //Waiting for deletion
@@ -189,7 +189,7 @@ void ObjMonitorContents(OBJECT *object)
 			if (--object->animFrameDuration < 0)
 				object->deleteFlag = true;
 			else
-				object->Draw();
+				object->DrawInstance(object->renderFlags, object->texture, object->mappings, object->highPriority, object->priority, object->mappingFrame, object->x.pos, object->y.pos);
 		}
 	}
 }
@@ -245,7 +245,7 @@ void ObjMonitor(OBJECT *object)
 			
 			//Act as solid, draw and animate
 			ObjMonitor_SolidObject(object);
-			object->Draw();
+			object->DrawInstance(object->renderFlags, object->texture, object->mappings, object->highPriority, object->priority, object->mappingFrame, object->x.pos, object->y.pos);
 			object->Animate(animationList);
 			break;
 		}
@@ -273,13 +273,13 @@ void ObjMonitor(OBJECT *object)
 			
 			//Set to broken animation and draw
 			object->anim = MONITOR_ITEM_BROKEN;
-			object->Draw();
+			object->DrawInstance(object->renderFlags, object->texture, object->mappings, object->highPriority, object->priority, object->mappingFrame, object->x.pos, object->y.pos);
 			break;
 		}
 		case 3: //Broken
 		{
 			//Draw and animate
-			object->Draw();
+			object->DrawInstance(object->renderFlags, object->texture, object->mappings, object->highPriority, object->priority, object->mappingFrame, object->x.pos, object->y.pos);
 			object->Animate(animationList);
 			break;
 		}

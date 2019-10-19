@@ -32,7 +32,6 @@ void ObjExplosion(OBJECT *object)
 			object->renderFlags.xFlip = false;
 			object->renderFlags.yFlip = false;
 			object->renderFlags.alignPlane = true;
-			object->renderFlags.onScreen = false;
 			object->priority = 1;
 			
 			//Clear collision
@@ -62,7 +61,7 @@ void ObjExplosion(OBJECT *object)
 			}
 			
 			//Draw
-			object->Draw();
+			object->DrawInstance(object->renderFlags, object->texture, object->mappings, object->highPriority, object->priority, object->mappingFrame, object->x.pos, object->y.pos);
 			break;
 		}
 	}

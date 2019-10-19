@@ -110,13 +110,13 @@ void ObjSwingingPlatform(OBJECT *object)
 			int16_t lastX = object->x.pos;
 			ObjSwingingPlatform_Move(object);
 			object->PlatformObject(object->widthPixels, object->yRadius + 1, lastX);
-			object->Draw();
+			object->DrawInstance(object->renderFlags, object->texture, object->mappings, object->highPriority, object->priority, object->mappingFrame, object->x.pos, object->y.pos);
 			break;
 		}
 		case 2:
 		{
 			//Draw
-			object->Draw();
+			object->DrawInstance(object->renderFlags, object->texture, object->mappings, object->highPriority, object->priority, object->mappingFrame, object->x.pos, object->y.pos);
 			break;
 		}
 	}

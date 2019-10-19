@@ -28,11 +28,42 @@ enum COLLISIONTYPE
 	COLLISIONTYPE_MONITOR,
 };
 
+//Object structures
+struct OBJECT_RENDERFLAGS
+{
+	bool xFlip : 1;
+	bool yFlip : 1;
+	bool alignPlane : 1;
+};
+
 struct OBJECT_SOLIDTOUCH
 {
 	bool side[OBJECT_PLAYER_REFERENCES];
 	bool bottom[OBJECT_PLAYER_REFERENCES];
 	bool top[OBJECT_PLAYER_REFERENCES];
+};
+
+//Object drawing instance class
+class OBJECT_DRAWINSTANCE
+{
+	public:
+		//Render properties
+		OBJECT_RENDERFLAGS renderFlags;
+		TEXTURE *texture;
+		MAPPINGS *mappings;
+		bool highPriority;
+		uint8_t priority;
+		uint16_t mappingFrame;
+		int16_t xPos, yPos;
+		
+		//Linked list
+		OBJECT_DRAWINSTANCE *next;
+		OBJECT_DRAWINSTANCE **list;
+		
+	public:
+		OBJECT_DRAWINSTANCE(OBJECT_DRAWINSTANCE **linkedList, OBJECT_RENDERFLAGS iRenderFlags, TEXTURE *iTexture, MAPPINGS *iMappings, bool iHighPriority, uint8_t iPriority, uint16_t iMappingFrame, int16_t iXPos, int16_t iYPos);
+		~OBJECT_DRAWINSTANCE();
+		void Draw();
 };
 
 //Object class
@@ -46,16 +77,10 @@ class OBJECT
 		int subtype;
 		
 		//Rendering stuff
-		struct
-		{
-			bool xFlip : 1;
-			bool yFlip : 1;
-			bool alignPlane : 1;
-			bool onScreenUseHeightPixels : 1;
-			bool onScreen : 1;
-		} renderFlags;
+		OBJECT_RENDERFLAGS renderFlags;
 		
-		bool isDrawing;
+		//Drawing instances
+		OBJECT_DRAWINSTANCE *drawInstances;
 		
 		//Our texture and mappings
 		TEXTURE *texture;
@@ -133,7 +158,7 @@ class OBJECT
 		uint32_t *scratchU32;
 		 int32_t *scratchS32;
 		
-		//Deletion flag
+		//Object delete flag
 		bool deleteFlag;
 		
 		OBJECT *next;
@@ -171,7 +196,6 @@ class OBJECT
 		void ClearSolidContact();
 		
 		bool Update();
+		void DrawInstance(OBJECT_RENDERFLAGS iRenderFlags, TEXTURE *iTexture, MAPPINGS *iMappings, bool iHighPriority, uint8_t iPriority, uint16_t iMappingFrame, int16_t iXPos, int16_t iYPos);
 		void Draw();
-		void DrawToScreen();
-		void DrawRecursive();
 };

@@ -209,7 +209,7 @@ void ObjGHZPlatform(OBJECT *object)
 			object->PlatformObject(object->widthPixels, 9, lastX);
 			
 			//Draw
-			object->Draw();
+			object->DrawInstance(object->renderFlags, object->texture, object->mappings, object->highPriority, object->priority, object->mappingFrame, object->x.pos, object->y.pos);
 			break;
 		}
 		case 2:
@@ -217,7 +217,7 @@ void ObjGHZPlatform(OBJECT *object)
 			//Handle routines and draw
 			ObjGHZPlatform_Move(object);
 			ObjGHZPlatform_Nudge(object);
-			object->Draw();
+			object->DrawInstance(object->renderFlags, object->texture, object->mappings, object->highPriority, object->priority, object->mappingFrame, object->x.pos, object->y.pos);
 			break;
 		}
 		case 3:

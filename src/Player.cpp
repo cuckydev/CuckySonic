@@ -305,7 +305,7 @@ void ObjSpindashDust(OBJECT *object)
 	
 	//Draw and animate
 	object->Animate(animationListSpindashDust);
-	object->Draw();
+	object->DrawInstance(object->renderFlags, object->texture, object->mappings, object->highPriority, object->priority, object->mappingFrame, object->x.pos, object->y.pos);
 }
 
 //Skid dust
@@ -376,7 +376,7 @@ void ObjSkidDust(OBJECT *object)
 			break;
 		case 2: //Dust instance
 			object->Animate(animationListSkidDust);
-			object->Draw();
+			object->DrawInstance(object->renderFlags, object->texture, object->mappings, object->highPriority, object->priority, object->mappingFrame, object->x.pos, object->y.pos);
 			break;
 		case 3: //Dust deleting
 			object->deleteFlag = true;
@@ -505,7 +505,7 @@ void ObjShield(OBJECT *object)
 				object->y.pos = player->y.pos;
 			}
 			
-			object->Draw();
+			object->DrawInstance(object->renderFlags, object->texture, object->mappings, object->highPriority, object->priority, object->mappingFrame, object->x.pos, object->y.pos);
 		}
 		else
 		{
@@ -526,7 +526,7 @@ void ObjShield(OBJECT *object)
 				#endif
 				object->x.pos = player->x.pos;
 				object->y.pos = player->y.pos;
-				object->Draw();
+				object->DrawInstance(object->renderFlags, object->texture, object->mappings, object->highPriority, object->priority, object->mappingFrame, object->x.pos, object->y.pos);
 			}
 		}
 	}
@@ -691,7 +691,7 @@ void ObjShield(OBJECT *object)
 		}
 		
 		//Draw to screen
-		object->Draw();
+		object->DrawInstance(object->renderFlags, object->texture, object->mappings, object->highPriority, object->priority, object->mappingFrame, object->x.pos, object->y.pos);
 	}
 }
 

@@ -261,7 +261,7 @@ void ObjMinecart(OBJECT *object)
 			else if (object->xVel < 0)
 				object->renderFlags.xFlip = true;
 			
-			object->Draw();
+			object->DrawInstance(object->renderFlags, object->texture, object->mappings, object->highPriority, object->priority, object->mappingFrame, object->x.pos, object->y.pos);
 			break;
 		}
 		case 3: //Breaking
@@ -293,7 +293,7 @@ void ObjMinecart(OBJECT *object)
 			if ((int8_t)(--object->routineSecondary) < 0)
 				object->deleteFlag = true;
 			else if (object->routineSecondary & 0x1)
-				object->Draw();
+				object->DrawInstance(object->renderFlags, object->texture, object->mappings, object->highPriority, object->priority, object->mappingFrame, object->x.pos, object->y.pos);
 		}
 	}
 	

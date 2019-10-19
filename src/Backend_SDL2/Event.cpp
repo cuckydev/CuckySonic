@@ -1,7 +1,9 @@
+#include <string.h>
 #include "SDL_events.h"
 #include "../Input.h"
 #include "../Audio.h"
 #include "../Log.h"
+#include "../MathUtil.h"
 
 #define DO_BUTTON_EVENT(src, button, bind, set) if (src == bind) { button = set; continue; }
 

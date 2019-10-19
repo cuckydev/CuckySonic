@@ -9,6 +9,7 @@
 #include "Error.h"
 #include "Player.h"
 
+//Object class
 OBJECT::OBJECT(OBJECT **linkedList, OBJECTFUNCTION objectFunction)
 {
 	memset(this, 0, sizeof(OBJECT));
@@ -64,12 +65,20 @@ OBJECT::~OBJECT()
 		}
 	}
 	
+	//Destroy draw instances
+	for (OBJECT_DRAWINSTANCE *drawInstance = drawInstances; drawInstance != nullptr;)
+	{
+		OBJECT_DRAWINSTANCE *nextInstance = drawInstance->next;
+		delete drawInstance;
+		drawInstance = nextInstance;
+	}
+	
 	//Destroy children
 	for (OBJECT *object = children; object != nullptr;)
 	{
-		OBJECT *next = object->next;
+		OBJECT *nextObject = object->next;
 		delete object;
-		object = next;
+		object = nextObject;
 	}
 }
 
@@ -527,9 +536,6 @@ void OBJECT::ClearSolidContact()
 //Update and drawing objects
 bool OBJECT::Update()
 {
-	//Clear drawing flag
-	isDrawing = false;
-	
 	//If our function has changed, free any allocated scratch memory
 	if (function != prevFunction)
 	{
@@ -558,6 +564,7 @@ bool OBJECT::Update()
 	//Check for deletion
 	if (deleteFlag)
 	{
+		//Remove player references to us
 		for (PLAYER *player = gLevel->playerList; player != nullptr; player = player->next)
 			if (player->interact == this)
 				player->interact = nullptr;
@@ -575,13 +582,84 @@ bool OBJECT::Update()
 	return false;
 }
 
-void OBJECT::Draw()
+void OBJECT::DrawInstance(OBJECT_RENDERFLAGS iRenderFlags, TEXTURE *iTexture, MAPPINGS *iMappings, bool iHighPriority, uint8_t iPriority, uint16_t iMappingFrame, int16_t iXPos, int16_t iYPos)
 {
-	//Set drawing flag
-	isDrawing = true;
+	//Create a draw instance with the properties given
+	new OBJECT_DRAWINSTANCE(&drawInstances, iRenderFlags, iTexture, iMappings, iHighPriority, iPriority, iMappingFrame, iXPos, iYPos);
 }
 
-void OBJECT::DrawToScreen()
+void OBJECT::Draw()
+{
+	//Draw our draw instances (delete them too), then draw child objects
+	for (OBJECT_DRAWINSTANCE *drawInstance = drawInstances; drawInstance != nullptr;)
+	{
+		OBJECT_DRAWINSTANCE *nextInstance = drawInstance->next;
+		drawInstance->Draw();
+		delete drawInstance;
+		drawInstance = nextInstance;
+	}
+	
+	for (OBJECT *object = children; object != nullptr; object = object->next)
+		object->Draw();
+}
+
+//Object drawing instance class
+OBJECT_DRAWINSTANCE::OBJECT_DRAWINSTANCE(OBJECT_DRAWINSTANCE **linkedList, OBJECT_RENDERFLAGS iRenderFlags, TEXTURE *iTexture, MAPPINGS *iMappings, bool iHighPriority, uint8_t iPriority, uint16_t iMappingFrame, int16_t iXPos, int16_t iYPos)
+{
+	//Clear memory
+	memset(this, 0, sizeof(OBJECT_DRAWINSTANCE));
+	
+	//Set our given properties
+	renderFlags = iRenderFlags;
+	texture = iTexture;
+	mappings = iMappings;
+	highPriority = iHighPriority;
+	priority = iPriority;
+	mappingFrame = iMappingFrame;
+	xPos = iXPos;
+	yPos = iYPos;
+	
+	//Attach to linked list (if applicable)
+	if (linkedList != nullptr)
+	{
+		list = linkedList;
+		
+		//If linked list is unset, set us as the first 
+		if (*linkedList == nullptr)
+		{
+			*linkedList = this;
+			return;
+		}
+		
+		//Attach us to the linked list
+		for (OBJECT_DRAWINSTANCE *drawInstance = *linkedList; 1; drawInstance = drawInstance->next)
+		{
+			if (drawInstance->next == nullptr)
+			{
+				drawInstance->next = this;
+				break;
+			}
+		}
+	}
+}
+
+OBJECT_DRAWINSTANCE::~OBJECT_DRAWINSTANCE()
+{
+	//Detach from linked list
+	if (list != nullptr)
+	{
+		for (OBJECT_DRAWINSTANCE **drawInstance = list; *drawInstance != nullptr; drawInstance = &(*drawInstance)->next)
+		{
+			if (*drawInstance == this)
+			{
+				*drawInstance = next;
+				break;
+			}
+		}
+	}
+}
+
+void OBJECT_DRAWINSTANCE::Draw()
 {
 	//Don't draw if we don't have textures or mappings
 	if (texture != nullptr && mappings != nullptr)
@@ -597,31 +675,9 @@ void OBJECT::DrawToScreen()
 		if (renderFlags.yFlip)
 			origY = mapRect->h - origY;
 		
+		//Draw to screen at the given position
 		int alignX = renderFlags.alignPlane ? gLevel->camera->x : 0;
 		int alignY = renderFlags.alignPlane ? gLevel->camera->y : 0;
-		
-		//Check if on-screen
-		renderFlags.onScreen = false;
-		
-		//Horizontal check, uses widthPixels
-		if (x.pos - alignX < -widthPixels || x.pos - alignX > gRenderSpec.width + widthPixels)
-			return;
-		
-		//Vertical check, uses 32 pixels for height or heightPixels
-		int16_t heightCheck = renderFlags.onScreenUseHeightPixels ? heightPixels : 32;
-		if (y.pos - alignY < -heightCheck || y.pos - alignY > gRenderSpec.height + heightCheck)
-			return;
-		
-		//We're on-screen, now set flag and draw
-		renderFlags.onScreen = true;
-		gSoftwareBuffer->DrawTexture(texture, texture->loadedPalette, mapRect, gLevel->GetObjectLayer(highPriority, priority), x.pos - origX - alignX, y.pos - origY - alignY, renderFlags.xFlip, renderFlags.yFlip);
+		gSoftwareBuffer->DrawTexture(texture, texture->loadedPalette, mapRect, gLevel->GetObjectLayer(highPriority, priority), xPos - origX - alignX, yPos - origY - alignY, renderFlags.xFlip, renderFlags.yFlip);
 	}
-}
-
-void OBJECT::DrawRecursive()
-{
-	if (isDrawing)
-		DrawToScreen();
-	for (OBJECT *object = children; object != nullptr; object = object->next)
-		object->DrawRecursive();
 }

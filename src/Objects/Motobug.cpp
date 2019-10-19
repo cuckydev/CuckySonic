@@ -119,7 +119,7 @@ void ObjMotobug(OBJECT *object)
 			
 			//Animate and draw
 			object->Animate(animationList);
-			object->Draw();
+			object->DrawInstance(object->renderFlags, object->texture, object->mappings, object->highPriority, object->priority, object->mappingFrame, object->x.pos, object->y.pos);
 			break;
 		}
 	}

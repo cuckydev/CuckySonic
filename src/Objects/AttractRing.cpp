@@ -92,7 +92,7 @@ void ObjAttractRing(OBJECT *object)
 			object->Move();
 			
 			object->mappingFrame = (gLevel->frameCounter >> 3) & 0x3;
-			object->Draw();
+			object->DrawInstance(object->renderFlags, object->texture, object->mappings, object->highPriority, object->priority, object->mappingFrame, object->x.pos, object->y.pos);
 			break;
 		}
 		case 2: //Touched player, collect a ring
@@ -108,7 +108,7 @@ void ObjAttractRing(OBJECT *object)
 	//Fallthrough
 		case 3: //Sparkling
 			object->Animate(animationList);
-			object->Draw();
+			object->DrawInstance(object->renderFlags, object->texture, object->mappings, object->highPriority, object->priority, object->mappingFrame, object->x.pos, object->y.pos);
 			break;
 		case 4: //Deleting after sparkle
 			object->deleteFlag = true;

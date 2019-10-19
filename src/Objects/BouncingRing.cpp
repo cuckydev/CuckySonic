@@ -71,7 +71,6 @@ void ObjBouncingRing_Routine0(OBJECT *object)
 		ring->renderFlags.xFlip = false;
 		ring->renderFlags.yFlip = false;
 		ring->renderFlags.alignPlane = true;
-		ring->renderFlags.onScreen = true;
 		ring->priority = 3;
 		ring->collisionType = COLLISIONTYPE_OTHER;
 		ring->touchWidth = 6;
@@ -211,7 +210,7 @@ void ObjBouncingRing(OBJECT *object)
 			#ifdef BOUNCINGRING_BLINK
 				if (object->scratchU8[SCRATCHU8_ANIM_COUNT] > 60 || gLevel->frameCounter & (object->scratchU8[SCRATCHU8_ANIM_COUNT] > 30 ? 0x4 : 0x2))
 			#endif
-					object->Draw();
+					object->DrawInstance(object->renderFlags, object->texture, object->mappings, object->highPriority, object->priority, object->mappingFrame, object->x.pos, object->y.pos);
 			break;
 		}
 		case 2: //Touched player, collect a ring
@@ -230,7 +229,7 @@ void ObjBouncingRing(OBJECT *object)
 		case 3: //Sparkling
 		{
 			object->Animate(animationList);
-			object->Draw();
+			object->DrawInstance(object->renderFlags, object->texture, object->mappings, object->highPriority, object->priority, object->mappingFrame, object->x.pos, object->y.pos);
 			break;
 		}
 		case 4: //Deleting after sparkle

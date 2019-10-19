@@ -33,7 +33,7 @@ void ObjSonic1Scenery(OBJECT *object)
 	//Fallthrough
 		case 1:
 		{
-			object->Draw();
+			object->DrawInstance(object->renderFlags, object->texture, object->mappings, object->highPriority, object->priority, object->mappingFrame, object->x.pos, object->y.pos);
 			break;
 		}
 	}

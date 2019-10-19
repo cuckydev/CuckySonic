@@ -1302,10 +1302,9 @@ void LEVEL::Draw()
 		player->DrawToScreen();
 	
 	for (OBJECT *object = coreObjectList; object != nullptr; object = object->next)
-		object->DrawRecursive();
-	
+		object->Draw();
 	for (OBJECT *object = objectList; object != nullptr; object = object->next)
-		object->DrawRecursive();
+		object->Draw();
 	
 	//Draw HUD
 	hud->Draw();

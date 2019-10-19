@@ -31,7 +31,7 @@ void ObjBridgeSegment(OBJECT *object)
 	}
 	
 	//Draw this segment
-	object->Draw();
+	object->DrawInstance(object->renderFlags, object->texture, object->mappings, object->highPriority, object->priority, object->mappingFrame, object->x.pos, object->y.pos);
 }
 
 void ObjBridge(OBJECT *object)

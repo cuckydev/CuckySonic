@@ -144,7 +144,7 @@ void ObjGHZEdgeWall(OBJECT *object)
 				ObjGHZEdgeWall_Solid(object, 19, 40);
 			
 			//Draw
-			object->Draw();
+			object->DrawInstance(object->renderFlags, object->texture, object->mappings, object->highPriority, object->priority, object->mappingFrame, object->x.pos, object->y.pos);
 			break;
 		}
 	}
