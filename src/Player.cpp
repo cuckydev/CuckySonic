@@ -24,7 +24,8 @@
 //#define FIX_DUCK_CONDITION     //In Sonic and Knuckles, the conditions for ducking are so loose, you can duck (and spindash) in unexpected situations.
 //#define FIX_ROLL_YSHIFT        //In the originals, when you roll, you're always shifted up / down globally, this can cause weird behaviour such as falling off of ceilings
 //#define FIX_ROLLJUMP_COLLISION //In the originals, for some reason, jumping from a roll will maintain Sonic's regular collision hitbox, rather than switching to the smaller hitbox, which causes weird issues.
-//#define FIX_PEELOUT_DOWN       //In Sonic CD, the peelout acted really weird if you were to switch to holding down in the middle of it, even causing you to be able to 
+//#define FIX_PEELOUT_DOWN       //In Sonic CD, the peelout acted really weird if you were to switch to holding down in the middle of it, even causing you to be able to walk through walls
+//#define FIX_GROUND_CLIPPING    //In the originals, you're allowed to clip at least 14 pixels into the ground if you manage to get into that situation, seems like a slight misunderstanding of the collision function
 
 //Game differences
 //#define SONIC1_SLOPE_ANGLE          //In Sonic 2+, the floor's angle will be replaced with the player's cardinal floor angle if there's a 45+ degree difference
@@ -43,7 +44,7 @@
 //#define SONIC12_AIR_CAP             //In Sonic 1 and 2, your speed in the air is capped to your top speed when above it, even if you're already above it
 //#define SONIC123_ROLL_DUCK          //In Sonic and Knuckles, they added a greater margin of speed for ducking and rolling, so you can duck while moving
 //#define SONICCD_ROLLING             //In Sonic CD, rolling to the right is weird
-//#define SONICCD_ROLLJUMP            //In Sonic CD, rolljumping was *partially* removed, the above "CONTROL_NO_ROLLJUMP_LOCK" would act differently
+//#define SONICCD_ROLLJUMP            //In Sonic CD, rolljumping was *partially* removed, the below "CONTROL_NO_ROLLJUMP_LOCK" would act differently
 
 //#define SONIC1_NO_SPINDASH          //The spindash, it needs no introduction
 //#define SONICCD_SPINDASH            //CD spindash
@@ -1144,8 +1145,10 @@ void PLAYER::AnglePos()
 				
 				if (nearestDifference < 0)
 				{
+					#ifndef FIX_GROUND_CLIPPING
 					//I'm not sure why this checks for a specific range, if the distance is negative, it will be colliding with a floor for sure
 					if (nearestDifference >= -14)
+					#endif
 						y.pos += nearestDifference;
 				}
 				else if (nearestDifference > 0)
@@ -1179,8 +1182,10 @@ void PLAYER::AnglePos()
 				
 				if (nearestDifference < 0)
 				{
+					#ifndef FIX_GROUND_CLIPPING
 					//I'm not sure why this checks for a specific range, if the distance is negative, it will be colliding with a floor for sure
 					if (nearestDifference >= -14)
+					#endif
 						x.pos -= nearestDifference;
 				}
 				else if (nearestDifference > 0)
@@ -1214,8 +1219,10 @@ void PLAYER::AnglePos()
 				
 				if (nearestDifference < 0)
 				{
+					#ifndef FIX_GROUND_CLIPPING
 					//I'm not sure why this checks for a specific range, if the distance is negative, it will be colliding with a floor for sure
 					if (nearestDifference >= -14)
+					#endif
 						y.pos -= nearestDifference;
 				}
 				else if (nearestDifference > 0)
@@ -1249,8 +1256,10 @@ void PLAYER::AnglePos()
 				
 				if (nearestDifference < 0)
 				{
+					#ifndef FIX_GROUND_CLIPPING
 					//I'm not sure why this checks for a specific range, if the distance is negative, it will be colliding with a floor for sure
 					if (nearestDifference >= -14)
+					#endif
 						x.pos += nearestDifference;
 				}
 				else if (nearestDifference > 0)
@@ -2149,7 +2158,7 @@ void PLAYER::CheckDropdashRelease()
 		anim = PLAYERANIMATION_ROLL;
 		prevAnim = (PLAYERANIMATION)0;
 		YSHIFT_ON_FLOOR(5);
-		//PlaySound(SOUNDID_DROPDASH_RELEASE);
+		PlaySound(SOUNDID_SPINDASH_RELEASE);
 		
 		//Lag screen behind us
 		ResetRecords(x.pos, y.pos);
@@ -2181,7 +2190,7 @@ void PLAYER::JumpAbilities()
 				//Start dropdash
 				abilityProperty = 1;
 				anim = PLAYERANIMATION_DROPDASH;
-				//PlaySound(SOUNDID_DROPDASH_CHARGE);
+				PlaySound(SOUNDID_DROPDASH);
 				return;
 			}
 		}
