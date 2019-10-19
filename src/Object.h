@@ -61,7 +61,7 @@ class OBJECT_DRAWINSTANCE
 		OBJECT_DRAWINSTANCE **list;
 		
 	public:
-		OBJECT_DRAWINSTANCE(OBJECT_DRAWINSTANCE **linkedList, OBJECT_RENDERFLAGS iRenderFlags, TEXTURE *iTexture, MAPPINGS *iMappings, bool iHighPriority, uint8_t iPriority, uint16_t iMappingFrame, int16_t iXPos, int16_t iYPos);
+		OBJECT_DRAWINSTANCE(OBJECT_DRAWINSTANCE **linkedList);
 		~OBJECT_DRAWINSTANCE();
 		void Draw();
 };

@@ -12,9 +12,10 @@
 //Object class
 OBJECT::OBJECT(OBJECT **linkedList, OBJECTFUNCTION objectFunction)
 {
+	//Clear memory
 	memset(this, 0, sizeof(OBJECT));
 	
-	//Set type and subtype
+	//Set function
 	function = objectFunction;
 	prevFunction = objectFunction;
 	
@@ -551,6 +552,14 @@ bool OBJECT::Update()
 		prevFunction = function;
 	}
 	
+	//Destroy draw instances
+	for (OBJECT_DRAWINSTANCE *drawInstance = drawInstances; drawInstance != nullptr;)
+	{
+		OBJECT_DRAWINSTANCE *nextInstance = drawInstance->next;
+		delete drawInstance;
+		drawInstance = nextInstance;
+	}
+	
 	//Run our object code
 	if (function != nullptr)
 		function(this);
@@ -579,45 +588,38 @@ bool OBJECT::Update()
 				return true;
 		}
 	}
+	
 	return false;
 }
 
 void OBJECT::DrawInstance(OBJECT_RENDERFLAGS iRenderFlags, TEXTURE *iTexture, MAPPINGS *iMappings, bool iHighPriority, uint8_t iPriority, uint16_t iMappingFrame, int16_t iXPos, int16_t iYPos)
 {
 	//Create a draw instance with the properties given
-	new OBJECT_DRAWINSTANCE(&drawInstances, iRenderFlags, iTexture, iMappings, iHighPriority, iPriority, iMappingFrame, iXPos, iYPos);
+	OBJECT_DRAWINSTANCE *newInstance = new OBJECT_DRAWINSTANCE(&drawInstances);
+	newInstance->renderFlags = iRenderFlags;
+	newInstance->texture = iTexture;
+	newInstance->mappings = iMappings;
+	newInstance->highPriority = iHighPriority;
+	newInstance->priority = iPriority;
+	newInstance->mappingFrame = iMappingFrame;
+	newInstance->xPos = iXPos;
+	newInstance->yPos = iYPos;
 }
 
 void OBJECT::Draw()
 {
-	//Draw our draw instances (delete them too), then draw child objects
-	for (OBJECT_DRAWINSTANCE *drawInstance = drawInstances; drawInstance != nullptr;)
-	{
-		OBJECT_DRAWINSTANCE *nextInstance = drawInstance->next;
+	//Draw our draw instances, then draw child objects
+	for (OBJECT_DRAWINSTANCE *drawInstance = drawInstances; drawInstance != nullptr; drawInstance = drawInstance->next)
 		drawInstance->Draw();
-		delete drawInstance;
-		drawInstance = nextInstance;
-	}
-	
 	for (OBJECT *object = children; object != nullptr; object = object->next)
 		object->Draw();
 }
 
 //Object drawing instance class
-OBJECT_DRAWINSTANCE::OBJECT_DRAWINSTANCE(OBJECT_DRAWINSTANCE **linkedList, OBJECT_RENDERFLAGS iRenderFlags, TEXTURE *iTexture, MAPPINGS *iMappings, bool iHighPriority, uint8_t iPriority, uint16_t iMappingFrame, int16_t iXPos, int16_t iYPos)
+OBJECT_DRAWINSTANCE::OBJECT_DRAWINSTANCE(OBJECT_DRAWINSTANCE **linkedList)
 {
 	//Clear memory
 	memset(this, 0, sizeof(OBJECT_DRAWINSTANCE));
-	
-	//Set our given properties
-	renderFlags = iRenderFlags;
-	texture = iTexture;
-	mappings = iMappings;
-	highPriority = iHighPriority;
-	priority = iPriority;
-	mappingFrame = iMappingFrame;
-	xPos = iXPos;
-	yPos = iYPos;
 	
 	//Attach to linked list (if applicable)
 	if (linkedList != nullptr)
