@@ -18,15 +18,15 @@ typedef void (*OBJECTFUNCTION)(OBJECT*);
 #define OBJECT_PLAYER_REFERENCES 0x100
 
 //Common macros
-#define CHECK_LINKEDLIST_DELETE(linkedList)	\
-	for (signed int i = (signed int)linkedList.size() - 1; i >= 0; i--)	\
-	{	\
-		if (linkedList[i]->deleteFlag)	\
-		{	\
-			delete linkedList[i];	\
-			linkedList.erase(linkedList.begin() + i);	\
-		}	\
-	}
+#define CHECK_LINKEDLIST_OBJECTDELETE(linkedList)	for (signed int i = (signed int)linkedList.size() - 1; i >= 0; i--)	\
+													{	\
+														if (linkedList[i]->deleteFlag)	\
+														{	\
+															delete linkedList[i];	\
+															linkedList.erase(linkedList.begin() + i);	\
+														}	\
+													}	\
+													linkedList.shrink_to_fit();
 
 //Enumerations
 enum COLLISIONTYPE

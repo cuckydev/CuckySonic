@@ -549,10 +549,8 @@ void LEVEL::UnloadAll()
 		player = next;
 	}
 	
-	objectList.clear();
-	objectList.shrink_to_fit();
-	coreObjectList.clear();
-	coreObjectList.shrink_to_fit();
+	DESTROY_LINKEDLIST_CONTENTS(objectList);
+	DESTROY_LINKEDLIST_CONTENTS(coreObjectList);
 	
 	if (camera != nullptr)
 		delete camera;
@@ -758,8 +756,8 @@ LEVEL::LEVEL(int id, const char *players[])
 		}
 	}
 	
-	CHECK_LINKEDLIST_DELETE(objectList);
-	CHECK_LINKEDLIST_DELETE(coreObjectList);
+	CHECK_LINKEDLIST_OBJECTDELETE(objectList);
+	CHECK_LINKEDLIST_OBJECTDELETE(coreObjectList);
 	
 	//Set the camera to follow the player
 	camera->Track(playerList);
@@ -1237,8 +1235,8 @@ bool LEVEL::Update()
 	}
 	
 	//Check to delete objects
-	CHECK_LINKEDLIST_DELETE(objectList);
-	CHECK_LINKEDLIST_DELETE(coreObjectList);
+	CHECK_LINKEDLIST_OBJECTDELETE(objectList);
+	CHECK_LINKEDLIST_OBJECTDELETE(coreObjectList);
 	
 	//Update camera
 	if (camera != nullptr)

@@ -693,27 +693,27 @@ static const uint8_t invincibilityStarAnimation[] = {0x00,0x05,0x00,0x05,0x01,0x
 
 static const uint16_t invincibilityStarPosArray[] = {0x0F00,0x0F03,0x0E06,0x0D08,0x0B0B,0x080D,0x060E,0x030F,0x0010,0xFC0F,0xF90E,0xF70D,0xF40B,0xF208,0xF106,0xF003,0xF000,0xF0FC,0xF1F9,0xF2F7,0xF4F4,0xF7F2,0xF9F1,0xFCF0,0xFFF0,0x03F0,0x06F1,0x08F2,0x0BF4,0x0DF7,0x0EF9,0x0FFC};
 
-static const uint8_t invincibilityStarArray0[] = {0x08,0x05,0x07,0x06,0x06,0x07,0x05,0x08,0x06,0x07,0x07,0x06,0xFF};
-static const uint8_t invincibilityStarArray1[] = {0x08,0x07,0x06,0x05,0x04,0x03,0x04,0x05,0x06,0x07,0xFF,0x03,0x04,0x05,0x06,0x07,0x08,0x07,0x06,0x05,0x04};
-static const uint8_t invincibilityStarArray2[] = {0x08,0x07,0x06,0x05,0x04,0x03,0x02,0x03,0x04,0x05,0x06,0x07,0xFF,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x07,0x06,0x05,0x04,0x03};
-static const uint8_t invincibilityStarArray3[] = {0x07,0x06,0x05,0x04,0x03,0x02,0x01,0x02,0x03,0x04,0x05,0x06,0xFF,0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x06,0x05,0x04,0x03,0x02};
+static const uint8_t invincibilityStarFrameArray0[] = {0x08,0x05,0x07,0x06,0x06,0x07,0x05,0x08,0x06,0x07,0x07,0x06,0xFF};
+static const uint8_t invincibilityStarFrameArray1[] = {0x08,0x07,0x06,0x05,0x04,0x03,0x04,0x05,0x06,0x07,0xFF,0x03,0x04,0x05,0x06,0x07,0x08,0x07,0x06,0x05,0x04};
+static const uint8_t invincibilityStarFrameArray2[] = {0x08,0x07,0x06,0x05,0x04,0x03,0x02,0x03,0x04,0x05,0x06,0x07,0xFF,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x07,0x06,0x05,0x04,0x03};
+static const uint8_t invincibilityStarFrameArray3[] = {0x07,0x06,0x05,0x04,0x03,0x02,0x01,0x02,0x03,0x04,0x05,0x06,0xFF,0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x06,0x05,0x04,0x03,0x02};
 
 static const struct
 {
-	const uint8_t *array;
-	uint16_t value;
+	const uint8_t *frameArray;
+	uint16_t animation;
 } invincibilityStarArray[4] = {
 	{nullptr, 0x0004},
-	{invincibilityStarArray1, 0x000B},
-	{invincibilityStarArray2, 0x160D},
-	{invincibilityStarArray3, 0x2C0D},
+	{invincibilityStarFrameArray1, 0x000B},
+	{invincibilityStarFrameArray2, 0x160D},
+	{invincibilityStarFrameArray3, 0x2C0D},
 };
 
 void ObjInvincibilityStars_GetPosition(const uint16_t *posArray, uint16_t posIndex, int16_t inXPos, int16_t inYPos, int16_t *outXPos, int16_t *outYPos)
 {
 	//Get the position from the array and offset it from our given position
-	*outXPos = inXPos + (int8_t)((posArray[posIndex] >> 8) & 0xFF);
-	*outYPos = inYPos + (int8_t)(posArray[posIndex] & 0xFF);
+	*outXPos = (inXPos + ((int8_t)((posArray[(posIndex & 0x3E) >> 1] >> 8) & 0xFF)));
+	*outYPos = (inYPos + ((int8_t)(posArray[(posIndex & 0x3E) >> 1] & 0xFF)));
 }
 
 void ObjInvincibilityStars(OBJECT *object)
@@ -722,11 +722,12 @@ void ObjInvincibilityStars(OBJECT *object)
 	enum SCRATCH
 	{
 		//U8
-		SCRATCHU8_ANIMATION =	0,
-		SCRATCHU8_MAX =			2,
+		SCRATCHU8_ANIMATION =			0,
+		SCRATCHU8_ANIMATION_SECONDARY =	1,
+		SCRATCHU8_MAX =					2,
 		//U16
-		SCRATCHU16_ANIMATION2 =	0,
-		SCRATCHU16_MAX =		1,
+		SCRATCHU16_ANIMATION2 =			0,
+		SCRATCHU16_MAX =				1,
 	};
 	
 	object->ScratchAllocU8(SCRATCHU8_MAX);
@@ -742,7 +743,7 @@ void ObjInvincibilityStars(OBJECT *object)
 	{
 		//Load mappings and textures
 		object->texture = gLevel->GetObjectTexture("data/Object/InvincibilitySuperStars.bmp");
-		object->mappings = gLevel->GetObjectMappings("data/Object/SuperStars.map");
+		object->mappings = gLevel->GetObjectMappings("data/Object/InvincibilityStars.map");
 		
 		//Set our render properties
 		object->priority = 1;
@@ -751,7 +752,8 @@ void ObjInvincibilityStars(OBJECT *object)
 		object->renderFlags.alignPlane = true;
 		
 		//Set other property things
-		object->scratchU8[SCRATCHU8_ANIMATION] = invincibilityStarArray[object->subtype].value;
+		object->scratchU8[SCRATCHU8_ANIMATION] = ((invincibilityStarArray[object->subtype].animation >> 8) & 0xFF);
+		object->scratchU8[SCRATCHU8_ANIMATION_SECONDARY] = (invincibilityStarArray[object->subtype].animation & 0xFF);
 		object->routine = (object->subtype ? 2 : 1);
 	}
 	
@@ -768,16 +770,71 @@ void ObjInvincibilityStars(OBJECT *object)
 			int16_t xPos = (object->x.pos = player->x.pos);
 			int16_t yPos = (object->y.pos = player->y.pos);
 			
-			//Get our animation frame
-			uint8_t frame = 0;
-			while ((frame = invincibilityStarArray0[object->scratchU16[SCRATCHU16_ANIMATION2]]) >= 0x80)
+			//Get our primary animation frame
+			uint16_t frame;
+			while ((frame = invincibilityStarFrameArray0[object->scratchU16[SCRATCHU16_ANIMATION2]]) >= 0x80)
 				object->scratchU16[SCRATCHU16_ANIMATION2] = 0;
 			
+			//Animate and draw stars
+			object->scratchU16[SCRATCHU16_ANIMATION2]++;
 			
+			//Draw star 1
+			int16_t star1XPos, star1YPos;
+			ObjInvincibilityStars_GetPosition(invincibilityStarPosArray, object->scratchU8[SCRATCHU8_ANIMATION], xPos, yPos, &star1XPos, &star1YPos);
+			object->DrawInstance(object->renderFlags, object->texture, object->mappings, object->highPriority, object->priority, frame, star1XPos, star1YPos);
+			
+			//Draw star 2
+			int16_t star2XPos, star2YPos;
+			ObjInvincibilityStars_GetPosition(invincibilityStarPosArray, object->scratchU8[SCRATCHU8_ANIMATION] + 0x12, xPos, yPos, &star2XPos, &star2YPos);
+			object->DrawInstance(object->renderFlags, object->texture, object->mappings, object->highPriority, object->priority, frame, star2XPos, star2YPos);
+			
+			//Spin around the player
+			if (player->status.xFlip)
+				object->scratchU8[SCRATCHU8_ANIMATION] += 0x12;
+			else
+				object->scratchU8[SCRATCHU8_ANIMATION] -= 0x12;
 			break;
 		}
 		case 2:
+		{
+			//Don't draw if not invincible
+			if (!(player->super == false && player->item.isInvincible == true))
+				break;
+			
+			//Copy player's position
+			unsigned int trailSeek = object->subtype << 2;
+			int16_t xPos = (object->x.pos = player->posRecord[(player->recordPos - trailSeek) % (unsigned)PLAYER_RECORD_LENGTH].x);
+			int16_t yPos = (object->y.pos = player->posRecord[(player->recordPos - trailSeek) % (unsigned)PLAYER_RECORD_LENGTH].y);
+			
+			//Get our animation frames
+			const uint8_t *frameArray = invincibilityStarArray[object->subtype].frameArray;
+			
+			uint16_t frame1;
+			while ((frame1 = frameArray[object->scratchU16[SCRATCHU16_ANIMATION2]]) >= 0x80)
+				object->scratchU16[SCRATCHU16_ANIMATION2] = 0;
+			
+			uint16_t frame2 = frameArray[object->scratchU16[SCRATCHU16_ANIMATION2] + object->scratchU8[SCRATCHU8_ANIMATION_SECONDARY]];
+			
+			//Increment animation frame
+			object->scratchU16[SCRATCHU16_ANIMATION2]++;
+			
+			//Draw star 1
+			int16_t star1XPos, star1YPos;
+			ObjInvincibilityStars_GetPosition(invincibilityStarPosArray, object->scratchU8[SCRATCHU8_ANIMATION], xPos, yPos, &star1XPos, &star1YPos);
+			object->DrawInstance(object->renderFlags, object->texture, object->mappings, object->highPriority, object->priority, frame2, star1XPos, star1YPos);
+			
+			//Draw star 2
+			int16_t star2XPos, star2YPos;
+			ObjInvincibilityStars_GetPosition(invincibilityStarPosArray, object->scratchU8[SCRATCHU8_ANIMATION] + 0x12, xPos, yPos, &star2XPos, &star2YPos);
+			object->DrawInstance(object->renderFlags, object->texture, object->mappings, object->highPriority, object->priority, frame1, star2XPos, star2YPos);
+			
+			//Spin around the player
+			if (player->status.xFlip)
+				object->scratchU8[SCRATCHU8_ANIMATION] += 0x02;
+			else
+				object->scratchU8[SCRATCHU8_ANIMATION] -= 0x02;
 			break;
+		}
 	}
 }
 
@@ -4938,6 +4995,8 @@ bool PLAYER::TouchResponseObject(OBJECT *object, int16_t playerLeft, int16_t pla
 						object->parent = (void*)this;
 					}
 					return true;
+				default:
+					break;
 			}
 		}
 	}

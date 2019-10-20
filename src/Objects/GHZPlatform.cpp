@@ -91,8 +91,6 @@ void ObjGHZPlatform_Move(OBJECT *object)
 			if (object->scratchU16[SCRATCHU16_FALL_TIME] != 0 && --object->scratchU16[SCRATCHU16_FALL_TIME] == 0)
 			{
 				//Make players standing on us fall off
-				bool touching = false;
-				
 				int i = 0;
 				for (PLAYER *player = gLevel->playerList; player != nullptr; player = player->next)
 				{

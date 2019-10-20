@@ -24,3 +24,8 @@
 			int32_t	axis##PosLong;	\
 		};
 #endif
+
+#define DESTROY_LINKEDLIST_CONTENTS(linkedList)	for (signed int dllci = (signed int)linkedList.size() - 1; dllci >= 0; dllci--)	\
+													delete linkedList[dllci];	\
+												linkedList.clear();	\
+												linkedList.shrink_to_fit();

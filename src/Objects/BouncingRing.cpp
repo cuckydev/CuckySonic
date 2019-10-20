@@ -53,10 +53,8 @@ void ObjBouncingRing_Routine0(OBJECT *object)
 		int16_t angleSpeed = 0x288;
 	};
 	
-	PLAYER *parentPlayer = (PLAYER*)object->parent;
-	
 	int16_t xVel, yVel;
-	for (int i = 0; i < *rings; i++)
+	for (unsigned int i = 0; i < *rings; i++)
 	{
 		//Create the ring object
 		OBJECT *ring = new OBJECT(&gLevel->objectList, &ObjBouncingRing);

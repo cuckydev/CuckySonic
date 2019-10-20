@@ -4,6 +4,7 @@
 #include "Object.h"
 #include "Objects.h"
 
+#include "CommonMacros.h"
 #include "Game.h"
 #include "Log.h"
 #include "Error.h"
@@ -38,13 +39,9 @@ OBJECT::~OBJECT()
 	free(scratchU32);
 	free(scratchS32);
 	
-	//Destroy draw instances
-	drawInstances.clear();
-	drawInstances.shrink_to_fit();
-	
-	//Destroy children
-	children.clear();
-	children.shrink_to_fit();
+	//Destroy draw instances and children
+	DESTROY_LINKEDLIST_CONTENTS(drawInstances);
+	DESTROY_LINKEDLIST_CONTENTS(children);
 }
 
 //Scratch allocation
@@ -517,8 +514,7 @@ bool OBJECT::Update()
 	}
 	
 	//Destroy draw instances
-	drawInstances.clear();
-	drawInstances.shrink_to_fit();
+	DESTROY_LINKEDLIST_CONTENTS(drawInstances);
 	
 	//Run our object code
 	if (function != nullptr)
@@ -526,9 +522,9 @@ bool OBJECT::Update()
 	
 	//Check if any of our assets failed to load
 	if (texture != nullptr && texture->fail != nullptr)
-		return Error(texture->fail);
+		return Error(fail = texture->fail);
 	if (mappings != nullptr && mappings->fail != nullptr)
-		return Error(mappings->fail);
+		return Error(fail = mappings->fail);
 	
 	//Check for deletion
 	if (deleteFlag)
@@ -547,7 +543,7 @@ bool OBJECT::Update()
 				return true;
 		}
 		
-		CHECK_LINKEDLIST_DELETE(children);
+		CHECK_LINKEDLIST_OBJECTDELETE(children);
 	}
 	
 	return false;

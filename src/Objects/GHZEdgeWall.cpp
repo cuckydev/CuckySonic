@@ -4,7 +4,7 @@
 #include "../Game.h"
 #include "../Log.h"
 
-int ObjGHZEdgeWall_Solid2(PLAYER *player, int i, OBJECT *object, int16_t width, int16_t height, int16_t *retXDiff, int16_t *retYDiff)
+int ObjGHZEdgeWall_Solid2(PLAYER *player, OBJECT *object, int16_t width, int16_t height, int16_t *retXDiff, int16_t *retYDiff)
 {
 	//Get our position differences and return 0 if out of range
 	int16_t xDiff = (player->x.pos - object->x.pos) + width;
@@ -48,7 +48,7 @@ void ObjGHZEdgeWall_Solid_Individual(PLAYER *player, int i, OBJECT *object, int1
 {
 	//Check for collisions
 	int16_t xDiff, yDiff;
-	int solidResult = ObjGHZEdgeWall_Solid2(player, i, object, width, height, &xDiff, &yDiff);
+	int solidResult = ObjGHZEdgeWall_Solid2(player, object, width, height, &xDiff, &yDiff);
 	
 	if (solidResult > 0)
 	{
