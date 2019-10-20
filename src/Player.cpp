@@ -730,7 +730,7 @@ void ObjInvincibilityStars(OBJECT *object)
 	};
 	
 	object->ScratchAllocU8(SCRATCHU8_MAX);
-	object->ScratchAllocU8(SCRATCHU16_MAX);
+	object->ScratchAllocU16(SCRATCHU16_MAX);
 	
 	//Get our parent player
 	PLAYER *player = (PLAYER*)object->parent;
@@ -4854,8 +4854,8 @@ void PLAYER::RingAttractCheck(OBJECT *object)
 	}
 	
 	//Iterate and check children
-	for (OBJECT *obj = object->children; obj != nullptr; obj = obj->next)
-		RingAttractCheck(obj);
+	for (size_t i = 0; i < object->children.size(); i++)
+		RingAttractCheck(object->children[i]);
 }
 
 //Object interaction functions
@@ -4943,9 +4943,9 @@ bool PLAYER::TouchResponseObject(OBJECT *object, int16_t playerLeft, int16_t pla
 	}
 	
 	//Iterate through children, we haven't hit the parent
-	for (OBJECT *obj = object->children; obj != nullptr; obj = obj->next)
+	for (size_t i = 0; i < object->children.size(); i++)
 	{
-		if (TouchResponseObject(obj, playerLeft, playerTop, playerWidth, playerHeight))
+		if (TouchResponseObject(object->children[i], playerLeft, playerTop, playerWidth, playerHeight))
 			return true;
 	}
 	
@@ -4956,8 +4956,8 @@ void PLAYER::TouchResponse()
 {
 	//Check for ring attraction
 	if (shield == SHIELD_ELECTRIC)
-		for (OBJECT *obj = gLevel->objectList; obj != nullptr; obj = obj->next)
-			RingAttractCheck(obj);
+		for (size_t i = 0; i < gLevel->objectList.size(); i++)
+			RingAttractCheck(gLevel->objectList[i]);
 	
 	//Get our collision hitbox
 	bool wasInvincible = item.isInvincible; //Remember if we were invincible, since this gets temporarily overwritten by the insta-shield hitbox
@@ -4998,10 +4998,10 @@ void PLAYER::TouchResponse()
 	}
 	
 	//Iterate through every object
-	for (OBJECT *obj = gLevel->objectList; obj != nullptr; obj = obj->next)
+	for (size_t i = 0; i < gLevel->objectList.size(); i++)
 	{
 		//Check for collision with this object
-		if (TouchResponseObject(obj, playerLeft, playerTop, playerWidth, playerHeight))
+		if (TouchResponseObject(gLevel->objectList[i], playerLeft, playerTop, playerWidth, playerHeight))
 			break;
 	}
 	

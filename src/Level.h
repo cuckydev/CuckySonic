@@ -1,9 +1,10 @@
 #pragma once
 #include <stdint.h>
-#include "Render.h"
-#include "GameConstants.h"
-#include "Audio.h"
+#include <deque>
 
+#include "Render.h"
+#include "Audio.h"
+#include "GameConstants.h"
 #include "LevelSpecific.h"
 #include "Player.h"
 #include "Object.h"
@@ -227,8 +228,8 @@ class LEVEL
 		
 		//Players and objects
 		PLAYER *playerList;
-		OBJECT *coreObjectList;
-		OBJECT *objectList;
+		std::deque<OBJECT*> coreObjectList;
+		std::deque<OBJECT*> objectList;
 		CAMERA *camera;
 		
 		//Title card and HUD

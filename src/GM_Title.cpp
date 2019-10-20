@@ -216,9 +216,9 @@ bool GM_Title(bool *noError)
 			
 			//Fade out music
 			if (titleMusic->playing)
-				titleMusic->volume = max(titleMusic->volume - (1.0f / 32.0f), 0.0f);
+				titleMusic->volume = mmax(titleMusic->volume - (1.0f / 32.0f), 0.0f);
 			if (menuMusic->playing)
-				menuMusic->volume = max(menuMusic->volume - (1.0f / 32.0f), 0.0f);
+				menuMusic->volume = mmax(menuMusic->volume - (1.0f / 32.0f), 0.0f);
 		}
 		
 		//Move title screen at beginning

@@ -94,7 +94,7 @@ uint8_t GetAtan(int16_t x, int16_t y)
 	if (x == 0 && y == 0)
 		return 0x40;
 
-	uint8_t angle = abs(x) > abs(y) ? AtanData[(abs(y) * 0x100) / abs(x)] : 0x40 - AtanData[(abs(x) * 0x100) / abs(y)];
+	uint8_t angle = mabs(x) > mabs(y) ? AtanData[(mabs(y) * 0x100) / mabs(x)] : 0x40 - AtanData[(mabs(x) * 0x100) / mabs(y)];
 
 	if (x < 0)
 		angle = -angle + 0x80;

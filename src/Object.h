@@ -1,5 +1,6 @@
 #pragma once
 #include <stdint.h>
+#include <deque>
 
 #include "Render.h"
 #include "Mappings.h"
@@ -15,6 +16,17 @@ typedef void (*OBJECTFUNCTION)(OBJECT*);
 
 //Constants
 #define OBJECT_PLAYER_REFERENCES 0x100
+
+//Common macros
+#define CHECK_LINKEDLIST_DELETE(linkedList)	\
+	for (signed int i = (signed int)linkedList.size() - 1; i >= 0; i--)	\
+	{	\
+		if (linkedList[i]->deleteFlag)	\
+		{	\
+			delete linkedList[i];	\
+			linkedList.erase(linkedList.begin() + i);	\
+		}	\
+	}
 
 //Enumerations
 enum COLLISIONTYPE
@@ -56,12 +68,8 @@ class OBJECT_DRAWINSTANCE
 		uint16_t mappingFrame;
 		int16_t xPos, yPos;
 		
-		//Linked list
-		OBJECT_DRAWINSTANCE *next;
-		OBJECT_DRAWINSTANCE **list;
-		
 	public:
-		OBJECT_DRAWINSTANCE(OBJECT_DRAWINSTANCE **linkedList);
+		OBJECT_DRAWINSTANCE(std::deque<OBJECT_DRAWINSTANCE*> *linkedList);
 		~OBJECT_DRAWINSTANCE();
 		void Draw();
 };
@@ -80,7 +88,7 @@ class OBJECT
 		OBJECT_RENDERFLAGS renderFlags;
 		
 		//Drawing instances
-		OBJECT_DRAWINSTANCE *drawInstances;
+		std::deque<OBJECT_DRAWINSTANCE*> drawInstances;
 		
 		//Our texture and mappings
 		TEXTURE *texture;
@@ -148,7 +156,7 @@ class OBJECT
 		void *parent;	//Our parent object or player
 		
 		//Children linked list
-		OBJECT *children;
+		std::deque<OBJECT*> children;
 		
 		//Scratch memory
 		 uint8_t  *scratchU8;
@@ -161,13 +169,12 @@ class OBJECT
 		//Object delete flag
 		bool deleteFlag;
 		
-		OBJECT *next;
-		OBJECT **list;
+		//Our object-specific function
 		OBJECTFUNCTION function;
 		OBJECTFUNCTION prevFunction;
 		
 	public:
-		OBJECT(OBJECT **linkedList, OBJECTFUNCTION object);
+		OBJECT(std::deque<OBJECT*> *linkedList, OBJECTFUNCTION object);
 		~OBJECT();
 		
 		void  ScratchAllocU8(int max);

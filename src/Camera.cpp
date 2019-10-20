@@ -60,24 +60,24 @@ void CAMERA::Track(PLAYER *trackPlayer)
 		if (trackPlayer->spindashing)
 		{
 			if (trackPlayer->status.xFlip)
-				xPan = min(xPan + CD_PAN_SCROLL,  CD_PAN_LEFT);
+				xPan = mmin(xPan + CD_PAN_SCROLL,  CD_PAN_LEFT);
 			else
-				xPan = max(xPan - CD_PAN_SCROLL, -CD_PAN_RIGHT);
+				xPan = mmax(xPan - CD_PAN_SCROLL, -CD_PAN_RIGHT);
 		}
 		else if (abs(trackPlayer->inertia) >= 0x600)
 		{
 			if (trackPlayer->inertia < 0)
-				xPan = min(xPan + CD_PAN_SCROLL,  CD_PAN_LEFT);
+				xPan = mmin(xPan + CD_PAN_SCROLL,  CD_PAN_LEFT);
 			else
-				xPan = max(xPan - CD_PAN_SCROLL, -CD_PAN_RIGHT);
+				xPan = mmax(xPan - CD_PAN_SCROLL, -CD_PAN_RIGHT);
 		}
 		else
 		{
 			//Pan back to the center
 			if (xPan > 0)
-				xPan = max(xPan - CD_PAN_SCROLL,   0);
+				xPan = mmax(xPan - CD_PAN_SCROLL,   0);
 			else if (xPan < 0)
-				xPan = min(xPan + CD_PAN_SCROLL,   0);
+				xPan = mmin(xPan + CD_PAN_SCROLL,   0);
 		}
 	#endif
 	
@@ -86,7 +86,7 @@ void CAMERA::Track(PLAYER *trackPlayer)
 	{
 		//Wait LOOK_PANTIME frames, then look LOOK_PAN_UP pixels
 		if (lookTimer >= LOOK_PANTIME)
-			lookPan = min(lookPan + LOOK_PANSPEED, LOOK_PAN_UP);
+			lookPan = mmin(lookPan + LOOK_PANSPEED, LOOK_PAN_UP);
 		else
 			lookTimer++;
 	}
@@ -94,7 +94,7 @@ void CAMERA::Track(PLAYER *trackPlayer)
 	{
 		//Wait LOOK_PANTIME frames, then look LOOK_PAN_DOWN pixels
 		if (lookTimer >= LOOK_PANTIME)
-			lookPan = max(lookPan - LOOK_PANSPEED, -LOOK_PAN_DOWN);
+			lookPan = mmax(lookPan - LOOK_PANSPEED, -LOOK_PAN_DOWN);
 		else
 			lookTimer++;
 	}
@@ -108,9 +108,9 @@ void CAMERA::Track(PLAYER *trackPlayer)
 	if (lookTimer < LOOK_PANTIME)
 	{
 		if (lookPan < 0)
-			lookPan = min(lookPan + LOOK_PANSPEED, 0);
+			lookPan = mmin(lookPan + LOOK_PANSPEED, 0);
 		if (lookPan > 0)
-			lookPan = max(lookPan - LOOK_PANSPEED, 0);
+			lookPan = mmax(lookPan - LOOK_PANSPEED, 0);
 	}
 	
 	//Don't move if locked

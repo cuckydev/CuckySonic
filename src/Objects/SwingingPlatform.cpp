@@ -34,8 +34,8 @@ void ObjSwingingPlatform_Move(OBJECT *object)
 	int16_t sin, cos;
 	GetSine(oscillate, &sin, &cos);
 	
-	for (OBJECT *child = object->children; child != nullptr; child = child->next)
-		ObjSwingingPlatform_Move_Individual(object, child, sin, cos);
+	for (size_t i = 0; i < object->children.size(); i++)
+		ObjSwingingPlatform_Move_Individual(object, object->children[i], sin, cos);
 	ObjSwingingPlatform_Move_Individual(object, object, sin, cos);
 }
 

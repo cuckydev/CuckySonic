@@ -33,9 +33,9 @@ void HUD::DrawCharacter(int xPos, int yPos, int srcX)
 	gSoftwareBuffer->DrawTexture(texture, texture->loadedPalette, &src, LEVEL_RENDERLAYER_HUD, xPos, yPos, false, false);
 }
 
-void HUD::DrawNumber(int xPos, int yPos, int number, unsigned int forceDigits, bool fromRight)
+void HUD::DrawNumber(int xPos, int yPos, unsigned int number, unsigned int forceDigits, bool fromRight)
 {
-	int offset = 0;
+	unsigned int offset = 0;
 	unsigned int exponent = 1;
 	
 	//Get how many digits we're using
@@ -64,7 +64,7 @@ void HUD::DrawNumber(int xPos, int yPos, int number, unsigned int forceDigits, b
 	}
 	
 	//Draw all digits
-	while (offset >= 0)
+	while (offset != ((unsigned int)-1))
 	{
 		
 		//Get the digit that this is

@@ -117,7 +117,7 @@ void TITLECARD::UpdateAndDraw()
 	if (frame >= finT)
 		gap = 32 + (frame - finT) * TRANSITION_SPEED;
 	else if (frame >= subT)
-		gap = min((frame - subT) * TRANSITION_SPEED / 2, 32);
+		gap = mmin((frame - subT) * TRANSITION_SPEED / 2, 32);
 	
 	int16_t xg = gLevel->playerList->x.pos - gLevel->camera->x;
 	int16_t yg = (gLevel->playerList->y.pos + (gLevel->playerList->yRadius - gLevel->playerList->defaultYRadius)) - gLevel->camera->y;

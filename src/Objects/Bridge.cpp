@@ -137,9 +137,7 @@ void ObjBridge(OBJECT *object)
 			}
 			
 			//Handle depression
-			int j = 0;
-			
-			for (OBJECT *child = object->children; child != nullptr; child = child->next)
+			for (size_t j = 0; j < object->children.size(); j++)
 			{
 				//Get the angle of this log (go up to 0x40 from the left, and go back down to 0x00 to the right)
 				uint8_t angle;
@@ -153,8 +151,7 @@ void ObjBridge(OBJECT *object)
 				GetSine(object->scratchU8[SCRATCHU8_DEPRESS_FORCE] * angle / 0x40, &depress, nullptr);
 				
 				//Set our depression position, then do next log
-				child->y.pos = object->y.pos + (depress * depressForce[object->scratchU8[SCRATCHU8_DEPRESS_POSITION]] / 0x100);
-				j++;
+				object->children[j]->y.pos = object->y.pos + (depress * depressForce[object->scratchU8[SCRATCHU8_DEPRESS_POSITION]] / 0x100);
 			}
 			
 			//Act as a solid platform
@@ -181,10 +178,7 @@ void ObjBridge(OBJECT *object)
 							object->scratchU8[SCRATCHU8_DEPRESS_POSITION] = xDiff;
 						
 						//Set our y-position
-						OBJECT *child = object->children;
-						for (int k = 0; k < xDiff; k++)
-							child = child->next;
-						player->y.pos = child->y.pos - (8 + player->yRadius);
+						player->y.pos = object->children[xDiff]->y.pos - (8 + player->yRadius);
 					}
 				}
 				else

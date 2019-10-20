@@ -367,6 +367,10 @@ bool LEVEL::LoadObjects(LEVELTABLE *tableEntry)
 {
 	LOG(("Loading objects... "));
 	
+	//Reset linked lists
+	objectList = std::deque<OBJECT*>(0);
+	coreObjectList = std::deque<OBJECT*>(0);
+	
 	//Open our object file
 	char *objectPath = AllocPath(gBasePath, tableEntry->levelReferencePath, ".obj");
 	BACKEND_FILE *objectFile = OpenFile(objectPath, "rb");
@@ -398,6 +402,7 @@ bool LEVEL::LoadObjects(LEVELTABLE *tableEntry)
 				if (tableEntry->objectFormat == OBJECTFORMAT_SONIC1)
 					id &= 0x7F;
 				
+				//Create a new object with the loaded information
 				OBJECT *newObject = new OBJECT(&objectList, tableEntry->objectFunctionList[id]);
 				if (newObject->fail)
 				{
@@ -405,7 +410,6 @@ bool LEVEL::LoadObjects(LEVELTABLE *tableEntry)
 					return true;
 				}
 				
-				//Apply data
 				newObject->x.pos = xPos;
 				newObject->y.pos = yPos;
 				
@@ -545,19 +549,10 @@ void LEVEL::UnloadAll()
 		player = next;
 	}
 	
-	for (OBJECT *object = coreObjectList; object != nullptr;)
-	{
-		OBJECT *next = object->next;
-		delete object;
-		object = next;
-	}
-	
-	for (OBJECT *object = objectList; object != nullptr;)
-	{
-		OBJECT *next = object->next;
-		delete object;
-		object = next;
-	}
+	objectList.clear();
+	objectList.shrink_to_fit();
+	coreObjectList.clear();
+	coreObjectList.shrink_to_fit();
 	
 	if (camera != nullptr)
 		delete camera;
@@ -627,8 +622,6 @@ const char *preloadMappings[] = {
 	"data/Object/SuperStars.map",
 	nullptr,
 };
-
-#include "SDL_timer.h"
 
 //Level class
 LEVEL::LEVEL(int id, const char *players[])
@@ -738,36 +731,37 @@ LEVEL::LEVEL(int id, const char *players[])
 	//Initialize scores
 	InitializeScores();
 	
-	//Run object and player code to initialize them
+	//Run players code
 	ClearControllerInput();
 	
 	for (PLAYER *player = playerList; player != nullptr; player = player->next)
 		player->Update();
 	
-	for (OBJECT *object = objectList; object != nullptr;)
+	//Update object and check for deletion
+	for (size_t i = 0; i < objectList.size(); i++)
 	{
-		OBJECT *nextObject = object->next;
-		if (object->Update())
+		if (objectList[i]->Update())
 		{
-			Error(fail = object->fail);
+			Error(fail = objectList[i]->fail);
 			UnloadAll();
 			return;
 		}
-		object = nextObject;
 	}
 	
-	for (OBJECT *object = coreObjectList; object != nullptr;)
+	for (size_t i = 0; i < coreObjectList.size(); i++)
 	{
-		OBJECT *nextObject = object->next;
-		if (object->Update())
+		if (coreObjectList[i]->Update())
 		{
-			Error(fail = object->fail);
+			Error(fail = coreObjectList[i]->fail);
 			UnloadAll();
 			return;
 		}
-		object = nextObject;
 	}
 	
+	CHECK_LINKEDLIST_DELETE(objectList);
+	CHECK_LINKEDLIST_DELETE(coreObjectList);
+	
+	//Set the camera to follow the player
 	camera->Track(playerList);
 	
 	LOG(("Success!\n"));
@@ -823,7 +817,7 @@ bool LEVEL::UpdateFade()
 		AUDIO_LOCK;
 		
 		//Fade music out
-		currentMusic->volume = max(currentMusic->volume - (1.0f / 32.0f), 0.0f);
+		currentMusic->volume = mmax(currentMusic->volume - (1.0f / 32.0f), 0.0f);
 		
 		//Unlock audio device
 		AUDIO_UNLOCK;
@@ -1092,9 +1086,8 @@ void LEVEL::ChangePrimaryMusic(MUSIC *music)
 	//Check if we should play or not
 	bool doRestore = !(currentMusic == primaryMusic || currentMusic == secondaryMusic);
 	if (currentMusic == nullptr || currentMusic == primaryMusic)
-		SetPlayingMusic(primaryMusic = music, doRestore, false); //If was already playing primary music, start playing this music
-	else
-		primaryMusic = music; //Set primary music to be this music
+		SetPlayingMusic(music, doRestore, false); //If was already playing primary music, start playing this music
+	primaryMusic = music; //Set primary music to be this music
 	
 	//Unlock audio device
 	AUDIO_UNLOCK;
@@ -1106,10 +1099,10 @@ void LEVEL::ChangeSecondaryMusic(MUSIC *music)
 	AUDIO_LOCK;
 	
 	//Check if we should play or not
+	bool doRestore = !(currentMusic == primaryMusic || currentMusic == secondaryMusic);
 	if (currentMusic == nullptr || currentMusic == primaryMusic || currentMusic == secondaryMusic)
-		SetPlayingMusic(secondaryMusic = music, !(currentMusic == primaryMusic || currentMusic == secondaryMusic), false); //If was already playing primary or secondary music (secondary music overrides primary music), start playing this music
-	else
-		secondaryMusic = music; //Set secondary music to be this music
+		SetPlayingMusic(music, doRestore, false); //If was already playing primary or secondary music (secondary music overrides primary music), start playing this music
+	secondaryMusic = music; //Set secondary music to be this music
 	
 	//Unlock audio device
 	AUDIO_UNLOCK;
@@ -1186,7 +1179,7 @@ void LEVEL::UpdateMusic()
 	
 	//Fade in the currently playing music
 	if (currentMusic != nullptr)
-		currentMusic->volume = min(currentMusic->volume + (1.0f / 180.0f), 1.0f);
+		currentMusic->volume = mmin(currentMusic->volume + (1.0f / 180.0f), 1.0f);
 	
 	//Unlock the audio device
 	AUDIO_UNLOCK;
@@ -1218,20 +1211,16 @@ bool LEVEL::Update()
 		for (PLAYER *player = playerList; player != nullptr; player = player->next)
 			player->Update();
 	
-		for (OBJECT *object = objectList; object != nullptr;)
+		for (size_t i = 0; i < objectList.size(); i++)
 		{
-			OBJECT *nextObject = object->next;
-			if (object->Update())
-				return Error(fail = object->fail);
-			object = nextObject;
+			if (objectList[i]->Update())
+				return Error(fail = objectList[i]->fail);
 		}
 		
-		for (OBJECT *object = coreObjectList; object != nullptr;)
+		for (size_t i = 0; i < coreObjectList.size(); i++)
 		{
-			OBJECT *nextObject = object->next;
-			if (object->Update())
-				return Error(fail = object->fail);
-			object = nextObject;
+			if (coreObjectList[i]->Update())
+				return Error(fail = coreObjectList[i]->fail);
 		}
 	}
 	else
@@ -1240,12 +1229,16 @@ bool LEVEL::Update()
 		for (PLAYER *player = playerList; player != nullptr; player = player->next)
 			player->Update();
 		
-		for (OBJECT *object = coreObjectList; object != nullptr; object = object->next)
+		for (size_t i = 0; i < coreObjectList.size(); i++)
 		{
-			if (object->Update())
-				return Error(fail = object->fail);
+			if (coreObjectList[i]->Update())
+				return Error(fail = coreObjectList[i]->fail);
 		}
 	}
+	
+	//Check to delete objects
+	CHECK_LINKEDLIST_DELETE(objectList);
+	CHECK_LINKEDLIST_DELETE(coreObjectList);
 	
 	//Update camera
 	if (camera != nullptr)
@@ -1283,10 +1276,10 @@ void LEVEL::Draw()
 	//Draw foreground
 	if (layout.foreground != nullptr && tileTexture != nullptr && camera != nullptr)
 	{
-		int cLeft = max(camera->x / 16, 0);
-		int cTop = max(camera->y / 16, 0);
-		int cRight = min((camera->x + gRenderSpec.width + 15) / 16, gLevel->layout.width - 1);
-		int cBottom = min((camera->y + gRenderSpec.height + 15) / 16, gLevel->layout.height - 1);
+		int cLeft = mmax(camera->x / 16, 0);
+		int cTop = mmax(camera->y / 16, 0);
+		int cRight = mmin((camera->x + gRenderSpec.width + 15) / 16, gLevel->layout.width - 1);
+		int cBottom = mmin((camera->y + gRenderSpec.height + 15) / 16, gLevel->layout.height - 1);
 		
 		for (int ty = cTop; ty < cBottom; ty++)
 		{
@@ -1311,10 +1304,10 @@ void LEVEL::Draw()
 	for (PLAYER *player = playerList; player != nullptr; player = player->next)
 		player->DrawToScreen();
 	
-	for (OBJECT *object = coreObjectList; object != nullptr; object = object->next)
-		object->Draw();
-	for (OBJECT *object = objectList; object != nullptr; object = object->next)
-		object->Draw();
+	for (size_t i = 0; i < objectList.size(); i++)
+		objectList[i]->Draw();
+	for (size_t i = 0; i < coreObjectList.size(); i++)
+		coreObjectList[i]->Draw();
 	
 	//Draw HUD
 	hud->Draw();

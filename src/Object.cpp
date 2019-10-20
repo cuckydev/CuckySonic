@@ -10,7 +10,7 @@
 #include "Player.h"
 
 //Object class
-OBJECT::OBJECT(OBJECT **linkedList, OBJECTFUNCTION objectFunction)
+OBJECT::OBJECT(std::deque<OBJECT*> *linkedList, OBJECTFUNCTION objectFunction)
 {
 	//Clear memory
 	memset(this, 0, sizeof(OBJECT));
@@ -19,28 +19,13 @@ OBJECT::OBJECT(OBJECT **linkedList, OBJECTFUNCTION objectFunction)
 	function = objectFunction;
 	prevFunction = objectFunction;
 	
+	//Reset children and draw instance linked lists
+	drawInstances = std::deque<OBJECT_DRAWINSTANCE*>(0);
+	children = std::deque<OBJECT*>(0);
+	
 	//Attach to linked list (if applicable)
 	if (linkedList != nullptr)
-	{
-		list = linkedList;
-		
-		//If linked list is unset, set us as the first 
-		if (*linkedList == nullptr)
-		{
-			*linkedList = this;
-			return;
-		}
-		
-		//Attach us to the linked list
-		for (OBJECT *object = *linkedList;; object = object->next)
-		{
-			if (object->next == nullptr)
-			{
-				object->next = this;
-				break;
-			}
-		}
-	}
+		linkedList->push_back(this);
 }
 
 OBJECT::~OBJECT()
@@ -53,34 +38,13 @@ OBJECT::~OBJECT()
 	free(scratchU32);
 	free(scratchS32);
 	
-	//Detach from linked list
-	if (list != nullptr)
-	{
-		for (OBJECT **object = list; *object != nullptr; object = &(*object)->next)
-		{
-			if (*object == this)
-			{
-				*object = next;
-				break;
-			}
-		}
-	}
-	
 	//Destroy draw instances
-	for (OBJECT_DRAWINSTANCE *drawInstance = drawInstances; drawInstance != nullptr;)
-	{
-		OBJECT_DRAWINSTANCE *nextInstance = drawInstance->next;
-		delete drawInstance;
-		drawInstance = nextInstance;
-	}
+	drawInstances.clear();
+	drawInstances.shrink_to_fit();
 	
 	//Destroy children
-	for (OBJECT *object = children; object != nullptr;)
-	{
-		OBJECT *nextObject = object->next;
-		delete object;
-		object = nextObject;
-	}
+	children.clear();
+	children.shrink_to_fit();
 }
 
 //Scratch allocation
@@ -537,9 +501,6 @@ void OBJECT::ClearSolidContact()
 //Update and drawing objects
 bool OBJECT::Update()
 {
-	if (deleteFlag)
-		return false;
-	
 	//If our function has changed, free any allocated scratch memory
 	if (function != prevFunction)
 	{
@@ -556,12 +517,8 @@ bool OBJECT::Update()
 	}
 	
 	//Destroy draw instances
-	for (OBJECT_DRAWINSTANCE *drawInstance = drawInstances; drawInstance != nullptr;)
-	{
-		OBJECT_DRAWINSTANCE *nextInstance = drawInstance->next;
-		delete drawInstance;
-		drawInstance = nextInstance;
-	}
+	drawInstances.clear();
+	drawInstances.shrink_to_fit();
 	
 	//Run our object code
 	if (function != nullptr)
@@ -580,16 +537,17 @@ bool OBJECT::Update()
 		for (PLAYER *player = gLevel->playerList; player != nullptr; player = player->next)
 			if (player->interact == this)
 				player->interact = nullptr;
-		delete this;
 	}
 	else
 	{
 		//Update children's code
-		for (OBJECT *object = children; object != nullptr; object = object->next)
+		for (size_t i = 0; i < children.size(); i++)
 		{
-			if (object->Update())
+			if (children[i]->Update())
 				return true;
 		}
+		
+		CHECK_LINKEDLIST_DELETE(children);
 	}
 	
 	return false;
@@ -612,56 +570,26 @@ void OBJECT::DrawInstance(OBJECT_RENDERFLAGS iRenderFlags, TEXTURE *iTexture, MA
 void OBJECT::Draw()
 {
 	//Draw our draw instances, then draw child objects
-	for (OBJECT_DRAWINSTANCE *drawInstance = drawInstances; drawInstance != nullptr; drawInstance = drawInstance->next)
-		drawInstance->Draw();
-	for (OBJECT *object = children; object != nullptr; object = object->next)
-		object->Draw();
+	for (size_t i = 0; i < drawInstances.size(); i++)
+		drawInstances[i]->Draw();
+	for (size_t i = 0; i < children.size(); i++)
+		children[i]->Draw();
 }
 
 //Object drawing instance class
-OBJECT_DRAWINSTANCE::OBJECT_DRAWINSTANCE(OBJECT_DRAWINSTANCE **linkedList)
+OBJECT_DRAWINSTANCE::OBJECT_DRAWINSTANCE(std::deque<OBJECT_DRAWINSTANCE*> *linkedList)
 {
 	//Clear memory
 	memset(this, 0, sizeof(OBJECT_DRAWINSTANCE));
 	
 	//Attach to linked list (if applicable)
 	if (linkedList != nullptr)
-	{
-		list = linkedList;
-		
-		//If linked list is unset, set us as the first 
-		if (*linkedList == nullptr)
-		{
-			*linkedList = this;
-			return;
-		}
-		
-		//Attach us to the linked list
-		for (OBJECT_DRAWINSTANCE *drawInstance = *linkedList; 1; drawInstance = drawInstance->next)
-		{
-			if (drawInstance->next == nullptr)
-			{
-				drawInstance->next = this;
-				break;
-			}
-		}
-	}
+		linkedList->push_back(this);
 }
 
 OBJECT_DRAWINSTANCE::~OBJECT_DRAWINSTANCE()
 {
-	//Detach from linked list
-	if (list != nullptr)
-	{
-		for (OBJECT_DRAWINSTANCE **drawInstance = list; *drawInstance != nullptr; drawInstance = &(*drawInstance)->next)
-		{
-			if (*drawInstance == this)
-			{
-				*drawInstance = next;
-				break;
-			}
-		}
-	}
+	return;
 }
 
 void OBJECT_DRAWINSTANCE::Draw()
