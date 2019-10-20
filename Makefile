@@ -4,7 +4,7 @@ ifeq ($(RELEASE), 1)
 	LDFLAGS = -s
 	FILENAME_DEF = release
 else
-	CXXFLAGS = -O0 -ggdb3 -DDEBUG
+	CXXFLAGS = -O0 -ggdb3 -Wall -Wextra -pedantic -DDEBUG
 	FILENAME_DEF = debug
 endif
 

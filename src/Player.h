@@ -318,6 +318,7 @@ class PLAYER
 		OBJECT *spindashDust;
 		OBJECT *skidDust;
 		OBJECT *shieldObject;
+		OBJECT *invincibilityStarObject[4];
 		
 		//For linked list
 		PLAYER **list;

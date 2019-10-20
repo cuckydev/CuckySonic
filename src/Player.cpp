@@ -470,7 +470,7 @@ void ObjShield(OBJECT *object)
 			object->scratchU8[SCRATCHU8_NO_COPY_POS] = 0;
 		}
 		
-		//Load the given mappings and textures
+		//Load mappings and textures
 		object->texture = gLevel->GetObjectTexture("data/Object/InvincibilitySuperStars.bmp");
 		object->mappings = gLevel->GetObjectMappings("data/Object/SuperStars.map");
 		
@@ -530,17 +530,8 @@ void ObjShield(OBJECT *object)
 			}
 		}
 	}
-	//Invincibility stars
-	else if (player->item.isInvincible)
-	{
-		//Restart if wasn't invincibility stars
-		if (object->routine != ROUTINE_INVINCIBILITYSTAR)
-			object->routine = ROUTINE_INVINCIBILITYSTAR;
-		
-		
-	}
 	//Shield
-	else
+	else if (!player->item.isInvincible)
 	{
 		//Reset if wasn't the shield we are now
 		if ((SHIELD)object->routine != player->shield)
@@ -697,6 +688,99 @@ void ObjShield(OBJECT *object)
 	}
 }
 
+//Invincibility Stars
+static const uint8_t invincibilityStarAnimation[] = {0x00,0x05,0x00,0x05,0x01,0x05,0x02,0x05,0x03,0x05,0x04,0xFF};
+
+static const uint16_t invincibilityStarPosArray[] = {0x0F00,0x0F03,0x0E06,0x0D08,0x0B0B,0x080D,0x060E,0x030F,0x0010,0xFC0F,0xF90E,0xF70D,0xF40B,0xF208,0xF106,0xF003,0xF000,0xF0FC,0xF1F9,0xF2F7,0xF4F4,0xF7F2,0xF9F1,0xFCF0,0xFFF0,0x03F0,0x06F1,0x08F2,0x0BF4,0x0DF7,0x0EF9,0x0FFC};
+
+static const uint8_t invincibilityStarArray0[] = {0x08,0x05,0x07,0x06,0x06,0x07,0x05,0x08,0x06,0x07,0x07,0x06,0xFF};
+static const uint8_t invincibilityStarArray1[] = {0x08,0x07,0x06,0x05,0x04,0x03,0x04,0x05,0x06,0x07,0xFF,0x03,0x04,0x05,0x06,0x07,0x08,0x07,0x06,0x05,0x04};
+static const uint8_t invincibilityStarArray2[] = {0x08,0x07,0x06,0x05,0x04,0x03,0x02,0x03,0x04,0x05,0x06,0x07,0xFF,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x07,0x06,0x05,0x04,0x03};
+static const uint8_t invincibilityStarArray3[] = {0x07,0x06,0x05,0x04,0x03,0x02,0x01,0x02,0x03,0x04,0x05,0x06,0xFF,0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x06,0x05,0x04,0x03,0x02};
+
+static const struct
+{
+	const uint8_t *array;
+	uint16_t value;
+} invincibilityStarArray[4] = {
+	{nullptr, 0x0004},
+	{invincibilityStarArray1, 0x000B},
+	{invincibilityStarArray2, 0x160D},
+	{invincibilityStarArray3, 0x2C0D},
+};
+
+void ObjInvincibilityStars_GetPosition(const uint16_t *posArray, uint16_t posIndex, int16_t inXPos, int16_t inYPos, int16_t *outXPos, int16_t *outYPos)
+{
+	//Get the position from the array and offset it from our given position
+	*outXPos = inXPos + (int8_t)((posArray[posIndex] >> 8) & 0xFF);
+	*outYPos = inYPos + (int8_t)(posArray[posIndex] & 0xFF);
+}
+
+void ObjInvincibilityStars(OBJECT *object)
+{
+	//Scratch
+	enum SCRATCH
+	{
+		//U8
+		SCRATCHU8_ANIMATION =	0,
+		SCRATCHU8_MAX =			2,
+		//U16
+		SCRATCHU16_ANIMATION2 =	0,
+		SCRATCHU16_MAX =		1,
+	};
+	
+	object->ScratchAllocU8(SCRATCHU8_MAX);
+	object->ScratchAllocU8(SCRATCHU16_MAX);
+	
+	//Get our parent player
+	PLAYER *player = (PLAYER*)object->parent;
+	if (player == nullptr)
+		return;
+	
+	//Initialize stars
+	if (object->routine == 0)
+	{
+		//Load mappings and textures
+		object->texture = gLevel->GetObjectTexture("data/Object/InvincibilitySuperStars.bmp");
+		object->mappings = gLevel->GetObjectMappings("data/Object/SuperStars.map");
+		
+		//Set our render properties
+		object->priority = 1;
+		object->widthPixels = 16;
+		object->heightPixels = 16;
+		object->renderFlags.alignPlane = true;
+		
+		//Set other property things
+		object->scratchU8[SCRATCHU8_ANIMATION] = invincibilityStarArray[object->subtype].value;
+		object->routine = (object->subtype ? 2 : 1);
+	}
+	
+	//Run star type-specific code
+	switch (object->routine)
+	{
+		case 1:
+		{
+			//Don't draw if not invincible
+			if (!(player->super == false && player->item.isInvincible == true))
+				break;
+			
+			//Copy player's position
+			int16_t xPos = (object->x.pos = player->x.pos);
+			int16_t yPos = (object->y.pos = player->y.pos);
+			
+			//Get our animation frame
+			uint8_t frame = 0;
+			while ((frame = invincibilityStarArray0[object->scratchU16[SCRATCHU16_ANIMATION2]]) >= 0x80)
+				object->scratchU16[SCRATCHU16_ANIMATION2] = 0;
+			
+			
+			break;
+		}
+		case 2:
+			break;
+	}
+}
+
 //Player class
 #define READ_SPEEDDEFINITION(definition)	definition.top = ReadFile_BE16(playerSpec); definition.acceleration = ReadFile_BE16(playerSpec); definition.deceleration = ReadFile_BE16(playerSpec); definition.rollDeceleration = ReadFile_BE16(playerSpec); definition.jumpForce = ReadFile_BE16(playerSpec); definition.jumpRelease = ReadFile_BE16(playerSpec);
 
@@ -811,6 +895,13 @@ PLAYER::PLAYER(PLAYER **linkedList, const char *specPath, PLAYER *myFollow, int 
 	
 	shieldObject = new OBJECT(&gLevel->coreObjectList, ObjShield);
 	shieldObject->parent = this;
+	
+	for (int i = 0; i < 4; i++)
+	{
+		invincibilityStarObject[i] = new OBJECT(&gLevel->coreObjectList, ObjInvincibilityStars);
+		invincibilityStarObject[i]->subtype = i;
+		invincibilityStarObject[i]->parent = this;
+	}
 	
 	//Attach to linked list (if applicable)
 	if (linkedList != nullptr)

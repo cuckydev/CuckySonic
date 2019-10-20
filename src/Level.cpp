@@ -628,6 +628,8 @@ const char *preloadMappings[] = {
 	nullptr,
 };
 
+#include "SDL_timer.h"
+
 //Level class
 LEVEL::LEVEL(int id, const char *players[])
 {
@@ -742,24 +744,28 @@ LEVEL::LEVEL(int id, const char *players[])
 	for (PLAYER *player = playerList; player != nullptr; player = player->next)
 		player->Update();
 	
-	for (OBJECT *object = coreObjectList; object != nullptr; object = object->next)
+	for (OBJECT *object = objectList; object != nullptr;)
 	{
+		OBJECT *nextObject = object->next;
 		if (object->Update())
 		{
 			Error(fail = object->fail);
 			UnloadAll();
 			return;
 		}
+		object = nextObject;
 	}
 	
-	for (OBJECT *object = objectList; object != nullptr; object = object->next)
+	for (OBJECT *object = coreObjectList; object != nullptr;)
 	{
+		OBJECT *nextObject = object->next;
 		if (object->Update())
 		{
 			Error(fail = object->fail);
 			UnloadAll();
 			return;
 		}
+		object = nextObject;
 	}
 	
 	camera->Track(playerList);
@@ -1212,16 +1218,20 @@ bool LEVEL::Update()
 		for (PLAYER *player = playerList; player != nullptr; player = player->next)
 			player->Update();
 	
-		for (OBJECT *object = objectList; object != nullptr; object = object->next)
+		for (OBJECT *object = objectList; object != nullptr;)
 		{
+			OBJECT *nextObject = object->next;
 			if (object->Update())
 				return Error(fail = object->fail);
+			object = nextObject;
 		}
 		
-		for (OBJECT *object = coreObjectList; object != nullptr; object = object->next)
+		for (OBJECT *object = coreObjectList; object != nullptr;)
 		{
+			OBJECT *nextObject = object->next;
 			if (object->Update())
 				return Error(fail = object->fail);
+			object = nextObject;
 		}
 	}
 	else

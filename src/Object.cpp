@@ -32,7 +32,7 @@ OBJECT::OBJECT(OBJECT **linkedList, OBJECTFUNCTION objectFunction)
 		}
 		
 		//Attach us to the linked list
-		for (OBJECT *object = *linkedList; 1; object = object->next)
+		for (OBJECT *object = *linkedList;; object = object->next)
 		{
 			if (object->next == nullptr)
 			{
@@ -537,6 +537,9 @@ void OBJECT::ClearSolidContact()
 //Update and drawing objects
 bool OBJECT::Update()
 {
+	if (deleteFlag)
+		return false;
+	
 	//If our function has changed, free any allocated scratch memory
 	if (function != prevFunction)
 	{
