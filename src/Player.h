@@ -426,5 +426,6 @@ class PLAYER
 		void MoveOnPlatform(OBJECT *platform, int16_t height, int16_t lastXPos);
 		
 		void GiveSpeedShoes();
+		void GiveInvincibility();
 		void GiveShield(SOUNDID sound, SHIELD type);
 };

@@ -174,6 +174,9 @@ void ObjMonitorContents(OBJECT *object)
 							breakPlayer->GiveShield(SOUNDID_GET_BLUE_SHIELD, SHIELD_BLUE);
 						break;
 					case MONITOR_ITEM_INVINCIBILITY:
+						//Give the player who hit us invincibility
+						if (breakPlayer != nullptr)
+							breakPlayer->GiveInvincibility();
 						break;
 					default:
 						break;

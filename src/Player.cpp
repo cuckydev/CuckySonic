@@ -530,12 +530,14 @@ void ObjShield(OBJECT *object)
 			}
 		}
 	}
-	//TODO: Invincibility stars
+	//Invincibility stars
 	else if (player->item.isInvincible)
 	{
 		//Restart if wasn't invincibility stars
 		if (object->routine != ROUTINE_INVINCIBILITYSTAR)
 			object->routine = ROUTINE_INVINCIBILITYSTAR;
+		
+		
 	}
 	//Shield
 	else
@@ -4987,6 +4989,20 @@ void PLAYER::GiveSpeedShoes()
 	//Play speed shoes music (only if lead)
 	if (follow == nullptr)
 		gLevel->ChangeSecondaryMusic(gLevel->speedShoesMusic);
+}
+
+void PLAYER::GiveInvincibility()
+{
+	if (!super)
+	{
+		//Give invincibility
+		item.isInvincible = true;
+		invincibilityTime = 150;
+		
+		//Play invincibility music (only if lead)
+		if (follow == nullptr)
+			gLevel->ChangeSecondaryMusic(gLevel->invincibilityMusic);
+	}
 }
 
 void PLAYER::GiveShield(SOUNDID sound, SHIELD type)
