@@ -5,6 +5,7 @@
 #include "SDL_render.h"
 #include "SDL_timer.h"
 
+#include "../CommonMacros.h"
 #include "../Log.h"
 #include "../GameConstants.h"
 #include "../Render.h"
@@ -32,7 +33,7 @@ TEXTURE::TEXTURE(std::deque<TEXTURE*> *linkedList, const char *path)
 	memset(this, 0, sizeof(TEXTURE));
 	
 	//Load bitmap
-	source = path;
+	source = duplicateString(path);
 	
 	char *filepath = AllocPath(gBasePath, path, nullptr);
 	SDL_Surface *bitmap = SDL_LoadBMP(filepath);
@@ -152,6 +153,8 @@ TEXTURE::~TEXTURE()
 		delete[] texture;
 	if (loadedPalette)
 		delete loadedPalette;
+	if (source)
+		delete[] source;
 }
 
 //Full-colour texture class

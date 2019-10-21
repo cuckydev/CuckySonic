@@ -29,3 +29,10 @@
 													delete linkedList[dllci];	\
 												linkedList.clear();	\
 												linkedList.shrink_to_fit();
+
+inline char *duplicateString(const char *str)
+{
+	size_t length = strlen(str) + 1;
+	char *retVal = new char[length];
+	return static_cast<char *>(memcpy(retVal, str, length));
+}

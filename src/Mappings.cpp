@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <string.h>
+#include "CommonMacros.h"
 #include "Filesystem.h"
 #include "Mappings.h"
 #include "Log.h"
@@ -11,7 +12,7 @@ MAPPINGS::MAPPINGS(std::deque<MAPPINGS*> *linkedList, const char *path)
 	memset(this, 0, sizeof(MAPPINGS));
 	
 	//Open the file given
-	source = path;
+	source = duplicateString(path);
 	
 	char *filepath = AllocPath(gBasePath, path, nullptr);
 	BACKEND_FILE *fp = OpenFile(filepath, "rb");
@@ -62,4 +63,5 @@ MAPPINGS::~MAPPINGS()
 	//Free allocated data
 	delete[] rect;
 	delete[] origin;
+	delete[] source;
 }
