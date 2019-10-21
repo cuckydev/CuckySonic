@@ -941,7 +941,7 @@ TEXTURE *LEVEL::GetObjectTexture(const char *path)
 {
 	for (size_t i = 0; i < objTextureCache.size(); i++)
 	{
-		if (!strcmp(objTextureCache[i]->source, path))
+		if (objTextureCache[i]->source != nullptr && !strcmp(objTextureCache[i]->source, path))
 			return objTextureCache[i];
 	}
 	
@@ -952,7 +952,7 @@ MAPPINGS *LEVEL::GetObjectMappings(const char *path)
 {
 	for (size_t i = 0; i < objMappingsCache.size(); i++)
 	{
-		if (!strcmp(objMappingsCache[i]->source, path))
+		if (objMappingsCache[i]->source != nullptr && !strcmp(objMappingsCache[i]->source, path))
 			return objMappingsCache[i];
 	}
 	

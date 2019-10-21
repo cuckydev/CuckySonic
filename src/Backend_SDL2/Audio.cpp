@@ -256,6 +256,8 @@ MUSIC::MUSIC(const char *name, int initialPosition, float initialVolume)
 	char *oggPath = AllocPath(basePath, ".ogg", nullptr);
 	char *metaPath = AllocPath(basePath, ".mmt", nullptr);
 	
+	delete[] basePath;
+	
 	//Open the given file (different between Windows and non-Windows, because Windows hates UTF-8)
 	#ifdef WINDOWS
 		//Convert to UTF-16
