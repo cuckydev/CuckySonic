@@ -1,6 +1,6 @@
 #Release and debug
 ifeq ($(RELEASE), 1)
-	CXXFLAGS = -O3 -flto -Wall -Wextra
+	CXXFLAGS = -O3 -flto -Wall -Wextra -pedantic
 	LDFLAGS = -s
 	FILENAME_DEF = release
 else
