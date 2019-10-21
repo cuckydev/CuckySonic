@@ -852,7 +852,7 @@ PLAYER::PLAYER(PLAYER **linkedList, const char *specPath, PLAYER *myFollow, int 
 	//Load art and mappings
 	char *texPath = AllocPath(specPath, ".bmp", nullptr);
 	texture = gLevel->GetObjectTexture(texPath);
-	delete texPath;
+	delete[] texPath;
 	
 	if (texture->fail != nullptr)
 	{
@@ -862,7 +862,7 @@ PLAYER::PLAYER(PLAYER **linkedList, const char *specPath, PLAYER *myFollow, int 
 	
 	char *mapPath = AllocPath(specPath, ".map", nullptr);
 	mappings = gLevel->GetObjectMappings(mapPath);
-	delete mapPath;
+	delete[] mapPath;
 	
 	if (mappings->fail != nullptr)
 	{
@@ -873,7 +873,7 @@ PLAYER::PLAYER(PLAYER **linkedList, const char *specPath, PLAYER *myFollow, int 
 	//Read properties from the specifications
 	char *plrSpecPath = AllocPath(gBasePath, specPath, ".psp");
 	BACKEND_FILE *playerSpec = OpenFile(plrSpecPath, "rb");
-	delete plrSpecPath;
+	delete[] plrSpecPath;
 	
 	if (playerSpec == nullptr)
 	{

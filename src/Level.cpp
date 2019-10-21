@@ -90,7 +90,7 @@ bool LEVEL::LoadMappings(LEVELTABLE *tableEntry)
 			//Open our chunk mapping file
 			char *mappingPath = AllocPath(gBasePath, tableEntry->chunkTileReferencePath, ".chk");
 			BACKEND_FILE *mappingFile = OpenFile(mappingPath, "rb");
-			delete mappingPath;
+			delete[] mappingPath;
 			
 			if (mappingFile == nullptr)
 			{
@@ -146,7 +146,7 @@ bool LEVEL::LoadLayout(LEVELTABLE *tableEntry)
 	//Open our layout file
 	char *layoutPath = AllocPath(gBasePath, tableEntry->levelReferencePath, ".lay");
 	BACKEND_FILE *layoutFile = OpenFile(layoutPath, "rb");
-	delete layoutPath;
+	delete[] layoutPath;
 	
 	if (layoutFile == nullptr)
 	{
@@ -261,8 +261,8 @@ bool LEVEL::LoadCollisionTiles(LEVELTABLE *tableEntry)
 	char *alternateMapPath = AllocPath(gBasePath, tableEntry->chunkTileReferencePath, ".alt");
 	BACKEND_FILE *norMapFile = OpenFile(normalMapPath, "rb");
 	BACKEND_FILE *altMapFile = OpenFile(alternateMapPath, "rb");
-	free(alternateMapPath);
-	free(normalMapPath);
+	delete[] alternateMapPath;
+	delete[] normalMapPath;
 	
 	if (norMapFile == nullptr || altMapFile == nullptr)
 	{
@@ -304,9 +304,9 @@ bool LEVEL::LoadCollisionTiles(LEVELTABLE *tableEntry)
 	BACKEND_FILE *colNormalFile = OpenFile(collisionNormalPath, "rb");
 	BACKEND_FILE *colRotatedFile = OpenFile(collisionRotatedPath, "rb");
 	BACKEND_FILE *colAngleFile = OpenFile(collisionAnglePath, "rb");
-	delete collisionAnglePath;
-	delete collisionRotatedPath;
-	delete collisionNormalPath;
+	delete[] collisionAnglePath;
+	delete[] collisionRotatedPath;
+	delete[] collisionNormalPath;
 	
 	if (colNormalFile == nullptr || colRotatedFile == nullptr || colAngleFile == nullptr)
 	{
@@ -374,7 +374,7 @@ bool LEVEL::LoadObjects(LEVELTABLE *tableEntry)
 	//Open our object file
 	char *objectPath = AllocPath(gBasePath, tableEntry->levelReferencePath, ".obj");
 	BACKEND_FILE *objectFile = OpenFile(objectPath, "rb");
-	delete objectPath;
+	delete[] objectPath;
 	
 	if (objectFile == nullptr)
 	{
@@ -434,7 +434,7 @@ bool LEVEL::LoadObjects(LEVELTABLE *tableEntry)
 	//Open external ring file
 	char *ringPath = AllocPath(gBasePath, tableEntry->levelReferencePath, ".ring");
 	BACKEND_FILE *ringFile = OpenFile(ringPath, "rb");
-	delete ringPath;
+	delete[] ringPath;
 	
 	if (ringFile == nullptr)
 	{
@@ -511,7 +511,7 @@ bool LEVEL::LoadArt(LEVELTABLE *tableEntry)
 	//Load background art
 	char *backPath = AllocPath(tableEntry->artReferencePath, ".background.bmp", nullptr);
 	background = new BACKGROUND(backPath, tableEntry->backFunction);
-	delete backPath;
+	delete[] backPath;
 	
 	if (background->fail)
 	{
@@ -859,6 +859,8 @@ void LEVEL::DynamicEvents()
 				else
 					player->status.pinballMode = false;
 			}
+			break;
+		default:
 			break;
 	}
 	

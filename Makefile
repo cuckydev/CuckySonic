@@ -35,7 +35,7 @@ ifeq ($(BACKEND), SDL2)
 endif
 
 #Other CXX flags
-CXXFLAGS += -MMD -MP -MF $@.d
+CXXFLAGS += -faligned-new -MMD -MP -MF $@.d
 
 #Sources to compile
 SOURCES = \

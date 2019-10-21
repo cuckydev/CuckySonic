@@ -32,7 +32,7 @@ SPECIALSTAGE::SPECIALSTAGE(const char *name)
 	//Load the background texture (stage-specific)
 	char *backgroundPath = AllocPath(name, ".background.bmp", nullptr);
 	backgroundTexture = new TEXTURE(nullptr, backgroundPath);
-	delete backgroundPath;
+	delete[] backgroundPath;
 	
 	if (backgroundTexture->fail != nullptr)
 	{
@@ -43,7 +43,7 @@ SPECIALSTAGE::SPECIALSTAGE(const char *name)
 	//Open the layout file
 	char *layoutPath = AllocPath(gBasePath, name, ".ssl");
 	BACKEND_FILE *fp = OpenFile(layoutPath, "rb");
-	delete layoutPath;
+	delete[] layoutPath;
 	
 	if (fp == nullptr)
 	{
@@ -55,7 +55,7 @@ SPECIALSTAGE::SPECIALSTAGE(const char *name)
 	width = ReadFile_BE16(fp);
 	height = ReadFile_BE16(fp);
 	
-	layout = (uint8_t*)malloc(width * height);
+	layout = new uint8_t[width * height];
 	if (layout == nullptr)
 	{
 		Error(fail = "Failed to allocate the internal stage layout");
@@ -80,7 +80,7 @@ SPECIALSTAGE::SPECIALSTAGE(const char *name)
 	//Open the perspective map file
 	char *perspectivePath = AllocPath(gBasePath, "data/SpecialStage/Perspective.bin", nullptr);
 	BACKEND_FILE *perspectiveFile = OpenFile(perspectivePath, "rb");
-	delete perspectivePath;
+	delete[] perspectivePath;
 	
 	if (perspectiveFile == nullptr)
 	{
@@ -112,8 +112,8 @@ SPECIALSTAGE::~SPECIALSTAGE()
 	delete stageTexture;
 	delete sphereTexture;
 	delete backgroundTexture;
-	delete layout;
-	delete perspectiveMap;
+	delete[] layout;
+	delete[] perspectiveMap;
 }
 
 //Stage update code

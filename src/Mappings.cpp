@@ -15,7 +15,7 @@ MAPPINGS::MAPPINGS(MAPPINGS **linkedList, const char *path)
 	
 	char *filepath = AllocPath(gBasePath, path, nullptr);
 	BACKEND_FILE *fp = OpenFile(filepath, "rb");
-	delete filepath;
+	delete[] filepath;
 	
 	if (fp == nullptr)
 	{
@@ -25,14 +25,14 @@ MAPPINGS::MAPPINGS(MAPPINGS **linkedList, const char *path)
 	
 	//Allocate our frames
 	size = GetFileSize(fp) / (6 * 2);
-	rect = (RECT*)calloc(size, sizeof(RECT));
-	origin = (POINT*)calloc(size, sizeof(POINT));
+	rect = new RECT[size];
+	origin = new POINT[size];
 	
 	if (rect == nullptr || origin == nullptr)
 	{
 		CloseFile(fp);
-		free(rect);
-		free(origin);
+		delete[] rect;
+		delete[] origin;
 		fail = "Failed to allocate rect and origin arrays";
 		return;
 	}
@@ -64,6 +64,6 @@ MAPPINGS::MAPPINGS(MAPPINGS **linkedList, const char *path)
 MAPPINGS::~MAPPINGS()
 {
 	//Free allocated data
-	free(rect);
-	free(origin);
+	delete[] rect;
+	delete[] origin;
 }

@@ -32,7 +32,7 @@ bool InitializeInput()
 	//Open gamecontrollerdb.txt (Gamepad mappings)
 	char *gcdbPath = AllocPath(gBasePath, "data/gamecontrollerdb.txt", nullptr);
 	int result = SDL_GameControllerAddMappingsFromFile(gcdbPath);
-	delete gcdbPath;
+	delete[] gcdbPath;
 	
 	if (result < 0)
 	{

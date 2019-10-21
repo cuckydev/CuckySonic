@@ -83,7 +83,7 @@ SOUND::SOUND(const char *path)
 	
 	char *filepath = AllocPath(gBasePath, path, nullptr);
 	SDL_AudioSpec *audioSpec = SDL_LoadWAV(filepath, &wavSpec, &wavBuffer, &wavLength);
-	delete filepath;
+	delete[] filepath;
 	
 	if (audioSpec == nullptr)
 	{
@@ -265,12 +265,12 @@ MUSIC::MUSIC(const char *name, int initialPosition, float initialVolume)
 		
 		//Open the file with our newly converted path
 		FILE *fp = _wfopen(wcharBuffer, L"rb");
-		delete wcharBuffer;
-		delete oggPath;
+		delete[] wcharBuffer;
+		delete[] oggPath;
 	#else
 		//Open file
 		FILE *fp = fopen(oggPath, "rb");
-		delete oggPath;
+		delete[] oggPath;
 	#endif
 	
 	//If the file failed to open...
@@ -297,7 +297,7 @@ MUSIC::MUSIC(const char *name, int initialPosition, float initialVolume)
 	
 	//Open meta file
 	BACKEND_FILE *metafp = OpenFile(metaPath, "rb");
-	delete metaPath;
+	delete[] metaPath;
 	
 	if (metafp == nullptr)
 	{

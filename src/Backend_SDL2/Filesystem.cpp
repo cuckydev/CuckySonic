@@ -108,7 +108,7 @@ bool InitializePath()
 void QuitPath()
 {
 	LOG(("Ending paths... "));
-	delete gBasePath;
-	delete gPrefPath;
+	delete[] gBasePath;
+	delete[] gPrefPath;
 	LOG(("Success!\n"));
 }
