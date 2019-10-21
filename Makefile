@@ -22,6 +22,9 @@ ifeq ($(WINDOWS), 1)
 	endif
 endif
 
+# If the user hasn't chosen a backend, just assume he wants SDL2
+BACKEND ?= SDL2
+
 #Backend flags and libraries
 ifeq ($(BACKEND), SDL2)
 	CXXFLAGS += `pkg-config --cflags sdl2` -DBACKEND_SDL2
