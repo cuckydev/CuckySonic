@@ -22,7 +22,7 @@ ifeq ($(WINDOWS), 1)
 	endif
 endif
 
-# If the user hasn't chosen a backend, just assume he wants SDL2
+#Use SDL2 as the default backend if one wasn't explicitly chosen
 BACKEND ?= SDL2
 
 #Backend flags and libraries
