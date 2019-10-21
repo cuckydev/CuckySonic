@@ -488,7 +488,7 @@ bool LEVEL::LoadArt(LEVELTABLE *tableEntry)
 			//Load our foreground tilemap
 			char *artPath = AllocPath(tableEntry->artReferencePath, ".tileset.bmp", nullptr);
 			tileTexture = new TEXTURE(nullptr, artPath);
-			delete artPath;
+			delete[] artPath;
 			
 			if (tileTexture->fail)
 			{
