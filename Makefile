@@ -1,10 +1,10 @@
 #Release and debug
 ifeq ($(RELEASE), 1)
-	CXXFLAGS = -O3 -flto
+	CXXFLAGS = -O3 -flto -Wall -Wextra
 	LDFLAGS = -s
 	FILENAME_DEF = release
 else
-	CXXFLAGS = -O0 -ggdb3 -Wall -Wextra -pedantic -DDEBUG
+	CXXFLAGS = -Og -ggdb3 -Wall -Wextra -pedantic -DDEBUG
 	FILENAME_DEF = debug
 endif
 
