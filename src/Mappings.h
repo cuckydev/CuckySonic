@@ -1,4 +1,5 @@
 #pragma once
+#include <deque>
 #include "Render.h"
 
 class MAPPINGS
@@ -15,11 +16,7 @@ class MAPPINGS
 		RECT *rect;
 		POINT *origin;
 		
-		//Linked list
-		MAPPINGS **list;
-		MAPPINGS *next;
-		
 	public:
-		MAPPINGS(MAPPINGS **linkedList, const char *path);
+		MAPPINGS(std::deque<MAPPINGS*> *linkedList, const char *path);
 		~MAPPINGS();
 };

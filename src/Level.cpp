@@ -367,10 +367,6 @@ bool LEVEL::LoadObjects(LEVELTABLE *tableEntry)
 {
 	LOG(("Loading objects... "));
 	
-	//Reset linked lists
-	objectList = std::deque<OBJECT*>(0);
-	coreObjectList = std::deque<OBJECT*>(0);
-	
 	//Open our object file
 	char *objectPath = AllocPath(gBasePath, tableEntry->levelReferencePath, ".obj");
 	BACKEND_FILE *objectFile = OpenFile(objectPath, "rb");
@@ -492,7 +488,7 @@ bool LEVEL::LoadArt(LEVELTABLE *tableEntry)
 			//Load our foreground tilemap
 			char *artPath = AllocPath(tableEntry->artReferencePath, ".tileset.bmp", nullptr);
 			tileTexture = new TEXTURE(nullptr, artPath);
-			free(artPath);
+			delete artPath;
 			
 			if (tileTexture->fail)
 			{
@@ -560,19 +556,8 @@ void LEVEL::UnloadAll()
 		delete hud;
 	
 	//Unload object textures and mappings
-	for (TEXTURE *texture = objTextureCache; texture != nullptr;)
-	{
-		TEXTURE *next = texture->next;
-		delete texture;
-		texture = next;
-	}
-	
-	for (MAPPINGS *mappings = objMappingsCache; mappings != nullptr;)
-	{
-		MAPPINGS *next = mappings->next;
-		delete mappings;
-		mappings = next;
-	}
+	DESTROY_LINKEDLIST_CONTENTS(objTextureCache);
+	DESTROY_LINKEDLIST_CONTENTS(objMappingsCache);
 	
 	//Lock audio device so we can safely unload all loaded music
 	AUDIO_LOCK;
@@ -625,7 +610,14 @@ const char *preloadMappings[] = {
 LEVEL::LEVEL(int id, const char *players[])
 {
 	LOG(("Loading level ID %d...\n", id));
+	
+	//Reset memory, then reinitialize linked lists
 	memset(this, 0, sizeof(LEVEL));
+	
+	objectList = std::deque<OBJECT*>(0);
+	coreObjectList = std::deque<OBJECT*>(0);
+	objTextureCache = std::deque<TEXTURE*>(0);
+	objMappingsCache = std::deque<MAPPINGS*>(0);
 	
 	//Set us as the global level
 	gLevel = this;
@@ -789,8 +781,8 @@ void LEVEL::SetFade(bool fadeIn, bool isSpecial)
 			function(tileTexture->loadedPalette);
 		if (background != nullptr)
 			function(background->texture->loadedPalette);
-		for (TEXTURE *texture = objTextureCache; texture != nullptr; texture = texture->next)
-			function(texture->loadedPalette);
+		for (size_t i = 0; i < objTextureCache.size(); i++)
+			function(objTextureCache[i]->loadedPalette);
 	}
 }
 
@@ -805,8 +797,8 @@ bool LEVEL::UpdateFade()
 		finished = function(tileTexture->loadedPalette) ? finished : false;
 	if (background != nullptr)
 		finished = function(background->texture->loadedPalette) ? finished : false;
-	for (TEXTURE *texture = objTextureCache; texture != nullptr; texture = texture->next)
-		finished = function(texture->loadedPalette) ? finished : false;
+	for (size_t i = 0; i < objTextureCache.size(); i++)
+		finished = function(objTextureCache[i]->loadedPalette) ? finished : false;
 	
 	//Fade music out
 	if (currentMusic != nullptr && !isFadingIn)
@@ -945,23 +937,23 @@ void LEVEL::DynamicEvents()
 }
 
 //Texture cache and mappings cache
-TEXTURE* LEVEL::GetObjectTexture(const char *path)
+TEXTURE *LEVEL::GetObjectTexture(const char *path)
 {
-	for (TEXTURE *texture = objTextureCache; texture != nullptr; texture = texture->next)
+	for (size_t i = 0; i < objTextureCache.size(); i++)
 	{
-		if (!strcmp(texture->source, path))
-			return texture;
+		if (!strcmp(objTextureCache[i]->source, path))
+			return objTextureCache[i];
 	}
 	
 	return new TEXTURE(&objTextureCache, path);
 }
 
-MAPPINGS* LEVEL::GetObjectMappings(const char *path)
+MAPPINGS *LEVEL::GetObjectMappings(const char *path)
 {
-	for (MAPPINGS *mappings = objMappingsCache; mappings != nullptr; mappings = mappings->next)
+	for (size_t i = 0; i < objMappingsCache.size(); i++)
 	{
-		if (!strcmp(mappings->source, path))
-			return mappings;
+		if (!strcmp(objMappingsCache[i]->source, path))
+			return objMappingsCache[i];
 	}
 	
 	return new MAPPINGS(&objMappingsCache, path);

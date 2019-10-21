@@ -237,8 +237,8 @@ class LEVEL
 		HUD *hud;
 		
 		//Object texture cache
-		TEXTURE *objTextureCache;
-		MAPPINGS *objMappingsCache;
+		std::deque<TEXTURE*> objTextureCache;
+		std::deque<MAPPINGS*> objMappingsCache;
 		
 		//State
 		bool inTitleCard;

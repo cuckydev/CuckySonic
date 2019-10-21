@@ -26,7 +26,7 @@ unsigned int vsyncMultiple = 0;
 const long double framerateMilliseconds = (1000.0 / FRAMERATE);
 
 //Texture class
-TEXTURE::TEXTURE(TEXTURE **linkedList, const char *path)
+TEXTURE::TEXTURE(std::deque<TEXTURE*> *linkedList, const char *path)
 {
 	LOG(("Loading texture from %s... ", path));
 	memset(this, 0, sizeof(TEXTURE));
@@ -93,16 +93,12 @@ TEXTURE::TEXTURE(TEXTURE **linkedList, const char *path)
 	
 	//Attach to linked list if given
 	if (linkedList != nullptr)
-	{
-		list = linkedList;
-		next = *linkedList;
-		*linkedList = this;
-	}
+		linkedList->push_back(this);
 	
 	LOG(("Success!\n"));
 }
 
-TEXTURE::TEXTURE(TEXTURE **linkedList, uint8_t *data, int dWidth, int dHeight)
+TEXTURE::TEXTURE(std::deque<TEXTURE*> *linkedList, uint8_t *data, int dWidth, int dHeight)
 {
 	LOG(("Loading texture from memory location %p dimensions %dx%d... ", (void*)data, dWidth, dHeight));
 	memset(this, 0, sizeof(TEXTURE));
@@ -123,11 +119,7 @@ TEXTURE::TEXTURE(TEXTURE **linkedList, uint8_t *data, int dWidth, int dHeight)
 	
 	//Attach to linked list if given
 	if (linkedList != nullptr)
-	{
-		list = linkedList;
-		next = *linkedList;
-		*linkedList = this;
-	}
+		linkedList->push_back(this);
 	
 	LOG(("Success!\n"));
 }
@@ -163,7 +155,7 @@ TEXTURE::~TEXTURE()
 }
 
 //Full-colour texture class
-TEXTURE_FULLCOLOUR::TEXTURE_FULLCOLOUR(TEXTURE_FULLCOLOUR **linkedList, const char *path)
+TEXTURE_FULLCOLOUR::TEXTURE_FULLCOLOUR(std::deque<TEXTURE_FULLCOLOUR*> *linkedList, const char *path)
 {
 	LOG(("Loading full-colour texture from %s... ", path));
 	memset(this, 0, sizeof(TEXTURE));
@@ -228,11 +220,7 @@ TEXTURE_FULLCOLOUR::TEXTURE_FULLCOLOUR(TEXTURE_FULLCOLOUR **linkedList, const ch
 	
 	//Attach to linked list if given
 	if (linkedList != nullptr)
-	{
-		list = linkedList;
-		next = *linkedList;
-		*linkedList = this;
-	}
+		linkedList->push_back(this);
 	
 	LOG(("Success!\n"));
 }

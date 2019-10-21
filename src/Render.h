@@ -1,5 +1,6 @@
 #pragma once
 #include <stdint.h>
+#include <deque>
 
 #ifdef BACKEND_SDL2
 	#include "SDL_render.h"
@@ -47,13 +48,9 @@ class TEXTURE
 		//Loaded palette
 		PALETTE *loadedPalette;
 		
-		//For linked lists (if applicable)
-		TEXTURE **list;
-		TEXTURE *next;
-		
 	public:
-		TEXTURE(TEXTURE **linkedList, const char *path);
-		TEXTURE(TEXTURE **linkedList, uint8_t *data, int dWidth, int dHeight);
+		TEXTURE(std::deque<TEXTURE*> *linkedList, const char *path);
+		TEXTURE(std::deque<TEXTURE*> *linkedList, uint8_t *data, int dWidth, int dHeight);
 		~TEXTURE();
 };
 
@@ -71,12 +68,8 @@ class TEXTURE_FULLCOLOUR
 		int width;
 		int height;
 		
-		//For linked lists (if applicable)
-		TEXTURE_FULLCOLOUR **list;
-		TEXTURE_FULLCOLOUR *next;
-		
 	public:
-		TEXTURE_FULLCOLOUR(TEXTURE_FULLCOLOUR **linkedList, const char *path);
+		TEXTURE_FULLCOLOUR(std::deque<TEXTURE_FULLCOLOUR*> *linkedList, const char *path);
 		~TEXTURE_FULLCOLOUR();
 };
 

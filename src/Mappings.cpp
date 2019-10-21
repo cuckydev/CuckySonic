@@ -4,7 +4,7 @@
 #include "Mappings.h"
 #include "Log.h"
 
-MAPPINGS::MAPPINGS(MAPPINGS **linkedList, const char *path)
+MAPPINGS::MAPPINGS(std::deque<MAPPINGS*> *linkedList, const char *path)
 {
 	LOG(("Loading mappings from %s... ", path));
 	
@@ -52,11 +52,7 @@ MAPPINGS::MAPPINGS(MAPPINGS **linkedList, const char *path)
 	
 	//Attach to linked list if given
 	if (linkedList != nullptr)
-	{
-		list = linkedList;
-		next = *linkedList;
-		*linkedList = this;
-	}
+		linkedList->push_back(this);
 	
 	LOG(("Success!\n"));
 }
