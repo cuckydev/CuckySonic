@@ -399,28 +399,29 @@ bool LEVEL::LoadObjects(LEVELTABLE *tableEntry)
 					id &= 0x7F;
 				
 				//Create a new object with the loaded information
-				OBJECT *newObject = new OBJECT(&objectList, tableEntry->objectFunctionList[id]);
-				if (newObject->fail)
+				OBJECT newObject(tableEntry->objectFunctionList[id]);
+				if (newObject.fail)
 				{
-					Error(fail = newObject->fail);
+					Error(fail = newObject.fail);
 					return true;
 				}
 				
-				newObject->x.pos = xPos;
-				newObject->y.pos = yPos;
+				newObject.x.pos = xPos;
+				newObject.y.pos = yPos;
 				
 				if (tableEntry->objectFormat == OBJECTFORMAT_SONIC1)
 				{
-					newObject->status.yFlip = (word2 & 0x8000) != 0;
-					newObject->status.xFlip = (word2 & 0x4000) != 0;
+					newObject.status.yFlip = (word2 & 0x8000) != 0;
+					newObject.status.xFlip = (word2 & 0x4000) != 0;
 				}
 				else
 				{
-					newObject->status.yFlip = (word2 & 0x4000) != 0;
-					newObject->status.xFlip = (word2 & 0x2000) != 0;
+					newObject.status.yFlip = (word2 & 0x4000) != 0;
+					newObject.status.xFlip = (word2 & 0x2000) != 0;
 				}
 				
-				newObject->subtype = subtype;
+				newObject.subtype = subtype;
+				objectList.push_back(newObject);
 			}
 		}
 	}
@@ -452,16 +453,17 @@ bool LEVEL::LoadObjects(LEVELTABLE *tableEntry)
 		for (int v = 0; v <= (type & 0x7); v++)
 		{
 			//Create ring object
-			OBJECT *newObject = new OBJECT(&objectList, &ObjRing);
-			if (newObject->fail)
+			OBJECT newObject(&ObjRing);
+			if (newObject.fail)
 			{
-				Error(fail = newObject->fail);
+				Error(fail = newObject.fail);
 				CloseFile(ringFile);
 				return true;
 			}
 			
-			newObject->x.pos = xPos;
-			newObject->y.pos = yPos;
+			newObject.x.pos = xPos;
+			newObject.y.pos = yPos;
+			objectList.push_back(newObject);
 			
 			//Offset
 			if (type & 0x8)
@@ -487,7 +489,7 @@ bool LEVEL::LoadArt(LEVELTABLE *tableEntry)
 		{
 			//Load our foreground tilemap
 			char *artPath = AllocPath(tableEntry->artReferencePath, ".tileset.bmp", nullptr);
-			tileTexture = new TEXTURE(nullptr, artPath);
+			tileTexture = new TEXTURE(artPath);
 			delete[] artPath;
 			
 			if (tileTexture->fail)
@@ -538,15 +540,12 @@ void LEVEL::UnloadAll()
 		delete background;
 	
 	//Unload players, objects, and camera
-	for (PLAYER *player = playerList; player != nullptr;)
-	{
-		PLAYER *next = player->next;
-		delete player;
-		player = next;
-	}
-	
-	DESTROY_LINKEDLIST_CONTENTS(objectList);
-	DESTROY_LINKEDLIST_CONTENTS(coreObjectList);
+	playerList.clear();
+	playerList.shrink_to_fit();
+	objectList.clear();
+	objectList.shrink_to_fit();
+	coreObjectList.clear();
+	coreObjectList.shrink_to_fit();
 	
 	if (camera != nullptr)
 		delete camera;
@@ -556,8 +555,10 @@ void LEVEL::UnloadAll()
 		delete hud;
 	
 	//Unload object textures and mappings
-	DESTROY_LINKEDLIST_CONTENTS(objTextureCache);
-	DESTROY_LINKEDLIST_CONTENTS(objMappingsCache);
+	objTextureCache.clear();
+	objTextureCache.shrink_to_fit();
+	objMappingsCache.clear();
+	objMappingsCache.shrink_to_fit();
 	
 	//Lock audio device so we can safely unload all loaded music
 	AUDIO_LOCK;
@@ -614,10 +615,11 @@ LEVEL::LEVEL(int id, const char *players[])
 	//Reset memory, then reinitialize linked lists
 	memset(this, 0, sizeof(LEVEL));
 	
-	objectList = std::deque<OBJECT*>(0);
-	coreObjectList = std::deque<OBJECT*>(0);
-	objTextureCache = std::deque<TEXTURE*>(0);
-	objMappingsCache = std::deque<MAPPINGS*>(0);
+	playerList = std::deque<PLAYER>();
+	objectList = std::deque<OBJECT>();
+	coreObjectList = std::deque<OBJECT>();
+	objTextureCache = std::deque<TEXTURE>();
+	objMappingsCache = std::deque<MAPPINGS>();
 	
 	//Set us as the global level
 	gLevel = this;
@@ -647,23 +649,22 @@ LEVEL::LEVEL(int id, const char *players[])
 	for (int i = 0; *players != nullptr; i++, players++)
 	{
 		//Create our player
-		PLAYER *newPlayer = new PLAYER(&playerList, *players, follow, i);
-		
-		if (newPlayer->fail)
+		PLAYER newPlayer(*players, follow, i);
+		if (newPlayer.fail)
 		{
-			fail = newPlayer->fail;
+			fail = newPlayer.fail;
 			UnloadAll();
 			return;
 		}
 		
-		//Set position and set the next player to follow us
-		newPlayer->x.pos = tableEntry->startX - (i * 24);
-		newPlayer->y.pos = tableEntry->startY;
-		follow = newPlayer;
+		newPlayer.x.pos = tableEntry->startX - (i * 16);
+		newPlayer.y.pos = tableEntry->startY;
+		follow = &newPlayer;
+		playerList.push_back(newPlayer);
 	}
 	
 	//Create our camera
-	camera = new CAMERA(playerList);
+	camera = new CAMERA(&playerList[0]);
 	
 	//Title-card
 	titleCard = new TITLECARD(tableEntry->name, tableEntry->subtitle);
@@ -703,17 +704,15 @@ LEVEL::LEVEL(int id, const char *players[])
 	gameoverMusic = new MUSIC("GameOver", 0, 1.0f);
 	extraLifeMusic = new MUSIC("ExtraLife", 0, 1.0f);
 	
+	AUDIO_UNLOCK;
+	
 	//Check if any music failed to load...
 	if (stageMusic->fail || speedShoesMusic->fail || invincibilityMusic->fail || superMusic->fail || goalMusic->fail || gameoverMusic->fail || extraLifeMusic->fail)
 	{
 		fail = "Failed to load music";
 		UnloadAll();
-		AUDIO_UNLOCK;
 		return;
 	}
-	
-	//Unlock audio device
-	AUDIO_UNLOCK;
 	
 	//Play stage music
 	ChangePrimaryMusic(stageMusic);
@@ -721,18 +720,17 @@ LEVEL::LEVEL(int id, const char *players[])
 	//Initialize scores
 	InitializeScores();
 	
-	//Run players code
+	//Run players code (with input reset)
 	ClearControllerInput();
-	
-	for (PLAYER *player = playerList; player != nullptr; player = player->next)
-		player->Update();
+	for (size_t i = 0; i < playerList.size(); i++)
+		playerList[i].Update();
 	
 	//Update object and check for deletion
 	for (size_t i = 0; i < objectList.size(); i++)
 	{
-		if (objectList[i]->Update())
+		if (objectList[i].Update())
 		{
-			Error(fail = objectList[i]->fail);
+			Error(fail = objectList[i].fail);
 			UnloadAll();
 			return;
 		}
@@ -740,9 +738,9 @@ LEVEL::LEVEL(int id, const char *players[])
 	
 	for (size_t i = 0; i < coreObjectList.size(); i++)
 	{
-		if (coreObjectList[i]->Update())
+		if (coreObjectList[i].Update())
 		{
-			Error(fail = coreObjectList[i]->fail);
+			Error(fail = coreObjectList[i].fail);
 			UnloadAll();
 			return;
 		}
@@ -752,7 +750,7 @@ LEVEL::LEVEL(int id, const char *players[])
 	CHECK_LINKEDLIST_OBJECTDELETE(coreObjectList);
 	
 	//Set the camera to follow the player
-	camera->Track(playerList);
+	camera->Track(&playerList[0]);
 	
 	LOG(("Success!\n"));
 }
@@ -782,7 +780,7 @@ void LEVEL::SetFade(bool fadeIn, bool isSpecial)
 		if (background != nullptr)
 			function(background->texture->loadedPalette);
 		for (size_t i = 0; i < objTextureCache.size(); i++)
-			function(objTextureCache[i]->loadedPalette);
+			function(objTextureCache[i].loadedPalette);
 	}
 }
 
@@ -798,7 +796,7 @@ bool LEVEL::UpdateFade()
 	if (background != nullptr)
 		finished = function(background->texture->loadedPalette) ? finished : false;
 	for (size_t i = 0; i < objTextureCache.size(); i++)
-		finished = function(objTextureCache[i]->loadedPalette) ? finished : false;
+		finished = function(objTextureCache[i].loadedPalette) ? finished : false;
 	
 	//Fade music out
 	if (currentMusic != nullptr && !isFadingIn)
@@ -824,8 +822,11 @@ void LEVEL::DynamicEvents()
 	{
 		case ZONEID_GHZ:
 			//Handle S-Tube force rolling
-			for (PLAYER *player = playerList; player != nullptr; player = player->next)
+			for (size_t i = 0; i < playerList.size(); i++)
 			{
+				//Get this player
+				PLAYER *player = &playerList[i];
+				
 				//Get which tile we're on
 				if (player->x.pos < 0 || player->x.pos >= gLevel->layout.width * 16 || player->y.pos < 0 || player->y.pos >= gLevel->layout.height * 16)
 					continue;
@@ -898,7 +899,7 @@ void LEVEL::DynamicEvents()
 	else if (bottomBoundaryTarget > bottomBoundary)
 	{
 		//Move faster if in mid-air
-		if ((camera->y + 8 + gRenderSpec.height) >= bottomBoundary && playerList->status.inAir)
+		if ((camera->y + 8 + gRenderSpec.height) >= bottomBoundary && playerList[0].status.inAir)
 			move *= 4;
 		
 		//Move
@@ -941,22 +942,26 @@ TEXTURE *LEVEL::GetObjectTexture(const char *path)
 {
 	for (size_t i = 0; i < objTextureCache.size(); i++)
 	{
-		if (objTextureCache[i]->source != nullptr && !strcmp(objTextureCache[i]->source, path))
-			return objTextureCache[i];
+		if (objTextureCache[i].source != nullptr && !strcmp(objTextureCache[i].source, path))
+			return &(objTextureCache[i]);
 	}
 	
-	return new TEXTURE(&objTextureCache, path);
+	TEXTURE newTexture(path);
+	objTextureCache.push_back(newTexture);
+	return &(objTextureCache.back());
 }
 
 MAPPINGS *LEVEL::GetObjectMappings(const char *path)
 {
 	for (size_t i = 0; i < objMappingsCache.size(); i++)
 	{
-		if (objMappingsCache[i]->source != nullptr && !strcmp(objMappingsCache[i]->source, path))
-			return objMappingsCache[i];
+		if (objMappingsCache[i].source != nullptr && !strcmp(objMappingsCache[i].source, path))
+			return &(objMappingsCache[i]);
 	}
 	
-	return new MAPPINGS(&objMappingsCache, path);
+	MAPPINGS newMappings(path);
+	objMappingsCache.push_back(newMappings);
+	return &(objMappingsCache.back());
 }
 
 LEVEL_RENDERLAYER LEVEL::GetObjectLayer(bool highPriority, int priority)
@@ -1200,31 +1205,31 @@ bool LEVEL::Update()
 	if (updateStage)
 	{
 		//Update players and objects
-		for (PLAYER *player = playerList; player != nullptr; player = player->next)
-			player->Update();
+		for (size_t i = 0; i < playerList.size(); i++)
+			playerList[i].Update();
 	
 		for (size_t i = 0; i < objectList.size(); i++)
 		{
-			if (objectList[i]->Update())
-				return Error(fail = objectList[i]->fail);
+			if (objectList[i].Update())
+				return Error(fail = objectList[i].fail);
 		}
 		
 		for (size_t i = 0; i < coreObjectList.size(); i++)
 		{
-			if (coreObjectList[i]->Update())
-				return Error(fail = coreObjectList[i]->fail);
+			if (coreObjectList[i].Update())
+				return Error(fail = coreObjectList[i].fail);
 		}
 	}
 	else
 	{
 		//If not to update the stage, only update players and core objects
-		for (PLAYER *player = playerList; player != nullptr; player = player->next)
-			player->Update();
+		for (size_t i = 0; i < playerList.size(); i++)
+			playerList[i].Update();
 		
 		for (size_t i = 0; i < coreObjectList.size(); i++)
 		{
-			if (coreObjectList[i]->Update())
-				return Error(fail = coreObjectList[i]->fail);
+			if (coreObjectList[i].Update())
+				return Error(fail = coreObjectList[i].fail);
 		}
 	}
 	
@@ -1234,10 +1239,10 @@ bool LEVEL::Update()
 	
 	//Update camera
 	if (camera != nullptr)
-		camera->Track(playerList);
+		camera->Track(&playerList[0]);
 	
 	//Update level dynamic events
-	if (playerList != nullptr)
+	if (!playerList.empty())
 		DynamicEvents();
 	
 	//Update all other level stuff
@@ -1255,8 +1260,8 @@ void LEVEL::Draw()
 	if (!fading)
 	{
 		//Cycle player palettes (super)
-		for (PLAYER *player = playerList; player != nullptr; player = player->next)
-			player->SuperPaletteCycle();
+		for (size_t i = 0; i < playerList.size(); i++)
+			playerList[i].SuperPaletteCycle();
 		if (paletteFunction != nullptr)
 			paletteFunction();
 	}
@@ -1293,13 +1298,12 @@ void LEVEL::Draw()
 	}
 	
 	//Draw players and objects
-	for (PLAYER *player = playerList; player != nullptr; player = player->next)
-		player->DrawToScreen();
-	
+	for (size_t i = 0; i < playerList.size(); i++)
+		playerList[i].Draw();
 	for (size_t i = 0; i < objectList.size(); i++)
-		objectList[i]->Draw();
+		objectList[i].Draw();
 	for (size_t i = 0; i < coreObjectList.size(); i++)
-		coreObjectList[i]->Draw();
+		coreObjectList[i].Draw();
 	
 	//Draw HUD
 	hud->Draw();

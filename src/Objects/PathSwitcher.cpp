@@ -24,33 +24,26 @@ void ObjPathSwitcher(OBJECT *object)
 			object->routine++;
 			
 			//Check each player to see if they're to the right / below us
-			int i = 0;
-			
-			for (PLAYER *player = gLevel->playerList; player != nullptr; player = player->next)
+			for (size_t i = 0; i < gLevel->playerList.size(); i++)
 			{
+				PLAYER *player = &gLevel->playerList[i];
 				if (object->subtype & MASK_VERTICAL)
 					object->playerContact[i].extraBit = player->y.pos >= object->y.pos;
 				else
 					object->playerContact[i].extraBit = player->x.pos >= object->x.pos;
-				
-				//Increment index
-				i++;
 			}
 		}
 //Fallthrough
 		case 1:
 		{
 			//Check each player to see if they're to the right / below us and change their priority and path
-			int i = 0;
-			
-			for (PLAYER *player = gLevel->playerList; player != nullptr; player = player->next)
+			for (size_t i = 0; i < gLevel->playerList.size(); i++)
 			{
+				PLAYER *player = &gLevel->playerList[i];
+				
 				//Don't check if in debug mode
 				if (player->debug)
-				{
-					i++;
 					continue;
-				}
 				
 				//Get which side we're on
 				bool newSide = object->playerContact[i].extraBit;
@@ -83,21 +76,13 @@ void ObjPathSwitcher(OBJECT *object)
 						{
 							if (player->x.pos <  object->x.pos - switchRadius[object->subtype & MASK_RADIUS]
 							 || player->x.pos >= object->x.pos + switchRadius[object->subtype & MASK_RADIUS])
-							{
-								//Skip us, we're not within the radius
-								i++;
-								continue;
-							}
+								continue; //Skip us, we're not within the radius
 						}
 						else
 						{
 							if (player->y.pos <  object->y.pos - switchRadius[object->subtype & MASK_RADIUS]
 							 || player->y.pos >= object->y.pos + switchRadius[object->subtype & MASK_RADIUS])
-							{
-								//Skip us, we're not within the radius
-								i++;
-								continue;
-							}
+								continue; //Skip us, we're not within the radius
 						}
 						
 						//Change our path
@@ -119,9 +104,6 @@ void ObjPathSwitcher(OBJECT *object)
 						player->highPriority = (object->subtype & (newSide ? MASK_RD_PRIORITY : MASK_LU_PRIORITY)) != 0;
 					}
 				}
-				
-				//Increment index
-				i++;
 			}
 			break;
 		}

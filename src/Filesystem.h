@@ -46,6 +46,7 @@ size_t TellFile(BACKEND_FILE *file);
 extern char *gBasePath;
 extern char *gPrefPath;
 
+char *DupePath(const char *path);
 char *AllocPath(const char *base, const char *name, const char *append);
 bool InitializePath();
 void QuitPath();

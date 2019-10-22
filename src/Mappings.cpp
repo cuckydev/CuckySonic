@@ -5,14 +5,14 @@
 #include "Mappings.h"
 #include "Log.h"
 
-MAPPINGS::MAPPINGS(std::deque<MAPPINGS*> *linkedList, const char *path)
+MAPPINGS::MAPPINGS(const char *path)
 {
 	LOG(("Loading mappings from %s... ", path));
 	
 	memset(this, 0, sizeof(MAPPINGS));
 	
 	//Open the file given
-	source = duplicateString(path);
+	source = DupePath(path);
 	
 	char *filepath = AllocPath(gBasePath, path, nullptr);
 	BACKEND_FILE *fp = OpenFile(filepath, "rb");
@@ -50,10 +50,6 @@ MAPPINGS::MAPPINGS(std::deque<MAPPINGS*> *linkedList, const char *path)
 	}
 	
 	CloseFile(fp);
-	
-	//Attach to linked list if given
-	if (linkedList != nullptr)
-		linkedList->push_back(this);
 	
 	LOG(("Success!\n"));
 }

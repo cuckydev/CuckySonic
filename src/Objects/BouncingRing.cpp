@@ -53,33 +53,33 @@ void ObjBouncingRing_Routine0(OBJECT *object)
 		int16_t angleSpeed = 0x288;
 	};
 	
-	int16_t xVel, yVel;
+	int16_t xVel = 0, yVel = 0;
 	for (unsigned int i = 0; i < *rings; i++)
 	{
 		//Create the ring object
-		OBJECT *ring = new OBJECT(&gLevel->objectList, &ObjBouncingRing);
-		ring->routine = 1;
-		ring->xRadius = 8;
-		ring->yRadius = 8;
-		ring->widthPixels = 8;
-		ring->x.pos = object->x.pos;
-		ring->y.pos = object->y.pos;
-		ring->texture = gLevel->GetObjectTexture("data/Object/Ring.bmp");
-		ring->mappings = gLevel->GetObjectMappings("data/Object/Ring.map");
-		ring->renderFlags.xFlip = false;
-		ring->renderFlags.yFlip = false;
-		ring->renderFlags.alignPlane = true;
-		ring->priority = 3;
-		ring->collisionType = COLLISIONTYPE_OTHER;
-		ring->touchWidth = 6;
-		ring->touchHeight = 6;
+		OBJECT ring(&ObjBouncingRing);
+		ring.routine = 1;
+		ring.xRadius = 8;
+		ring.yRadius = 8;
+		ring.widthPixels = 8;
+		ring.x.pos = object->x.pos;
+		ring.y.pos = object->y.pos;
+		ring.texture = gLevel->GetObjectTexture("data/Object/Ring.bmp");
+		ring.mappings = gLevel->GetObjectMappings("data/Object/Ring.map");
+		ring.renderFlags.xFlip = false;
+		ring.renderFlags.yFlip = false;
+		ring.renderFlags.alignPlane = true;
+		ring.priority = 3;
+		ring.collisionType = COLLISIONTYPE_OTHER;
+		ring.touchWidth = 6;
+		ring.touchHeight = 6;
 		
-		ring->ScratchAllocU8(SCRATCHU8_MAX);
-		ring->ScratchAllocU16(SCRATCHU16_MAX);
-		ring->scratchU8[SCRATCHU8_ANIM_COUNT] = 0xFF;
-		ring->scratchU16[SCRATCHU16_ANIM_ACCUM] = 0x00;
+		ring.ScratchAllocU8(SCRATCHU8_MAX);
+		ring.ScratchAllocU16(SCRATCHU16_MAX);
+		ring.scratchU8[SCRATCHU8_ANIM_COUNT] = 0xFF;
+		ring.scratchU16[SCRATCHU16_ANIM_ACCUM] = 0x00;
 		
-		ring->parent = object->parent;
+		ring.parent = object->parent;
 		
 		//Get the ring's velocity
 		if (angleSpeed >= 0)
@@ -103,8 +103,11 @@ void ObjBouncingRing_Routine0(OBJECT *object)
 		}
 		
 		//Set the ring's velocity
-		ring->xVel = xVel;
-		ring->yVel = yVel;
+		ring.xVel = xVel;
+		ring.yVel = yVel;
+		
+		//Link ring to object list
+		gLevel->objectList.push_back(ring);
 		
 		xVel = -xVel;
 		angleSpeed = -angleSpeed;

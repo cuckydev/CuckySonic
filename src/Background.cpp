@@ -9,7 +9,7 @@ BACKGROUND::BACKGROUND(const char *name, BACKGROUNDFUNCTION backFunction)
 	memset(this, 0, sizeof(BACKGROUND));
 	
 	//Load the given texture
-	texture = new TEXTURE(nullptr, name);
+	texture = new TEXTURE(name);
 	if (texture->fail)
 	{
 		fail = texture->fail;

@@ -107,10 +107,9 @@ void ObjSpring(OBJECT *object)
 			OBJECT_SOLIDTOUCH touch = object->SolidObject(27, 8, 16, object->x.pos);
 			
 			//Check if any players touched the top of us
-			int i = 0;
-			
-			for (PLAYER *player = gLevel->playerList; player != nullptr; player = player->next)
+			for (size_t i = 0; i < gLevel->playerList.size(); i++)
 			{
+				PLAYER *player = &gLevel->playerList[i];
 				bool isUp = (object->routine == ROUTINE_UP) ^ player->status.reverseGravity;
 				
 			#ifdef SOLIDOBJECT_CONTACT_CHECK
@@ -178,9 +177,6 @@ void ObjSpring(OBJECT *object)
 					
 					PlaySound(SOUNDID_SPRING);
 				}
-				
-				//Check next player's contact
-				i++;
 			}
 			
 			object->Animate(animationList);
@@ -193,9 +189,9 @@ void ObjSpring(OBJECT *object)
 			OBJECT_SOLIDTOUCH touch = object->SolidObject(19, 14, 15, object->x.pos);
 			
 			//Check if any players touched our sides
-			int i = 0;
-			for (PLAYER *player = gLevel->playerList; player != nullptr; player = player->next)
+			for (size_t i = 0; i < gLevel->playerList.size(); i++)
 			{
+				PLAYER *player = &gLevel->playerList[i];
 			#ifdef SOLIDOBJECT_CONTACT_CHECK
 				if (touch.side[i])
 			#else
@@ -287,9 +283,6 @@ void ObjSpring(OBJECT *object)
 					object->playerContact[i].pushing = false;
 					PlaySound(SOUNDID_SPRING);
 				}
-				
-				//Check next player's contact
-				i++;
 			}
 			
 			object->Animate(animationList);

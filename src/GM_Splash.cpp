@@ -14,7 +14,7 @@
 bool GM_Splash(bool *noError)
 {
 	//Load our splash image
-	TEXTURE *splashTexture = new TEXTURE(nullptr, "data/Splash.bmp");
+	TEXTURE *splashTexture = new TEXTURE("data/Splash.bmp");
 	if (splashTexture->fail != nullptr)
 		return (*noError = !Error(splashTexture->fail));
 	

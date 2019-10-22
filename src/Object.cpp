@@ -11,7 +11,7 @@
 #include "Player.h"
 
 //Object class
-OBJECT::OBJECT(std::deque<OBJECT*> *linkedList, OBJECTFUNCTION objectFunction)
+OBJECT::OBJECT(OBJECTFUNCTION objectFunction)
 {
 	//Clear memory
 	memset(this, 0, sizeof(OBJECT));
@@ -21,12 +21,8 @@ OBJECT::OBJECT(std::deque<OBJECT*> *linkedList, OBJECTFUNCTION objectFunction)
 	prevFunction = objectFunction;
 	
 	//Reset children and draw instance linked lists
-	drawInstances = std::deque<OBJECT_DRAWINSTANCE*>(0);
-	children = std::deque<OBJECT*>(0);
-	
-	//Attach to linked list (if applicable)
-	if (linkedList != nullptr)
-		linkedList->push_back(this);
+	drawInstances = std::deque<OBJECT_DRAWINSTANCE>();
+	children = std::deque<OBJECT>();
 }
 
 OBJECT::~OBJECT()
@@ -40,19 +36,21 @@ OBJECT::~OBJECT()
 	free(scratchS32);
 	
 	//Destroy draw instances and children
-	DESTROY_LINKEDLIST_CONTENTS(drawInstances);
-	DESTROY_LINKEDLIST_CONTENTS(children);
+	drawInstances.clear();
+	drawInstances.shrink_to_fit();
+	children.clear();
+	children.shrink_to_fit();
 }
 
 //Scratch allocation
 #define SCRATCH_ALLOC(name, type, max) if (name == nullptr) { name = (type*)malloc(max * sizeof(type)); memset(name, 0, max * sizeof(type)); }
 
-void  OBJECT::ScratchAllocU8(int max) { SCRATCH_ALLOC(scratchU8,   uint8_t, max) }
-void  OBJECT::ScratchAllocS8(int max) { SCRATCH_ALLOC(scratchS8,    int8_t, max) }
-void OBJECT::ScratchAllocU16(int max) { SCRATCH_ALLOC(scratchU16, uint16_t, max) }
-void OBJECT::ScratchAllocS16(int max) { SCRATCH_ALLOC(scratchS16,  int16_t, max) }
-void OBJECT::ScratchAllocU32(int max) { SCRATCH_ALLOC(scratchU32, uint32_t, max) }
-void OBJECT::ScratchAllocS32(int max) { SCRATCH_ALLOC(scratchS32,  int32_t, max) }
+void  OBJECT::ScratchAllocU8(size_t max) { SCRATCH_ALLOC(scratchU8,   uint8_t, max) }
+void  OBJECT::ScratchAllocS8(size_t max) { SCRATCH_ALLOC(scratchS8,    int8_t, max) }
+void OBJECT::ScratchAllocU16(size_t max) { SCRATCH_ALLOC(scratchU16, uint16_t, max) }
+void OBJECT::ScratchAllocS16(size_t max) { SCRATCH_ALLOC(scratchS16,  int16_t, max) }
+void OBJECT::ScratchAllocU32(size_t max) { SCRATCH_ALLOC(scratchU32, uint32_t, max) }
+void OBJECT::ScratchAllocS32(size_t max) { SCRATCH_ALLOC(scratchS32,  int32_t, max) }
 
 //Movement and gravity
 void OBJECT::Move()
@@ -187,32 +185,28 @@ int16_t OBJECT::CheckFloorEdge(COLLISIONLAYER layer, int16_t xPos, int16_t yPos,
 //Object collision functions
 void OBJECT::PlatformObject(int16_t width, int16_t height, int16_t lastXPos)
 {
-	int i = 0;
-	for (PLAYER *player = gLevel->playerList; player != nullptr; player = player->next)
+	for (size_t i = 0; i < gLevel->playerList.size(); i++)
 	{
 		//If the player is already standing on us
 		if (playerContact[i].standing == true)
 		{
 			//Check if we're still on the platform
-			int16_t xDiff = player->x.pos - lastXPos + width;
+			int16_t xDiff = gLevel->playerList[i].x.pos - lastXPos + width;
 			
-			if (!player->status.inAir && xDiff >= 0 && xDiff < width * 2)
-				player->MoveOnPlatform(this, height, lastXPos);
+			if (!gLevel->playerList[i].status.inAir && xDiff >= 0 && xDiff < width * 2)
+				gLevel->playerList[i].MoveOnPlatform(this, height, lastXPos);
 			else
-				ExitPlatform(player, i);
+				ExitPlatform(&gLevel->playerList[i], i);
 		}
 		else
 		{
 			//Check if we're going to land on the platform
-			LandOnPlatform(player, i, width, width * 2, height, lastXPos);
+			LandOnPlatform(&gLevel->playerList[i], i, width, width * 2, height, lastXPos);
 		}
-		
-		//Check next player's contact
-		i++;
 	}
 }
 
-bool OBJECT::LandOnPlatform(PLAYER *player, int i, int16_t width1, int16_t width2, int16_t height, int16_t lastXPos)
+bool OBJECT::LandOnPlatform(PLAYER *player, size_t i, int16_t width1, int16_t width2, int16_t height, int16_t lastXPos)
 {
 	//Check if we're in a state where we can enter onto the platform
 	int16_t xDiff = (player->x.pos - lastXPos) + width1;
@@ -251,7 +245,7 @@ bool OBJECT::LandOnPlatform(PLAYER *player, int i, int16_t width1, int16_t width
 	}
 }
 
-void OBJECT::ExitPlatform(PLAYER *player, int i)
+void OBJECT::ExitPlatform(PLAYER *player, size_t i)
 {
 	player->status.shouldNotFall = false;
 	playerContact[i].standing = false;
@@ -261,37 +255,33 @@ void OBJECT::ExitPlatform(PLAYER *player, int i)
 //Solid object and its variants
 OBJECT_SOLIDTOUCH OBJECT::SolidObject(int16_t width, int16_t height_air, int16_t height_standing, int16_t lastXPos)
 {
-	//Get cleared solid touch
+	//Initialize solid touch
 	OBJECT_SOLIDTOUCH solidTouch;
 	memset(&solidTouch, 0, sizeof(OBJECT_SOLIDTOUCH));
 	
 	//Check all players
-	int i = 0;
-	for (PLAYER *player = gLevel->playerList; player != nullptr; player = player->next)
+	for (size_t i = 0; i < gLevel->playerList.size(); i++)
 	{
 		//Check if we're still standing on the object
 		if (playerContact[i].standing)
 		{
 			//Check if we're to exit the top of the object
-			int16_t xDiff = (player->x.pos - lastXPos) + width;
-			if (player->status.inAir || xDiff < 0 || xDiff >= width * 2)
+			int16_t xDiff = (gLevel->playerList[i].x.pos - lastXPos) + width;
+			if (gLevel->playerList[i].status.inAir || xDiff < 0 || xDiff >= width * 2)
 			{
 				//Exit top as platform, then check next player
-				ExitPlatform(player, i++);
+				ExitPlatform(&gLevel->playerList[i], i);
 				continue;
 			}
 			
 			//Move with the object
-			player->MoveOnPlatform(this, height_standing, lastXPos);
-			
-			//Check next player
-			i++;
+			gLevel->playerList[i].MoveOnPlatform(this, height_standing, lastXPos);
 			continue;
 		}
 		else
 		{
 			//Check for collisions, then check next player
-			SolidObjectCont(&solidTouch, player, i++, width, height_air, lastXPos);
+			SolidObjectCont(&solidTouch, &gLevel->playerList[i], i, width, height_air, lastXPos);
 			continue;
 		}
 	}
@@ -299,7 +289,7 @@ OBJECT_SOLIDTOUCH OBJECT::SolidObject(int16_t width, int16_t height_air, int16_t
 	return solidTouch;
 }
 
-void OBJECT::SolidObjectCont(OBJECT_SOLIDTOUCH *solidTouch, PLAYER *player, int i, int16_t width, int16_t height, int16_t lastXPos)
+void OBJECT::SolidObjectCont(OBJECT_SOLIDTOUCH *solidTouch, PLAYER *player, size_t i, int16_t width, int16_t height, int16_t lastXPos)
 {
 	//Check if we're within range
 	int16_t xDiff = (player->x.pos - x.pos) + width; //d0
@@ -354,7 +344,8 @@ void OBJECT::SolidObjectCont(OBJECT_SOLIDTOUCH *solidTouch, PLAYER *player, int 
 							player->AttachToObject(this, (&playerContact[i].standing - (size_t)this));
 							
 							//Set top touch flag
-							solidTouch->top[i] = true;
+							if (solidTouch != nullptr)
+								solidTouch->top[i] = true;
 						}
 						
 						return;
@@ -379,7 +370,8 @@ void OBJECT::SolidObjectCont(OBJECT_SOLIDTOUCH *solidTouch, PLAYER *player, int 
 						}
 						
 						//Set bottom touch flag
-						solidTouch->bottom[i] = true;
+						if (solidTouch != nullptr)
+							solidTouch->bottom[i] = true;
 						return;
 					}
 					else
@@ -392,7 +384,8 @@ void OBJECT::SolidObjectCont(OBJECT_SOLIDTOUCH *solidTouch, PLAYER *player, int 
 							{
 								//Crush the player and set the bottom touch flag
 								player->KillCharacter(SOUNDID_HURT);
-								solidTouch->bottom[i] = true;
+								if (solidTouch != nullptr)
+									solidTouch->bottom[i] = true;
 								return;
 							}
 							
@@ -401,7 +394,8 @@ void OBJECT::SolidObjectCont(OBJECT_SOLIDTOUCH *solidTouch, PLAYER *player, int 
 						else
 						{
 							//Set bottom touch flag
-							solidTouch->bottom[i] = true;
+							if (solidTouch != nullptr)
+								solidTouch->bottom[i] = true;
 							return;
 						}
 					}
@@ -435,7 +429,8 @@ void OBJECT::SolidObjectCont(OBJECT_SOLIDTOUCH *solidTouch, PLAYER *player, int 
 				//Contact on ground: Set side touch and set pushing flags
 				if (!player->status.inAir)
 				{
-					solidTouch->side[i] = true;
+					if (solidTouch != nullptr)
+						solidTouch->side[i] = true;
 					playerContact[i].pushing = true;
 					player->status.pushing = true;
 					return;
@@ -443,7 +438,8 @@ void OBJECT::SolidObjectCont(OBJECT_SOLIDTOUCH *solidTouch, PLAYER *player, int 
 			}
 			
 			//Contact in mid-air: Set side touch and clear pushing flags
-			solidTouch->side[i] = true;
+			if (solidTouch != nullptr)
+				solidTouch->side[i] = true;
 			playerContact[i].pushing = false;
 			player->status.pushing = false;
 			return;
@@ -454,7 +450,7 @@ void OBJECT::SolidObjectCont(OBJECT_SOLIDTOUCH *solidTouch, PLAYER *player, int 
 	SolidObjectClearPush(player, i);
 }
 
-void OBJECT::SolidObjectClearPush(PLAYER *player, int i)
+void OBJECT::SolidObjectClearPush(PLAYER *player, size_t i)
 {
 	//Check we should stop pushing
 	if (playerContact[i].pushing)
@@ -473,25 +469,20 @@ void OBJECT::SolidObjectClearPush(PLAYER *player, int i)
 void OBJECT::ClearSolidContact()
 {
 	//Check all players and clear all contact
-	int i = 0;
-	
-	for (PLAYER *player = gLevel->playerList; player != nullptr; player = player->next)
+	for (size_t i = 0; i < gLevel->playerList.size(); i++)
 	{
 		//Clear pushing and standing
 		if (playerContact[i].standing || playerContact[i].pushing)
 		{
 			//Clear our contact flags
-			player->status.shouldNotFall = false;
-			player->status.pushing = false;
+			gLevel->playerList[i].status.shouldNotFall = false;
+			gLevel->playerList[i].status.pushing = false;
 			playerContact[i].standing = false;
 			playerContact[i].pushing = false;
 			
 			//Place the player in mid-air, this is weird and stupid god damn
-			player->status.inAir = true;
+			gLevel->playerList[i].status.inAir = true;
 		}
-		
-		//Check next player's contact
-		i++;
 	}
 }
 
@@ -513,8 +504,9 @@ bool OBJECT::Update()
 		prevFunction = function;
 	}
 	
-	//Destroy draw instances
-	DESTROY_LINKEDLIST_CONTENTS(drawInstances);
+	//Destroy draw instances from last update
+	drawInstances.clear();
+	drawInstances.shrink_to_fit();
 	
 	//Run our object code
 	if (function != nullptr)
@@ -530,19 +522,16 @@ bool OBJECT::Update()
 	if (deleteFlag)
 	{
 		//Remove player references to us
-		for (PLAYER *player = gLevel->playerList; player != nullptr; player = player->next)
-			if (player->interact == this)
-				player->interact = nullptr;
+		for (size_t i = 0; i < gLevel->playerList.size(); i++)
+			if (gLevel->playerList[i].interact == this)
+				gLevel->playerList[i].interact = nullptr;
 	}
 	else
 	{
 		//Update children's code
 		for (size_t i = 0; i < children.size(); i++)
-		{
-			if (children[i]->Update())
+			if (children[i].Update())
 				return true;
-		}
-		
 		CHECK_LINKEDLIST_OBJECTDELETE(children);
 	}
 	
@@ -552,35 +541,31 @@ bool OBJECT::Update()
 void OBJECT::DrawInstance(OBJECT_RENDERFLAGS iRenderFlags, TEXTURE *iTexture, MAPPINGS *iMappings, bool iHighPriority, uint8_t iPriority, uint16_t iMappingFrame, int16_t iXPos, int16_t iYPos)
 {
 	//Create a draw instance with the properties given
-	OBJECT_DRAWINSTANCE *newInstance = new OBJECT_DRAWINSTANCE(&drawInstances);
-	newInstance->renderFlags = iRenderFlags;
-	newInstance->texture = iTexture;
-	newInstance->mappings = iMappings;
-	newInstance->highPriority = iHighPriority;
-	newInstance->priority = iPriority;
-	newInstance->mappingFrame = iMappingFrame;
-	newInstance->xPos = iXPos;
-	newInstance->yPos = iYPos;
+	OBJECT_DRAWINSTANCE newInstance;
+	newInstance.renderFlags = iRenderFlags;
+	newInstance.texture = iTexture;
+	newInstance.mappings = iMappings;
+	newInstance.highPriority = iHighPriority;
+	newInstance.priority = iPriority;
+	newInstance.mappingFrame = iMappingFrame;
+	newInstance.xPos = iXPos;
+	newInstance.yPos = iYPos;
+	drawInstances.push_back(newInstance);
 }
 
 void OBJECT::Draw()
 {
 	//Draw our draw instances, then draw child objects
 	for (size_t i = 0; i < drawInstances.size(); i++)
-		drawInstances[i]->Draw();
+		drawInstances[i].Draw();
 	for (size_t i = 0; i < children.size(); i++)
-		children[i]->Draw();
+		children[i].Draw();
 }
 
 //Object drawing instance class
-OBJECT_DRAWINSTANCE::OBJECT_DRAWINSTANCE(std::deque<OBJECT_DRAWINSTANCE*> *linkedList)
+OBJECT_DRAWINSTANCE::OBJECT_DRAWINSTANCE()
 {
-	//Clear memory
-	memset(this, 0, sizeof(OBJECT_DRAWINSTANCE));
-	
-	//Attach to linked list (if applicable)
-	if (linkedList != nullptr)
-		linkedList->push_back(this);
+	memset(this, 0, sizeof(OBJECT_DRAWINSTANCE)); //Clear memory
 }
 
 OBJECT_DRAWINSTANCE::~OBJECT_DRAWINSTANCE()

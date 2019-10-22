@@ -168,9 +168,10 @@ void ObjMinecart(OBJECT *object)
 			//Act as a solid and be pushed
 			OBJECT_SOLIDTOUCH solid = object->SolidObject(object->xRadius + 8, 16, 6, lastX);
 			
-			int v = 0;
-			for (PLAYER *player = gLevel->playerList; player != nullptr; player = player->next)
+			for (size_t v = 0; v < gLevel->playerList.size(); v++)
 			{
+				PLAYER *player = &gLevel->playerList[v];
+				
 				//Push velocity stuff
 				if (solid.side[v] && player->spindashing == false)
 				{
@@ -249,9 +250,6 @@ void ObjMinecart(OBJECT *object)
 				//Friction when standing on minecart
 				if (object->playerContact[v].standing)
 					player->inertia = player->inertia * 8 / 9;
-				
-				//Check next player's contact
-				v++;
 			}
 			
 			//Draw to screen and handle rolling
@@ -271,12 +269,13 @@ void ObjMinecart(OBJECT *object)
 			object->routineSecondary = 60;
 			object->mappingFrame = 4;
 			
-			int v = 0;
-			for (PLAYER *player = gLevel->playerList; player != nullptr; player = player->next)
+			for (size_t i = 0; i < gLevel->playerList.size(); i++)
 			{
-				if (object->playerContact[v++].standing)
+				PLAYER *player = &gLevel->playerList[i];
+				
+				if (object->playerContact[i].standing)
 				{
-					object->ExitPlatform(player, v);
+					object->ExitPlatform(player, i);
 					player->routine = PLAYERROUTINE_HURT;
 					player->anim = PLAYERANIMATION_SLIDE;
 					player->xVel = object->xVel * 2;

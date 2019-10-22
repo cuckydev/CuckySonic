@@ -14,7 +14,7 @@ SPECIALSTAGE::SPECIALSTAGE(const char *name)
 	LOG(("Loading special stage %s...\n", name));
 	
 	//Load the stage texture
-	stageTexture = new TEXTURE(nullptr, "data/SpecialStage/Stage.bmp");
+	stageTexture = new TEXTURE("data/SpecialStage/Stage.bmp");
 	if (stageTexture->fail != nullptr)
 	{
 		Error(fail = stageTexture->fail);
@@ -22,7 +22,7 @@ SPECIALSTAGE::SPECIALSTAGE(const char *name)
 	}
 	
 	//Load the texture for the spheres and rings
-	sphereTexture = new TEXTURE(nullptr, "data/SpecialStage/Spheres.bmp");
+	sphereTexture = new TEXTURE("data/SpecialStage/Spheres.bmp");
 	if (sphereTexture->fail != nullptr)
 	{
 		Error(fail = sphereTexture->fail);
@@ -31,7 +31,7 @@ SPECIALSTAGE::SPECIALSTAGE(const char *name)
 	
 	//Load the background texture (stage-specific)
 	char *backgroundPath = AllocPath(name, ".background.bmp", nullptr);
-	backgroundTexture = new TEXTURE(nullptr, backgroundPath);
+	backgroundTexture = new TEXTURE(backgroundPath);
 	delete[] backgroundPath;
 	
 	if (backgroundTexture->fail != nullptr)

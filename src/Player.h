@@ -325,7 +325,7 @@ class PLAYER
 		PLAYER *next;
 		
 	public:
-		PLAYER(PLAYER **linkedList, const char *specPath, PLAYER *myFollow, int myController);
+		PLAYER(const char *specPath, PLAYER *myFollow, int myController);
 		~PLAYER();
 		
 		void SetSpeedFromDefinition(SPEEDDEFINITION definition);

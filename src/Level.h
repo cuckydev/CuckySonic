@@ -227,9 +227,9 @@ class LEVEL
 		uint16_t bottomBoundaryTarget;
 		
 		//Players and objects
-		PLAYER *playerList;
-		std::deque<OBJECT*> coreObjectList;
-		std::deque<OBJECT*> objectList;
+		std::deque<PLAYER> playerList;
+		std::deque<OBJECT> coreObjectList;
+		std::deque<OBJECT> objectList;
 		CAMERA *camera;
 		
 		//Title card and HUD
@@ -237,8 +237,8 @@ class LEVEL
 		HUD *hud;
 		
 		//Object texture cache
-		std::deque<TEXTURE*> objTextureCache;
-		std::deque<MAPPINGS*> objMappingsCache;
+		std::deque<TEXTURE> objTextureCache;
+		std::deque<MAPPINGS> objMappingsCache;
 		
 		//State
 		bool inTitleCard;

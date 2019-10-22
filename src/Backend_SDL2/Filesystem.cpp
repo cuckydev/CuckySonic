@@ -51,6 +51,13 @@ size_t SeekFile(BACKEND_FILE *file, size_t whence, int offset)
 size_t TellFile(BACKEND_FILE *file) { return SDL_RWtell(file); }
 
 //Core file path stuff
+char *DupePath(const char *path)
+{
+	size_t length = strlen(path) + 1;
+	char *retVal = new char[length];
+	return (char*)memcpy(retVal, path, length);
+}
+
 char *AllocPath(const char *base, const char *name, const char *append)
 {
 	char *newString = new char[

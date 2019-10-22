@@ -28,39 +28,35 @@ void ObjMonitor_ChkOverEdge(OBJECT *object, int i, PLAYER *player)
 	return;
 }
 
-void ObjMonitor_SolidObject_Lead(OBJECT *object, OBJECT_SOLIDTOUCH *solidTouch, int i, PLAYER *player)
+void ObjMonitor_SolidObject_Lead(OBJECT *object, int i, PLAYER *player)
 {
 	//Basically, act as a solid if we're either already on top of the monitor, or not in ball form
 	if (object->playerContact[i].standing)
 		ObjMonitor_ChkOverEdge(object, i, player);
 	else if (player->anim != PLAYERANIMATION_ROLL && player->anim != PLAYERANIMATION_DROPDASH)
-		object->SolidObjectCont(solidTouch, player, i, MONITOR_WIDTH, MONITOR_HEIGHT, object->x.pos);
+		object->SolidObjectCont(nullptr, player, i, MONITOR_WIDTH, MONITOR_HEIGHT, object->x.pos);
 }
 
-void ObjMonitor_SolidObject_Follower(OBJECT *object, OBJECT_SOLIDTOUCH *solidTouch, int i, PLAYER *player)
+void ObjMonitor_SolidObject_Follower(OBJECT *object, int i, PLAYER *player)
 {
 	//There's a 2-player check in Sonic 2 here
 	if (object->playerContact[i].standing)
 		ObjMonitor_ChkOverEdge(object, i, player);
 	else
-		object->SolidObjectCont(solidTouch, player, i, MONITOR_WIDTH, MONITOR_HEIGHT, object->x.pos);
+		object->SolidObjectCont(nullptr, player, i, MONITOR_WIDTH, MONITOR_HEIGHT, object->x.pos);
 }
 
-OBJECT_SOLIDTOUCH ObjMonitor_SolidObject(OBJECT *object)
+void ObjMonitor_SolidObject(OBJECT *object)
 {
 	//Check for contact with all players (followers cannot break monitors)
-	OBJECT_SOLIDTOUCH solidTouch;
-	int i = 0;
-	
-	for (PLAYER *player = gLevel->playerList; player != nullptr; player = player->next)
+	for (size_t i = 0; i < gLevel->playerList.size(); i++)
 	{
-		if (player == gLevel->playerList)
-			ObjMonitor_SolidObject_Lead(object, &solidTouch, i++, player);
+		PLAYER *player = &gLevel->playerList[i];
+		if (i == 0)
+			ObjMonitor_SolidObject_Lead(object, i, player);
 		else
-			ObjMonitor_SolidObject_Follower(object, &solidTouch, i++, player);
+			ObjMonitor_SolidObject_Follower(object, i, player);
 	}
-	
-	return solidTouch;
 }
 
 //Animation and enum
@@ -262,17 +258,19 @@ void ObjMonitor(OBJECT *object)
 			object->collisionType = COLLISIONTYPE_NULL;
 			
 			//Create the item content thing
-			OBJECT *content = new OBJECT(&gLevel->objectList, &ObjMonitorContents);
-			content->x.pos = object->x.pos;
-			content->y.pos = object->y.pos;
-			content->anim = object->anim;
-			content->parent = (void*)object;
+			OBJECT content(&ObjMonitorContents);
+			content.x.pos = object->x.pos;
+			content.y.pos = object->y.pos;
+			content.anim = object->anim;
+			content.parent = (void*)object;
+			gLevel->objectList.push_back(content);
 			
 			//Create the explosion
-			OBJECT *explosion = new OBJECT(&gLevel->objectList, &ObjExplosion);
-			explosion->x.pos = object->x.pos;
-			explosion->y.pos = object->y.pos;
-			explosion->routine++; //Don't create animal or score
+			OBJECT explosion(&ObjExplosion);
+			explosion.x.pos = object->x.pos;
+			explosion.y.pos = object->y.pos;
+			explosion.routine++; //Don't create animal or score
+			gLevel->objectList.push_back(explosion);
 			
 			//Set to broken animation and draw
 			object->anim = MONITOR_ITEM_BROKEN;

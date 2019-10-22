@@ -49,28 +49,9 @@ class TEXTURE
 		PALETTE *loadedPalette;
 		
 	public:
-		TEXTURE(std::deque<TEXTURE*> *linkedList, const char *path);
-		TEXTURE(std::deque<TEXTURE*> *linkedList, uint8_t *data, int dWidth, int dHeight);
+		TEXTURE(const char *path);
+		TEXTURE(uint8_t *data, int dWidth, int dHeight);
 		~TEXTURE();
-};
-
-class TEXTURE_FULLCOLOUR
-{
-	public:
-		//Status
-		const char *fail;
-		
-		//Source file (if applicable)
-		const char *source;
-		
-		//Texture data
-		uint32_t *texture;
-		int width;
-		int height;
-		
-	public:
-		TEXTURE_FULLCOLOUR(std::deque<TEXTURE_FULLCOLOUR*> *linkedList, const char *path);
-		~TEXTURE_FULLCOLOUR();
 };
 
 //Render queue structure
@@ -99,12 +80,6 @@ struct RENDERQUEUE
 			TEXTURE *texture;
 			bool xFlip, yFlip;
 		} texture;
-		struct
-		{
-			int srcX, srcY;
-			TEXTURE_FULLCOLOUR *texture;
-			bool xFlip, yFlip;
-		} textureFullColour;
 		struct
 		{
 			PALCOLOUR *colour;
@@ -139,7 +114,6 @@ class SOFTWAREBUFFER
 		void DrawPoint(int layer, const POINT *point, PALCOLOUR *colour);
 		void DrawQuad(int layer, const RECT *quad, PALCOLOUR *colour);
 		void DrawTexture(TEXTURE *texture, PALETTE *palette, const RECT *src, int layer, int x, int y, bool xFlip, bool yFlip);
-		void DrawTexture(TEXTURE_FULLCOLOUR *texture, const RECT *src, int layer, int x, int y, bool xFlip, bool yFlip);
 		
 		void Blit8 (PALCOLOUR *backgroundColour, uint8_t  *buffer, int pitch);
 		void Blit16(PALCOLOUR *backgroundColour, uint16_t *buffer, int pitch);

@@ -27,13 +27,13 @@ unsigned int vsyncMultiple = 0;
 const long double framerateMilliseconds = (1000.0 / FRAMERATE);
 
 //Texture class
-TEXTURE::TEXTURE(std::deque<TEXTURE*> *linkedList, const char *path)
+TEXTURE::TEXTURE(const char *path)
 {
 	LOG(("Loading texture from %s... ", path));
 	memset(this, 0, sizeof(TEXTURE));
 	
 	//Load bitmap
-	source = duplicateString(path);
+	source = DupePath(path);
 	
 	char *filepath = AllocPath(gBasePath, path, nullptr);
 	SDL_Surface *bitmap = SDL_LoadBMP(filepath);
@@ -92,14 +92,10 @@ TEXTURE::TEXTURE(std::deque<TEXTURE*> *linkedList, const char *path)
 	//Free bitmap surface
 	SDL_FreeSurface(bitmap);
 	
-	//Attach to linked list if given
-	if (linkedList != nullptr)
-		linkedList->push_back(this);
-	
 	LOG(("Success!\n"));
 }
 
-TEXTURE::TEXTURE(std::deque<TEXTURE*> *linkedList, uint8_t *data, int dWidth, int dHeight)
+TEXTURE::TEXTURE(uint8_t *data, int dWidth, int dHeight)
 {
 	LOG(("Loading texture from memory location %p dimensions %dx%d... ", (void*)data, dWidth, dHeight));
 	memset(this, 0, sizeof(TEXTURE));
@@ -117,10 +113,6 @@ TEXTURE::TEXTURE(std::deque<TEXTURE*> *linkedList, uint8_t *data, int dWidth, in
 	memcpy(texture, data, dWidth * dHeight);
 	width = dWidth;
 	height = dHeight;
-	
-	//Attach to linked list if given
-	if (linkedList != nullptr)
-		linkedList->push_back(this);
 	
 	LOG(("Success!\n"));
 }
@@ -155,106 +147,6 @@ TEXTURE::~TEXTURE()
 		delete loadedPalette;
 	if (source)
 		delete[] source;
-}
-
-//Full-colour texture class
-TEXTURE_FULLCOLOUR::TEXTURE_FULLCOLOUR(std::deque<TEXTURE_FULLCOLOUR*> *linkedList, const char *path)
-{
-	LOG(("Loading full-colour texture from %s... ", path));
-	memset(this, 0, sizeof(TEXTURE));
-	
-	//Load bitmap
-	source = path;
-	
-	char *filepath = AllocPath(gBasePath, path, nullptr);
-	SDL_Surface *bitmap = SDL_LoadBMP(filepath);
-	delete[] filepath;
-	
-	if (bitmap == nullptr)
-	{
-		fail = SDL_GetError();
-		return;
-	}
-	
-	//Allocate texture data
-	texture = new uint32_t[bitmap->pitch / bitmap->format->BytesPerPixel * bitmap->h];
-	
-	if (texture == nullptr)
-	{
-		SDL_FreeSurface(bitmap);
-		fail = "Failed to allocate texture buffer";
-		return;
-	}
-	
-	//Convert to our native format
-	width = bitmap->pitch / bitmap->format->BytesPerPixel;
-	height = bitmap->h;
-	
-	for (int v = 0; v < width * height; v++)
-	{
-		uint32_t pixel;
-		switch (bitmap->format->BytesPerPixel)
-		{
-			case 1:
-				pixel = ((uint8_t*)bitmap->pixels)[v];
-				break;
-			case 2:
-				pixel = ((uint16_t*)bitmap->pixels)[v];
-				break;
-			case 3:
-				#if SDL_BYTEORDER == SDL_BIG_ENDIAN
-					pixel = (((uint8_t*)bitmap->pixels)[v * bitmap->format->BytesPerPixel + 0] << 16) | (((uint8_t*)bitmap->pixels)[v * bitmap->format->BytesPerPixel + 1] << 8) | (((uint8_t*)bitmap->pixels)[v * bitmap->format->BytesPerPixel + 2]);
-				#else
-					pixel = (((uint8_t*)bitmap->pixels)[v * bitmap->format->BytesPerPixel + 0]) | (((uint8_t*)bitmap->pixels)[v * bitmap->format->BytesPerPixel + 1] << 8) | (((uint8_t*)bitmap->pixels)[v * bitmap->format->BytesPerPixel + 2] << 16);
-				#endif
-				break;
-			case 4:
-				pixel = ((uint32_t*)bitmap->pixels)[v];
-				break;
-		}
-		
-		uint8_t r, g, b;
-		SDL_GetRGB(pixel, bitmap->format, &r, &g, &b);
-		texture[v] = SDL_MapRGB(nativeFormat, r, g, b);
-	}
-	
-	//Free bitmap surface
-	SDL_FreeSurface(bitmap);
-	
-	//Attach to linked list if given
-	if (linkedList != nullptr)
-		linkedList->push_back(this);
-	
-	LOG(("Success!\n"));
-}
-
-TEXTURE_FULLCOLOUR::~TEXTURE_FULLCOLOUR()
-{
-	//Check if the software buffer is referencing us and remove said entries
-	for (int i = 0; i < RENDERLAYERS; i++)
-	{
-		for (RENDERQUEUE *entry = gSoftwareBuffer->queue[i]; entry != nullptr; entry = entry->next)
-		{
-			if (entry->type == RENDERQUEUE_TEXTURE_FULLCOLOUR && entry->textureFullColour.texture == this)
-			{
-				//Remove from linked list then delete entry
-				for (RENDERQUEUE **dcEntry = &gSoftwareBuffer->queue[i]; *dcEntry != nullptr; dcEntry = &(*dcEntry)->next)
-				{
-					if (*dcEntry == entry)
-					{
-						*dcEntry = entry->next;
-						break;
-					}
-				}
-				
-				delete entry;
-			}
-		}
-	}
-	
-	//Free texture data
-	if (texture != nullptr)
-		delete[] texture;
 }
 
 //Palette functions
@@ -427,65 +319,6 @@ void SOFTWAREBUFFER::DrawTexture(TEXTURE *texture, PALETTE *palette, const RECT 
 	//Flipping
 	newEntry->texture.xFlip = xFlip;
 	newEntry->texture.yFlip = yFlip;
-	
-	//Link to the queue
-	newEntry->next = queue[layer];
-	queue[layer] = newEntry;
-}
-
-void SOFTWAREBUFFER::DrawTexture(TEXTURE_FULLCOLOUR *texture, const RECT *src, int layer, int x, int y, bool xFlip, bool yFlip)
-{
-	//Get the source rect to use (nullptr = entire texture)
-	RECT newSrc;
-	if (src != nullptr)
-		newSrc = *src;
-	else
-		newSrc = {0, 0, texture->width, texture->height};
-	
-	//Clip to the destination
-	if (x < 0)
-	{
-		if (!xFlip)
-			newSrc.x -= x;
-		newSrc.w += x;
-		x -= x;
-	}
-	
-	int dx = x + newSrc.w - width;
-	if (dx > 0)
-	{
-		if (xFlip)
-			newSrc.x += dx;
-		newSrc.w -= dx;
-	}
-	
-	if (y < 0)
-	{
-		if (!yFlip)
-			newSrc.y -= y;
-		newSrc.h += y;
-		y -= y;
-	}
-	
-	int dy = y + newSrc.h - height;
-	if (dy > 0)
-	{
-		if (yFlip)
-			newSrc.y += dy;
-		newSrc.h -= dy;
-	}
-	
-	//Allocate our new queue entry
-	RENDERQUEUE *newEntry = new RENDERQUEUE;
-	newEntry->type = RENDERQUEUE_TEXTURE_FULLCOLOUR;
-	newEntry->dest = {x, y, newSrc.w, newSrc.h};
-	newEntry->textureFullColour.srcX = newSrc.x;
-	newEntry->textureFullColour.srcY = newSrc.y;
-	newEntry->textureFullColour.texture = texture;
-	
-	//Flipping
-	newEntry->textureFullColour.xFlip = xFlip;
-	newEntry->textureFullColour.yFlip = yFlip;
 	
 	//Link to the queue
 	newEntry->next = queue[layer];

@@ -34,8 +34,9 @@ TITLECARD::TITLECARD(const char *levelName, const char *levelSubtitle)
 	subtitle = levelSubtitle;
 	
 	//Get position to draw at
-	drawY = (gLevel->playerList->y.pos + (gLevel->playerList->yRadius - gLevel->playerList->defaultYRadius)) - gLevel->camera->y;
+	PLAYER *player = &gLevel->playerList[0];
 	
+	drawY = (player->y.pos + (player->yRadius - player->defaultYRadius)) - gLevel->camera->y;
 	if (drawY < gRenderSpec.height / 2)
 		drawY += 48;
 	else
@@ -113,14 +114,16 @@ void TITLECARD::UpdateAndDraw()
 	}
 	
 	//Draw background (zoom out to show the player, then zoom completely out about a second later)
+	PLAYER *player = &gLevel->playerList[0];
+	
 	int gap = 0;
 	if (frame >= finT)
 		gap = 32 + (frame - finT) * TRANSITION_SPEED;
 	else if (frame >= subT)
 		gap = mmin((frame - subT) * TRANSITION_SPEED / 2, 32);
 	
-	int16_t xg = gLevel->playerList->x.pos - gLevel->camera->x;
-	int16_t yg = (gLevel->playerList->y.pos + (gLevel->playerList->yRadius - gLevel->playerList->defaultYRadius)) - gLevel->camera->y;
+	int16_t xg = player->x.pos - gLevel->camera->x;
+	int16_t yg = (player->y.pos + (player->yRadius - player->defaultYRadius)) - gLevel->camera->y;
 	
 	RECT left = {0, 0, xg - gap, gRenderSpec.height};
 	RECT top = {0, 0, gRenderSpec.width, yg - gap};

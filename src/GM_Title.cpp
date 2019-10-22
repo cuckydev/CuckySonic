@@ -137,7 +137,7 @@ void TitleBackground(BACKGROUND *background, bool doScroll, int cameraX, int cam
 bool GM_Title(bool *noError)
 {
 	//Load our title sheet and background
-	TEXTURE *titleTexture = new TEXTURE(nullptr, "data/Title.bmp");
+	TEXTURE *titleTexture = new TEXTURE("data/Title.bmp");
 	if (titleTexture->fail != nullptr)
 		return (*noError = !Error(titleTexture->fail));
 	

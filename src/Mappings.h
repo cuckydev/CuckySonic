@@ -17,6 +17,6 @@ class MAPPINGS
 		POINT *origin;
 		
 	public:
-		MAPPINGS(std::deque<MAPPINGS*> *linkedList, const char *path);
+		MAPPINGS(const char *path);
 		~MAPPINGS();
 };

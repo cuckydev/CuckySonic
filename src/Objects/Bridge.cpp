@@ -67,9 +67,10 @@ void ObjBridge(OBJECT *object)
 			//Create our log segments
 			for (int i = 0; i < object->subtype; i++)
 			{
-				OBJECT *newSegment = new OBJECT(&object->children, &ObjBridgeSegment);
-				newSegment->x.pos = bridgeLeft + 16 * i;
-				newSegment->y.pos = object->y.pos;
+				OBJECT newSegment(&ObjBridgeSegment);
+				newSegment.x.pos = bridgeLeft + 16 * i;
+				newSegment.y.pos = object->y.pos;
+				object->children.push_back(newSegment);
 			}
 		}
 //Fallthrough
@@ -104,10 +105,10 @@ void ObjBridge(OBJECT *object)
 			else
 			{
 				//Check for any players standing on us and handle appropriately
-				int i = 0;
-				
-				for (PLAYER *player = gLevel->playerList; player != nullptr; player = player->next)
+				for (size_t i = 0; i < gLevel->playerList.size(); i++)
 				{
+					PLAYER *player = &gLevel->playerList[i];
+					
 					//Check if this specific player is standing on us
 					if (object->playerContact[i].standing)
 					{
@@ -126,9 +127,6 @@ void ObjBridge(OBJECT *object)
 							object->scratchU8[SCRATCHU8_DEPRESS_POSITION] = standingLog;
 					#endif
 					}
-					
-					//Check next player's contact
-					i++;
 				}
 				
 				//Increase force if someone is standing on us
@@ -151,14 +149,14 @@ void ObjBridge(OBJECT *object)
 				GetSine(object->scratchU8[SCRATCHU8_DEPRESS_FORCE] * angle / 0x40, &depress, nullptr);
 				
 				//Set our depression position, then do next log
-				object->children[j]->y.pos = object->y.pos + (depress * depressForce[object->scratchU8[SCRATCHU8_DEPRESS_POSITION]] / 0x100);
+				object->children[j].y.pos = object->y.pos + (depress * depressForce[object->scratchU8[SCRATCHU8_DEPRESS_POSITION]] / 0x100);
 			}
 			
 			//Act as a solid platform
-			int i = 0;
-			
-			for (PLAYER *player = gLevel->playerList; player != nullptr; player = player->next)
+			for (size_t i = 0; i < gLevel->playerList.size(); i++)
 			{
+				PLAYER *player = &gLevel->playerList[i];
+				
 				if (object->playerContact[i].standing)
 				{
 					//Check if we're leaving the platform
@@ -178,7 +176,7 @@ void ObjBridge(OBJECT *object)
 							object->scratchU8[SCRATCHU8_DEPRESS_POSITION] = xDiff;
 						
 						//Set our y-position
-						player->y.pos = object->children[xDiff]->y.pos - (8 + player->yRadius);
+						player->y.pos = object->children[xDiff].y.pos - (8 + player->yRadius);
 					}
 				}
 				else
@@ -194,9 +192,6 @@ void ObjBridge(OBJECT *object)
 							object->scratchU8[SCRATCHU8_DEPRESS_POSITION] = standingLog;
 					}
 				}
-				
-				//Check next player's contact
-				i++;
 			}
 			break;
 		}

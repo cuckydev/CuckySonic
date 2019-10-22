@@ -35,7 +35,7 @@ void ObjSwingingPlatform_Move(OBJECT *object)
 	GetSine(oscillate, &sin, &cos);
 	
 	for (size_t i = 0; i < object->children.size(); i++)
-		ObjSwingingPlatform_Move_Individual(object, object->children[i], sin, cos);
+		ObjSwingingPlatform_Move_Individual(object, &object->children[i], sin, cos);
 	ObjSwingingPlatform_Move_Individual(object, object, sin, cos);
 }
 
@@ -74,27 +74,29 @@ void ObjSwingingPlatform(OBJECT *object)
 			
 			for (int i = 0; i <= chains; i++)
 			{
-				OBJECT *newSegment = new OBJECT(&object->children, &ObjSwingingPlatform);
-				
-				//Get render properties and graphics
-				newSegment->texture = gLevel->GetObjectTexture("data/Object/GHZSwingingPlatform.bmp");
-				newSegment->mappings = gLevel->GetObjectMappings("data/Object/SwingingPlatform.map");
-				newSegment->renderFlags.alignPlane = true;
-				newSegment->widthPixels = 8;
-				newSegment->mappingFrame = 1;
-				newSegment->priority = 4;
+				//Create a segment
+				OBJECT newSegment(&ObjSwingingPlatform);
+				newSegment.texture = gLevel->GetObjectTexture("data/Object/GHZSwingingPlatform.bmp");
+				newSegment.mappings = gLevel->GetObjectMappings("data/Object/SwingingPlatform.map");
+				newSegment.renderFlags.alignPlane = true;
+				newSegment.widthPixels = 8;
+				newSegment.mappingFrame = 1;
+				newSegment.priority = 4;
 				
 				//Set position and routine
-				newSegment->ScratchAllocS16(SCRATCHS16_MAX);
-				newSegment->scratchS16[SCRATCHS16_OFF_Y] = yOff;
-				newSegment->routine = 2;
+				newSegment.ScratchAllocS16(SCRATCHS16_MAX);
+				newSegment.scratchS16[SCRATCHS16_OFF_Y] = yOff;
+				newSegment.routine = 2;
 				
 				//Use anchor frame if anchor point
 				if (yOff <= 0)
 				{
-					newSegment->mappingFrame = 2;
-					newSegment->priority = 3;
+					newSegment.mappingFrame = 2;
+					newSegment.priority = 3;
 				}
+				
+				//Link to children list
+				object->children.push_back(newSegment);
 				
 				//Get next offset
 				yOff += 0x10;

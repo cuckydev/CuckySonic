@@ -358,11 +358,12 @@ void ObjSkidDust(OBJECT *object)
 					object->animFrameDuration = 3;
 					
 					//Create a new dust object at the player's feet
-					OBJECT *dust = new OBJECT(&gLevel->objectList, &ObjSkidDust);
-					dust->x.pos = player->x.pos;
-					dust->y.pos = player->y.pos + (player->status.reverseGravity ? -16 : 16);
-					dust->highPriority = player->highPriority;
-					dust->anim = 2;
+					OBJECT dust(&ObjSkidDust);
+					dust.x.pos = player->x.pos;
+					dust.y.pos = player->y.pos + (player->status.reverseGravity ? -16 : 16);
+					dust.highPriority = player->highPriority;
+					dust.anim = 2;
+					gLevel->objectList.push_back(dust);
 					
 					//Offset if our height is atypical (for a short character like Tails)
 					int heightDifference = 19 - player->defaultYRadius;
@@ -722,12 +723,12 @@ void ObjInvincibilityStars(OBJECT *object)
 	enum SCRATCH
 	{
 		//U8
-		SCRATCHU8_ANIMATION =			0,
-		SCRATCHU8_ANIMATION_SECONDARY =	1,
-		SCRATCHU8_MAX =					2,
+		SCRATCHU8_ANGLE =			0,
+		SCRATCHU8_STAR2_FRAMEOFF =	1,
+		SCRATCHU8_MAX =				2,
 		//U16
-		SCRATCHU16_ANIMATION2 =			0,
-		SCRATCHU16_MAX =				1,
+		SCRATCHU16_FRAME =			0,
+		SCRATCHU16_MAX =			1,
 	};
 	
 	object->ScratchAllocU8(SCRATCHU8_MAX);
@@ -752,8 +753,8 @@ void ObjInvincibilityStars(OBJECT *object)
 		object->renderFlags.alignPlane = true;
 		
 		//Set other property things
-		object->scratchU8[SCRATCHU8_ANIMATION] = ((invincibilityStarArray[object->subtype].animation >> 8) & 0xFF);
-		object->scratchU8[SCRATCHU8_ANIMATION_SECONDARY] = (invincibilityStarArray[object->subtype].animation & 0xFF);
+		object->scratchU8[SCRATCHU8_ANGLE] = ((invincibilityStarArray[object->subtype].animation >> 8) & 0xFF);
+		object->scratchU8[SCRATCHU8_STAR2_FRAMEOFF] = (invincibilityStarArray[object->subtype].animation & 0xFF);
 		object->routine = (object->subtype ? 2 : 1);
 	}
 	
@@ -772,27 +773,27 @@ void ObjInvincibilityStars(OBJECT *object)
 			
 			//Get our primary animation frame
 			uint16_t frame;
-			while ((frame = invincibilityStarFrameArray0[object->scratchU16[SCRATCHU16_ANIMATION2]]) >= 0x80)
-				object->scratchU16[SCRATCHU16_ANIMATION2] = 0;
+			while ((frame = invincibilityStarFrameArray0[object->scratchU16[SCRATCHU16_FRAME]]) >= 0x80)
+				object->scratchU16[SCRATCHU16_FRAME] = 0;
 			
 			//Animate and draw stars
-			object->scratchU16[SCRATCHU16_ANIMATION2]++;
+			object->scratchU16[SCRATCHU16_FRAME]++;
 			
 			//Draw star 1
 			int16_t star1XPos, star1YPos;
-			ObjInvincibilityStars_GetPosition(invincibilityStarPosArray, object->scratchU8[SCRATCHU8_ANIMATION], xPos, yPos, &star1XPos, &star1YPos);
+			ObjInvincibilityStars_GetPosition(invincibilityStarPosArray, object->scratchU8[SCRATCHU8_ANGLE], xPos, yPos, &star1XPos, &star1YPos);
 			object->DrawInstance(object->renderFlags, object->texture, object->mappings, object->highPriority, object->priority, frame, star1XPos, star1YPos);
 			
 			//Draw star 2
 			int16_t star2XPos, star2YPos;
-			ObjInvincibilityStars_GetPosition(invincibilityStarPosArray, object->scratchU8[SCRATCHU8_ANIMATION] + 0x12, xPos, yPos, &star2XPos, &star2YPos);
+			ObjInvincibilityStars_GetPosition(invincibilityStarPosArray, object->scratchU8[SCRATCHU8_ANGLE] + 0x12, xPos, yPos, &star2XPos, &star2YPos);
 			object->DrawInstance(object->renderFlags, object->texture, object->mappings, object->highPriority, object->priority, frame, star2XPos, star2YPos);
 			
 			//Spin around the player
 			if (player->status.xFlip)
-				object->scratchU8[SCRATCHU8_ANIMATION] += 0x12;
+				object->scratchU8[SCRATCHU8_ANGLE] += 0x12;
 			else
-				object->scratchU8[SCRATCHU8_ANIMATION] -= 0x12;
+				object->scratchU8[SCRATCHU8_ANGLE] -= 0x12;
 			break;
 		}
 		case 2:
@@ -810,29 +811,29 @@ void ObjInvincibilityStars(OBJECT *object)
 			const uint8_t *frameArray = invincibilityStarArray[object->subtype].frameArray;
 			
 			uint16_t frame1;
-			while ((frame1 = frameArray[object->scratchU16[SCRATCHU16_ANIMATION2]]) >= 0x80)
-				object->scratchU16[SCRATCHU16_ANIMATION2] = 0;
+			while ((frame1 = frameArray[object->scratchU16[SCRATCHU16_FRAME]]) >= 0x80)
+				object->scratchU16[SCRATCHU16_FRAME] = 0;
 			
-			uint16_t frame2 = frameArray[object->scratchU16[SCRATCHU16_ANIMATION2] + object->scratchU8[SCRATCHU8_ANIMATION_SECONDARY]];
+			uint16_t frame2 = frameArray[object->scratchU16[SCRATCHU16_FRAME] + object->scratchU8[SCRATCHU8_STAR2_FRAMEOFF]];
 			
 			//Increment animation frame
-			object->scratchU16[SCRATCHU16_ANIMATION2]++;
+			object->scratchU16[SCRATCHU16_FRAME]++;
 			
 			//Draw star 1
 			int16_t star1XPos, star1YPos;
-			ObjInvincibilityStars_GetPosition(invincibilityStarPosArray, object->scratchU8[SCRATCHU8_ANIMATION], xPos, yPos, &star1XPos, &star1YPos);
+			ObjInvincibilityStars_GetPosition(invincibilityStarPosArray, object->scratchU8[SCRATCHU8_ANGLE], xPos, yPos, &star1XPos, &star1YPos);
 			object->DrawInstance(object->renderFlags, object->texture, object->mappings, object->highPriority, object->priority, frame2, star1XPos, star1YPos);
 			
 			//Draw star 2
 			int16_t star2XPos, star2YPos;
-			ObjInvincibilityStars_GetPosition(invincibilityStarPosArray, object->scratchU8[SCRATCHU8_ANIMATION] + 0x12, xPos, yPos, &star2XPos, &star2YPos);
+			ObjInvincibilityStars_GetPosition(invincibilityStarPosArray, object->scratchU8[SCRATCHU8_ANGLE] + 0x12, xPos, yPos, &star2XPos, &star2YPos);
 			object->DrawInstance(object->renderFlags, object->texture, object->mappings, object->highPriority, object->priority, frame1, star2XPos, star2YPos);
 			
 			//Spin around the player
 			if (player->status.xFlip)
-				object->scratchU8[SCRATCHU8_ANIMATION] += 0x02;
+				object->scratchU8[SCRATCHU8_ANGLE] += 0x02;
 			else
-				object->scratchU8[SCRATCHU8_ANIMATION] -= 0x02;
+				object->scratchU8[SCRATCHU8_ANGLE] -= 0x02;
 			break;
 		}
 	}
@@ -841,7 +842,7 @@ void ObjInvincibilityStars(OBJECT *object)
 //Player class
 #define READ_SPEEDDEFINITION(definition)	definition.top = ReadFile_BE16(playerSpec); definition.acceleration = ReadFile_BE16(playerSpec); definition.deceleration = ReadFile_BE16(playerSpec); definition.rollDeceleration = ReadFile_BE16(playerSpec); definition.jumpForce = ReadFile_BE16(playerSpec); definition.jumpRelease = ReadFile_BE16(playerSpec);
 
-PLAYER::PLAYER(PLAYER **linkedList, const char *specPath, PLAYER *myFollow, int myController)
+PLAYER::PLAYER(const char *specPath, PLAYER *myFollow, int myController)
 {
 	LOG(("Creating a player with spec %s and controlled by controller %d...\n", specPath, myController));
 	memset(this, 0, sizeof(PLAYER));
@@ -944,43 +945,28 @@ PLAYER::PLAYER(PLAYER **linkedList, const char *specPath, PLAYER *myFollow, int 
 	ResetRecords(x.pos - 0x20, y.pos - 0x04);
 	
 	//Load our objects
-	spindashDust = new OBJECT(&gLevel->coreObjectList, ObjSpindashDust);
-	spindashDust->parent = this;
+	OBJECT locSpindashDust(&ObjSpindashDust);
+	locSpindashDust.parent = this;
+	gLevel->coreObjectList.push_back(locSpindashDust);
+	spindashDust = &gLevel->coreObjectList.back();
 	
-	skidDust = new OBJECT(&gLevel->coreObjectList, ObjSkidDust);
-	skidDust->parent = this;
+	OBJECT locSkidDust(&ObjSkidDust);
+	locSkidDust.parent = this;
+	gLevel->coreObjectList.push_back(locSkidDust);
+	skidDust = &gLevel->coreObjectList.back();
 	
-	shieldObject = new OBJECT(&gLevel->coreObjectList, ObjShield);
-	shieldObject->parent = this;
+	OBJECT locShieldObject(&ObjShield);
+	locShieldObject.parent = this;
+	gLevel->coreObjectList.push_back(locShieldObject);
+	shieldObject = &gLevel->coreObjectList.back();
 	
 	for (int i = 0; i < 4; i++)
 	{
-		invincibilityStarObject[i] = new OBJECT(&gLevel->coreObjectList, ObjInvincibilityStars);
-		invincibilityStarObject[i]->subtype = i;
-		invincibilityStarObject[i]->parent = this;
-	}
-	
-	//Attach to linked list (if applicable)
-	if (linkedList != nullptr)
-	{
-		list = linkedList;
-		
-		//If linked list is unset, set us as the first 
-		if (*linkedList == nullptr)
-		{
-			*linkedList = this;
-			return;
-		}
-		
-		//Attach us to the linked list
-		for (PLAYER *player = *linkedList;; player = player->next)
-		{
-			if (player->next == nullptr)
-			{
-				player->next = this;
-				break;
-			}
-		}
+		OBJECT locInvStarObject(&ObjInvincibilityStars);
+		locInvStarObject.subtype = i;
+		locInvStarObject.parent = this;
+		gLevel->coreObjectList.push_back(locInvStarObject);
+		invincibilityStarObject[i] = &gLevel->coreObjectList.back();
 	}
 	
 	LOG(("Success!\n"));
@@ -988,18 +974,7 @@ PLAYER::PLAYER(PLAYER **linkedList, const char *specPath, PLAYER *myFollow, int 
 
 PLAYER::~PLAYER()
 {
-	//Detach from linked list
-	if (list != nullptr)
-	{
-		for (PLAYER **player = list; *player != nullptr; player = &(*player)->next)
-		{
-			if (*player == this)
-			{
-				*player = next;
-				break;
-			}
-		}
-	}
+	return;
 }
 
 void PLAYER::SetSpeedFromDefinition(SPEEDDEFINITION definition)
@@ -3577,10 +3552,11 @@ bool PLAYER::HurtCharacter(void *hit)
 		else
 		{
 			//Lose rings
-			OBJECT *ringObject = new OBJECT(&gLevel->objectList, &ObjBouncingRing);
-			ringObject->x.pos = x.pos;
-			ringObject->y.pos = y.pos;
-			ringObject->parent = (void*)this;
+			OBJECT ringObject(&ObjBouncingRing);
+			ringObject.x.pos = x.pos;
+			ringObject.y.pos = y.pos;
+			ringObject.parent = (void*)this;
+			gLevel->objectList.push_back(ringObject);
 		}
 	}
 	
@@ -4912,7 +4888,7 @@ void PLAYER::RingAttractCheck(OBJECT *object)
 	
 	//Iterate and check children
 	for (size_t i = 0; i < object->children.size(); i++)
-		RingAttractCheck(object->children[i]);
+		RingAttractCheck(&object->children[i]);
 }
 
 //Object interaction functions
@@ -5004,7 +4980,7 @@ bool PLAYER::TouchResponseObject(OBJECT *object, int16_t playerLeft, int16_t pla
 	//Iterate through children, we haven't hit the parent
 	for (size_t i = 0; i < object->children.size(); i++)
 	{
-		if (TouchResponseObject(object->children[i], playerLeft, playerTop, playerWidth, playerHeight))
+		if (TouchResponseObject(&object->children[i], playerLeft, playerTop, playerWidth, playerHeight))
 			return true;
 	}
 	
@@ -5016,7 +4992,7 @@ void PLAYER::TouchResponse()
 	//Check for ring attraction
 	if (shield == SHIELD_ELECTRIC)
 		for (size_t i = 0; i < gLevel->objectList.size(); i++)
-			RingAttractCheck(gLevel->objectList[i]);
+			RingAttractCheck(&gLevel->objectList[i]);
 	
 	//Get our collision hitbox
 	bool wasInvincible = item.isInvincible; //Remember if we were invincible, since this gets temporarily overwritten by the insta-shield hitbox
@@ -5060,7 +5036,7 @@ void PLAYER::TouchResponse()
 	for (size_t i = 0; i < gLevel->objectList.size(); i++)
 	{
 		//Check for collision with this object
-		if (TouchResponseObject(gLevel->objectList[i], playerLeft, playerTop, playerWidth, playerHeight))
+		if (TouchResponseObject(&gLevel->objectList[i], playerLeft, playerTop, playerWidth, playerHeight))
 			break;
 	}
 	

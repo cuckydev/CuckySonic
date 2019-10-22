@@ -70,9 +70,12 @@ void ObjGHZPlatform_Move(OBJECT *object)
 			if (!object->scratchU16[SCRATCHU16_FALL_TIME])
 			{
 				//Wait for the player to stand on us
-				for (PLAYER *player = gLevel->playerList; player != nullptr; player = player->next)
+				for (size_t i = 0; i < gLevel->playerList.size(); i++)
+				{
+					PLAYER *player = &gLevel->playerList[i];
 					if (player->status.shouldNotFall && player->interact == (void*)object)
 						object->scratchU16[SCRATCHU16_FALL_TIME] = 30; //Wait for 0.5 seconds
+				}
 			}
 			else
 			{
@@ -91,9 +94,10 @@ void ObjGHZPlatform_Move(OBJECT *object)
 			if (object->scratchU16[SCRATCHU16_FALL_TIME] != 0 && --object->scratchU16[SCRATCHU16_FALL_TIME] == 0)
 			{
 				//Make players standing on us fall off
-				int i = 0;
-				for (PLAYER *player = gLevel->playerList; player != nullptr; player = player->next)
+				for (size_t i = 0; i < gLevel->playerList.size(); i++)
 				{
+					PLAYER *player = &gLevel->playerList[i];
+					
 					if (player->status.shouldNotFall && player->interact == (void*)object)
 					{
 						//Make player airborne
@@ -102,8 +106,6 @@ void ObjGHZPlatform_Move(OBJECT *object)
 						object->playerContact[i].standing = false;
 						player->yVel = object->yVel;
 					}
-					
-					i++;
 				}
 				
 				//No longer act as a solid platform

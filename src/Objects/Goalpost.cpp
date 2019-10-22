@@ -69,7 +69,9 @@ void ObjGoalpost(OBJECT *object)
 				gLevel->leftBoundaryTarget = boundary;
 			
 			//If the main player is near us, start spinning
-			if (gLevel->playerList->x.pos >= object->x.pos && gLevel->playerList->x.pos < (object->x.pos + 0x20))
+			PLAYER *player = &gLevel->playerList[0];
+			
+			if (player->x.pos >= object->x.pos && player->x.pos < (object->x.pos + 32))
 			{
 				//Lock the camera, timer, and increment routine
 				gLevel->leftBoundaryTarget = gLevel->rightBoundaryTarget - gRenderSpec.width;
@@ -103,23 +105,24 @@ void ObjGoalpost(OBJECT *object)
 				object->scratchU8[SCRATCHU8_SPARKLE] %= 8;
 				
 				//Create a sparkle object
-				OBJECT *sparkle = new OBJECT(&gLevel->objectList, &ObjRing);
-				sparkle->routine = 3;
-				sparkle->x.pos = object->x.pos + goalpostSparklePos[object->scratchU8[SCRATCHU8_SPARKLE]][0];
-				sparkle->y.pos = object->y.pos + goalpostSparklePos[object->scratchU8[SCRATCHU8_SPARKLE]][1];
-				
-				//Initialize sparkle's rendering stuff
-				sparkle->texture = gLevel->GetObjectTexture("data/Object/Ring.bmp");
-				sparkle->mappings = gLevel->GetObjectMappings("data/Object/Ring.map");
-				sparkle->renderFlags.alignPlane = true;
-				sparkle->widthPixels = 8;
+				OBJECT sparkle(&ObjRing);
+				sparkle.routine = 3;
+				sparkle.x.pos = object->x.pos + goalpostSparklePos[object->scratchU8[SCRATCHU8_SPARKLE]][0];
+				sparkle.y.pos = object->y.pos + goalpostSparklePos[object->scratchU8[SCRATCHU8_SPARKLE]][1];
+				sparkle.texture = gLevel->GetObjectTexture("data/Object/Ring.bmp");
+				sparkle.mappings = gLevel->GetObjectMappings("data/Object/Ring.map");
+				sparkle.renderFlags.alignPlane = true;
+				sparkle.widthPixels = 8;
+				gLevel->objectList.push_back(sparkle);
 			}
 			break;
 		}
 		case 3: //Make players run to the right of the screen
 		{
-			for (PLAYER *player = gLevel->playerList; player != nullptr; player = player->next)
+			for (size_t i = 0; i < gLevel->playerList.size(); i++)
 			{
+				PLAYER *player = &gLevel->playerList[i];
+				
 				//Skip if debug is enabled
 				if (player->debug)
 					continue;
@@ -133,7 +136,7 @@ void ObjGoalpost(OBJECT *object)
 				}
 				
 				//If the main player, and near the right of the screen, increment routine
-				if (player == gLevel->playerList && player->x.pos >= gLevel->rightBoundaryTarget)
+				if (i == 0 && player->x.pos >= gLevel->rightBoundaryTarget)
 					object->routine++;
 			}
 			break;

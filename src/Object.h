@@ -19,13 +19,8 @@ typedef void (*OBJECTFUNCTION)(OBJECT*);
 
 //Common macros
 #define CHECK_LINKEDLIST_OBJECTDELETE(linkedList)	for (signed int i = (signed int)linkedList.size() - 1; i >= 0; i--)	\
-													{	\
-														if (linkedList[i]->deleteFlag)	\
-														{	\
-															delete linkedList[i];	\
+														if (linkedList[i].deleteFlag)	\
 															linkedList.erase(linkedList.begin() + i);	\
-														}	\
-													}	\
 													linkedList.shrink_to_fit();
 
 //Enumerations
@@ -69,7 +64,7 @@ class OBJECT_DRAWINSTANCE
 		int16_t xPos, yPos;
 		
 	public:
-		OBJECT_DRAWINSTANCE(std::deque<OBJECT_DRAWINSTANCE*> *linkedList);
+		OBJECT_DRAWINSTANCE();
 		~OBJECT_DRAWINSTANCE();
 		void Draw();
 };
@@ -88,7 +83,7 @@ class OBJECT
 		OBJECT_RENDERFLAGS renderFlags;
 		
 		//Drawing instances
-		std::deque<OBJECT_DRAWINSTANCE*> drawInstances;
+		std::deque<OBJECT_DRAWINSTANCE> drawInstances;
 		
 		//Our texture and mappings
 		TEXTURE *texture;
@@ -156,7 +151,7 @@ class OBJECT
 		void *parent;	//Our parent object or player
 		
 		//Children linked list
-		std::deque<OBJECT*> children;
+		std::deque<OBJECT> children;
 		
 		//Scratch memory
 		 uint8_t  *scratchU8;
@@ -174,15 +169,15 @@ class OBJECT
 		OBJECTFUNCTION prevFunction;
 		
 	public:
-		OBJECT(std::deque<OBJECT*> *linkedList, OBJECTFUNCTION object);
+		OBJECT(OBJECTFUNCTION object);
 		~OBJECT();
 		
-		void  ScratchAllocU8(int max);
-		void  ScratchAllocS8(int max);
-		void ScratchAllocU16(int max);
-		void ScratchAllocS16(int max);
-		void ScratchAllocU32(int max);
-		void ScratchAllocS32(int max);
+		void  ScratchAllocU8(size_t max);
+		void  ScratchAllocS8(size_t max);
+		void ScratchAllocU16(size_t max);
+		void ScratchAllocS16(size_t max);
+		void ScratchAllocU32(size_t max);
+		void ScratchAllocS32(size_t max);
 		
 		void Move();
 		void MoveAndFall();
@@ -193,12 +188,12 @@ class OBJECT
 		int16_t CheckFloorEdge(COLLISIONLAYER layer, int16_t xPos, int16_t yPos, uint8_t *outAngle);
 		
 		void PlatformObject(int16_t width, int16_t height, int16_t lastXPos);
-		bool LandOnPlatform(PLAYER *player, int i, int16_t width1, int16_t width2, int16_t height, int16_t lastXPos);
-		void ExitPlatform(PLAYER *player, int i);
+		bool LandOnPlatform(PLAYER *player, size_t i, int16_t width1, int16_t width2, int16_t height, int16_t lastXPos);
+		void ExitPlatform(PLAYER *player, size_t i);
 		
 		OBJECT_SOLIDTOUCH SolidObject(int16_t width, int16_t height_air, int16_t height_standing, int16_t lastXPos);
-		void SolidObjectCont(OBJECT_SOLIDTOUCH *solidTouch, PLAYER *player, int i, int16_t width, int16_t height, int16_t lastXPos);
-		void SolidObjectClearPush(PLAYER *player, int i);
+		void SolidObjectCont(OBJECT_SOLIDTOUCH *solidTouch, PLAYER *player, size_t i, int16_t width, int16_t height, int16_t lastXPos);
+		void SolidObjectClearPush(PLAYER *player, size_t i);
 		
 		void ClearSolidContact();
 		
