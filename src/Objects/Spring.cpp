@@ -109,7 +109,8 @@ void ObjSpring(OBJECT *object)
 			//Check if any players touched the top of us
 			for (size_t i = 0; i < gLevel->playerList.size(); i++)
 			{
-				PLAYER *player = &gLevel->playerList[i];
+				//Get the player and check if we touched the spring
+				PLAYER *player = gLevel->playerList[i];
 				bool isUp = (object->routine == ROUTINE_UP) ^ player->status.reverseGravity;
 				
 			#ifdef SOLIDOBJECT_CONTACT_CHECK
@@ -191,7 +192,8 @@ void ObjSpring(OBJECT *object)
 			//Check if any players touched our sides
 			for (size_t i = 0; i < gLevel->playerList.size(); i++)
 			{
-				PLAYER *player = &gLevel->playerList[i];
+				//Get the player and check if we touched the spring
+				PLAYER *player = gLevel->playerList[i];
 			#ifdef SOLIDOBJECT_CONTACT_CHECK
 				if (touch.side[i])
 			#else

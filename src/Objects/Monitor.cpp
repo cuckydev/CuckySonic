@@ -51,7 +51,8 @@ void ObjMonitor_SolidObject(OBJECT *object)
 	//Check for contact with all players (followers cannot break monitors)
 	for (size_t i = 0; i < gLevel->playerList.size(); i++)
 	{
-		PLAYER *player = &gLevel->playerList[i];
+		//Get the player
+		PLAYER *player = gLevel->playerList[i];
 		if (i == 0)
 			ObjMonitor_SolidObject_Lead(object, i, player);
 		else
@@ -258,19 +259,19 @@ void ObjMonitor(OBJECT *object)
 			object->collisionType = COLLISIONTYPE_NULL;
 			
 			//Create the item content thing
-			OBJECT content(&ObjMonitorContents);
-			content.x.pos = object->x.pos;
-			content.y.pos = object->y.pos;
-			content.anim = object->anim;
-			content.parent = (void*)object;
-			gLevel->objectList.push_back(content);
+			OBJECT *content = new OBJECT(&ObjMonitorContents);
+			content->x.pos = object->x.pos;
+			content->y.pos = object->y.pos;
+			content->anim = object->anim;
+			content->parent = (void*)object;
+			gLevel->objectList.link_back(content);
 			
 			//Create the explosion
-			OBJECT explosion(&ObjExplosion);
-			explosion.x.pos = object->x.pos;
-			explosion.y.pos = object->y.pos;
-			explosion.routine++; //Don't create animal or score
-			gLevel->objectList.push_back(explosion);
+			OBJECT *explosion = new OBJECT(&ObjExplosion);
+			explosion->x.pos = object->x.pos;
+			explosion->y.pos = object->y.pos;
+			explosion->routine++; //Don't create animal or score
+			gLevel->objectList.link_back(explosion);
 			
 			//Set to broken animation and draw
 			object->anim = MONITOR_ITEM_BROKEN;

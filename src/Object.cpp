@@ -13,7 +13,7 @@
 //Object class
 OBJECT::OBJECT(OBJECTFUNCTION objectFunction)
 {
-	//Clear memory
+	//Reset memory
 	memset(this, 0, sizeof(OBJECT));
 	
 	//Set function
@@ -21,8 +21,8 @@ OBJECT::OBJECT(OBJECTFUNCTION objectFunction)
 	prevFunction = objectFunction;
 	
 	//Reset children and draw instance linked lists
-	drawInstances = std::deque<OBJECT_DRAWINSTANCE>();
-	children = std::deque<OBJECT>();
+	drawInstances = LINKEDLIST<OBJECT_DRAWINSTANCE*>();
+	children = LINKEDLIST<OBJECT*>();
 }
 
 OBJECT::~OBJECT()
@@ -36,10 +36,8 @@ OBJECT::~OBJECT()
 	free(scratchS32);
 	
 	//Destroy draw instances and children
-	drawInstances.clear();
-	drawInstances.shrink_to_fit();
-	children.clear();
-	children.shrink_to_fit();
+	CLEAR_INSTANCE_LINKEDLIST(drawInstances);
+	CLEAR_INSTANCE_LINKEDLIST(children);
 }
 
 //Scratch allocation
@@ -187,21 +185,24 @@ void OBJECT::PlatformObject(int16_t width, int16_t height, int16_t lastXPos)
 {
 	for (size_t i = 0; i < gLevel->playerList.size(); i++)
 	{
+		//Get the player
+		PLAYER *player = gLevel->playerList[i];
+		
 		//If the player is already standing on us
 		if (playerContact[i].standing == true)
 		{
 			//Check if we're still on the platform
-			int16_t xDiff = gLevel->playerList[i].x.pos - lastXPos + width;
+			int16_t xDiff = player->x.pos - lastXPos + width;
 			
-			if (!gLevel->playerList[i].status.inAir && xDiff >= 0 && xDiff < width * 2)
-				gLevel->playerList[i].MoveOnPlatform(this, height, lastXPos);
+			if (!player->status.inAir && xDiff >= 0 && xDiff < width * 2)
+				player->MoveOnPlatform(this, height, lastXPos);
 			else
-				ExitPlatform(&gLevel->playerList[i], i);
+				ExitPlatform(player, i);
 		}
 		else
 		{
 			//Check if we're going to land on the platform
-			LandOnPlatform(&gLevel->playerList[i], i, width, width * 2, height, lastXPos);
+			LandOnPlatform(player, i, width, width * 2, height, lastXPos);
 		}
 	}
 }
@@ -262,26 +263,29 @@ OBJECT_SOLIDTOUCH OBJECT::SolidObject(int16_t width, int16_t height_air, int16_t
 	//Check all players
 	for (size_t i = 0; i < gLevel->playerList.size(); i++)
 	{
+		//Get the player
+		PLAYER *player = gLevel->playerList[i];
+		
 		//Check if we're still standing on the object
 		if (playerContact[i].standing)
 		{
 			//Check if we're to exit the top of the object
-			int16_t xDiff = (gLevel->playerList[i].x.pos - lastXPos) + width;
-			if (gLevel->playerList[i].status.inAir || xDiff < 0 || xDiff >= width * 2)
+			int16_t xDiff = (player->x.pos - lastXPos) + width;
+			if (player->status.inAir || xDiff < 0 || xDiff >= width * 2)
 			{
 				//Exit top as platform, then check next player
-				ExitPlatform(&gLevel->playerList[i], i);
+				ExitPlatform(player, i);
 				continue;
 			}
 			
 			//Move with the object
-			gLevel->playerList[i].MoveOnPlatform(this, height_standing, lastXPos);
+			player->MoveOnPlatform(this, height_standing, lastXPos);
 			continue;
 		}
 		else
 		{
 			//Check for collisions, then check next player
-			SolidObjectCont(&solidTouch, &gLevel->playerList[i], i, width, height_air, lastXPos);
+			SolidObjectCont(&solidTouch, player, i, width, height_air, lastXPos);
 			continue;
 		}
 	}
@@ -471,17 +475,20 @@ void OBJECT::ClearSolidContact()
 	//Check all players and clear all contact
 	for (size_t i = 0; i < gLevel->playerList.size(); i++)
 	{
+		//Get the player
+		PLAYER *player = gLevel->playerList[i];
+		
 		//Clear pushing and standing
 		if (playerContact[i].standing || playerContact[i].pushing)
 		{
 			//Clear our contact flags
-			gLevel->playerList[i].status.shouldNotFall = false;
-			gLevel->playerList[i].status.pushing = false;
+			player->status.shouldNotFall = false;
+			player->status.pushing = false;
 			playerContact[i].standing = false;
 			playerContact[i].pushing = false;
 			
 			//Place the player in mid-air, this is weird and stupid god damn
-			gLevel->playerList[i].status.inAir = true;
+			player->status.inAir = true;
 		}
 	}
 }
@@ -505,8 +512,7 @@ bool OBJECT::Update()
 	}
 	
 	//Destroy draw instances from last update
-	drawInstances.clear();
-	drawInstances.shrink_to_fit();
+	CLEAR_INSTANCE_LINKEDLIST(drawInstances);
 	
 	//Run our object code
 	if (function != nullptr)
@@ -523,14 +529,17 @@ bool OBJECT::Update()
 	{
 		//Remove player references to us
 		for (size_t i = 0; i < gLevel->playerList.size(); i++)
-			if (gLevel->playerList[i].interact == this)
-				gLevel->playerList[i].interact = nullptr;
+		{
+			PLAYER *player = gLevel->playerList[i];
+			if (player->interact == this)
+				player->interact = nullptr;
+		}
 	}
 	else
 	{
 		//Update children's code
 		for (size_t i = 0; i < children.size(); i++)
-			if (children[i].Update())
+			if (children[i]->Update())
 				return true;
 		CHECK_LINKEDLIST_OBJECTDELETE(children);
 	}
@@ -541,31 +550,32 @@ bool OBJECT::Update()
 void OBJECT::DrawInstance(OBJECT_RENDERFLAGS iRenderFlags, TEXTURE *iTexture, MAPPINGS *iMappings, bool iHighPriority, uint8_t iPriority, uint16_t iMappingFrame, int16_t iXPos, int16_t iYPos)
 {
 	//Create a draw instance with the properties given
-	OBJECT_DRAWINSTANCE newInstance;
-	newInstance.renderFlags = iRenderFlags;
-	newInstance.texture = iTexture;
-	newInstance.mappings = iMappings;
-	newInstance.highPriority = iHighPriority;
-	newInstance.priority = iPriority;
-	newInstance.mappingFrame = iMappingFrame;
-	newInstance.xPos = iXPos;
-	newInstance.yPos = iYPos;
-	drawInstances.push_back(newInstance);
+	OBJECT_DRAWINSTANCE *newInstance = new OBJECT_DRAWINSTANCE();
+	newInstance->renderFlags = iRenderFlags;
+	newInstance->texture = iTexture;
+	newInstance->mappings = iMappings;
+	newInstance->highPriority = iHighPriority;
+	newInstance->priority = iPriority;
+	newInstance->mappingFrame = iMappingFrame;
+	newInstance->xPos = iXPos;
+	newInstance->yPos = iYPos;
+	drawInstances.link_back(newInstance);
 }
 
 void OBJECT::Draw()
 {
 	//Draw our draw instances, then draw child objects
 	for (size_t i = 0; i < drawInstances.size(); i++)
-		drawInstances[i].Draw();
+		drawInstances[i]->Draw();
 	for (size_t i = 0; i < children.size(); i++)
-		children[i].Draw();
+		children[i]->Draw();
 }
 
 //Object drawing instance class
 OBJECT_DRAWINSTANCE::OBJECT_DRAWINSTANCE()
 {
-	memset(this, 0, sizeof(OBJECT_DRAWINSTANCE)); //Clear memory
+	//Reset memory
+	memset(this, 0, sizeof(OBJECT_DRAWINSTANCE));
 }
 
 OBJECT_DRAWINSTANCE::~OBJECT_DRAWINSTANCE()

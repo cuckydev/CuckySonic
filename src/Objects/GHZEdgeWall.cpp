@@ -114,7 +114,7 @@ void ObjGHZEdgeWall_Solid(OBJECT *object, int16_t width, int16_t height)
 {
 	for (size_t i = 0; i < gLevel->playerList.size(); i++)
 	{
-		PLAYER *player = &gLevel->playerList[i];
+		PLAYER *player = gLevel->playerList[i];
 		ObjGHZEdgeWall_Solid_Individual(player, i, object, width, height); //Handle collision
 	}
 }

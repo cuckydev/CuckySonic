@@ -69,7 +69,7 @@ void ObjGoalpost(OBJECT *object)
 				gLevel->leftBoundaryTarget = boundary;
 			
 			//If the main player is near us, start spinning
-			PLAYER *player = &gLevel->playerList[0];
+			PLAYER *player = gLevel->playerList[0];
 			
 			if (player->x.pos >= object->x.pos && player->x.pos < (object->x.pos + 32))
 			{
@@ -105,15 +105,15 @@ void ObjGoalpost(OBJECT *object)
 				object->scratchU8[SCRATCHU8_SPARKLE] %= 8;
 				
 				//Create a sparkle object
-				OBJECT sparkle(&ObjRing);
-				sparkle.routine = 3;
-				sparkle.x.pos = object->x.pos + goalpostSparklePos[object->scratchU8[SCRATCHU8_SPARKLE]][0];
-				sparkle.y.pos = object->y.pos + goalpostSparklePos[object->scratchU8[SCRATCHU8_SPARKLE]][1];
-				sparkle.texture = gLevel->GetObjectTexture("data/Object/Ring.bmp");
-				sparkle.mappings = gLevel->GetObjectMappings("data/Object/Ring.map");
-				sparkle.renderFlags.alignPlane = true;
-				sparkle.widthPixels = 8;
-				gLevel->objectList.push_back(sparkle);
+				OBJECT *sparkle = new OBJECT(&ObjRing);
+				sparkle->routine = 3;
+				sparkle->x.pos = object->x.pos + goalpostSparklePos[object->scratchU8[SCRATCHU8_SPARKLE]][0];
+				sparkle->y.pos = object->y.pos + goalpostSparklePos[object->scratchU8[SCRATCHU8_SPARKLE]][1];
+				sparkle->texture = gLevel->GetObjectTexture("data/Object/Ring.bmp");
+				sparkle->mappings = gLevel->GetObjectMappings("data/Object/Ring.map");
+				sparkle->renderFlags.alignPlane = true;
+				sparkle->widthPixels = 8;
+				gLevel->objectList.link_back(sparkle);
 			}
 			break;
 		}
@@ -121,9 +121,8 @@ void ObjGoalpost(OBJECT *object)
 		{
 			for (size_t i = 0; i < gLevel->playerList.size(); i++)
 			{
-				PLAYER *player = &gLevel->playerList[i];
-				
-				//Skip if debug is enabled
+				//Get the player
+				PLAYER *player = gLevel->playerList[i];
 				if (player->debug)
 					continue;
 				

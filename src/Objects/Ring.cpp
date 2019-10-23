@@ -92,10 +92,10 @@ void ObjRingSpawner(OBJECT *object)
 	for (int i = 0; i <= ringsToMake; i++)
 	{
 		//Create ring object
-		OBJECT newObject(&ObjRing);
-		newObject.x.pos = xPos;
-		newObject.y.pos = yPos;
-		gLevel->objectList.push_back(newObject);
+		OBJECT *newObject = new OBJECT(&ObjRing);
+		newObject->x.pos = xPos;
+		newObject->y.pos = yPos;
+		gLevel->objectList.link_back(newObject);
 		
 		//Get next position
 		xPos += posData[object->subtype >> 4][0];

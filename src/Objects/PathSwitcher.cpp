@@ -26,7 +26,7 @@ void ObjPathSwitcher(OBJECT *object)
 			//Check each player to see if they're to the right / below us
 			for (size_t i = 0; i < gLevel->playerList.size(); i++)
 			{
-				PLAYER *player = &gLevel->playerList[i];
+				PLAYER *player = gLevel->playerList[i];
 				if (object->subtype & MASK_VERTICAL)
 					object->playerContact[i].extraBit = player->y.pos >= object->y.pos;
 				else
@@ -39,7 +39,8 @@ void ObjPathSwitcher(OBJECT *object)
 			//Check each player to see if they're to the right / below us and change their priority and path
 			for (size_t i = 0; i < gLevel->playerList.size(); i++)
 			{
-				PLAYER *player = &gLevel->playerList[i];
+				//Get the player
+				PLAYER *player = gLevel->playerList[i];
 				
 				//Don't check if in debug mode
 				if (player->debug)

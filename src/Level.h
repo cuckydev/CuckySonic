@@ -1,7 +1,7 @@
 #pragma once
 #include <stdint.h>
-#include <deque>
 
+#include "LinkedList.h"
 #include "Render.h"
 #include "Audio.h"
 #include "GameConstants.h"
@@ -227,9 +227,9 @@ class LEVEL
 		uint16_t bottomBoundaryTarget;
 		
 		//Players and objects
-		std::deque<PLAYER> playerList;
-		std::deque<OBJECT> coreObjectList;
-		std::deque<OBJECT> objectList;
+		LINKEDLIST<PLAYER*> playerList;
+		LINKEDLIST<OBJECT*> coreObjectList;
+		LINKEDLIST<OBJECT*> objectList;
 		CAMERA *camera;
 		
 		//Title card and HUD
@@ -237,8 +237,8 @@ class LEVEL
 		HUD *hud;
 		
 		//Object texture cache
-		std::deque<TEXTURE> objTextureCache;
-		std::deque<MAPPINGS> objMappingsCache;
+		LINKEDLIST<TEXTURE*> objTextureCache;
+		LINKEDLIST<MAPPINGS*> objMappingsCache;
 		
 		//State
 		bool inTitleCard;

@@ -43,7 +43,6 @@ CXXFLAGS += -faligned-new -MMD -MP -MF $@.d
 #Sources to compile
 SOURCES = \
 	Main \
-	LinkedList \
 	MathUtil \
 	Fade \
 	Mappings \

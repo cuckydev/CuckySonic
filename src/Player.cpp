@@ -358,12 +358,12 @@ void ObjSkidDust(OBJECT *object)
 					object->animFrameDuration = 3;
 					
 					//Create a new dust object at the player's feet
-					OBJECT dust(&ObjSkidDust);
-					dust.x.pos = player->x.pos;
-					dust.y.pos = player->y.pos + (player->status.reverseGravity ? -16 : 16);
-					dust.highPriority = player->highPriority;
-					dust.anim = 2;
-					gLevel->objectList.push_back(dust);
+					OBJECT *dust = new OBJECT(&ObjSkidDust);
+					dust->x.pos = player->x.pos;
+					dust->y.pos = player->y.pos + (player->status.reverseGravity ? -16 : 16);
+					dust->highPriority = player->highPriority;
+					dust->anim = 2;
+					gLevel->objectList.link_back(dust);
 					
 					//Offset if our height is atypical (for a short character like Tails)
 					int heightDifference = 19 - player->defaultYRadius;
@@ -945,28 +945,24 @@ PLAYER::PLAYER(const char *specPath, PLAYER *myFollow, int myController)
 	ResetRecords(x.pos - 0x20, y.pos - 0x04);
 	
 	//Load our objects
-	OBJECT locSpindashDust(&ObjSpindashDust);
-	locSpindashDust.parent = this;
-	gLevel->coreObjectList.push_back(locSpindashDust);
-	spindashDust = &gLevel->coreObjectList.back();
+	spindashDust = new OBJECT(&ObjSpindashDust);
+	spindashDust->parent = (void*)this;
+	gLevel->coreObjectList.link_back(spindashDust);
 	
-	OBJECT locSkidDust(&ObjSkidDust);
-	locSkidDust.parent = this;
-	gLevel->coreObjectList.push_back(locSkidDust);
-	skidDust = &gLevel->coreObjectList.back();
+	skidDust = new OBJECT(&ObjSkidDust);
+	skidDust->parent = (void*)this;
+	gLevel->coreObjectList.link_back(skidDust);
 	
-	OBJECT locShieldObject(&ObjShield);
-	locShieldObject.parent = this;
-	gLevel->coreObjectList.push_back(locShieldObject);
-	shieldObject = &gLevel->coreObjectList.back();
+	shieldObject = new OBJECT(&ObjShield);
+	shieldObject->parent = (void*)this;
+	gLevel->coreObjectList.link_back(shieldObject);
 	
 	for (int i = 0; i < 4; i++)
 	{
-		OBJECT locInvStarObject(&ObjInvincibilityStars);
-		locInvStarObject.subtype = i;
-		locInvStarObject.parent = this;
-		gLevel->coreObjectList.push_back(locInvStarObject);
-		invincibilityStarObject[i] = &gLevel->coreObjectList.back();
+		invincibilityStarObject[i] = new OBJECT(&ObjInvincibilityStars);
+		invincibilityStarObject[i]->parent = (void*)this;
+		invincibilityStarObject[i]->subtype = i;
+		gLevel->coreObjectList.link_back(invincibilityStarObject[i]);
 	}
 	
 	LOG(("Success!\n"));
@@ -3552,11 +3548,11 @@ bool PLAYER::HurtCharacter(void *hit)
 		else
 		{
 			//Lose rings
-			OBJECT ringObject(&ObjBouncingRing);
-			ringObject.x.pos = x.pos;
-			ringObject.y.pos = y.pos;
-			ringObject.parent = (void*)this;
-			gLevel->objectList.push_back(ringObject);
+			OBJECT *ringObject = new OBJECT(&ObjBouncingRing);
+			ringObject->x.pos = x.pos;
+			ringObject->y.pos = y.pos;
+			ringObject->parent = (void*)this;
+			gLevel->objectList.link_back(ringObject);
 		}
 	}
 	
@@ -4888,7 +4884,7 @@ void PLAYER::RingAttractCheck(OBJECT *object)
 	
 	//Iterate and check children
 	for (size_t i = 0; i < object->children.size(); i++)
-		RingAttractCheck(&object->children[i]);
+		RingAttractCheck(object->children[i]);
 }
 
 //Object interaction functions
@@ -4980,7 +4976,7 @@ bool PLAYER::TouchResponseObject(OBJECT *object, int16_t playerLeft, int16_t pla
 	//Iterate through children, we haven't hit the parent
 	for (size_t i = 0; i < object->children.size(); i++)
 	{
-		if (TouchResponseObject(&object->children[i], playerLeft, playerTop, playerWidth, playerHeight))
+		if (TouchResponseObject(object->children[i], playerLeft, playerTop, playerWidth, playerHeight))
 			return true;
 	}
 	
@@ -4992,7 +4988,7 @@ void PLAYER::TouchResponse()
 	//Check for ring attraction
 	if (shield == SHIELD_ELECTRIC)
 		for (size_t i = 0; i < gLevel->objectList.size(); i++)
-			RingAttractCheck(&gLevel->objectList[i]);
+			RingAttractCheck(gLevel->objectList[i]);
 	
 	//Get our collision hitbox
 	bool wasInvincible = item.isInvincible; //Remember if we were invincible, since this gets temporarily overwritten by the insta-shield hitbox
@@ -5036,7 +5032,7 @@ void PLAYER::TouchResponse()
 	for (size_t i = 0; i < gLevel->objectList.size(); i++)
 	{
 		//Check for collision with this object
-		if (TouchResponseObject(&gLevel->objectList[i], playerLeft, playerTop, playerWidth, playerHeight))
+		if (TouchResponseObject(gLevel->objectList[i], playerLeft, playerTop, playerWidth, playerHeight))
 			break;
 	}
 	

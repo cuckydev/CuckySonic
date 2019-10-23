@@ -170,7 +170,8 @@ void ObjMinecart(OBJECT *object)
 			
 			for (size_t v = 0; v < gLevel->playerList.size(); v++)
 			{
-				PLAYER *player = &gLevel->playerList[v];
+				//Get the player
+				PLAYER *player = gLevel->playerList[v];
 				
 				//Push velocity stuff
 				if (solid.side[v] && player->spindashing == false)
@@ -271,7 +272,8 @@ void ObjMinecart(OBJECT *object)
 			
 			for (size_t i = 0; i < gLevel->playerList.size(); i++)
 			{
-				PLAYER *player = &gLevel->playerList[i];
+				//Get the player
+				PLAYER *player = gLevel->playerList[i];
 				
 				if (object->playerContact[i].standing)
 				{

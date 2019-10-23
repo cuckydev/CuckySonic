@@ -72,7 +72,7 @@ void ObjGHZPlatform_Move(OBJECT *object)
 				//Wait for the player to stand on us
 				for (size_t i = 0; i < gLevel->playerList.size(); i++)
 				{
-					PLAYER *player = &gLevel->playerList[i];
+					PLAYER *player = gLevel->playerList[i];
 					if (player->status.shouldNotFall && player->interact == (void*)object)
 						object->scratchU16[SCRATCHU16_FALL_TIME] = 30; //Wait for 0.5 seconds
 				}
@@ -96,7 +96,8 @@ void ObjGHZPlatform_Move(OBJECT *object)
 				//Make players standing on us fall off
 				for (size_t i = 0; i < gLevel->playerList.size(); i++)
 				{
-					PLAYER *player = &gLevel->playerList[i];
+					//Get the player
+					PLAYER *player = gLevel->playerList[i];
 					
 					if (player->status.shouldNotFall && player->interact == (void*)object)
 					{

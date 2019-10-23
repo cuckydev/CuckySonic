@@ -1,7 +1,7 @@
 #pragma once
 #include <stdint.h>
-#include <deque>
 
+#include "LinkedList.h"
 #include "Render.h"
 #include "Mappings.h"
 #include "LevelCollision.h"
@@ -18,10 +18,19 @@ typedef void (*OBJECTFUNCTION)(OBJECT*);
 #define OBJECT_PLAYER_REFERENCES 0x100
 
 //Common macros
-#define CHECK_LINKEDLIST_OBJECTDELETE(linkedList)	for (signed int i = (signed int)linkedList.size() - 1; i >= 0; i--)	\
-														if (linkedList[i].deleteFlag)	\
-															linkedList.erase(linkedList.begin() + i);	\
-													linkedList.shrink_to_fit();
+#define CHECK_LINKEDLIST_OBJECTDELETE(linkedList)	for (LL_NODE<OBJECT*> *node = linkedList.head; node != nullptr;)	\
+													{	\
+														node = linkedList.head;	\
+														for (; node != nullptr; node = node->next)	\
+														{	\
+															if (node->nodeEntry->deleteFlag)	\
+															{	\
+																delete node->nodeEntry;	\
+																linkedList.eraseNode(node);	\
+																break;	\
+															}	\
+														}	\
+													}
 
 //Enumerations
 enum COLLISIONTYPE
@@ -83,7 +92,7 @@ class OBJECT
 		OBJECT_RENDERFLAGS renderFlags;
 		
 		//Drawing instances
-		std::deque<OBJECT_DRAWINSTANCE> drawInstances;
+		LINKEDLIST<OBJECT_DRAWINSTANCE*> drawInstances;
 		
 		//Our texture and mappings
 		TEXTURE *texture;
@@ -151,7 +160,7 @@ class OBJECT
 		void *parent;	//Our parent object or player
 		
 		//Children linked list
-		std::deque<OBJECT> children;
+		LINKEDLIST<OBJECT*> children;
 		
 		//Scratch memory
 		 uint8_t  *scratchU8;
