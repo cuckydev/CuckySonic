@@ -80,6 +80,9 @@ static const uint8_t scrollRipple[64] =
 
 void TitleBackground(BACKGROUND *background, bool doScroll, int cameraX, int cameraY)
 {
+	(void)doScroll;
+	(void)cameraY;
+	
 	//Handle palette cycle
 	static int paletteTimer = 0;
 	

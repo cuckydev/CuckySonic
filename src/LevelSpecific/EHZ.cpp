@@ -34,6 +34,8 @@ static const uint8_t ehzScrollRipple[] =
 
 void EHZ_Background(BACKGROUND *background, bool doScroll, int cameraX, int cameraY)
 {
+	(void)cameraY;
+	
 	//Get our scroll values
 	int16_t scrollBG1 = cameraX / 0x40;
 	int16_t scrollBG2 = (cameraX * 0x18) / 0x100;

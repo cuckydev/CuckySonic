@@ -4,6 +4,7 @@
 
 #include "SDL_timer.h"
 
+#include "../LinkedList.h"
 #include "../Audio.h"
 #include "../Filesystem.h"
 #include "../MathUtil.h"
@@ -14,8 +15,8 @@
 SDL_AudioDeviceID gAudioDevice;
 
 //Sound and music lists (for mixing and remembering what soundList/songs exist)
-SOUND *soundList = nullptr;
-MUSIC *musicList = nullptr;
+LINKEDLIST<SOUND*> soundList;
+LINKEDLIST<MUSIC*> musicList;
 
 //Sound effects
 SOUND *sounds[SOUNDID_MAX];
@@ -132,9 +133,8 @@ SOUND::SOUND(const char *path)
 	volumeL = 1.0f;
 	volumeR = 1.0f;
 	
-	//Attach to the linked list
-	next = soundList;
-	soundList = this;
+	//Link to list
+	soundList.link_back(this);
 	
 	LOG(("Success!\n"));
 }
@@ -158,9 +158,8 @@ SOUND::SOUND(SOUND *ourParent)
 	volumeL = 1.0f;
 	volumeR = 1.0f;
 	
-	//Attach to the linked list
-	next = soundList;
-	soundList = this;
+	//Link to list
+	soundList.link_back(this);
 	
 	LOG(("Success!\n"));
 }
@@ -170,22 +169,17 @@ SOUND::~SOUND()
 	//Wait for audio device to be finished and lock it
 	SDL_LockAudioDevice(gAudioDevice);
 	
-	//Remove from linked list
-	for (SOUND **sound = &soundList; *sound != nullptr; sound = &(*sound)->next)
-	{
-		if (*sound == this)
-		{
-			*sound = next;
-			break;
-		}
-	}
-	
 	//Free our data (do not free if we're a child of another sound)
 	if (parent == nullptr)
 		free(buffer);
 	
 	//Resume audio device
 	SDL_UnlockAudioDevice(gAudioDevice);
+	
+	//Unlink from list
+	for (size_t i = 0; i < soundList.size(); i++)
+		if (soundList[i] == this)
+			soundList.erase(i);
 }
 
 //Mixer function
@@ -231,6 +225,8 @@ void SOUND::Mix(float *stream, int samples)
 //The miniaudio converter function
 ma_uint32 MusicReadSamples(ma_pcm_converter *dsp, void *buffer, ma_uint32 requestFrames, void *musicPointer)
 {
+	(void)dsp;
+	
 	//Read X amount of frames from the music (in the music's format) to be read and converted to our native format
 	MUSIC *music = (MUSIC*)musicPointer;
 	return music->ReadSamplesToBuffer((float*)buffer, requestFrames);
@@ -316,14 +312,13 @@ MUSIC::MUSIC(const char *name, int initialPosition, float initialVolume)
 	const ma_pcm_converter_config config = ma_pcm_converter_config_init(ma_format_f32, channels, frequency, ma_format_f32, 2, AUDIO_FREQUENCY, MusicReadSamples, this);
 	ma_pcm_converter_init(&config, &resampler);
 	
-	//Attach to the linked list
-	next = musicList;
-	musicList = this;
-	
 	//Seek to given position and use given volume
 	if (stb_vorbis_seek_frame(file, initialPosition) < 0)
 		stb_vorbis_seek_frame(file, 0); //Seek to the beginning if failed
 	volume = initialVolume;
+	
+	//Link to list
+	musicList.link_back(this);
 	
 	LOG(("Success!\n"));
 }
@@ -334,18 +329,13 @@ MUSIC::~MUSIC()
 	if (file != nullptr)
 		stb_vorbis_close(file);
 	
-	//Remove from linked list
-	for (MUSIC **music = &musicList; *music != nullptr; music = &(*music)->next)
-	{
-		if (*music == this)
-		{
-			*music = next;
-			break;
-		}
-	}
-	
 	//Free mix buffer
 	free(mixBuffer);
+	
+	//Unlink from list
+	for (size_t i = 0; i < musicList.size(); i++)
+		if (musicList[i] == this)
+			musicList.erase(i);
 }
 
 //Playback functions
@@ -448,10 +438,10 @@ void AudioCallback(void *userdata, uint8_t *stream, int length)
 		return;
 	
 	//Mix all loaded sounds and music into the buffer
-	for (MUSIC *music = musicList; music != nullptr; music = music->next)
-		music->ReadAndMix((float*)stream, frames);
-	for (SOUND *sound = soundList; sound != nullptr; sound = sound->next)
-		sound->Mix((float*)stream, frames);
+	for (size_t i = 0; i < musicList.size(); i++)
+		musicList[i]->ReadAndMix((float*)stream, frames);
+	for (size_t i = 0; i < soundList.size(); i++)
+		soundList[i]->Mix((float*)stream, frames);
 }
 
 //Play sound functions
@@ -586,19 +576,8 @@ void QuitAudio()
 	//Lock the audio device, and unload all of our sounds and music
 	AUDIO_LOCK;
 	
-	for (MUSIC *music = musicList; music != nullptr;)
-	{
-		MUSIC *next = music->next;
-		delete music;
-		music = next;
-	}
-	
-	for (SOUND *sound = soundList; sound != nullptr;)
-	{
-		SOUND *next = sound->next;
-		delete sound;
-		sound = next;
-	}
+	CLEAR_INSTANCE_LINKEDLIST(soundList);
+	CLEAR_INSTANCE_LINKEDLIST(musicList);
 	
 	//Close our audio device
 	AUDIO_UNLOCK;
