@@ -43,8 +43,7 @@ CXXFLAGS += -faligned-new -MMD -MP -MF $@.d
 #Sources to compile
 SOURCES = \
 	Main \
-	Audio_stb_vorbis \
-	Audio_miniaudio \
+	LinkedList \
 	MathUtil \
 	Fade \
 	Mappings \
@@ -81,7 +80,9 @@ SOURCES = \
 	Objects/PurpleRock \
 	Objects/Monitor \
 	Objects/Spring \
-	Objects/Minecart
+	Objects/Minecart \
+	Audio_stb_vorbis \
+	Audio_miniaudio
 
 #Backend source files
 ifeq ($(BACKEND), SDL2)
