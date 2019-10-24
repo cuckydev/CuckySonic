@@ -19,13 +19,14 @@
 #define DROPDASH_CHARGE	20
 
 //Bug-fixes
-//#define FIX_SPINDASH_JUMP      //When you jump the frame after you spindash, you'll jump straight upwards
-//#define FIX_HORIZONTAL_WRAP    //In the originals, for some reason, the LevelBound uses unsigned checks, meaning if you go off to the left, you'll be sent to the right boundary
-//#define FIX_DUCK_CONDITION     //In Sonic and Knuckles, the conditions for ducking are so loose, you can duck (and spindash) in unexpected situations.
-//#define FIX_ROLL_YSHIFT        //In the originals, when you roll, you're always shifted up / down globally, this can cause weird behaviour such as falling off of ceilings
-//#define FIX_ROLLJUMP_COLLISION //In the originals, for some reason, jumping from a roll will maintain Sonic's regular collision hitbox, rather than switching to the smaller hitbox, which causes weird issues.
-//#define FIX_PEELOUT_DOWN       //In Sonic CD, the peelout acted really weird if you were to switch to holding down in the middle of it, even causing you to be able to walk through walls
-//#define FIX_GROUND_CLIPPING    //In the originals, you're allowed to clip at least 14 pixels into the ground if you manage to get into that situation, seems like a slight misunderstanding of the collision function
+//#define FIX_SPINDASH_JUMP       //When you jump the frame after you spindash, you'll jump straight upwards
+//#define FIX_HORIZONTAL_WRAP     //In the originals, for some reason, the LevelBound uses unsigned checks, meaning if you go off to the left, you'll be sent to the right boundary
+//#define FIX_DUCK_CONDITION      //In Sonic and Knuckles, the conditions for ducking are so loose, you can duck (and spindash) in unexpected situations.
+//#define FIX_ROLL_YSHIFT         //In the originals, when you roll, you're always shifted up / down globally, this can cause weird behaviour such as falling off of ceilings
+//#define FIX_ROLLJUMP_COLLISION  //In the originals, for some reason, jumping from a roll will maintain Sonic's regular collision hitbox, rather than switching to the smaller hitbox, which causes weird issues.
+//#define FIX_PEELOUT_DOWN        //In Sonic CD, the peelout acted really weird if you were to switch to holding down in the middle of it, even causing you to be able to walk through walls
+//#define FIX_GROUND_CLIPPING     //In the originals, you're allowed to clip at least 14 pixels into the ground if you manage to get into that situation, seems like a slight misunderstanding of the collision function
+//#define FIX_INSTASHIELD_REFLECT //In Sonic 3 and Knuckles, Sonic's insta-shield doesn't reflect projectiles, but the code suggests that it's supposed to
 
 //Game differences
 //#define SONIC1_SLOPE_ANGLE          //In Sonic 2+, the floor's angle will be replaced with the player's cardinal floor angle if there's a 45+ degree difference
@@ -3486,7 +3487,11 @@ bool PLAYER::CheckHurt(void *hit)
 	}
 	
 	//Don't check for reflection if we are invincible, don't have a shield (and not using insta-shield, but... this check is fucked because isInvincible is set during the insta-shield here)
+#ifndef FIX_INSTASHIELD_REFLECT
 	if ((jumpAbility == 1 || item.shieldReflect) && !item.isInvincible)
+#else
+	if ((jumpAbility == 1 || item.shieldReflect) && !(item.isInvincible && invincibilityTime))
+#endif
 	{
 		//If we should be reflected, reflect
 		if (object->hurtType.reflect)
@@ -3500,9 +3505,7 @@ bool PLAYER::CheckHurt(void *hit)
 			object->yVel = (yVel * -0x800) >> 8;
 			
 			//Clear the object's collision
-			object->collisionType = COLLISIONTYPE_ENEMY;
-			object->touchWidth = 0;
-			object->touchHeight = 0;
+			object->collisionType = COLLISIONTYPE_NULL;
 			return true;
 		}
 	}
@@ -4905,7 +4908,11 @@ bool PLAYER::TouchResponseObject(OBJECT *object, int16_t playerLeft, int16_t pla
 				case COLLISIONTYPE_ENEMY:
 				case COLLISIONTYPE_BOSS:
 					//Check if we're gonna hurt the enemy, or ourselves
+				#ifndef FIX_INSTASHIELD_REFLECT
 					if (item.isInvincible || anim == PLAYERANIMATION_SPINDASH || anim == PLAYERANIMATION_ROLL|| anim == PLAYERANIMATION_DROPDASH)
+				#else
+					if (item.isInvincible ? (invincibilityTime != 0) : (anim == PLAYERANIMATION_SPINDASH || anim == PLAYERANIMATION_ROLL|| anim == PLAYERANIMATION_DROPDASH))
+				#endif
 						return object->Hurt(this);
 					
 					//Check character specific states

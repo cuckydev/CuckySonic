@@ -309,7 +309,7 @@ MUSIC::MUSIC(const char *name, int initialPosition, float initialVolume)
 	CloseFile(metafp);
 	
 	//Initialize the resampler
-	const ma_pcm_converter_config config = ma_pcm_converter_config_init(ma_format_f32, channels, frequency, ma_format_f32, 2, AUDIO_FREQUENCY, MusicReadSamples, this);
+	ma_pcm_converter_config config = ma_pcm_converter_config_init(ma_format_f32, channels, frequency, ma_format_f32, 2, AUDIO_FREQUENCY, MusicReadSamples, this);
 	ma_pcm_converter_init(&config, &resampler);
 	
 	//Seek to given position and use given volume
@@ -381,7 +381,7 @@ ma_uint32 MUSIC::ReadSamplesToBuffer(float *buffer, int samples)
 	}
 	
 	//Fill the rest of the buffer with 0.0 (reached end of song)
-	for (; samplesRead < samples * channels; samplesRead++)
+	for (; samplesRead < samples; samplesRead++)
 		*bufferPointer++ = 0.0f;
 	
 	return samplesRead;
