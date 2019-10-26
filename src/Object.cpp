@@ -586,7 +586,7 @@ OBJECT_DRAWINSTANCE::~OBJECT_DRAWINSTANCE()
 void OBJECT_DRAWINSTANCE::Draw()
 {
 	//Don't draw if we don't have textures or mappings
-	if (texture != nullptr && mappings != nullptr)
+	if (texture != nullptr && mappings != nullptr && mappingFrame < mappings->size)
 	{
 		//Draw our sprite
 		RECT *mapRect = &mappings->rect[mappingFrame];
