@@ -131,9 +131,6 @@ SOUND::SOUND(const char *path)
 	volumeL = 1.0f;
 	volumeR = 1.0f;
 	
-	//Link to list
-	soundList.link_back(this);
-	
 	LOG(("Success!\n"));
 }
 
@@ -154,28 +151,14 @@ SOUND::SOUND(SOUND *ourParent)
 	volumeL = 1.0f;
 	volumeR = 1.0f;
 	
-	//Link to list
-	soundList.link_back(this);
-	
 	LOG(("Success!\n"));
 }
 
 SOUND::~SOUND()
 {
-	//Wait for audio device to be finished and lock it
-	SDL_LockAudioDevice(gAudioDevice);
-	
 	//Free our data (do not free if we're a child of another sound)
 	if (parent == nullptr)
 		free(buffer);
-	
-	//Resume audio device
-	SDL_UnlockAudioDevice(gAudioDevice);
-	
-	//Unlink from list
-	for (size_t i = 0; i < soundList.size(); i++)
-		if (soundList[i] == this)
-			soundList.erase(i);
 }
 
 //Mixer function
@@ -523,6 +506,8 @@ bool LoadAllSoundEffects()
 		
 		if (sounds[i]->fail)
 			return false;
+		
+		soundList.link_back(sounds[i]);
 	}
 	
 	return true;

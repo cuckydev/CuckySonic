@@ -1,5 +1,6 @@
 #pragma once
 #include <stdint.h>
+#include <stdio.h>
 
 template <typename T> struct LL_NODE
 {
@@ -113,7 +114,7 @@ template <typename T> class LINKEDLIST
 		inline void clear()
 		{
 			//Destroy every node until empty
-			while (head != nullptr)
+			while (head)
 				eraseNode(head);
 			head = nullptr;
 			tail = nullptr;
@@ -123,6 +124,8 @@ template <typename T> class LINKEDLIST
 		T operator[](size_t index) { return at(index); };
 };
 
-#define CLEAR_INSTANCE_LINKEDLIST(linkedList)	for (size_t i = 0; i < linkedList.size(); i++)	\
-													delete linkedList[i];	\
-												linkedList.clear();
+#define CLEAR_INSTANCE_LINKEDLIST(linkedList)	while (linkedList.head)	\
+												{	\
+													delete linkedList.head->nodeEntry;	\
+													linkedList.eraseNode(linkedList.head);	\
+												}
