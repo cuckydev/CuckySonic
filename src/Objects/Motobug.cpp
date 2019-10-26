@@ -27,30 +27,34 @@ void ObjMotobug(OBJECT *object)
 	
 	object->ScratchAllocS8(SCRATCHS8_MAX);
 	
-	switch (object->routine)
+	if (object->routine == 0)
 	{
-		case 0:
+		//Load graphics
+		object->texture = gLevel->GetObjectTexture("data/Object/Sonic1Badnik.bmp");
+		object->mappings = gLevel->GetObjectMappings("data/Object/Motobug.map");
+		
+		//Initialize other properties
+		object->routine++;
+		object->renderFlags.alignPlane = true;
+		object->widthPixels = 24;
+		object->heightPixels = 14;
+		object->priority = 4;
+		
+		if (object->anim == 0)
 		{
-			//Load graphics
-			object->texture = gLevel->GetObjectTexture("data/Object/Sonic1Badnik.bmp");
-			object->mappings = gLevel->GetObjectMappings("data/Object/Motobug.map");
-			
-			//Initialize other properties
-			object->routine++;
-			object->renderFlags.alignPlane = true;
-			object->widthPixels = 24;
-			object->heightPixels = 14;
-			object->priority = 4;
-			
-			//Collision
+			//If a motobug, setup our collision
 			object->xRadius = 8;
 			object->yRadius = 14;
-			
 			object->collisionType = COLLISIONTYPE_ENEMY;
 			object->touchWidth = 20;
 			object->touchHeight = 16;
 		}
-		//Fallthrough
+		else
+			object->routine = 3; //Dust routine
+	}
+	
+	switch (object->routine)
+	{
 		case 1: //Waiting to spawn
 		{
 			//Fall down to the ground
@@ -111,7 +115,19 @@ void ObjMotobug(OBJECT *object)
 					//Move across ground
 					object->y.pos += distance;
 					
-					//Create smoke
+					//Create smoke every 16 frames
+					if (--object->scratchS8[SCRATCHS8_SMOKE_DELAY] < 0)
+					{
+						//Restart timer and create object
+						object->scratchS8[SCRATCHS8_SMOKE_DELAY] = 15;
+						
+						OBJECT *newSmoke = new OBJECT(&ObjMotobug);
+						newSmoke->x.pos = object->x.pos;
+						newSmoke->y.pos = object->y.pos;
+						newSmoke->status = object->status;
+						newSmoke->anim = 2;
+						gLevel->objectList.link_back(newSmoke);
+					}
 					break;
 				}
 			}
@@ -121,5 +137,20 @@ void ObjMotobug(OBJECT *object)
 			object->DrawInstance(object->renderFlags, object->texture, object->mappings, object->highPriority, object->priority, object->mappingFrame, object->x.pos, object->y.pos);
 			break;
 		}
+		case 3: //Smoke
+		{
+			//Animate and draw
+			object->Animate(animationList);
+			object->DrawInstance(object->renderFlags, object->texture, object->mappings, object->highPriority, object->priority, object->mappingFrame, object->x.pos, object->y.pos);
+			break;
+		}
+		case 4: //Smoke deletion
+		{
+			//Delete us
+			object->deleteFlag = true;
+			break;
+		}
+		default:
+			break;
 	}
 }

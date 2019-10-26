@@ -95,7 +95,7 @@ SOUND::SOUND(const char *path)
 	
 	//Build our audio CVT
 	SDL_AudioCVT wavCVT;
-	if (SDL_BuildAudioCVT(&wavCVT, wavSpec.format, wavSpec.channels, wavSpec.freq, AUDIO_F32, 2, wavSpec.freq) < 0)
+	if (SDL_BuildAudioCVT(&wavCVT, wavSpec.format, wavSpec.channels, wavSpec.freq, AUDIO_F32, AUDIO_CHANNELS, AUDIO_FREQUENCY) < 0)
 	{
 		Error(fail = SDL_GetError());
 		SDL_FreeWAV(wavBuffer);
@@ -123,12 +123,10 @@ SOUND::SOUND(const char *path)
 	
 	//Use the data given
 	buffer = (float*)wavCVT.buf;
-	size = (wavLength * wavCVT.len_mult) / sizeof(float) / 2;
+	size = wavCVT.len_cvt / (sizeof(float) * AUDIO_CHANNELS);
 	
 	//Initialize other properties
-	sample = 0.0;
-	frequency = wavSpec.freq;
-	baseFrequency = frequency;
+	sample = 0;
 	volume = 1.0f;
 	volumeL = 1.0f;
 	volumeR = 1.0f;
@@ -151,9 +149,7 @@ SOUND::SOUND(SOUND *ourParent)
 	size = parent->size;
 	
 	//Initialize other properties
-	sample = 0.0;
-	frequency = parent->frequency;
-	baseFrequency = frequency;
+	sample = 0;
 	volume = 1.0f;
 	volumeL = 1.0f;
 	volumeR = 1.0f;
@@ -183,38 +179,26 @@ SOUND::~SOUND()
 }
 
 //Mixer function
-void SOUND::Mix(float *stream, int samples)
+void SOUND::Mix(float *stream, int frames)
 {
 	//Don't mix if not playing
 	if (!playing)
 		return;
 	
 	//Mix this song into the buffer
-	const double freqMove = frequency / AUDIO_FREQUENCY;
-	for (int i = 0; i < samples; i++)
+	for (int i = 0; i < frames; i++)
 	{
-		float *channelVolume = &volumeL;
-		
-		for (int channel = 0; channel < 2; channel++)
+		for (int v = 0; v < AUDIO_CHANNELS; v++)
 		{
-			//Get the in-between sample this is (linear interpolation)
-			const int intSample = std::floor(sample);
-			const float sample1 = buffer[intSample * 2 + channel];
-			const float sample2 = ((intSample + 1) >= size) ? 0 : buffer[intSample * 2 + channel + 1];
+			float channelVolume = (&volumeL)[v];
 			
-			//Interpolate sample
-			const float subPos = (float)fmod(sample, 1.0);
-			const float sampleOut = sample1 + (sample2 - sample1) * subPos;
-
-			//Mix into buffer
-			*stream++ += sampleOut * volume * (*channelVolume++);
+			//Copy the audio into the stream
+			const int intSample = sample * AUDIO_CHANNELS + v;
+			*stream++ += buffer[intSample] * volume * channelVolume;
 		}
 
-		//Increment position
-		sample += freqMove;
-
-		//Stop if reached end
-		if (sample >= size)
+		//Increment position and stop if reached end
+		if (++sample >= size)
 		{
 			playing = false;
 			break;
@@ -229,7 +213,7 @@ ma_uint32 MusicReadSamples(ma_pcm_converter *dsp, void *buffer, ma_uint32 reques
 	
 	//Read X amount of frames from the music (in the music's format) to be read and converted to our native format
 	MUSIC *music = (MUSIC*)musicPointer;
-	return music->ReadSamplesToBuffer((float*)buffer, requestFrames);
+	return music->ReadSamplesToBuffer((float*)buffer, requestFrames * music->channels);
 }
 
 //Music class (using stb_vorbis and miniaudio)
@@ -309,7 +293,7 @@ MUSIC::MUSIC(const char *name, int initialPosition, float initialVolume)
 	CloseFile(metafp);
 	
 	//Initialize the resampler
-	ma_pcm_converter_config config = ma_pcm_converter_config_init(ma_format_f32, channels, frequency, ma_format_f32, 2, AUDIO_FREQUENCY, MusicReadSamples, this);
+	ma_pcm_converter_config config = ma_pcm_converter_config_init(ma_format_f32, channels, frequency, ma_format_f32, AUDIO_CHANNELS, AUDIO_FREQUENCY, MusicReadSamples, this);
 	ma_pcm_converter_init(&config, &resampler);
 	
 	//Seek to given position and use given volume
@@ -325,17 +309,20 @@ MUSIC::MUSIC(const char *name, int initialPosition, float initialVolume)
 
 MUSIC::~MUSIC()
 {
-	//Close our loaded file
+	//Close our loaded file and free mix buffer
 	if (file != nullptr)
 		stb_vorbis_close(file);
-	
-	//Free mix buffer
-	free(mixBuffer);
+	delete[] mixBuffer;
 	
 	//Unlink from list
 	for (size_t i = 0; i < musicList.size(); i++)
+	{
 		if (musicList[i] == this)
+		{
 			musicList.erase(i);
+			break;
+		}
+	}
 }
 
 //Playback functions
@@ -366,7 +353,7 @@ ma_uint32 MUSIC::ReadSamplesToBuffer(float *buffer, int samples)
 	while (playing && samplesRead < samples)
 	{
 		//Read data and advance through buffer
-		int thisRead = stb_vorbis_get_samples_float_interleaved(file, channels, bufferPointer, (samples - samplesRead) * channels) * channels;
+		int thisRead = stb_vorbis_get_samples_float_interleaved(file, channels, bufferPointer, samples - samplesRead) * channels;
 		bufferPointer += thisRead;
 		samplesRead += thisRead;
 		
@@ -383,8 +370,7 @@ ma_uint32 MUSIC::ReadSamplesToBuffer(float *buffer, int samples)
 	//Fill the rest of the buffer with 0.0 (reached end of song)
 	for (; samplesRead < samples; samplesRead++)
 		*bufferPointer++ = 0.0f;
-	
-	return samplesRead;
+	return samplesRead / channels;
 }
 
 //Used for mixing into the audio buffer
@@ -396,7 +382,7 @@ void MUSIC::ReadAndMix(float *stream, int frames)
 	
 	//Allocate mix buffer if unallocated
 	if (mixBuffer == nullptr)
-		mixBuffer = (float*)malloc(frames * sizeof(float) * 2);
+		mixBuffer = new float[frames * AUDIO_CHANNELS];
 	
 	//Read the samples and convert to native format using miniaudio
 	ma_pcm_converter_read(&resampler, mixBuffer, frames);
@@ -405,8 +391,8 @@ void MUSIC::ReadAndMix(float *stream, int frames)
 	float *buffer = stream;
 	float *srcBuffer = mixBuffer;
 	
-	for (int i = 0; i < frames * 2; i++)
-		*buffer++ += (*srcBuffer++) * volume;
+	for (int i = 0; i < frames * AUDIO_CHANNELS; i++)
+		*buffer++ += srcBuffer[i] * volume;
 }
 
 //Callback function
@@ -426,11 +412,11 @@ void AudioCallback(void *userdata, uint8_t *stream, int length)
 	(void)userdata;
 	
 	//Get how many frames are in our buffer
-	int frames = length / (2 * sizeof(float));
+	int frames = length / (sizeof(float) * AUDIO_CHANNELS);
 	
 	//Clear the stream with 0.0f
 	float *buffer = (float*)stream;
-	for (int i = 0; i < frames * 2; i++)
+	for (int i = 0; i < frames * AUDIO_CHANNELS; i++)
 		*buffer++ = 0.0f;
 	
 	//If window is unfocused, don't mix anything, pause audio
@@ -552,7 +538,7 @@ bool InitializeAudio()
 	want.freq = AUDIO_FREQUENCY;
 	want.samples = AUDIO_SAMPLES;
 	want.format = AUDIO_F32;
-	want.channels = 2;
+	want.channels = AUDIO_CHANNELS;
 	want.callback = AudioCallback;
 	
 	gAudioDevice = SDL_OpenAudioDevice(nullptr, 0, &want, nullptr, 0);

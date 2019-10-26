@@ -11,8 +11,9 @@
 #endif
 
 //Constant defines
-#define AUDIO_FREQUENCY 44100
+#define AUDIO_FREQUENCY 48000
 #define AUDIO_SAMPLES	0x200
+#define AUDIO_CHANNELS	2
 
 //Sound ids
 enum SOUNDID
@@ -100,14 +101,12 @@ class SOUND
 		
 		//Our actual buffer data
 		float *buffer;
-		int size;
+		size_t size;
 		
 		//Current playback state
 		bool playing;
 		
-		double sample;
-		double frequency;
-		double baseFrequency;
+		size_t sample;
 		
 		float volume;
 		float volumeL;
@@ -122,7 +121,7 @@ class SOUND
 		SOUND(SOUND *ourParent);
 		~SOUND();
 		
-		void Mix(float *stream, int samples);
+		void Mix(float *stream, int frames);
 };
 
 //Music class (using stb_vorbis and miniaudio)
@@ -142,7 +141,7 @@ class MUSIC
 		stb_vorbis *file;
 		
 		double frequency;
-		int channels;
+		unsigned int channels;
 		int64_t loopStart;
 		
 		//miniaudio resampler
