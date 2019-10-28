@@ -37,7 +37,7 @@
 
 //#define SONIC1_WALK_ANIMATION       //For some reason, in Sonic 2+, the animation code was messed up, making the first frame of the walk animation last only one frame
 //#define SONIC1_SLOPE_ROTATION       //In Sonic 2+, a few lines were added to the animation code to make the floor rotation more consistent
-#define SONICCD_DASH_ANIMATION      //Sonic CD gives Sonic a third running animation, a dash animation
+//#define SONICCD_DASH_ANIMATION      //Sonic CD gives Sonic a third running animation, a dash animation
 
 //#define SONIC12_SLOPE_RESIST        //In Sonic 3, they made it so you're always affected by slope gravity unless you're on a shallow floor
 //#define SONIC12_SLOPE_REPEL         //In Sonic 3, the code to make it so you fall off of walls and ceilings when going too slow was completely redone
@@ -48,8 +48,8 @@
 //#define SONICCD_ROLLJUMP            //In Sonic CD, rolljumping was *partially* removed, the below "CONTROL_NO_ROLLJUMP_LOCK" would act differently
 
 //#define SONIC1_NO_SPINDASH          //The spindash, it needs no introduction
-#define SONICCD_SPINDASH            //CD spindash
-#define SONICCD_PEELOUT             //CD super-peelout
+//#define SONICCD_SPINDASH            //CD spindash
+//#define SONICCD_PEELOUT             //CD super-peelout
 //#define SONIC1_NO_SUPER             //Super Sonic wasn't in Sonic 1
 //#define SONIC123_NO_HYPER           //DOES NOTHING, UNIMPLEMENTED! - Hyper Sonic wasn't introduced until S3K
 //#define SONIC2_SUPER_AT_PEAK        //In Sonic 2, you'd turn super at the peak of a jump, no matter what, while in Sonic 3, this was moved to the jump ability code
