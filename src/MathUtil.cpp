@@ -1,4 +1,5 @@
 #include "MathUtil.h"
+#include "Endianness.h"
 
 const int16_t sineTable[] =
 {
@@ -101,4 +102,43 @@ uint8_t GetAtan(int16_t x, int16_t y)
 	if (y < 0)
 		angle = -angle + 0x100;
 	return angle;
+}
+
+uint32_t RandomNumber()
+{
+	struct M68KREG
+	{
+		union
+		{
+			struct
+			{
+				#ifdef CPU_BIGENDIAN
+					uint16_t high;
+					uint16_t low;
+				#else
+					uint16_t low;
+					uint16_t high;
+				#endif
+			} w;
+			uint32_t l = 0x00000000;
+		};
+	} static seed;
+	
+	//Re-seed if 0
+	if (seed.l == 0)
+		seed.l = 0x2A6D365A;
+	
+	//Scramble our current seed
+	M68KREG retSeed = seed;			//move.l	d1,d0
+	seed.l <<= 2;					//asl.l		#2,d1
+	seed.l += retSeed.l;			//add.l		d0,d1
+	seed.l <<= 3;					//asl.l		#3,d1
+	seed.l += retSeed.l;			//add.l		d0,d1
+	retSeed.w.low = seed.w.low;		//move.w	d1,d0
+	
+	//switch to seed.w.high because of a swap
+	retSeed.w.low += seed.w.high;	//add.w		d1,d0
+	seed.w.high = retSeed.w.low;	//move.w	d0,d1
+	
+	return retSeed.l;
 }

@@ -39,6 +39,7 @@ SOUNDDEFINITION soundDefinition[SOUNDID_MAX] = {
 	{SOUNDCHANNEL_FM4,  "data/Audio/Sound/SpindashRev9.wav", SOUNDID_NULL},
 	{SOUNDCHANNEL_FM4,  "data/Audio/Sound/SpindashRev10.wav", SOUNDID_NULL},
 	
+	{SOUNDCHANNEL_FM4,	"data/Audio/Sound/CDCharge.wav", SOUNDID_NULL},
 	{SOUNDCHANNEL_FM4,  "data/Audio/Sound/DropDash.wav", SOUNDID_NULL},
 	{SOUNDCHANNEL_FM4,  "data/Audio/Sound/SpindashRelease.wav", SOUNDID_NULL},
 	
@@ -46,14 +47,18 @@ SOUNDDEFINITION soundDefinition[SOUNDID_MAX] = {
 	{SOUNDCHANNEL_FM4,	"data/Audio/Sound/SpikeHurt.wav", SOUNDID_NULL},
 	
 	{SOUNDCHANNEL_NULL,	"data/Audio/Sound/Ring.wav", SOUNDID_NULL},
-	{SOUNDCHANNEL_FM4,	nullptr, SOUNDID_RING}, //SOUNDID_RING_LEFT
-	{SOUNDCHANNEL_FM3,	nullptr, SOUNDID_RING}, //SOUNDID_RING_RIGHT
+	{SOUNDCHANNEL_FM3,	nullptr, SOUNDID_RING}, //SOUNDID_RING_LEFT
+	{SOUNDCHANNEL_FM4,	nullptr, SOUNDID_RING}, //SOUNDID_RING_RIGHT
 	
 	{SOUNDCHANNEL_FM4,	"data/Audio/Sound/RingLoss.wav", SOUNDID_NULL},
 	
 	{SOUNDCHANNEL_FM4,	"data/Audio/Sound/Pop.wav", SOUNDID_NULL},
 	{SOUNDCHANNEL_FM3,	"data/Audio/Sound/GoalpostSpin.wav", SOUNDID_NULL},
 	{SOUNDCHANNEL_FM3,	"data/Audio/Sound/Spring.wav", SOUNDID_NULL},
+	
+	{SOUNDCHANNEL_NULL,	nullptr, SOUNDID_NULL}, //SOUNDID_WATERFALL
+	{SOUNDCHANNEL_FM3,	"data/Audio/Sound/Waterfall1.wav", SOUNDID_NULL},
+	{SOUNDCHANNEL_FM3,	"data/Audio/Sound/Waterfall2.wav", SOUNDID_NULL},
 	
 	{SOUNDCHANNEL_FM4,	"data/Audio/Sound/GetBlueShield.wav", SOUNDID_NULL},
 	{SOUNDCHANNEL_FM4,	"data/Audio/Sound/GetFireShield.wav", SOUNDID_NULL},
@@ -426,47 +431,49 @@ void PlaySound(SOUNDID id)
 	AUDIO_LOCK;
 	
 	//Play sound (there's specific sound stuff here though, such as ring panning, or spindash rev frequency)
-	if (id == SOUNDID_SPINDASH_REV)
-	{
-		//Check spindash pitch clear
-		if (!spindashLast || SDL_GetTicks() > spindashTimer)
-		{
-			spindashLast = true;
-			spindashPitch = 0;
-		}
-		
-		//Increment pitch
-		if (++spindashPitch > 11)
-			spindashPitch = 11;
-		
-		//Set sound id
-		id = (SOUNDID)((unsigned int)SOUNDID_SPINDASH_REV + spindashPitch);
-		
-		//Update timer
-		spindashTimer = SDL_GetTicks() + 1000;
-	}
-	else
-	{
-		//Clear spindash last
+	if (id != SOUNDID_SPINDASH_REV)
 		spindashLast = false;
-		
-		//Ring sound
-		if (id == SOUNDID_RING)
-		{
+	
+	switch (id)
+	{
+		case SOUNDID_WATERFALL:
+			//Play fade if wasn't starting, otherwise, play secondary
+			if (sounds[SOUNDID_WATERFALL_1]->playing || sounds[SOUNDID_WATERFALL_2]->playing)
+				id = SOUNDID_WATERFALL_2;
+			else
+				id = SOUNDID_WATERFALL_1;
+			break;
+		case SOUNDID_SPINDASH_REV:
+			//Check spindash pitch clear
+			if (!spindashLast || SDL_GetTicks() > spindashTimer)
+			{
+				spindashLast = true;
+				spindashPitch = 0;
+			}
+			
+			//Increment pitch
+			if (++spindashPitch > 11)
+				spindashPitch = 11;
+			
+			//Set sound id
+			id = (SOUNDID)((unsigned int)SOUNDID_SPINDASH_REV + spindashPitch);
+			
+			//Update timer
+			spindashTimer = SDL_GetTicks() + 1000;
+			break;
+		case SOUNDID_RING:
 			//Flip between left and right every time the sound plays
 			ringPanLeft ^= 1;
 			id = ringPanLeft ? SOUNDID_RING_LEFT : SOUNDID_RING_RIGHT;
 			sounds[id]->volumeL = ringPanLeft ? 1.0f : 0.0f;
 			sounds[id]->volumeR = ringPanLeft ? 0.0f : 1.0f;
-		}
+			break;
+		default:
+			break;
 	}
 	
-	//Stop sounds of the same channel
-	for (int i = 0; i < SOUNDID_MAX; i++)
-		if (sounds[i] != nullptr && soundDefinition[i].channel == soundDefinition[id].channel)
-			sounds[i]->playing = false;
-	
-	//Actually play our sound
+	//Stop sounds of the same channel and play the sound
+	StopChannel(soundDefinition[id].channel);
 	if (sounds[id] != nullptr)
 	{
 		sounds[id]->sample = 0.0;
@@ -484,6 +491,17 @@ void StopSound(SOUNDID id)
 	AUDIO_LOCK;
 	if (sounds[id] != nullptr)
 		sounds[id]->playing = false;
+	AUDIO_UNLOCK;
+	return;
+}
+
+void StopChannel(SOUNDCHANNEL channel)
+{
+	//Stop the given sound while the audio device is locked
+	AUDIO_LOCK;
+	for (int i = 0; i < SOUNDID_MAX; i++)
+		if (sounds[i] != nullptr && soundDefinition[i].channel == channel)
+			sounds[i]->playing = false;
 	AUDIO_UNLOCK;
 	return;
 }

@@ -76,8 +76,7 @@ bool OBJECT::Hurt(PLAYER *player)
 	//Cap our actual bonus at 3
 	if (lastCounter >= 3)
 		lastCounter = 3;
-	
-	//move.w	d0,objoff_3E(a1)
+	subtype = lastCounter;
 	
 	//Get our bonus points
 	uint16_t bonus = enemyPoints[lastCounter];
@@ -86,7 +85,7 @@ bool OBJECT::Hurt(PLAYER *player)
 	if (player->chainPointCounter >= 16)
 	{
 		bonus = 10000;
-		//move.w	#$A,objoff_3E(a1)
+		subtype = 5;
 	}
 	
 	//Give us the points bonus
@@ -94,7 +93,7 @@ bool OBJECT::Hurt(PLAYER *player)
 	
 	//Turn us into an explosion
 	function = &ObjExplosion;
-	routine = 0;
+	routine = 0; //Initialize routine, spawn score and animal
 	
 	//Adjust player's velocity
 	if (player->yVel >= 0)

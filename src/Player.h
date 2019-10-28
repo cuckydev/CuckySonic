@@ -12,7 +12,8 @@
 class OBJECT;
 
 //Constants
-#define PLAYER_RECORD_LENGTH 0x40
+#define PLAYER_RECORD_LENGTH	0x40
+#define INVINCIBILITYSTARS		4
 
 //Routines
 enum PLAYERROUTINE
@@ -300,17 +301,13 @@ class PLAYER
 		bool cameraLock;
 		
 		//Position and status records
-		struct POS_RECORD
+		struct RECORD
 		{
 			int16_t x, y;
-		} posRecord[PLAYER_RECORD_LENGTH];
-
-		struct STAT_RECORD
-		{
 			CONTROLMASK controlHeld;
 			CONTROLMASK controlPress;
 			STATUS status;
-		} statRecord[PLAYER_RECORD_LENGTH];
+		} record[PLAYER_RECORD_LENGTH];
 		
 		int recordPos;
 		
@@ -318,7 +315,7 @@ class PLAYER
 		OBJECT *spindashDust;
 		OBJECT *skidDust;
 		OBJECT *shieldObject;
-		OBJECT *invincibilityStarObject[4];
+		OBJECT *invincibilityStarObject[INVINCIBILITYSTARS];
 		
 		//For linked list
 		PLAYER **list;

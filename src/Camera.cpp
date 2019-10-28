@@ -135,7 +135,7 @@ void CAMERA::Track(PLAYER *trackPlayer)
 		unsigned int lastScroll = trackPlayer->scrollDelay;
 		if ((trackPlayer->scrollDelay -= 0x100) > lastScroll)
 			trackPlayer->scrollDelay = 0;
-		trackX = trackPlayer->posRecord[(trackPlayer->recordPos - ((trackPlayer->scrollDelay / 0x100) + 1)) % PLAYER_RECORD_LENGTH].x;
+		trackX = trackPlayer->record[(trackPlayer->recordPos - ((trackPlayer->scrollDelay / 0x100) + 1)) % PLAYER_RECORD_LENGTH].x;
 	}
 	else
 	{

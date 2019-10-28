@@ -77,6 +77,7 @@ SOURCES = \
 	Objects/GHZEdgeWall \
 	Objects/SwingingPlatform \
 	Objects/PurpleRock \
+	Objects/GHZWaterfallSound \
 	Objects/Monitor \
 	Objects/Spring \
 	Objects/Minecart \

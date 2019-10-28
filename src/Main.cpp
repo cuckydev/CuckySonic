@@ -15,6 +15,8 @@
 	#define BACKEND_QUIT	SDL_Quit()
 #endif
 
+#include "MathUtil.h"
+
 int main(int argc, char *argv[])
 {
 	//Print our given arguments (just for debug stuff)

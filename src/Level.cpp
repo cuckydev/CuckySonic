@@ -23,7 +23,7 @@ OBJECTFUNCTION objFuncSonic1[] = {
 	nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
 	nullptr, nullptr, nullptr, &ObjPurpleRock, nullptr, nullptr, nullptr, nullptr,
 	&ObjMotobug, &ObjSpring, nullptr, nullptr, &ObjGHZEdgeWall, nullptr, nullptr, nullptr,
-	nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
+	nullptr, &ObjGHZWaterfallSound, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
 	nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
 	nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
 	nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
@@ -584,6 +584,7 @@ void LEVEL::UnloadAll()
 //Assets to pre-load (Assets that are loaded by objects that are usually created mid-game)
 const char *preloadTexture[] = {
 	"data/Object/Explosion.bmp",
+	"data/Object/Score.bmp",
 	"data/Object/Shield.bmp",
 	"data/Object/InvincibilitySuperStars.bmp",
 	nullptr,
@@ -591,6 +592,7 @@ const char *preloadTexture[] = {
 
 const char *preloadMappings[] = {
 	"data/Object/Explosion.map",
+	"data/Object/Score.map",
 	"data/Object/MonitorContents.map",
 	"data/Object/InstaShield.map",
 	"data/Object/BlueShield.map",

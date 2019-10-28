@@ -37,7 +37,7 @@
 
 //#define SONIC1_WALK_ANIMATION       //For some reason, in Sonic 2+, the animation code was messed up, making the first frame of the walk animation last only one frame
 //#define SONIC1_SLOPE_ROTATION       //In Sonic 2+, a few lines were added to the animation code to make the floor rotation more consistent
-//#define SONICCD_DASH_ANIMATION      //Sonic CD gives Sonic a third running animation, a dash animation
+#define SONICCD_DASH_ANIMATION      //Sonic CD gives Sonic a third running animation, a dash animation
 
 //#define SONIC12_SLOPE_RESIST        //In Sonic 3, they made it so you're always affected by slope gravity unless you're on a shallow floor
 //#define SONIC12_SLOPE_REPEL         //In Sonic 3, the code to make it so you fall off of walls and ceilings when going too slow was completely redone
@@ -48,8 +48,8 @@
 //#define SONICCD_ROLLJUMP            //In Sonic CD, rolljumping was *partially* removed, the below "CONTROL_NO_ROLLJUMP_LOCK" would act differently
 
 //#define SONIC1_NO_SPINDASH          //The spindash, it needs no introduction
-//#define SONICCD_SPINDASH            //CD spindash
-//#define SONICCD_PEELOUT             //CD super-peelout
+#define SONICCD_SPINDASH            //CD spindash
+#define SONICCD_PEELOUT             //CD super-peelout
 //#define SONIC1_NO_SUPER             //Super Sonic wasn't in Sonic 1
 //#define SONIC123_NO_HYPER           //DOES NOTHING, UNIMPLEMENTED! - Hyper Sonic wasn't introduced until S3K
 //#define SONIC2_SUPER_AT_PEAK        //In Sonic 2, you'd turn super at the peak of a jump, no matter what, while in Sonic 3, this was moved to the jump ability code
@@ -440,8 +440,7 @@ void ObjShield(OBJECT *object)
 {
 	enum ROUTINE
 	{
-		ROUTINE_SUPERSTAR =			(uint8_t)-1,
-		ROUTINE_INVINCIBILITYSTAR =	(uint8_t)-2,
+		ROUTINE_SUPERSTAR =	(uint8_t)-1,
 	};
 	
 	//Scratch
@@ -704,7 +703,7 @@ static const struct
 {
 	const uint8_t *frameArray;
 	uint16_t animation;
-} invincibilityStarArray[4] = {
+} invincibilityStarArray[INVINCIBILITYSTARS] = {
 	{nullptr, 0x0004},
 	{invincibilityStarFrameArray1, 0x000B},
 	{invincibilityStarFrameArray2, 0x160D},
@@ -737,7 +736,7 @@ void ObjInvincibilityStars(OBJECT *object)
 	
 	//Get our parent player
 	PLAYER *player = (PLAYER*)object->parent;
-	if (player == nullptr)
+	if (player == nullptr || object->routineSecondary == 0)
 		return;
 	
 	//Initialize stars
@@ -805,8 +804,8 @@ void ObjInvincibilityStars(OBJECT *object)
 			
 			//Copy player's position
 			unsigned int trailSeek = object->subtype << 2;
-			int16_t xPos = (object->x.pos = player->posRecord[(player->recordPos - trailSeek) % (unsigned)PLAYER_RECORD_LENGTH].x);
-			int16_t yPos = (object->y.pos = player->posRecord[(player->recordPos - trailSeek) % (unsigned)PLAYER_RECORD_LENGTH].y);
+			int16_t xPos = (object->x.pos = player->record[(player->recordPos - trailSeek) % (unsigned)PLAYER_RECORD_LENGTH].x);
+			int16_t yPos = (object->y.pos = player->record[(player->recordPos - trailSeek) % (unsigned)PLAYER_RECORD_LENGTH].y);
 			
 			//Get our animation frames
 			const uint8_t *frameArray = invincibilityStarArray[object->subtype].frameArray;
@@ -958,7 +957,7 @@ PLAYER::PLAYER(const char *specPath, PLAYER *myFollow, int myController)
 	shieldObject->parent = (void*)this;
 	gLevel->coreObjectList.link_back(shieldObject);
 	
-	for (int i = 0; i < 4; i++)
+	for (int i = 0; i < INVINCIBILITYSTARS; i++)
 	{
 		invincibilityStarObject[i] = new OBJECT(&ObjInvincibilityStars);
 		invincibilityStarObject[i]->parent = (void*)this;
@@ -1893,8 +1892,7 @@ void PLAYER::LandOnFloor_SetState()
 void PLAYER::RecordPos()
 {
 	//Set the records at the current position
-	posRecord[recordPos] = {x.pos, y.pos};
-	statRecord[recordPos] = {controlHeld, controlPress, status};
+	record[recordPos] = {x.pos, y.pos, controlHeld, controlPress, status};
 	
 	//Increment record position
 	recordPos++;
@@ -1903,15 +1901,9 @@ void PLAYER::RecordPos()
 
 void PLAYER::ResetRecords(int16_t xPos, int16_t yPos)
 {
-	//Clear our records with the given position
+	//Clear our records with the given position and reset our record position
 	for (int i = 0; i < PLAYER_RECORD_LENGTH; i++)
-	{
-		posRecord[i].x = xPos;
-		posRecord[i].y = yPos;
-		memset(&statRecord[i], 0, sizeof(statRecord[0])); //Stat record is initialized as 0
-	}
-	
-	//Reset our record pos
+		record[i] = {xPos, yPos, {}, {}, {}};
 	recordPos = 0;
 }
 
@@ -2106,7 +2098,7 @@ bool PLAYER::CDPeeloutSpindash()
 					if (controlPress.a || controlPress.b || controlPress.c)
 					{
 						cdSPTimer = 1;
-						PlaySound(SOUNDID_SPINDASH_REV);
+						PlaySound(SOUNDID_CD_CHARGE);
 					}
 					
 					return false;
@@ -2120,6 +2112,7 @@ bool PLAYER::CDPeeloutSpindash()
 					//Failed peelout
 					cdSPTimer = 0;
 					inertia = 0;
+					StopChannel(SOUNDCHANNEL_FM4);
 				}
 				else
 				{
@@ -2138,6 +2131,7 @@ bool PLAYER::CDPeeloutSpindash()
 			//Cancel peelout
 			cdSPTimer = 0;
 			inertia = 0;
+			StopChannel(SOUNDCHANNEL_FM4);
 		}
 	#endif
 	}
@@ -2185,7 +2179,7 @@ bool PLAYER::CDPeeloutSpindash()
 			return false;
 		
 		//Start spindashing
-		PlaySound(SOUNDID_SPINDASH_REV);
+		PlaySound(SOUNDID_CD_CHARGE);
 		cdSPTimer = 1;
 		inertia = 0x16;
 		if (status.xFlip)
@@ -2922,148 +2916,148 @@ void PLAYER::Move()
 			
 			if (((angle + 0x20) & 0xC0) == 0 && (inertia == 0 || cdSPTimer != 0))
 			{
-				if (cdSPTimer == 0)
+				if (inertia == 0)
 				{
-					//Do idle animation
 					status.pushing = false;
 					anim = PLAYERANIMATION_IDLE;
+				}
 					
-					//Balancing
-					if (status.shouldNotFall)
+				//Balancing
+				if (status.shouldNotFall)
+				{
+					OBJECT *object = (OBJECT*)interact;
+					
+					//Balancing on an object
+					if (object != nullptr && !object->status.noBalance)
 					{
-						OBJECT *object = (OBJECT*)interact;
+						//Get our area we stand on
+						int width = (object->widthPixels * 2) - 4;
+						int xDiff = (object->widthPixels + x.pos) - object->x.pos;
 						
-						//Balancing on an object
-						if (object != nullptr && !object->status.noBalance)
+						if (xDiff < 2)
 						{
-							//Get our area we stand on
-							int width = (object->widthPixels * 2) - 4;
-							int xDiff = (object->widthPixels + x.pos) - object->x.pos;
-							
-							if (xDiff < 2)
+							if (!super)
 							{
-								if (!super)
+								if (status.xFlip)
 								{
-									if (status.xFlip)
-									{
-										if (xDiff < -4)
-											anim = PLAYERANIMATION_BALANCE2;	//Balancing on the edge
-										else
-											anim = PLAYERANIMATION_BALANCE1;	//Far over the edge
-									}
+									if (xDiff < -4)
+										anim = PLAYERANIMATION_BALANCE2;	//Balancing on the edge
 									else
-									{
-										if (xDiff < -4)
-										{
-											anim = PLAYERANIMATION_BALANCE4;	//Turn around to the "far over the edge" balancing animation
-											status.xFlip = true;
-										}
-										else
-											anim = PLAYERANIMATION_BALANCE3;	//Balancing on the edge backwards
-									}
+										anim = PLAYERANIMATION_BALANCE1;	//Far over the edge
 								}
 								else
 								{
-									anim = PLAYERANIMATION_BALANCE1;	//Super sonic balance animation
-									status.xFlip = true;
+									if (xDiff < -4)
+									{
+										anim = PLAYERANIMATION_BALANCE4;	//Turn around to the "far over the edge" balancing animation
+										status.xFlip = true;
+									}
+									else
+										anim = PLAYERANIMATION_BALANCE3;	//Balancing on the edge backwards
 								}
 							}
-							else if (xDiff >= width)
+							else
 							{
-								if (!super)
+								anim = PLAYERANIMATION_BALANCE1;	//Super sonic balance animation
+								status.xFlip = true;
+							}
+						}
+						else if (xDiff >= width)
+						{
+							if (!super)
+							{
+								if (!status.xFlip)
 								{
-									if (!status.xFlip)
-									{
-										if (xDiff >= width + 6)
-											anim = PLAYERANIMATION_BALANCE2;	//Balancing on the edge
-										else
-											anim = PLAYERANIMATION_BALANCE1;	//Far over the edge
-									}
+									if (xDiff >= width + 6)
+										anim = PLAYERANIMATION_BALANCE2;	//Balancing on the edge
 									else
-									{
-										if (xDiff >= width + 6)
-										{
-											anim = PLAYERANIMATION_BALANCE4;	//Turn around to the "far over the edge" balancing animation
-											status.xFlip = false;
-										}
-										else
-											anim = PLAYERANIMATION_BALANCE3;	//Balancing on the edge backwards
-									}
+										anim = PLAYERANIMATION_BALANCE1;	//Far over the edge
 								}
 								else
 								{
-									anim = PLAYERANIMATION_BALANCE1;	//Super sonic balance animation
-									status.xFlip = false;
+									if (xDiff >= width + 6)
+									{
+										anim = PLAYERANIMATION_BALANCE4;	//Turn around to the "far over the edge" balancing animation
+										status.xFlip = false;
+									}
+									else
+										anim = PLAYERANIMATION_BALANCE3;	//Balancing on the edge backwards
 								}
+							}
+							else
+							{
+								anim = PLAYERANIMATION_BALANCE1;	//Super sonic balance animation
+								status.xFlip = false;
 							}
 						}
 					}
-					else
+				}
+				else
+				{
+					//If Sonic's middle bottom point is 12 pixels away from the floor, start balancing
+					if (ChkFloorEdge(topSolidLayer, x.pos, y.pos, nullptr) >= 12)
 					{
-						//If Sonic's middle bottom point is 12 pixels away from the floor, start balancing
-						if (ChkFloorEdge(topSolidLayer, x.pos, y.pos, nullptr) >= 12)
+						//Stop peelout prematurely
+						cdSPTimer = 0;
+						inertia = 0;
+						StopChannel(SOUNDCHANNEL_FM4);
+						
+						if (nextTilt == 3) //If there's no floor to the left of us
 						{
-							//Stop peelout prematurely
-							cdSPTimer = 0;
-							inertia = 0;
-							
-							if (nextTilt == 3) //If there's no floor to the left of us
+							if (!super)
 							{
-								if (!super)
+								if (!status.xFlip)
 								{
-									if (!status.xFlip)
-									{
-										if (ChkFloorEdge(topSolidLayer, x.pos - 6, y.pos, nullptr) >= 12)
-											anim = PLAYERANIMATION_BALANCE2;	//Far over the edge
-										else
-											anim = PLAYERANIMATION_BALANCE1;	//Balancing on the edge
-									}
+									if (ChkFloorEdge(topSolidLayer, x.pos - 6, y.pos, nullptr) >= 12)
+										anim = PLAYERANIMATION_BALANCE2;	//Far over the edge
 									else
-									{
-										//Facing right on ledge to the left of us...
-										if (ChkFloorEdge(topSolidLayer, x.pos - 6, y.pos, nullptr) >= 12)
-										{
-											anim = PLAYERANIMATION_BALANCE4;	//Turn around to the "far over the edge" balancing animation
-											status.xFlip = false;
-										}
-										else
-											anim = PLAYERANIMATION_BALANCE3;	//Balancing on the edge backwards
-									}
+										anim = PLAYERANIMATION_BALANCE1;	//Balancing on the edge
 								}
 								else
 								{
-									anim = PLAYERANIMATION_BALANCE1;	//Super sonic balance animation
-									status.xFlip = false;
+									//Facing right on ledge to the left of us...
+									if (ChkFloorEdge(topSolidLayer, x.pos - 6, y.pos, nullptr) >= 12)
+									{
+										anim = PLAYERANIMATION_BALANCE4;	//Turn around to the "far over the edge" balancing animation
+										status.xFlip = false;
+									}
+									else
+										anim = PLAYERANIMATION_BALANCE3;	//Balancing on the edge backwards
 								}
 							}
-							else if (tilt == 3) //If there's no floor to the right of us
+							else
 							{
-								if (!super)
+								anim = PLAYERANIMATION_BALANCE1;	//Super sonic balance animation
+								status.xFlip = false;
+							}
+						}
+						else if (tilt == 3) //If there's no floor to the right of us
+						{
+							if (!super)
+							{
+								if (status.xFlip)
 								{
-									if (status.xFlip)
-									{
-										if (ChkFloorEdge(topSolidLayer, x.pos + 6, y.pos, nullptr) >= 12)
-											anim = PLAYERANIMATION_BALANCE2;	//Far over the edge
-										else
-											anim = PLAYERANIMATION_BALANCE1;	//Balancing on the edge
-									}
+									if (ChkFloorEdge(topSolidLayer, x.pos + 6, y.pos, nullptr) >= 12)
+										anim = PLAYERANIMATION_BALANCE2;	//Far over the edge
 									else
-									{
-										//Facing right on ledge to the left of us...
-										if (ChkFloorEdge(topSolidLayer, x.pos + 6, y.pos, nullptr) >= 12)
-										{
-											anim = PLAYERANIMATION_BALANCE4;	//Turn around to the "far over the edge" balancing animation
-											status.xFlip = true;
-										}
-										else
-											anim = PLAYERANIMATION_BALANCE3;	//Balancing on the edge backwards
-									}
+										anim = PLAYERANIMATION_BALANCE1;	//Balancing on the edge
 								}
 								else
 								{
-									anim = PLAYERANIMATION_BALANCE1;	//Super sonic balance animation
-									status.xFlip = true;
+									//Facing right on ledge to the left of us...
+									if (ChkFloorEdge(topSolidLayer, x.pos + 6, y.pos, nullptr) >= 12)
+									{
+										anim = PLAYERANIMATION_BALANCE4;	//Turn around to the "far over the edge" balancing animation
+										status.xFlip = true;
+									}
+									else
+										anim = PLAYERANIMATION_BALANCE3;	//Balancing on the edge backwards
 								}
+							}
+							else
+							{
+								anim = PLAYERANIMATION_BALANCE1;	//Super sonic balance animation
+								status.xFlip = true;
 							}
 						}
 					}
@@ -3276,6 +3270,7 @@ void PLAYER::RollSpeed()
 						inertia = 0;
 						xVel = 0;
 						yVel = 0;
+						StopChannel(SOUNDCHANNEL_FM4);
 						return;
 					}
 					else
@@ -3743,6 +3738,8 @@ bool PLAYER::SuperTransform()
 		//Become invincible and set speed
 		invincibilityTime = 0;
 		item.isInvincible = true;
+		for (int i = 0; i < INVINCIBILITYSTARS; i++)
+			invincibilityStarObject[i]->routineSecondary = 0;
 		
 		if (!item.hasSpeedShoes)
 			SetSpeedFromDefinition(status.underwater ? underwaterSuperSD : superSD);
@@ -4287,11 +4284,7 @@ void PLAYER::Animate()
 //CPU control code
 void PLAYER::CPUControl()
 {
-	PLAYER *followPlayer = (PLAYER*)follow;
-	STAT_RECORD goal = followPlayer->statRecord[(followPlayer->recordPos - 16) % (unsigned)PLAYER_RECORD_LENGTH];
 	
-	controlHeld = goal.controlHeld;
-	controlPress = goal.controlPress;
 }
 
 //Update
@@ -4673,6 +4666,8 @@ void PLAYER::Display()
 		
 		//Lose invincibility
 		item.isInvincible = false;
+		for (int i = 0; i < INVINCIBILITYSTARS; i++)
+			invincibilityStarObject[i]->routineSecondary = 0;
 	}
 	
 	//Handle speed shoes (every 8 frames)
@@ -4752,7 +4747,7 @@ void PLAYER::DrawToScreen()
 					trailSeek /= 2;
 				
 				//Draw at the position from the frame above
-				int x = posRecord[(recordPos - trailSeek) % (unsigned)PLAYER_RECORD_LENGTH].x, y = posRecord[(recordPos - trailSeek) % (unsigned)PLAYER_RECORD_LENGTH].y;
+				int x = record[(recordPos - trailSeek) % (unsigned)PLAYER_RECORD_LENGTH].x, y = record[(recordPos - trailSeek) % (unsigned)PLAYER_RECORD_LENGTH].y;
 				gSoftwareBuffer->DrawTexture(texture, texture->loadedPalette, mapRect, gLevel->GetObjectLayer(highPriority, priority), x - origX - alignX, y - origY - alignY, renderFlags.xFlip, renderFlags.yFlip);
 			}
 		}
@@ -5127,6 +5122,8 @@ void PLAYER::GiveInvincibility()
 		//Give invincibility
 		item.isInvincible = true;
 		invincibilityTime = 150;
+		for (int i = 0; i < INVINCIBILITYSTARS; i++)
+			invincibilityStarObject[i]->routineSecondary = 1;
 		
 		//Play invincibility music (only if lead)
 		if (follow == nullptr)
