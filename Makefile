@@ -63,23 +63,24 @@ SOURCES = \
 	LevelSpecific/GHZ \
 	LevelSpecific/EHZ \
 	Objects/PathSwitcher \
-	Objects/Goalpost \
-	Objects/Spiral \
-	Objects/Bridge \
-	Objects/Sonic1Scenery \
 	Objects/Ring \
 	Objects/BouncingRing \
 	Objects/AttractRing \
-	Objects/Explosion \
-	Objects/Motobug \
-	Objects/Chopper \
-	Objects/GHZPlatform \
-	Objects/GHZEdgeWall \
-	Objects/SwingingPlatform \
-	Objects/PurpleRock \
-	Objects/GHZWaterfallSound \
 	Objects/Monitor \
 	Objects/Spring \
+	Objects/Explosion \
+	Objects/Bridge \
+	Objects/Goalpost \
+	Objects/Spiral \
+	Objects/Sonic1Scenery \
+	Objects/Motobug \
+	Objects/Chopper \
+	Objects/Crabmeat \
+	Objects/GHZWaterfallSound \
+	Objects/GHZPlatform \
+	Objects/GHZEdgeWall \
+	Objects/PurpleRock \
+	Objects/SwingingPlatform \
 	Objects/Minecart \
 	Audio_stb_vorbis \
 	Audio_miniaudio

@@ -135,6 +135,7 @@ void ObjGHZEdgeWall(OBJECT *object)
 			//Set other render properties
 			object->renderFlags.alignPlane = true;
 			object->widthPixels = 8;
+			object->heightPixels = 32;
 			object->priority = 6;
 			object->mappingFrame = object->subtype & (~0x10);
 		}
@@ -147,6 +148,7 @@ void ObjGHZEdgeWall(OBJECT *object)
 			
 			//Draw
 			object->DrawInstance(object->renderFlags, object->texture, object->mappings, object->highPriority, object->priority, object->mappingFrame, object->x.pos, object->y.pos);
+			object->UnloadOffscreen(object->x.pos);
 			break;
 		}
 	}

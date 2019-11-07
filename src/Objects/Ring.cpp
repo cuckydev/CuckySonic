@@ -37,6 +37,7 @@ void ObjRing(OBJECT *object)
 		case 1: //Waiting for contact, just animate
 			object->mappingFrame = (gLevel->frameCounter >> 3) & 0x3;
 			object->DrawInstance(object->renderFlags, object->texture, object->mappings, object->highPriority, object->priority, object->mappingFrame, object->x.pos, object->y.pos);
+			object->UnloadOffscreen(object->x.pos);
 			break;
 		case 2: //Touched player, collect a ring
 			//Increment routine
@@ -55,6 +56,7 @@ void ObjRing(OBJECT *object)
 			break;
 		case 4: //Deleting after sparkle
 			object->deleteFlag = true;
+			gLevel->ReleaseObjectLoad(object);
 			break;
 	}
 }
@@ -97,6 +99,8 @@ void ObjRingSpawner(OBJECT *object)
 		newObject->y.pos = yPos;
 		gLevel->objectList.link_back(newObject);
 		
+		gLevel->LinkObjectLoad(newObject);
+		
 		//Get next position
 		xPos += posData[object->subtype >> 4][0];
 		yPos += posData[object->subtype >> 4][1];
@@ -104,4 +108,5 @@ void ObjRingSpawner(OBJECT *object)
 	
 	//Delete us
 	object->deleteFlag = true;
+	gLevel->ReleaseObjectLoad(object);
 }

@@ -102,9 +102,8 @@ void ObjSpiral(OBJECT *object) //Also MTZ cylinder
 			{
 				//Get the player
 				PLAYER *player = gLevel->playerList[i];
-				bool *standBit = &object->playerContact[i].standing;
 				
-				if (*standBit == false) //Not already on the spiral
+				if (object->playerContact[i].standing == false) //Not already on the spiral
 				{
 					if (player->status.inAir) //Don't run on corkscrew if in mid-air
 						continue;
@@ -147,7 +146,7 @@ void ObjSpiral(OBJECT *object) //Also MTZ cylinder
 						continue;
 					
 					//Set the player to run on the spiral
-					player->AttachToObject(object, standBit - (size_t)object);
+					player->AttachToObject(object, i);
 				}
 				else
 				{
@@ -181,7 +180,7 @@ void ObjSpiral(OBJECT *object) //Also MTZ cylinder
 					
 					//Fall off
 					player->status.shouldNotFall = false;
-					*standBit = false;
+					object->playerContact[i].standing = false;
 					player->flipsRemaining = false;
 					player->flipSpeed = 4;
 				}
@@ -194,4 +193,6 @@ void ObjSpiral(OBJECT *object) //Also MTZ cylinder
 			break;
 		}
 	}
+	
+	object->UnloadOffscreen(object->x.pos);
 }

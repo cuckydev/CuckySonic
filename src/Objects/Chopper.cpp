@@ -48,6 +48,7 @@ void ObjChopper(OBJECT *object)
 			
 			//Initialize other properties
 			object->widthPixels = 16;
+			object->heightPixels = 32;
 			object->yVel = -0x700;
 			object->scratchS16[SCRATCHS16_ORIG_Y] = object->y.pos;
 		}
@@ -85,4 +86,6 @@ void ObjChopper(OBJECT *object)
 			break;
 		}
 	}
+	
+	object->UnloadOffscreen(object->x.pos);
 }

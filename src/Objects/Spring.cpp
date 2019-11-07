@@ -64,7 +64,7 @@ void ObjSpring(OBJECT *object)
 			//Set render properties
 			object->renderFlags.alignPlane = true;
 			object->widthPixels = 16;
-			object->heightPixels = 16;
+			object->heightPixels = 32;
 			object->priority = 4;
 			
 			//Subtype specific initialization
@@ -292,4 +292,6 @@ void ObjSpring(OBJECT *object)
 			break;
 		}
 	}
+	
+	object->UnloadOffscreen(object->x.pos);
 }

@@ -26,7 +26,7 @@
 //#define FIX_ROLLJUMP_COLLISION  //In the originals, for some reason, jumping from a roll will maintain Sonic's regular collision hitbox, rather than switching to the smaller hitbox, which causes weird issues.
 //#define FIX_PEELOUT_DOWN        //In Sonic CD, the peelout acted really weird if you were to switch to holding down in the middle of it, even causing you to be able to walk through walls
 //#define FIX_GROUND_CLIPPING     //In the originals, you're allowed to clip at least 14 pixels into the ground if you manage to get into that situation, seems like a slight misunderstanding of the collision function
-//#define FIX_INSTASHIELD_REFLECT //In Sonic 3 and Knuckles, Sonic's insta-shield doesn't reflect projectiles, but the code suggests that it's supposed to
+#define FIX_INSTASHIELD_REFLECT //In Sonic 3 and Knuckles, Sonic's insta-shield doesn't reflect projectiles, but the code suggests that it's supposed to
 
 //Game differences
 //#define SONIC1_SLOPE_ANGLE          //In Sonic 2+, the floor's angle will be replaced with the player's cardinal floor angle if there's a 45+ degree difference
@@ -440,7 +440,8 @@ void ObjShield(OBJECT *object)
 {
 	enum ROUTINE
 	{
-		ROUTINE_SUPERSTAR =	(uint8_t)-1,
+		ROUTINE_SUPERSTAR =			(typeof(OBJECT::routine))-1,
+		ROUTINE_INVINCIBILITYSTAR =	(typeof(OBJECT::routine))-2,
 	};
 	
 	//Scratch
@@ -686,6 +687,11 @@ void ObjShield(OBJECT *object)
 		
 		//Draw to screen
 		object->DrawInstance(object->renderFlags, object->texture, object->mappings, object->highPriority, object->priority, object->mappingFrame, object->x.pos, object->y.pos);
+	}
+	else
+	{
+		//Set our routine to invincibility star so we resume shield state properly
+		object->routine = ROUTINE_INVINCIBILITYSTAR;
 	}
 }
 
@@ -3546,7 +3552,7 @@ bool PLAYER::HurtCharacter(void *hit)
 		else
 		{
 			//Lose rings
-			OBJECT *ringObject = new OBJECT(&ObjBouncingRing);
+			OBJECT *ringObject = new OBJECT(&ObjBouncingRing_Spawner);
 			ringObject->x.pos = x.pos;
 			ringObject->y.pos = y.pos;
 			ringObject->parent = (void*)this;
@@ -4721,34 +4727,29 @@ void PLAYER::DrawToScreen()
 			int alignY = renderFlags.alignPlane ? gLevel->camera->y : 0;
 			
 			//Check if on-screen
-			renderFlags.onScreen = false;
-			
-			//Horizontal check, uses widthPixels
-			if (x.pos - alignX < -widthPixels || x.pos - alignX > gRenderSpec.width + widthPixels)
-				return;
-			
-			//Vertical check, uses 32 pixels for height or heightPixels
-			int16_t heightCheck = renderFlags.onScreenUseHeightPixels ? heightPixels : 32;
-			if (y.pos - alignY < -heightCheck || y.pos - alignY > gRenderSpec.height + heightCheck)
-				return;
-			
-			//We're on-screen, now set flag and draw
-			renderFlags.onScreen = true;
-			gSoftwareBuffer->DrawTexture(texture, texture->loadedPalette, mapRect, gLevel->GetObjectLayer(highPriority, priority), x.pos - origX - alignX, y.pos - origY - alignY, renderFlags.xFlip, renderFlags.yFlip);
-			
-			//Draw trail when using speed shoes or hyper
-			if (item.hasSpeedShoes || hyper)
+			renderFlags.isOnscreen = false;
+	
+			if (!(x.pos - alignX < -widthPixels || x.pos - alignX > gRenderSpec.width + widthPixels) &&
+				!(y.pos - alignY < -heightPixels || y.pos - alignY > gRenderSpec.height + heightPixels))
 			{
-				//If an even frame, use the position from 3 frames ago, odd frame, 5 frames ago
-				int trailSeek = (gLevel->frameCounter & 0x1) ? 5 : 3;
+				//We're on-screen, now set flag and draw
+				renderFlags.isOnscreen = true;
+				gSoftwareBuffer->DrawTexture(texture, texture->loadedPalette, mapRect, gLevel->GetObjectLayer(highPriority, priority), x.pos - origX - alignX, y.pos - origY - alignY, renderFlags.xFlip, renderFlags.yFlip);
 				
-				//Shorten if running out of speed shoes time
-				if (hyper == false && item.hasSpeedShoes && speedShoesTime <= 1)
-					trailSeek /= 2;
-				
-				//Draw at the position from the frame above
-				int x = record[(recordPos - trailSeek) % (unsigned)PLAYER_RECORD_LENGTH].x, y = record[(recordPos - trailSeek) % (unsigned)PLAYER_RECORD_LENGTH].y;
-				gSoftwareBuffer->DrawTexture(texture, texture->loadedPalette, mapRect, gLevel->GetObjectLayer(highPriority, priority), x - origX - alignX, y - origY - alignY, renderFlags.xFlip, renderFlags.yFlip);
+				//Draw trail when using speed shoes or hyper
+				if (item.hasSpeedShoes || hyper)
+				{
+					//If an even frame, use the position from 3 frames ago, odd frame, 5 frames ago
+					int trailSeek = (gLevel->frameCounter & 0x1) ? 5 : 3;
+					
+					//Shorten if running out of speed shoes time
+					if (hyper == false && item.hasSpeedShoes && speedShoesTime <= 1)
+						trailSeek /= 2;
+					
+					//Draw at the position from the frame above
+					int x = record[(recordPos - trailSeek) % (unsigned)PLAYER_RECORD_LENGTH].x, y = record[(recordPos - trailSeek) % (unsigned)PLAYER_RECORD_LENGTH].y;
+					gSoftwareBuffer->DrawTexture(texture, texture->loadedPalette, mapRect, gLevel->GetObjectLayer(highPriority, priority), x - origX - alignX, y - origY - alignY, renderFlags.xFlip, renderFlags.yFlip);
+				}
 			}
 		}
 	}
@@ -4903,11 +4904,7 @@ bool PLAYER::TouchResponseObject(OBJECT *object, int16_t playerLeft, int16_t pla
 				case COLLISIONTYPE_ENEMY:
 				case COLLISIONTYPE_BOSS:
 					//Check if we're gonna hurt the enemy, or ourselves
-				#ifndef FIX_INSTASHIELD_REFLECT
 					if (item.isInvincible || anim == PLAYERANIMATION_SPINDASH || anim == PLAYERANIMATION_ROLL|| anim == PLAYERANIMATION_DROPDASH)
-				#else
-					if (item.isInvincible ? (invincibilityTime != 0) : (anim == PLAYERANIMATION_SPINDASH || anim == PLAYERANIMATION_ROLL|| anim == PLAYERANIMATION_DROPDASH))
-				#endif
 						return object->Hurt(this);
 					
 					//Check character specific states
@@ -5042,11 +5039,11 @@ void PLAYER::TouchResponse()
 	item.isInvincible = wasInvincible;
 }
 
-void PLAYER::AttachToObject(OBJECT *object, bool *standingBit)
+void PLAYER::AttachToObject(OBJECT *object, size_t i)
 {
 	//If already standing on an object, clear that object's standing bit
 	if (status.shouldNotFall && interact != nullptr)
-		*((bool*)interact + (size_t)standingBit) = false; //Clear the object we're standing on's standing bit
+		interact->playerContact[i].standing = false; //Clear the previous object stood on's standing bit
 	
 	//Set to stand on this object
 	interact = object;
@@ -5056,7 +5053,7 @@ void PLAYER::AttachToObject(OBJECT *object, bool *standingBit)
 	
 	//Land on object
 	status.shouldNotFall = true;
-	*((bool*)object + (size_t)standingBit) = true;
+	object->playerContact[i].standing = true;
 	
 	if (status.inAir)
 	{

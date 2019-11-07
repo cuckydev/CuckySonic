@@ -8,6 +8,7 @@
 #include "Game.h"
 #include "Log.h"
 #include "Error.h"
+#include "MathUtil.h"
 #include "Player.h"
 
 //Object class
@@ -16,13 +17,12 @@ OBJECT::OBJECT(OBJECTFUNCTION objectFunction)
 	//Reset memory
 	memset(this, 0, sizeof(OBJECT));
 	
-	//Set function
-	function = objectFunction;
-	prevFunction = objectFunction;
-	
 	//Reset children and draw instance linked lists
 	drawInstances = LINKEDLIST<OBJECT_DRAWINSTANCE*>();
 	children = LINKEDLIST<OBJECT*>();
+	
+	//Set function
+	function = objectFunction;
 }
 
 OBJECT::~OBJECT()
@@ -40,7 +40,7 @@ OBJECT::~OBJECT()
 	CLEAR_INSTANCE_LINKEDLIST(children);
 }
 
-//Scratch allocation
+//Scratch allocation functions
 #define SCRATCH_ALLOC(name, type, max) if (name == nullptr) { name = (type*)malloc(max * sizeof(type)); memset(name, 0, max * sizeof(type)); }
 
 void  OBJECT::ScratchAllocU8(size_t max) { SCRATCH_ALLOC(scratchU8,   uint8_t, max) }
@@ -50,7 +50,7 @@ void OBJECT::ScratchAllocS16(size_t max) { SCRATCH_ALLOC(scratchS16,  int16_t, m
 void OBJECT::ScratchAllocU32(size_t max) { SCRATCH_ALLOC(scratchU32, uint32_t, max) }
 void OBJECT::ScratchAllocS32(size_t max) { SCRATCH_ALLOC(scratchS32,  int32_t, max) }
 
-//Movement and gravity
+//Generic object functions
 void OBJECT::Move()
 {
 	xPosLong += xVel << 8;
@@ -64,11 +64,157 @@ void OBJECT::MoveAndFall()
 	yVel += 0x38;
 }
 
-//Hurt function
+void OBJECT::Animate(const uint8_t **animationList)
+{
+	//Restart animation if not the same as the previous
+	if (anim != prevAnim)
+	{
+		prevAnim = anim;
+		animFrame = 0;
+		animFrameDuration = 0;
+	}
+	
+	//Wait for next frame
+	if (--animFrameDuration >= 0)
+		return;
+	
+	//Get the animation to reference
+	const uint8_t *animation = animationList[anim];
+	
+	//Set next frame duration
+	animFrameDuration = animation[0];
+	
+	//Handle commands
+	if (animation[1 + animFrame] >= 0x80)
+	{
+		switch (animation[1 + animFrame])
+		{
+			case 0xFF:	//Restart animation
+				animFrame = 0;
+				break;
+			case 0xFE:	//Go back X amount of frames
+				animFrame -= animation[2 + animFrame];
+				break;
+			case 0xFD:	//Switch to X animation
+				anim = animation[2 + animFrame];
+				return;
+			case 0xFC:	//Advance routine
+				routine++;
+				animFrameDuration = 0;
+				animFrame++;
+				return;
+			case 0xFB:	//Reset animation and clear secondary routine
+				animFrame = 0;
+				routineSecondary = 0;
+				return;
+			case 0xFA:	//Increment secondary routine
+				routineSecondary++;
+				return;
+		}
+	}
+	
+	//Set our mapping frame and flip
+	mappingFrame = animation[1 + animFrame] & 0x7F;
+	renderFlags.xFlip = status.xFlip;
+	renderFlags.yFlip = status.yFlip;
+	animFrame++;
+}
+
+void OBJECT::Animate_S1(const uint8_t **animationList)
+{
+	//Restart animation if not the same as the previous
+	if (anim != prevAnim)
+	{
+		prevAnim = anim;
+		animFrame = 0;
+		animFrameDuration = 0;
+	}
+	
+	//Wait for next frame
+	if (--animFrameDuration >= 0)
+		return;
+	
+	//Get the animation to reference
+	const uint8_t *animation = animationList[anim];
+	
+	//Set next frame duration
+	animFrameDuration = animation[0];
+	
+	//Handle commands
+	if (animation[1 + animFrame] >= 0x80)
+	{
+		switch (animation[1 + animFrame])
+		{
+			case 0xFF:	//Restart animation
+				animFrame = 0;
+				break;
+			case 0xFE:	//Go back X amount of frames
+				animFrame -= animation[2 + animFrame];
+				break;
+			case 0xFD:	//Switch to X animation
+				anim = animation[2 + animFrame];
+				return;
+			case 0xFC:	//Advance routine
+				routine++;
+				return;
+			case 0xFB:	//Reset animation and clear secondary routine
+				animFrame = 0;
+				routineSecondary = 0;
+				return;
+			case 0xFA:	//Increment secondary routine
+				routineSecondary++;
+				return;
+		}
+	}
+	
+	//Set our mapping frame and flip
+	uint8_t frame = animation[1 + animFrame];
+	mappingFrame = frame & 0x1F;
+	renderFlags.xFlip = status.xFlip ^ ((frame & 0x20) != 0);
+	renderFlags.yFlip = status.yFlip ^ ((frame & 0x40) != 0);
+	animFrame++;
+}
+
+int16_t OBJECT::CheckFloorEdge(COLLISIONLAYER layer, int16_t xPos, int16_t yPos, uint8_t *outAngle)
+{
+	int16_t distance = FindFloor(xPos, yPos + yRadius, layer, false, outAngle);
+	if (outAngle != nullptr)
+		*outAngle = ((*outAngle) & 1) ? 0 : (*outAngle);
+	return distance;
+}
+
+void OBJECT::DrawInstance(OBJECT_RENDERFLAGS iRenderFlags, TEXTURE *iTexture, MAPPINGS *iMappings, bool iHighPriority, uint8_t iPriority, uint16_t iMappingFrame, int16_t iXPos, int16_t iYPos)
+{
+	//Create a draw instance with the properties given
+	OBJECT_DRAWINSTANCE *newInstance = new OBJECT_DRAWINSTANCE();
+	newInstance->renderFlags = iRenderFlags;
+	newInstance->texture = iTexture;
+	newInstance->mappings = iMappings;
+	newInstance->highPriority = iHighPriority;
+	newInstance->priority = iPriority;
+	newInstance->mappingFrame = iMappingFrame;
+	newInstance->xPos = iXPos;
+	newInstance->yPos = iYPos;
+	drawInstances.link_back(newInstance);
+}
+
+void OBJECT::UnloadOffscreen(int16_t xPos)
+{
+	//Check if we're within loaded range
+	uint16_t xOff = (xPos & 0xFF80) - ((gLevel->camera->x - 0x80) & 0xFF80);
+	if (xOff > upperRound(0x80 + gRenderSpec.width + 0x80, 0x80))
+		deleteFlag = true;
+}
+
+//Object interaction functions
 const uint16_t enemyPoints[] = {100, 200, 500, 1000};
 
 bool OBJECT::Hurt(PLAYER *player)
 {
+	//Release if set to release when destroyed
+	if (status.releaseDestroyed)
+		gLevel->ReleaseObjectLoad(this);
+	
 	//Handle chain point bonus
 	uint16_t lastCounter = player->chainPointCounter;
 	player->chainPointCounter++;
@@ -111,73 +257,29 @@ bool OBJECT::Hurt(PLAYER *player)
 	return true;
 }
 
-//Shared animate function
-void OBJECT::Animate(const uint8_t **animationList)
+void OBJECT::ClearSolidContact()
 {
-	//Restart animation if not the same as the previous
-	if (anim != prevAnim)
+	//Check all players and clear all contact
+	for (size_t i = 0; i < gLevel->playerList.size(); i++)
 	{
-		prevAnim = anim;
-		animFrame = 0;
-		animFrameDuration = 0;
-	}
-	
-	//Wait for next frame
-	if (--animFrameDuration >= 0)
-		return;
-	
-	//Get the animation to reference
-	const uint8_t *animation = animationList[anim];
-	
-	//Set next frame duration
-	animFrameDuration = animation[0];
-	
-	//Handle commands
-	if (animation[1 + animFrame] >= 0x80)
-	{
-		switch (animation[1 + animFrame])
+		//Get the player
+		PLAYER *player = gLevel->playerList[i];
+		
+		//Clear pushing and standing
+		if (playerContact[i].standing || playerContact[i].pushing)
 		{
-			case 0xFF:	//Restart animation
-				animFrame = 0;
-				break;
-			case 0xFE:	//Go back X amount of frames
-				animFrame -= animation[2 + animFrame];
-				break;
-			case 0xFD:	//Switch to X animation
-				anim = animation[2 + animFrame];
-				return;
-			case 0xFC:	//Advance routine
-				routine++;
-				animFrameDuration = 0;
-				animFrame++; //???
-				return;
-			case 0xFB:	//Reset animation and clear secondary routine
-				animFrame = 0;
-				routineSecondary = 0;
-				return;
-			case 0xFA:	//Increment secondary routine
-				routineSecondary++;
-				return;
-			case 0xF9:	//Not sure
-				return;
+			//Clear our contact flags
+			player->status.shouldNotFall = false;
+			player->status.pushing = false;
+			playerContact[i].standing = false;
+			playerContact[i].pushing = false;
+			
+			//Place the player in mid-air, this is weird and stupid god damn
+			player->status.inAir = true;
 		}
 	}
-	
-	//Set our mapping frame and flip
-	mappingFrame = animation[1 + animFrame] & 0x7F;
-	renderFlags.xFlip = status.xFlip;
-	renderFlags.yFlip = status.yFlip;
-	animFrame++;
 }
 
-//Collision functions
-int16_t OBJECT::CheckFloorEdge(COLLISIONLAYER layer, int16_t xPos, int16_t yPos, uint8_t *outAngle)
-{
-	int16_t distance = FindFloor(xPos, yPos + yRadius, layer, false, outAngle);
-	if (outAngle != nullptr)
-		*outAngle = ((*outAngle) & 1) ? 0 : (*outAngle);
-	return distance;
-}
 
 //Object collision functions
 void OBJECT::PlatformObject(int16_t width, int16_t height, int16_t lastXPos)
@@ -225,7 +327,7 @@ bool OBJECT::LandOnPlatform(PLAYER *player, size_t i, int16_t width1, int16_t wi
 		
 		//Land on top of the platform
 		player->y.pos += yThing + 4;
-		player->AttachToObject(this, (&playerContact[i].standing - (size_t)this));
+		player->AttachToObject(this, i);
 		return true;
 	}
 	else
@@ -240,7 +342,7 @@ bool OBJECT::LandOnPlatform(PLAYER *player, size_t i, int16_t width1, int16_t wi
 		
 		//Land on top of the platform
 		player->y.pos += yThing + 4;
-		player->AttachToObject(this, (&playerContact[i].standing - (size_t)this));
+		player->AttachToObject(this, i);
 		return true;
 	}
 }
@@ -344,7 +446,7 @@ void OBJECT::SolidObjectCont(OBJECT_SOLIDTOUCH *solidTouch, PLAYER *player, size
 							else
 								player->y.pos -= (yDiff + 1);
 							
-							player->AttachToObject(this, (&playerContact[i].standing - (size_t)this));
+							player->AttachToObject(this, i);
 							
 							//Set top touch flag
 							if (solidTouch != nullptr)
@@ -468,31 +570,7 @@ void OBJECT::SolidObjectClearPush(PLAYER *player, size_t i)
 	}
 }
 
-//Common solid functions
-void OBJECT::ClearSolidContact()
-{
-	//Check all players and clear all contact
-	for (size_t i = 0; i < gLevel->playerList.size(); i++)
-	{
-		//Get the player
-		PLAYER *player = gLevel->playerList[i];
-		
-		//Clear pushing and standing
-		if (playerContact[i].standing || playerContact[i].pushing)
-		{
-			//Clear our contact flags
-			player->status.shouldNotFall = false;
-			player->status.pushing = false;
-			playerContact[i].standing = false;
-			playerContact[i].pushing = false;
-			
-			//Place the player in mid-air, this is weird and stupid god damn
-			player->status.inAir = true;
-		}
-	}
-}
-
-//Update and drawing objects
+//Main update and draw functions
 bool OBJECT::Update()
 {
 	//If our function has changed, free any allocated scratch memory
@@ -516,6 +594,8 @@ bool OBJECT::Update()
 	//Run our object code
 	if (function != nullptr)
 		function(this);
+	else
+		deleteFlag = true; //Delete, we're useless!
 	
 	//Check if any of our assets failed to load
 	if (texture != nullptr && texture->fail != nullptr)
@@ -523,7 +603,7 @@ bool OBJECT::Update()
 	if (mappings != nullptr && mappings->fail != nullptr)
 		return Error(fail = mappings->fail);
 	
-	//Check for deletion
+	//Check for regular deletion
 	if (deleteFlag)
 	{
 		//Remove player references to us
@@ -533,6 +613,9 @@ bool OBJECT::Update()
 			if (player->interact == this)
 				player->interact = nullptr;
 		}
+		
+		//Remove object load references to us
+		gLevel->UnrefObjectLoad(this);
 	}
 	else
 	{
@@ -546,26 +629,23 @@ bool OBJECT::Update()
 	return false;
 }
 
-void OBJECT::DrawInstance(OBJECT_RENDERFLAGS iRenderFlags, TEXTURE *iTexture, MAPPINGS *iMappings, bool iHighPriority, uint8_t iPriority, uint16_t iMappingFrame, int16_t iXPos, int16_t iYPos)
-{
-	//Create a draw instance with the properties given
-	OBJECT_DRAWINSTANCE *newInstance = new OBJECT_DRAWINSTANCE();
-	newInstance->renderFlags = iRenderFlags;
-	newInstance->texture = iTexture;
-	newInstance->mappings = iMappings;
-	newInstance->highPriority = iHighPriority;
-	newInstance->priority = iPriority;
-	newInstance->mappingFrame = iMappingFrame;
-	newInstance->xPos = iXPos;
-	newInstance->yPos = iYPos;
-	drawInstances.link_back(newInstance);
-}
-
 void OBJECT::Draw()
 {
-	//Draw our draw instances, then draw child objects
-	for (size_t i = 0; i < drawInstances.size(); i++)
-		drawInstances[i]->Draw();
+	//On-screen check (done here in the original kind of)
+	int alignX = renderFlags.alignPlane ? gLevel->camera->x : 0;
+	int alignY = renderFlags.alignPlane ? gLevel->camera->y : 0;
+	
+	renderFlags.isOnscreen = false;
+	
+	if (!(x.pos - alignX < -widthPixels || x.pos - alignX > gRenderSpec.width + widthPixels) &&
+		!(y.pos - alignY < -heightPixels || y.pos - alignY > gRenderSpec.height + heightPixels))
+	{
+		//Draw our draw instances if on-screen and set flag
+		for (size_t i = 0; i < drawInstances.size(); i++)
+			drawInstances[i]->Draw();
+		renderFlags.isOnscreen = true;
+	}
+	
 	for (size_t i = 0; i < children.size(); i++)
 		children[i]->Draw();
 }

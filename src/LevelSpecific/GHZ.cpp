@@ -3,11 +3,13 @@
 
 void GHZ_PaletteCycle()
 {
-	//Palette cycle 0 (waterfall and background)
-	if (--gLevel->palCycle[0].timer < 0)
+	//Waterfall and water palette cycle
+	static int timer = 0;
+	
+	if (--timer < 0)
 	{
 		//Cycle colours and reset timer
-		gLevel->palCycle[0].timer = 5;
+		timer = 5;
 		
 		//Cycle the tile texture (using the background palette, because it won't change until after)
 		gLevel->tileTexture->loadedPalette->colour[0x28] = gLevel->background->texture->loadedPalette->colour[0x2B];

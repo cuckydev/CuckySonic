@@ -43,13 +43,7 @@ void ObjAttractRing(OBJECT *object)
 			if (player->shield != SHIELD_ELECTRIC)
 			{
 				object->function = ObjBouncingRing;
-				object->prevFunction = ObjBouncingRing;
-				
-				object->ScratchAllocU8(1);
-				object->ScratchAllocU16(1);
-				object->scratchU8[0] = 0xFF;
-				object->scratchU16[0] = 0x00;
-				
+				object->routine = 0;
 				object->xRadius = 8;
 				object->yRadius = 8;
 			}

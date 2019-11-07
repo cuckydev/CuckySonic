@@ -5,6 +5,7 @@
 #include "Render.h"
 #include "Audio.h"
 #include "GameConstants.h"
+#include "CommonMacros.h"
 #include "LevelSpecific.h"
 #include "Player.h"
 #include "Object.h"
@@ -149,11 +150,20 @@ struct COLLISIONTILE
 	uint8_t angle;
 };
 
-//Palette cycle
-struct PALETTECYCLE
+//Object load
+struct OBJECT_LOAD
 {
-	int timer = 0;
-	int cycle = 0;
+	//Object data
+	OBJECTFUNCTION function = nullptr;
+	OBJECT_STATUS status;
+	POSDEF(x)
+	POSDEF(y)
+	unsigned int subtype = 0;
+	
+	//Current status
+	OBJECT *loaded = nullptr;
+	bool loadRange : 1;
+	bool specificBit : 1;
 };
 
 //Level struct
@@ -200,7 +210,6 @@ class LEVEL
 		TEXTURE *tileTexture;
 		BACKGROUND *background;
 		
-		PALETTECYCLE palCycle[PALETTE_CYCLES];
 		PALETTECYCLEFUNCTION paletteFunction;
 		
 		//Chunk and tile data
@@ -229,8 +238,11 @@ class LEVEL
 		//Players and objects
 		LINKEDLIST<PLAYER*> playerList;
 		LINKEDLIST<OBJECT*> coreObjectList;
-		LINKEDLIST<OBJECT*> objectList;
 		CAMERA *camera;
+		
+		//Level objects
+		LINKEDLIST<OBJECT_LOAD*> objectLoadList;
+		LINKEDLIST<OBJECT*> objectList;
 		
 		//Title card and HUD
 		TITLECARD *titleCard;
@@ -270,10 +282,18 @@ class LEVEL
 		TEXTURE *GetObjectTexture(const char *path);
 		MAPPINGS *GetObjectMappings(const char *path);
 		
+		//Object load functions
+		OBJECT_LOAD *GetObjectLoad(OBJECT *object);
+		void LinkObjectLoad(OBJECT *object);
+		void ReleaseObjectLoad(OBJECT *object);
+		void UnrefObjectLoad(OBJECT *object);
+		
+		void CheckObjectLoad();
+		
 		//Object layer function
 		LEVEL_RENDERLAYER GetObjectLayer(bool highPriority, int priority);
 		
-		//Palette update function (TODO: move to external file)
+		//Palette update function
 		void PaletteUpdate();
 		
 		//Oscillatory table functions

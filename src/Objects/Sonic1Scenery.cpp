@@ -21,6 +21,7 @@ void ObjSonic1Scenery(OBJECT *object)
 					object->texture = gLevel->GetObjectTexture("data/Object/GHZBridge.bmp");
 					object->mappings = gLevel->GetObjectMappings("data/Object/Bridge.map");
 					object->widthPixels = 16;
+					object->heightPixels = 32;
 					object->priority = 1;
 					break;
 			}
@@ -34,6 +35,7 @@ void ObjSonic1Scenery(OBJECT *object)
 		case 1:
 		{
 			object->DrawInstance(object->renderFlags, object->texture, object->mappings, object->highPriority, object->priority, object->mappingFrame, object->x.pos, object->y.pos);
+			object->UnloadOffscreen(object->x.pos);
 			break;
 		}
 	}

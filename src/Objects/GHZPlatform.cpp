@@ -8,15 +8,10 @@ enum SCRATCH
 {
 	//U8
 	SCRATCHU8_WEIGHT =		0,
-	SCRATCHU8_SPAWN_TYPE =	1,
-	SCRATCHU8_MAX =			2,
+	SCRATCHU8_MAX =			1,
 	//U16
 	SCRATCHU16_FALL_TIME =	0,
 	SCRATCHU16_MAX =		1,
-	//S16
-	SCRATCHS16_SPAWN_X =	0,
-	SCRATCHS16_SPAWN_Y =	1,
-	SCRATCHS16_MAX =		2,
 	//S32
 	SCRATCHS32_ORIG_X =		0,
 	SCRATCHS32_ORIG_Y =		1,
@@ -119,7 +114,7 @@ void ObjGHZPlatform_Move(OBJECT *object)
 			
 			//Delete if reached bottom boundary
 			if ((object->scratchS32[SCRATCHS32_Y] >> 16) >= gLevel->bottomBoundaryTarget)
-				object->routine = 3;
+				object->deleteFlag = true;
 			break;
 		}
 		case 0xA: //Big platform
@@ -145,7 +140,6 @@ void ObjGHZPlatform(OBJECT *object)
 	//Allocate scratch memory
 	object->ScratchAllocU8(SCRATCHU8_MAX);
 	object->ScratchAllocU16(SCRATCHU16_MAX);
-	object->ScratchAllocS16(SCRATCHS16_MAX);
 	object->ScratchAllocS32(SCRATCHS32_MAX);
 	
 	switch (object->routine)
@@ -161,6 +155,7 @@ void ObjGHZPlatform(OBJECT *object)
 			//Initialize render properties
 			object->renderFlags.alignPlane = true;
 			object->widthPixels = 32;
+			object->heightPixels = 32;
 			object->priority = 4;
 			
 			//Set our origin position and other stuff
@@ -173,11 +168,6 @@ void ObjGHZPlatform(OBJECT *object)
 			object->scratchU8[SCRATCHU8_WEIGHT] = 0;
 			object->scratchU16[SCRATCHU16_FALL_TIME] = 0;
 			object->yVel = 0;
-			
-			//Remember our spawning position and subtype
-			object->scratchS16[SCRATCHS16_SPAWN_X] = object->x.pos;
-			object->scratchS16[SCRATCHS16_SPAWN_Y] = object->y.pos;
-			object->scratchU8[SCRATCHU8_SPAWN_TYPE] = object->subtype;
 			
 			//Set our frame for the big platform
 			if (object->subtype == 10)
@@ -211,6 +201,7 @@ void ObjGHZPlatform(OBJECT *object)
 			
 			//Draw
 			object->DrawInstance(object->renderFlags, object->texture, object->mappings, object->highPriority, object->priority, object->mappingFrame, object->x.pos, object->y.pos);
+			object->UnloadOffscreen(object->scratchS32[SCRATCHS32_ORIG_X] >> 16);
 			break;
 		}
 		case 2:
@@ -219,19 +210,7 @@ void ObjGHZPlatform(OBJECT *object)
 			ObjGHZPlatform_Move(object);
 			ObjGHZPlatform_Nudge(object);
 			object->DrawInstance(object->renderFlags, object->texture, object->mappings, object->highPriority, object->priority, object->mappingFrame, object->x.pos, object->y.pos);
-			break;
-		}
-		case 3:
-		{
-			//Respawn when left screen horizontally (emulates how original game does stuff)
-			int16_t xDiff = object->x.pos - gLevel->camera->x;
-			if (xDiff <= -object->widthPixels || xDiff >= gRenderSpec.width + object->widthPixels)
-			{
-				object->xPosLong = object->scratchS16[SCRATCHS16_SPAWN_X] << 16;
-				object->yPosLong = object->scratchS16[SCRATCHS16_SPAWN_Y] << 16;
-				object->subtype = object->scratchU8[SCRATCHU8_SPAWN_TYPE];
-				object->routine = 0;
-			}
+			object->UnloadOffscreen(object->scratchS32[SCRATCHS32_ORIG_X] >> 16);
 			break;
 		}
 	}

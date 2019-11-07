@@ -28,9 +28,9 @@ void ObjPathSwitcher(OBJECT *object)
 			{
 				PLAYER *player = gLevel->playerList[i];
 				if (object->subtype & MASK_VERTICAL)
-					object->playerContact[i].extraBit = player->y.pos >= object->y.pos;
+					object->playerContact[i].objectSpecific = player->y.pos >= object->y.pos;
 				else
-					object->playerContact[i].extraBit = player->x.pos >= object->x.pos;
+					object->playerContact[i].objectSpecific = player->x.pos >= object->x.pos;
 			}
 		}
 //Fallthrough
@@ -47,7 +47,7 @@ void ObjPathSwitcher(OBJECT *object)
 					continue;
 				
 				//Get which side we're on
-				bool newSide = object->playerContact[i].extraBit;
+				bool newSide = object->playerContact[i].objectSpecific;
 				if (object->subtype & MASK_VERTICAL)
 				{
 					if (player->y.pos > object->y.pos)
@@ -64,10 +64,10 @@ void ObjPathSwitcher(OBJECT *object)
 				}
 				
 				//Have we changed sides
-				if (newSide != object->playerContact[i].extraBit)
+				if (newSide != object->playerContact[i].objectSpecific)
 				{
 					//Set our side, path, and priority
-					object->playerContact[i].extraBit = newSide;
+					object->playerContact[i].objectSpecific = newSide;
 					
 					//Check if we're grounded (ground-only?)
 					if ((object->subtype & MASK_GROUND_ONLY) == 0 || !player->status.inAir)
@@ -109,4 +109,6 @@ void ObjPathSwitcher(OBJECT *object)
 			break;
 		}
 	}
+	
+	object->UnloadOffscreen(object->x.pos);
 }

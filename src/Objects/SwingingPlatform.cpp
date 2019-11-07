@@ -9,8 +9,7 @@ enum SCRATCH
 	//S16
 	SCRATCHS16_ORIG_X =	0,
 	SCRATCHS16_ORIG_Y =	1,
-	SCRATCHS16_OFF_Y =	2,
-	SCRATCHS16_MAX =	3,
+	SCRATCHS16_MAX =	2,
 };
 
 void ObjSwingingPlatform_Move_Individual(OBJECT *parent, OBJECT *child, int16_t sin, int16_t cos)
@@ -19,8 +18,12 @@ void ObjSwingingPlatform_Move_Individual(OBJECT *parent, OBJECT *child, int16_t 
 	int16_t origX = parent->scratchS16[SCRATCHS16_ORIG_X];
 	int16_t origY = parent->scratchS16[SCRATCHS16_ORIG_Y];
 	
-	child->x.pos = origX + (cos * child->scratchS16[SCRATCHS16_OFF_Y] / 0x100);
-	child->y.pos = origY + (sin * child->scratchS16[SCRATCHS16_OFF_Y] / 0x100);
+	int16_t pixelLength = child->subtype * 16;
+	if (child == parent)
+		pixelLength -= 8;
+	
+	child->x.pos = origX + (cos * pixelLength / 0x100);
+	child->y.pos = origY + (sin * pixelLength / 0x100);
 }
 
 void ObjSwingingPlatform_Move(OBJECT *object)
@@ -61,7 +64,7 @@ void ObjSwingingPlatform(OBJECT *object)
 			
 			//Get our collision size
 			object->widthPixels = 24;
-			object->heightPixels = 8;
+			object->heightPixels = 32;
 			object->yRadius = 8;
 			
 			//Remember our origin position
@@ -70,7 +73,7 @@ void ObjSwingingPlatform(OBJECT *object)
 			
 			//Create the chain
 			uint8_t chains = object->subtype & 0xF;
-			int16_t yOff = 0;
+			uint8_t yOff = 0;
 			
 			for (int i = 0; i <= chains; i++)
 			{
@@ -80,16 +83,17 @@ void ObjSwingingPlatform(OBJECT *object)
 				newSegment->mappings = gLevel->GetObjectMappings("data/Object/SwingingPlatform.map");
 				newSegment->renderFlags.alignPlane = true;
 				newSegment->widthPixels = 8;
+				newSegment->widthPixels = 32;
 				newSegment->mappingFrame = 1;
 				newSegment->priority = 4;
 				
 				//Set position and routine
 				newSegment->ScratchAllocS16(SCRATCHS16_MAX);
-				newSegment->scratchS16[SCRATCHS16_OFF_Y] = yOff;
+				newSegment->subtype = yOff;
 				newSegment->routine = 2;
 				
 				//Use anchor frame if anchor point
-				if (yOff <= 0)
+				if (yOff++ == 0)
 				{
 					newSegment->mappingFrame = 2;
 					newSegment->priority = 3;
@@ -97,13 +101,10 @@ void ObjSwingingPlatform(OBJECT *object)
 				
 				//Link to children list
 				object->children.link_back(newSegment);
-				
-				//Get next offset
-				yOff += 0x10;
 			}
 			
-			//Set the Y-offset for this too
-			object->scratchS16[SCRATCHS16_OFF_Y] = yOff - 8;
+			//Set the Y-offset for the platform too
+			object->subtype = yOff;
 		}
 	//Fallthrough
 		case 1: //Platform and controller
@@ -113,6 +114,7 @@ void ObjSwingingPlatform(OBJECT *object)
 			ObjSwingingPlatform_Move(object);
 			object->PlatformObject(object->widthPixels, object->yRadius + 1, lastX);
 			object->DrawInstance(object->renderFlags, object->texture, object->mappings, object->highPriority, object->priority, object->mappingFrame, object->x.pos, object->y.pos);
+			object->UnloadOffscreen(object->scratchS16[SCRATCHS16_ORIG_X]);
 			break;
 		}
 		case 2:

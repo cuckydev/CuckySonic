@@ -37,7 +37,7 @@ void ObjMotobug(OBJECT *object)
 		object->routine++;
 		object->renderFlags.alignPlane = true;
 		object->widthPixels = 24;
-		object->heightPixels = 14;
+		object->heightPixels = 32;
 		object->priority = 4;
 		
 		if (object->anim == 0)
@@ -59,10 +59,6 @@ void ObjMotobug(OBJECT *object)
 		{
 			//Fall down to the ground
 			object->MoveAndFall();
-			
-			//If moving upwards (overflow) we're probably bugged, so delete us
-			if (object->yVel < 0)
-				object->deleteFlag = true;
 			
 			//Check for the floor
 			int16_t distance = object->CheckFloorEdge(COLLISIONLAYER_NORMAL_TOP, object->x.pos, object->y.pos, nullptr);
@@ -133,14 +129,15 @@ void ObjMotobug(OBJECT *object)
 			}
 			
 			//Animate and draw
-			object->Animate(animationList);
+			object->Animate_S1(animationList);
 			object->DrawInstance(object->renderFlags, object->texture, object->mappings, object->highPriority, object->priority, object->mappingFrame, object->x.pos, object->y.pos);
+			object->UnloadOffscreen(object->x.pos);
 			break;
 		}
 		case 3: //Smoke
 		{
 			//Animate and draw
-			object->Animate(animationList);
+			object->Animate_S1(animationList);
 			object->DrawInstance(object->renderFlags, object->texture, object->mappings, object->highPriority, object->priority, object->mappingFrame, object->x.pos, object->y.pos);
 			break;
 		}

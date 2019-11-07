@@ -117,8 +117,7 @@ class PLAYER
 			bool xFlip : 1;
 			bool yFlip : 1;
 			bool alignPlane : 1;
-			bool onScreenUseHeightPixels : 1;
-			bool onScreen : 1;
+			bool isOnscreen : 1;
 		} renderFlags;
 		
 		bool isDrawing;
@@ -420,7 +419,7 @@ class PLAYER
 		bool TouchResponseObject(OBJECT *object, int16_t playerLeft, int16_t playerTop, int16_t playerWidth, int16_t playerHeight);
 		void TouchResponse();
 		
-		void AttachToObject(OBJECT *object, bool *standingBit);
+		void AttachToObject(OBJECT *object, size_t i);
 		void MoveOnPlatform(OBJECT *platform, int16_t height, int16_t lastXPos);
 		
 		void GiveSpeedShoes();

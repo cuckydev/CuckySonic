@@ -17,7 +17,7 @@ OBJECTFUNCTION objFuncSonic1[] = {
 	nullptr, nullptr, nullptr, &ObjPathSwitcher, nullptr, nullptr, nullptr, nullptr,
 	nullptr, nullptr, nullptr, nullptr, nullptr, &ObjGoalpost, nullptr, nullptr,
 	nullptr, &ObjBridge, nullptr, nullptr, nullptr, &ObjSwingingPlatform, nullptr, nullptr,
-	&ObjGHZPlatform, nullptr, nullptr, nullptr, &ObjSonic1Scenery, nullptr, nullptr, nullptr,
+	&ObjGHZPlatform, nullptr, nullptr, nullptr, &ObjSonic1Scenery, nullptr, nullptr, &ObjCrabmeat,
 	nullptr, nullptr, nullptr, nullptr, nullptr, &ObjRingSpawner, &ObjMonitor, nullptr,
 	nullptr, nullptr, nullptr, &ObjChopper, nullptr, nullptr, nullptr, nullptr,
 	nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
@@ -388,6 +388,7 @@ bool LEVEL::LoadObjects(LEVELTABLE *tableEntry)
 			
 			for (int i = 0; i < objects; i++)
 			{
+				//Read data from the file
 				int16_t xPos = ReadFile_BE16(objectFile);
 				int16_t word2 = ReadFile_BE16(objectFile);
 				int16_t yPos = word2 & 0x0FFF;
@@ -395,33 +396,47 @@ bool LEVEL::LoadObjects(LEVELTABLE *tableEntry)
 				uint8_t id = ReadFile_Byte(objectFile);
 				uint8_t subtype = ReadFile_Byte(objectFile);
 				
+				//Read flags from word2
+				bool releaseDestroyed;
+				bool yFlip = (word2 & 0x8000) != 0;
+				bool xFlip = (word2 & 0x4000) != 0;
+				
 				if (tableEntry->objectFormat == OBJECTFORMAT_SONIC1)
+				{
+					//Release destroyed is stored as the highest significant bit of the id in Sonic 1
+					releaseDestroyed = (id & 0x80) != 0;
 					id &= 0x7F;
-				
-				//Create a new object with the loaded information
-				OBJECT *newObject = new OBJECT(tableEntry->objectFunctionList[id]);
-				if (newObject->fail)
-				{
-					Error(fail = newObject->fail);
-					return true;
-				}
-				
-				newObject->x.pos = xPos;
-				newObject->y.pos = yPos;
-				
-				if (tableEntry->objectFormat == OBJECTFORMAT_SONIC1)
-				{
-					newObject->status.yFlip = (word2 & 0x8000) != 0;
-					newObject->status.xFlip = (word2 & 0x4000) != 0;
 				}
 				else
 				{
-					newObject->status.yFlip = (word2 & 0x4000) != 0;
-					newObject->status.xFlip = (word2 & 0x2000) != 0;
+					//Release destroyed is stored as the highest significant bit of word2 in Sonic 2
+					releaseDestroyed = (word2 & 0x8000) != 0;
 				}
 				
-				newObject->subtype = subtype;
-				objectList.link_back(newObject);
+				if (tableEntry->objectFormat == OBJECTFORMAT_SONIC1)
+				{
+					yFlip = (word2 & 0x8000) != 0;
+					xFlip = (word2 & 0x4000) != 0;
+				}
+				else
+				{
+					yFlip = (word2 & 0x4000) != 0;
+					xFlip = (word2 & 0x2000) != 0;
+				}
+				
+				//Create and link object load from data
+				OBJECT_LOAD *objectLoad = new OBJECT_LOAD;
+				objectLoad->function = tableEntry->objectFunctionList[id];
+				objectLoad->status = {xFlip, yFlip, releaseDestroyed, false, false};
+				objectLoad->xPosLong = xPos << 16;
+				objectLoad->yPosLong = yPos << 16;
+				objectLoad->subtype = subtype;
+				
+				objectLoad->loaded = nullptr;
+				objectLoad->loadRange = false;
+				objectLoad->specificBit = false;
+				
+				gLevel->objectLoadList.link_back(objectLoad);
 			}
 		}
 	}
@@ -452,20 +467,21 @@ bool LEVEL::LoadObjects(LEVELTABLE *tableEntry)
 		
 		for (int v = 0; v <= (type & 0x7); v++)
 		{
-			//Create ring object
-			OBJECT *newObject = new OBJECT(&ObjRing);
-			if (newObject->fail)
-			{
-				Error(fail = newObject->fail);
-				CloseFile(ringFile);
-				return true;
-			}
+			//Create and link object load from data
+			OBJECT_LOAD *objectLoad = new OBJECT_LOAD;
+			objectLoad->function = &ObjRing;
+			objectLoad->status = {false, false, false, false, false};
+			objectLoad->xPosLong = xPos << 16;
+			objectLoad->yPosLong = yPos << 16;
+			objectLoad->subtype = 0;
 			
-			newObject->x.pos = xPos;
-			newObject->y.pos = yPos;
-			objectList.link_back(newObject);
+			objectLoad->loaded = nullptr;
+			objectLoad->loadRange = false;
+			objectLoad->specificBit = false;
 			
-			//Offset
+			gLevel->objectLoadList.link_back(objectLoad);
+			
+			//Offset next position
 			if (type & 0x8)
 				yPos += 0x18;
 			else
@@ -543,6 +559,7 @@ void LEVEL::UnloadAll()
 	CLEAR_INSTANCE_LINKEDLIST(playerList);
 	CLEAR_INSTANCE_LINKEDLIST(objectList);
 	CLEAR_INSTANCE_LINKEDLIST(coreObjectList);
+	CLEAR_INSTANCE_LINKEDLIST(objectLoadList);
 	
 	if (camera != nullptr)
 		delete camera;
@@ -716,6 +733,9 @@ LEVEL::LEVEL(int id, const char *players[])
 	
 	//Initialize scores
 	InitializeScores();
+	
+	//Load objects near us
+	CheckObjectLoad();
 	
 	//Run players code (with input reset)
 	ClearControllerInput();
@@ -959,6 +979,82 @@ MAPPINGS *LEVEL::GetObjectMappings(const char *path)
 	return newMappings;
 }
 
+//Object load functions
+OBJECT_LOAD *LEVEL::GetObjectLoad(OBJECT *object)
+{
+	//Return the object load that holds our object or nullptr
+	for (size_t i = 0; i < objectLoadList.size(); i++)
+		if (objectLoadList[i]->loaded == object)
+			return objectLoadList[i];
+	return nullptr;
+}
+
+void LEVEL::LinkObjectLoad(OBJECT *object)
+{
+	//Define our object load struct and link it
+	OBJECT_LOAD *objectLoad = new OBJECT_LOAD;
+	objectLoad->function = object->function;
+	objectLoad->status = object->status;
+	objectLoad->xPosLong = object->xPosLong;
+	objectLoad->yPosLong = object->yPosLong;
+	objectLoad->subtype = object->subtype;
+	
+	objectLoad->loaded = object;
+	objectLoad->loadRange = false;
+	objectLoad->specificBit = false;
+	
+	objectLoadList.link_back(objectLoad);
+}
+
+void LEVEL::ReleaseObjectLoad(OBJECT *object)
+{
+	//Remove object from object load list
+	for (size_t i = 0; i < objectLoadList.size(); i++)
+	{
+		if (objectLoadList[i]->loaded == object)
+			objectLoadList.erase(i--);
+	}
+}
+
+void LEVEL::UnrefObjectLoad(OBJECT *object)
+{
+	//Remove references to object
+	for (size_t i = 0; i < objectLoadList.size(); i++)
+	{
+		if (objectLoadList[i]->loaded == object)
+			objectLoadList[i--]->loaded = nullptr;
+	}
+}
+
+void LEVEL::CheckObjectLoad()
+{
+	//Check all object loads if they should be loaded
+	for (size_t i = 0; i < objectLoadList.size(); i++)
+	{
+		//Check if this object load is in load range
+		uint16_t xOff = (objectLoadList[i]->x.pos & 0xFF80) - ((camera->x - 0x80) & 0xFF80);
+		bool isLoadRange = xOff <= upperRound(0x80 + gRenderSpec.width + 0x80, 0x80);
+		
+		//Check if we're just now in range, and load object if so
+		if (isLoadRange == true && objectLoadList[i]->loadRange == false && objectLoadList[i]->loaded == nullptr)
+		{
+			//Load the object if in-range
+			OBJECT *newObject = new OBJECT(objectLoadList[i]->function);
+			newObject->status = objectLoadList[i]->status;
+			newObject->xPosLong = objectLoadList[i]->xPosLong;
+			newObject->yPosLong = objectLoadList[i]->yPosLong;
+			newObject->subtype = objectLoadList[i]->subtype;
+			objectLoadList[i]->loaded = newObject;
+			
+			gLevel->objectList.link_back(newObject);
+		}
+		
+		//Update the object load's state
+		objectLoadList[i]->loadRange = isLoadRange;
+	}
+}
+
+//Object layer function
 LEVEL_RENDERLAYER LEVEL::GetObjectLayer(bool highPriority, int priority)
 {
 	return (LEVEL_RENDERLAYER)(highPriority ? (LEVEL_RENDERLAYER_OBJECT_HIGH_0 + priority) : (LEVEL_RENDERLAYER_OBJECT_LOW_0 + priority));
@@ -1240,7 +1336,8 @@ bool LEVEL::Update()
 	if (playerList.size())
 		DynamicEvents();
 	
-	//Update all other level stuff
+	//Load objects and update oscillatory values
+	CheckObjectLoad();
 	OscillatoryUpdate();
 	
 	//Increase our time

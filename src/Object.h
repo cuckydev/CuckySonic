@@ -50,6 +50,17 @@ struct OBJECT_RENDERFLAGS
 	bool xFlip : 1;
 	bool yFlip : 1;
 	bool alignPlane : 1;
+	bool isOnscreen : 1;
+};
+
+struct OBJECT_STATUS
+{
+	//Properties to load from
+	bool xFlip : 1;				//Set if facing left
+	bool yFlip : 1;				//In the air
+	bool releaseDestroyed : 1;	//Don't reload if destroyed (enemies)
+	bool noBalance : 1;			//Set to make sure players don't balance on us
+	bool objectSpecific : 1;	//Used for anything any specific object wants
 };
 
 struct OBJECT_SOLIDTOUCH
@@ -82,16 +93,14 @@ class OBJECT_DRAWINSTANCE
 class OBJECT
 {
 	public:
-		//Fail
+		//Failure
 		const char *fail;
 		
 		//Object sub-type
-		int subtype;
+		unsigned int subtype;
 		
 		//Rendering stuff
 		OBJECT_RENDERFLAGS renderFlags;
-		
-		//Drawing instances
 		LINKEDLIST<OBJECT_DRAWINSTANCE*> drawInstances;
 		
 		//Our texture and mappings
@@ -105,15 +114,15 @@ class OBJECT
 		//Speeds
 		int16_t xVel;		//Global X-velocity
 		int16_t yVel;		//Global Y-velocity
-		int16_t inertia;	//Horizontal velocity (on ground)
+		int16_t inertia;	//Generic horizontal velocity
 		
-		//Collision box size
-		uint8_t xRadius;
-		uint8_t yRadius;
+		//Collision properties
+		int16_t xRadius;
+		int16_t yRadius;
 		
 		COLLISIONTYPE collisionType;
-		uint8_t touchWidth;
-		uint8_t touchHeight;
+		int16_t touchWidth;
+		int16_t touchHeight;
 		
 		struct
 		{
@@ -125,39 +134,39 @@ class OBJECT
 		
 		//Sprite properties
 		bool highPriority;					//Drawn above the foreground
-		uint8_t priority;					//Priority of sprite when drawing
-		uint8_t widthPixels, heightPixels;	//Width and height of sprite in pixels (used for on screen checking and balancing)
+		unsigned int priority;					//Priority of sprite when drawing
+		int16_t widthPixels, heightPixels;	//Width and height of sprite in pixels (used for on screen checking and balancing)
 		
 		//Animation and mapping
-		uint16_t mappingFrame;
+		unsigned int mappingFrame;
 		
-		uint16_t animFrame;
-		int anim;
-		int prevAnim;
-		int16_t animFrameDuration;
+		unsigned int animFrame;
+		unsigned int anim;
+		unsigned int prevAnim;
+		signed int animFrameDuration;
 		
 		//Our status
-		struct
-		{
-			bool xFlip : 1;				//Set if facing left
-			bool yFlip : 1;				//In the air
-			bool noBalance : 1;			//Set to make sure players don't balance on us
-		} status;
+		OBJECT_STATUS status;
 		
 		//Player contact status
 		struct
 		{
-			bool standing;
-			bool pushing;
-			bool extraBit;
+			bool standing : 1;
+			bool pushing : 1;
+			bool objectSpecific : 1;
 		} playerContact[OBJECT_PLAYER_REFERENCES];
 		
+		//Routine
 		uint8_t routine;			//Routine
 		uint8_t routineSecondary;	//Routine Secondary
-		uint8_t respawnIndex;		//Index of this object in the respawn table, this is to not respawn unloaded enemies / monitors
 		
 		uint8_t angle;	//Angle
-		void *parent;	//Our parent object or player
+		union //Parent
+		{
+			void *parent;
+			OBJECT *parentObject;
+			PLAYER *parentPlayer;
+		};
 		
 		//Children linked list
 		LINKEDLIST<OBJECT*> children;
@@ -170,17 +179,19 @@ class OBJECT
 		uint32_t *scratchU32;
 		 int32_t *scratchS32;
 		
-		//Object delete flag
-		bool deleteFlag;
-		
 		//Our object-specific function
 		OBJECTFUNCTION function;
 		OBJECTFUNCTION prevFunction;
 		
+		//Delete flag
+		bool deleteFlag : 1;
+		
 	public:
+		//Constructor and destructor
 		OBJECT(OBJECTFUNCTION object);
 		~OBJECT();
 		
+		//Scratch allocation functions
 		void  ScratchAllocU8(size_t max);
 		void  ScratchAllocS8(size_t max);
 		void ScratchAllocU16(size_t max);
@@ -188,14 +199,24 @@ class OBJECT
 		void ScratchAllocU32(size_t max);
 		void ScratchAllocS32(size_t max);
 		
+		//Generic object functions
 		void Move();
 		void MoveAndFall();
 		
-		bool Hurt(PLAYER *player);
-		
 		void Animate(const uint8_t **animationList);
+		void Animate_S1(const uint8_t **animationList);
+		
 		int16_t CheckFloorEdge(COLLISIONLAYER layer, int16_t xPos, int16_t yPos, uint8_t *outAngle);
 		
+		void DrawInstance(OBJECT_RENDERFLAGS iRenderFlags, TEXTURE *iTexture, MAPPINGS *iMappings, bool iHighPriority, uint8_t iPriority, uint16_t iMappingFrame, int16_t iXPos, int16_t iYPos);
+		
+		void UnloadOffscreen(int16_t xPos);
+		
+		//Object interaction functions
+		bool Hurt(PLAYER *player);
+		void ClearSolidContact();
+		
+		//Player solid contact functions
 		void PlatformObject(int16_t width, int16_t height, int16_t lastXPos);
 		bool LandOnPlatform(PLAYER *player, size_t i, int16_t width1, int16_t width2, int16_t height, int16_t lastXPos);
 		void ExitPlatform(PLAYER *player, size_t i);
@@ -204,9 +225,7 @@ class OBJECT
 		void SolidObjectCont(OBJECT_SOLIDTOUCH *solidTouch, PLAYER *player, size_t i, int16_t width, int16_t height, int16_t lastXPos);
 		void SolidObjectClearPush(PLAYER *player, size_t i);
 		
-		void ClearSolidContact();
-		
+		//Main update and draw functions
 		bool Update();
-		void DrawInstance(OBJECT_RENDERFLAGS iRenderFlags, TEXTURE *iTexture, MAPPINGS *iMappings, bool iHighPriority, uint8_t iPriority, uint16_t iMappingFrame, int16_t iXPos, int16_t iYPos);
 		void Draw();
 };

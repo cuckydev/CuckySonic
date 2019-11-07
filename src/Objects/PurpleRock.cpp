@@ -20,6 +20,7 @@ void ObjPurpleRock(OBJECT *object)
 			//Set render properties
 			object->renderFlags.alignPlane = true;
 			object->widthPixels = 19;
+			object->heightPixels = 32;
 			object->priority = 4;
 		}
 	//Fallthrough
@@ -28,6 +29,7 @@ void ObjPurpleRock(OBJECT *object)
 			//Act as solid and draw to screen
 			object->SolidObject(27, 16, 16, object->x.pos);
 			object->DrawInstance(object->renderFlags, object->texture, object->mappings, object->highPriority, object->priority, object->mappingFrame, object->x.pos, object->y.pos);
+			object->UnloadOffscreen(object->x.pos);
 			break;
 		}
 	}

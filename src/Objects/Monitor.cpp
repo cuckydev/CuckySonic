@@ -88,7 +88,7 @@ static const uint8_t animationRing[] =			{0x07,0x00,0x04,0x04,0x01,0x04,0x04,0xF
 static const uint8_t animationSpeedShoes[] =	{0x07,0x00,0x05,0x05,0x01,0x05,0x05,0xFF};
 static const uint8_t animationShield[] =		{0x07,0x00,0x06,0x06,0x01,0x06,0x06,0xFF};
 static const uint8_t animationInvincibility[] =	{0x07,0x00,0x07,0x07,0x01,0x07,0x07,0xFF};
-static const uint8_t animationBroken[] =		{0x02,0x00,0x01,0x08,0xFE,0x01};
+static const uint8_t animationBroken[] =		{0x02,0x00,0x01,0x08,0xFE,0x01}; //static 1, static 2, > broken <
 
 static const uint8_t *animationList[] = {
 	animationStatic,
@@ -120,6 +120,7 @@ void ObjMonitorContents(OBJECT *object)
 			object->highPriority = true;
 			object->priority = 3;
 			object->widthPixels = 8;
+			object->heightPixels = 32;
 			object->yVel = -0x300;
 			
 			//Get our mapping frame (anim + 1 stupid dumb)
@@ -216,13 +217,24 @@ void ObjMonitor(OBJECT *object)
 			object->widthPixels = 15;
 			object->heightPixels = 14;
 			
-			//Setup our collision
-			object->collisionType = COLLISIONTYPE_MONITOR;
-			object->touchWidth = 16;
-			object->touchHeight = 16;
-			
-			//Set our animation
-			object->anim = zoneItemByZone[gLevel->zone][object->subtype];
+			//Set our animation / state
+			if (gLevel->GetObjectLoad(object)->specificBit)
+			{
+				//Broken
+				object->routine = 3;
+				object->anim = MONITOR_ITEM_BROKEN;
+				return;
+			}
+			else
+			{
+				//Setup our collision
+				object->collisionType = COLLISIONTYPE_MONITOR;
+				object->touchWidth = 16;
+				object->touchHeight = 16;
+				
+				//Use subtype animation
+				object->anim = zoneItemByZone[gLevel->zone][object->subtype];
+			}
 		}
 	//Fallthrough
 		case 1: //Not broken
@@ -247,6 +259,7 @@ void ObjMonitor(OBJECT *object)
 			ObjMonitor_SolidObject(object);
 			object->DrawInstance(object->renderFlags, object->texture, object->mappings, object->highPriority, object->priority, object->mappingFrame, object->x.pos, object->y.pos);
 			object->Animate(animationList);
+			object->UnloadOffscreen(object->x.pos);
 			break;
 		}
 		case 2: //Breaking from contact
@@ -274,6 +287,7 @@ void ObjMonitor(OBJECT *object)
 			gLevel->objectList.link_back(explosion);
 			
 			//Set to broken animation and draw
+			gLevel->GetObjectLoad(object)->specificBit = true;
 			object->anim = MONITOR_ITEM_BROKEN;
 			object->DrawInstance(object->renderFlags, object->texture, object->mappings, object->highPriority, object->priority, object->mappingFrame, object->x.pos, object->y.pos);
 			break;
@@ -283,6 +297,7 @@ void ObjMonitor(OBJECT *object)
 			//Draw and animate
 			object->DrawInstance(object->renderFlags, object->texture, object->mappings, object->highPriority, object->priority, object->mappingFrame, object->x.pos, object->y.pos);
 			object->Animate(animationList);
+			object->UnloadOffscreen(object->x.pos);
 			break;
 		}
 	}

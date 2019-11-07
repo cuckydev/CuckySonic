@@ -14,6 +14,7 @@ void ObjBridgeSegment(OBJECT *object)
 		object->routine++;
 		object->renderFlags.alignPlane = true;
 		object->widthPixels = 8;
+		object->heightPixels = 32;
 		object->priority = 3;
 		
 		//Load graphics
@@ -60,12 +61,13 @@ void ObjBridge(OBJECT *object)
 			object->priority = 3;
 			object->renderFlags.alignPlane = true;
 			object->widthPixels = 128;
+			object->heightPixels = 32;
 			
 			//Get our type properties
 			int16_t bridgeLeft = object->x.pos - (object->subtype * 8);
 			
 			//Create our log segments
-			for (int i = 0; i < object->subtype; i++)
+			for (unsigned int i = 0; i < object->subtype; i++)
 			{
 				OBJECT *newSegment = new OBJECT(&ObjBridgeSegment);
 				newSegment->x.pos = bridgeLeft + 16 * i;
@@ -80,9 +82,9 @@ void ObjBridge(OBJECT *object)
 			//ex. 2, 4, 6, 8, 8, 6, 4, 2
 			uint8_t depressForce[0x100];
 			
-			for (int i = 0, v = 0; i < object->subtype / 2; i++)
+			for (unsigned int i = 0, v = 0; i < object->subtype / 2; i++)
 				depressForce[i] = (v += 2);
-			for (int i = object->subtype - 1, v = 0; i >= object->subtype / 2; i--)
+			for (unsigned int i = object->subtype - 1, v = 0; i >= object->subtype / 2; i--)
 				depressForce[i] = (v += 2);
 			
 			//Is a player standing on us?
@@ -195,6 +197,8 @@ void ObjBridge(OBJECT *object)
 					}
 				}
 			}
+			
+			object->UnloadOffscreen(object->x.pos);
 			break;
 		}
 	}

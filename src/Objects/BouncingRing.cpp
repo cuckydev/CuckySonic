@@ -8,7 +8,7 @@
 #include "../Audio.h"
 #include "../MathUtil.h"
 
-//#define BOUNCINGRING_BLINK	//When set, the rings will blink shortly before it despawns
+//#define BOUNCINGRING_BLINK	//When set, the rings will blink shortly before despawning
 
 static const uint8_t animationCollect[] =	{0x05,0x04,0x05,0x06,0x07,0xFC};
 
@@ -16,17 +16,7 @@ static const uint8_t *animationList[] = {
 	animationCollect,
 };
 
-enum SCRATCH
-{
-	//U8
-	SCRATCHU8_ANIM_COUNT = 0,
-	SCRATCHU8_MAX = 1,
-	//U16
-	SCRATCHU16_ANIM_ACCUM = 0,
-	SCRATCHU16_MAX = 1,
-};
-
-void ObjBouncingRing_Routine0(OBJECT *object)
+void ObjBouncingRing_Spawner(OBJECT *object)
 {
 	//Cap our rings
 	unsigned int *rings = &gRings;
@@ -58,28 +48,10 @@ void ObjBouncingRing_Routine0(OBJECT *object)
 	{
 		//Create the ring object
 		OBJECT *ring = new OBJECT(&ObjBouncingRing);
-		ring->routine = 1;
-		ring->xRadius = 8;
-		ring->yRadius = 8;
-		ring->widthPixels = 8;
+		ring->parent = object->parent;
 		ring->x.pos = object->x.pos;
 		ring->y.pos = object->y.pos;
-		ring->texture = gLevel->GetObjectTexture("data/Object/Ring.bmp");
-		ring->mappings = gLevel->GetObjectMappings("data/Object/Ring.map");
-		ring->renderFlags.xFlip = false;
-		ring->renderFlags.yFlip = false;
-		ring->renderFlags.alignPlane = true;
-		ring->priority = 3;
-		ring->collisionType = COLLISIONTYPE_OTHER;
-		ring->touchWidth = 6;
-		ring->touchHeight = 6;
-		
-		ring->ScratchAllocU8(SCRATCHU8_MAX);
-		ring->ScratchAllocU16(SCRATCHU16_MAX);
-		ring->scratchU8[SCRATCHU8_ANIM_COUNT] = 0xFF;
-		ring->scratchU16[SCRATCHU16_ANIM_ACCUM] = 0x00;
-		
-		ring->parent = object->parent;
+		gLevel->objectList.link_back(ring);
 		
 		//Get the ring's velocity
 		if (angleSpeed >= 0)
@@ -106,14 +78,11 @@ void ObjBouncingRing_Routine0(OBJECT *object)
 		ring->xVel = xVel;
 		ring->yVel = yVel;
 		
-		//Link ring to object list
-		gLevel->objectList.link_back(ring);
-		
 		xVel = -xVel;
 		angleSpeed = -angleSpeed;
 	}
 	
-	//Clear our rings and delete the spawner
+	//Clear our rings and delete us
 	PlaySound(SOUNDID_RING_LOSS);
 	*rings = 0;
 	object->deleteFlag = true;
@@ -121,7 +90,17 @@ void ObjBouncingRing_Routine0(OBJECT *object)
 
 void ObjBouncingRing(OBJECT *object)
 {
-	//Allocate scratch memory
+	//Scratch
+	enum SCRATCH
+	{
+		//U8
+		SCRATCHU8_ANIM_COUNT = 0,
+		SCRATCHU8_MAX = 1,
+		//U16
+		SCRATCHU16_ANIM_ACCUM = 0,
+		SCRATCHU16_MAX = 1,
+	};
+	
 	object->ScratchAllocU8(SCRATCHU8_MAX);
 	object->ScratchAllocU16(SCRATCHU16_MAX);
 	
@@ -129,9 +108,28 @@ void ObjBouncingRing(OBJECT *object)
 	{
 		case 0:
 		{
-			ObjBouncingRing_Routine0(object);
-			break;
+			//Initialize collision
+			object->xRadius = 8;
+			object->yRadius = 8;
+			
+			//Initialize render properties and load graphics
+			object->widthPixels = 8;
+			object->texture = gLevel->GetObjectTexture("data/Object/Ring.bmp");
+			object->mappings = gLevel->GetObjectMappings("data/Object/Ring.map");
+			object->renderFlags.alignPlane = true;
+			object->priority = 3;
+			
+			//Initialize collision with Sonic and other properties
+			object->collisionType = COLLISIONTYPE_OTHER;
+			object->touchWidth = 6;
+			object->touchHeight = 6;
+			
+			object->scratchU8[SCRATCHU8_ANIM_COUNT] = 0xFF;
+			object->scratchU16[SCRATCHU16_ANIM_ACCUM] = 0x00;
+			
+			object->routine++;
 		}
+	//Fallthrough
 		case 1:
 		{
 			//Move and fall
@@ -208,10 +206,11 @@ void ObjBouncingRing(OBJECT *object)
 			if (object->scratchU8[SCRATCHU8_ANIM_COUNT] == 0)
 				object->deleteFlag = true;
 			else
-			#ifdef BOUNCINGRING_BLINK
-				if (object->scratchU8[SCRATCHU8_ANIM_COUNT] > 60 || gLevel->frameCounter & (object->scratchU8[SCRATCHU8_ANIM_COUNT] > 30 ? 0x4 : 0x2))
-			#endif
-					object->DrawInstance(object->renderFlags, object->texture, object->mappings, object->highPriority, object->priority, object->mappingFrame, object->x.pos, object->y.pos);
+			
+		#ifdef BOUNCINGRING_BLINK
+			if (object->scratchU8[SCRATCHU8_ANIM_COUNT] > 60 || gLevel->frameCounter & (object->scratchU8[SCRATCHU8_ANIM_COUNT] > 30 ? 0x4 : 0x2))
+		#endif
+				object->DrawInstance(object->renderFlags, object->texture, object->mappings, object->highPriority, object->priority, object->mappingFrame, object->x.pos, object->y.pos);
 			break;
 		}
 		case 2: //Touched player, collect a ring
