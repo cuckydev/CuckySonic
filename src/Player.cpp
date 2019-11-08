@@ -5074,13 +5074,42 @@ void PLAYER::AttachToObject(OBJECT *object, size_t i)
 	}
 }
 
-void PLAYER::MoveOnPlatform(OBJECT *platform, int16_t height, int16_t lastXPos)
+void PLAYER::MoveOnPlatform(OBJECT *platform, int16_t width, int16_t height, int16_t lastXPos, const int8_t *slope, bool doubleSlope)
 {
+	//Get our top with or without slope
 	int top;
-	if (status.reverseGravity)
-		top = platform->y.pos + height;
+	
+	if (slope == nullptr)
+	{
+		if (status.reverseGravity)
+			top = platform->y.pos + height;
+		else
+			top = platform->y.pos - height;
+	}
 	else
-		top = platform->y.pos - height;
+	{
+		if (!status.shouldNotFall) //????
+			return;
+		
+		//Get our x-position on the platform for getting the slope
+		int16_t xDiff = (x.pos - lastXPos) + width;
+		if (platform->renderFlags.xFlip)
+			xDiff = (~xDiff) + (width * 2);
+		
+		//Offset using the appropriate slope
+		if (doubleSlope)
+		{
+			//Double xDiff because slope will be interleaved, and if reverse gravity, use the bottom slope
+			xDiff *= 2;
+			if (status.reverseGravity)
+				xDiff++;
+		}
+		
+		if (status.reverseGravity)
+			top = platform->y.pos + (height + slope[xDiff]);
+		else
+			top = platform->y.pos - (height + slope[xDiff]);
+	}
 	
 	//Check if we're in an intangible state
 	if (objectControl.disableObjectInteract || routine == PLAYERROUTINE_DEATH || debug != 0)

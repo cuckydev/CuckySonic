@@ -187,7 +187,7 @@ void ObjBridge(OBJECT *object)
 				{
 					//Check to land onto the bridge
 					int16_t standingLog = ((player->x.pos - object->x.pos) + bridgeWidth) / 16;
-					object->LandOnPlatform(player, i, bridgeWidth, bridgeWidthSecondary, 8, object->x.pos);
+					object->LandOnPlatform(player, i, bridgeWidth, bridgeWidthSecondary, 8, object->x.pos, nullptr);
 					
 					if (object->playerContact[i].standing)
 					{

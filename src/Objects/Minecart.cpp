@@ -166,7 +166,7 @@ void ObjMinecart(OBJECT *object)
 			}
 			
 			//Act as a solid and be pushed
-			OBJECT_SOLIDTOUCH solid = object->SolidObject(object->xRadius + 8, 16, 6, lastX);
+			OBJECT_SOLIDTOUCH solid = object->SolidObject(object->xRadius + 8, 16, 6, lastX, true, nullptr, false);
 			
 			for (size_t v = 0; v < gLevel->playerList.size(); v++)
 			{
@@ -277,7 +277,7 @@ void ObjMinecart(OBJECT *object)
 				
 				if (object->playerContact[i].standing)
 				{
-					object->ExitPlatform(player, i);
+					object->ExitPlatform(player, i, true);
 					player->routine = PLAYERROUTINE_HURT;
 					player->anim = PLAYERANIMATION_SLIDE;
 					player->xVel = object->xVel * 2;

@@ -17,7 +17,7 @@ void ObjMonitor_ChkOverEdge(OBJECT *object, int i, PLAYER *player)
 	
 	if (!player->status.inAir && xDiff >= 0 && xDiff < MONITOR_WIDTH * 2)
 	{
-		player->MoveOnPlatform(object, MONITOR_HEIGHT + 1, object->x.pos);
+		player->MoveOnPlatform(object, MONITOR_WIDTH, MONITOR_HEIGHT + 1, object->x.pos, nullptr, false);
 		return;
 	}
 	
@@ -34,7 +34,7 @@ void ObjMonitor_SolidObject_Lead(OBJECT *object, int i, PLAYER *player)
 	if (object->playerContact[i].standing)
 		ObjMonitor_ChkOverEdge(object, i, player);
 	else if (player->anim != PLAYERANIMATION_ROLL && player->anim != PLAYERANIMATION_DROPDASH)
-		object->SolidObjectCont(nullptr, player, i, MONITOR_WIDTH, MONITOR_HEIGHT, object->x.pos);
+		object->SolidObjectCont(nullptr, player, i, MONITOR_WIDTH, MONITOR_HEIGHT, object->x.pos, nullptr, false);
 }
 
 void ObjMonitor_SolidObject_Follower(OBJECT *object, int i, PLAYER *player)
@@ -43,7 +43,7 @@ void ObjMonitor_SolidObject_Follower(OBJECT *object, int i, PLAYER *player)
 	if (object->playerContact[i].standing)
 		ObjMonitor_ChkOverEdge(object, i, player);
 	else
-		object->SolidObjectCont(nullptr, player, i, MONITOR_WIDTH, MONITOR_HEIGHT, object->x.pos);
+		object->SolidObjectCont(nullptr, player, i, MONITOR_WIDTH, MONITOR_HEIGHT, object->x.pos, nullptr, false);
 }
 
 void ObjMonitor_SolidObject(OBJECT *object)

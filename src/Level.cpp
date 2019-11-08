@@ -17,7 +17,7 @@ OBJECTFUNCTION objFuncSonic1[] = {
 	nullptr, nullptr, nullptr, &ObjPathSwitcher, nullptr, nullptr, nullptr, nullptr,
 	nullptr, nullptr, nullptr, nullptr, nullptr, &ObjGoalpost, nullptr, nullptr,
 	nullptr, &ObjBridge, nullptr, nullptr, nullptr, &ObjSwingingPlatform, nullptr, nullptr,
-	&ObjGHZPlatform, nullptr, nullptr, nullptr, &ObjSonic1Scenery, nullptr, nullptr, &ObjCrabmeat,
+	&ObjGHZPlatform, nullptr, &ObjGHZLedge, nullptr, &ObjSonic1Scenery, nullptr, nullptr, &ObjCrabmeat,
 	nullptr, nullptr, nullptr, nullptr, nullptr, &ObjRingSpawner, &ObjMonitor, nullptr,
 	nullptr, nullptr, nullptr, &ObjChopper, nullptr, nullptr, nullptr, nullptr,
 	nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,

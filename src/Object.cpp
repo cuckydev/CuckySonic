@@ -282,7 +282,7 @@ void OBJECT::ClearSolidContact()
 
 
 //Object collision functions
-void OBJECT::PlatformObject(int16_t width, int16_t height, int16_t lastXPos)
+void OBJECT::PlatformObject(int16_t width, int16_t height, int16_t lastXPos, bool setAirOnExit, const int8_t *slope)
 {
 	for (size_t i = 0; i < gLevel->playerList.size(); i++)
 	{
@@ -296,24 +296,33 @@ void OBJECT::PlatformObject(int16_t width, int16_t height, int16_t lastXPos)
 			int16_t xDiff = player->x.pos - lastXPos + width;
 			
 			if (!player->status.inAir && xDiff >= 0 && xDiff < width * 2)
-				player->MoveOnPlatform(this, height, lastXPos);
+				player->MoveOnPlatform(this, width, height, lastXPos, slope, false);
 			else
-				ExitPlatform(player, i);
+				ExitPlatform(player, i, setAirOnExit);
 		}
 		else
 		{
 			//Check if we're going to land on the platform
-			LandOnPlatform(player, i, width, width * 2, height, lastXPos);
+			LandOnPlatform(player, i, width, width * 2, height, lastXPos, slope);
 		}
 	}
 }
 
-bool OBJECT::LandOnPlatform(PLAYER *player, size_t i, int16_t width1, int16_t width2, int16_t height, int16_t lastXPos)
+bool OBJECT::LandOnPlatform(PLAYER *player, size_t i, int16_t width1, int16_t width2, int16_t height, int16_t lastXPos, const int8_t *slope)
 {
 	//Check if we're in a state where we can enter onto the platform
 	int16_t xDiff = (player->x.pos - lastXPos) + width1;
 	if (player->yVel < 0 || xDiff < 0 || xDiff >= width2)
 		return false;
+	
+	//Handle slope
+	if (slope != nullptr)
+	{
+		//Flip xDiff if xFlip (of renderflags for some reason) is set and get our slope
+		if (renderFlags.xFlip)
+			xDiff = (~xDiff) + width2;
+		height += slope[xDiff];
+	}
 	
 	if (player->status.reverseGravity)
 	{
@@ -347,15 +356,16 @@ bool OBJECT::LandOnPlatform(PLAYER *player, size_t i, int16_t width1, int16_t wi
 	}
 }
 
-void OBJECT::ExitPlatform(PLAYER *player, size_t i)
+void OBJECT::ExitPlatform(PLAYER *player, size_t i, bool setAirOnExit)
 {
 	player->status.shouldNotFall = false;
 	playerContact[i].standing = false;
-	player->status.inAir = true;
+	if (setAirOnExit)
+		player->status.inAir = true;
 }
 
 //Solid object and its variants
-OBJECT_SOLIDTOUCH OBJECT::SolidObject(int16_t width, int16_t height_air, int16_t height_standing, int16_t lastXPos)
+OBJECT_SOLIDTOUCH OBJECT::SolidObject(int16_t width, int16_t height_air, int16_t height_standing, int16_t lastXPos, bool setAirOnExit, const int8_t *slope, bool doubleSlope)
 {
 	//Initialize solid touch
 	OBJECT_SOLIDTOUCH solidTouch;
@@ -375,18 +385,18 @@ OBJECT_SOLIDTOUCH OBJECT::SolidObject(int16_t width, int16_t height_air, int16_t
 			if (player->status.inAir || xDiff < 0 || xDiff >= width * 2)
 			{
 				//Exit top as platform, then check next player
-				ExitPlatform(player, i);
+				ExitPlatform(player, i, setAirOnExit);
 				continue;
 			}
 			
 			//Move with the object
-			player->MoveOnPlatform(this, height_standing, lastXPos);
+			player->MoveOnPlatform(this, width, height_standing, lastXPos, slope, doubleSlope);
 			continue;
 		}
 		else
 		{
 			//Check for collisions, then check next player
-			SolidObjectCont(&solidTouch, player, i, width, height_air, lastXPos);
+			SolidObjectCont(&solidTouch, player, i, width, height_air, lastXPos, slope, doubleSlope);
 			continue;
 		}
 	}
@@ -394,160 +404,189 @@ OBJECT_SOLIDTOUCH OBJECT::SolidObject(int16_t width, int16_t height_air, int16_t
 	return solidTouch;
 }
 
-void OBJECT::SolidObjectCont(OBJECT_SOLIDTOUCH *solidTouch, PLAYER *player, size_t i, int16_t width, int16_t height, int16_t lastXPos)
+void OBJECT::SolidObjectCont(OBJECT_SOLIDTOUCH *solidTouch, PLAYER *player, size_t i, int16_t width, int16_t height, int16_t lastXPos, const int8_t *slope, bool doubleSlope)
 {
-	//Check if we're within range
+	//Check if we're within horizontal range
 	int16_t xDiff = (player->x.pos - x.pos) + width; //d0
-	
-	int16_t yDiff; //d3
-	if (player->status.reverseGravity)
-		yDiff = (-(player->y.pos - y.pos) + 4) + (height += player->yRadius);
-	else
-		yDiff = (player->y.pos - y.pos + 4) + (height += player->yRadius);
-	
-	//Perform main collision checks if within range and not under the influence of another object
-	if (!(player->objectControl.disableObjectInteract || (xDiff < 0 || xDiff > (width * 2)) || (yDiff < 0 || yDiff > (height * 2))))
+	if (xDiff >= 0 && xDiff <= (width * 2))
 	{
-		//Check if we're intangible
-		if (!(player->routine == PLAYERROUTINE_DEATH || player->debug))
+		//Offset by our slope
+		int8_t slopeOff = 0, slopeHOff = 0;
+		
+		if (slope != nullptr)
 		{
-			//Get our clip differences
-			int16_t xClip = xDiff;
-			if (xDiff >= width)
-			{
-				xDiff -= width * 2;
-				xClip = -xDiff;
-			}
+			//Get our x-offset flipped
+			int16_t xOff = xDiff;
+			if (renderFlags.xFlip)
+				xOff = (~xOff) + (width * 2);
 			
-			int16_t yClip = yDiff;
-			if (yDiff >= height)
+			if (!doubleSlope)
 			{
-				yDiff -= (4 + (height * 2));
-				yClip = -yDiff;
+				//Apply our slope (single slope)
+				slopeOff = slope[xOff] - *slope;
 			}
-			
-			//If our horizontal difference is greater than the vertical difference (we're above / below the object)
-			if (yClip <= xClip)
+			else
 			{
-				if (yDiff >= 0)
-				{
-					//Check our vertical difference
-					if (yDiff < 16)
-					{
-						//Check our horizontal range
-						int16_t xDiff2 = (player->x.pos - lastXPos) + widthPixels;
-						
-						if (xDiff2 >= 0 && xDiff2 < widthPixels * 2 && player->yVel >= 0)
-						{
-							//Land on the object
-							yDiff -= 4;
-							if (player->status.reverseGravity)
-								player->y.pos += (yDiff + 1);
-							else
-								player->y.pos -= (yDiff + 1);
-							
-							player->AttachToObject(this, i);
-							
-							//Set top touch flag
-							if (solidTouch != nullptr)
-								solidTouch->top[i] = true;
-						}
-						
-						return;
-					}
-					
-					//Clear our pushing
-					SolidObjectClearPush(player, i);
+				//Apply our slope (double slope)
+				slopeOff = slope[xOff * 2] - *slope;
+				slopeHOff = slope[xOff * 2];
+			}
+		}
+		
+		//Check if we're within vertical range
+		int16_t yDiff; //d3
+		if (player->status.reverseGravity)
+			yDiff = (-(player->y.pos - (y.pos - slopeOff)) + 4) + (height += player->yRadius);
+		else
+			yDiff = (player->y.pos - (y.pos - slopeOff) + 4) + (height += player->yRadius);
+		
+		if (yDiff >= 0 && yDiff <= ((height += slopeHOff) * 2))
+		{
+			//Perform main collision checks if within range and not under the influence of another object
+			if (!player->objectControl.disableObjectInteract)
+			{
+				//Check if we're intangible
+				if (player->routine == PLAYERROUTINE_DEATH || player->debug)
 					return;
-				}
-				else
+				
+				//Get our clip differences
+				int16_t xClip = xDiff;
+				if (xDiff >= width)
 				{
-					if (player->yVel != 0)
+					xDiff -= width * 2;
+					xClip = -xDiff;
+				}
+				
+				int16_t yClip = yDiff;
+				if (yDiff >= height)
+				{
+					yDiff -= (4 + (height * 2));
+					yClip = -yDiff;
+				}
+				
+				//If our horizontal difference is greater than the vertical difference (we're above / below the object)
+				if (yClip <= xClip)
+				{
+					if (yDiff >= 0)
 					{
-						//Clip us out of the top (why does it check if yOff is negative?)
-						if (player->yVel < 0 && yDiff < 0)
+						//Check our vertical difference
+						if (yDiff < 16)
 						{
-							if (player->status.reverseGravity)
-								yDiff = -yDiff;
+							//Check our horizontal range
+							int16_t xDiff2 = (player->x.pos - lastXPos) + widthPixels;
 							
-							player->y.pos -= yDiff;
-							player->yVel = 0;
+							if (xDiff2 >= 0 && xDiff2 < widthPixels * 2 && player->yVel >= 0)
+							{
+								//Land on the object
+								yDiff -= 4;
+								if (player->status.reverseGravity)
+									player->y.pos += (yDiff + 1);
+								else
+									player->y.pos -= (yDiff + 1);
+								
+								player->AttachToObject(this, i);
+								
+								//Set top touch flag
+								if (solidTouch != nullptr)
+									solidTouch->top[i] = true;
+							}
+							
+							return;
 						}
 						
-						//Set bottom touch flag
-						if (solidTouch != nullptr)
-							solidTouch->bottom[i] = true;
+						//Clear our pushing
+						SolidObjectClearPush(player, i);
 						return;
 					}
 					else
 					{
-						if (!player->status.inAir)
+						if (player->yVel != 0)
 						{
-							int16_t absXDiff = abs(xClip);
-							
-							if (absXDiff >= 16)
+							//Clip us out of the top (why does it check if yOff is negative?)
+							if (player->yVel < 0 && yDiff < 0)
 							{
-								//Crush the player and set the bottom touch flag
-								player->KillCharacter(SOUNDID_HURT);
-								if (solidTouch != nullptr)
-									solidTouch->bottom[i] = true;
-								return;
+								if (player->status.reverseGravity)
+									yDiff = -yDiff;
+								
+								player->y.pos -= yDiff;
+								player->yVel = 0;
 							}
 							
-							//Fallthrough into horizontal check
-						}
-						else
-						{
 							//Set bottom touch flag
 							if (solidTouch != nullptr)
 								solidTouch->bottom[i] = true;
 							return;
 						}
-					}
-				}
-			}
-			
-			//Horizontal checking (if yClip is greater than xClip or it fell-through to here)
-			if (yClip > 4)
-			{
-				//Hault our velocity if running into sides
-				if (xDiff > 0)
-				{
-					if (player->xVel >= 0)
-					{
-						player->inertia = 0;
-						player->xVel = 0;
-					}
-				}
-				else if (xDiff < 0)
-				{
-					if (player->xVel < 0)
-					{
-						player->inertia = 0;
-						player->xVel = 0;
+						else
+						{
+							if (!player->status.inAir)
+							{
+								int16_t absXDiff = abs(xClip);
+								
+								if (absXDiff >= 16)
+								{
+									//Crush the player and set the bottom touch flag
+									player->KillCharacter(SOUNDID_HURT);
+									if (solidTouch != nullptr)
+										solidTouch->bottom[i] = true;
+									return;
+								}
+								
+								//Fallthrough into horizontal check
+							}
+							else
+							{
+								//Set bottom touch flag
+								if (solidTouch != nullptr)
+									solidTouch->bottom[i] = true;
+								return;
+							}
+						}
 					}
 				}
 				
-				//Clip out of side
-				player->x.pos -= xDiff;
-				
-				//Contact on ground: Set side touch and set pushing flags
-				if (!player->status.inAir)
+				//Horizontal checking (if yClip is greater than xClip or it fell-through to here)
+				if (yClip > 4)
 				{
-					if (solidTouch != nullptr)
-						solidTouch->side[i] = true;
-					playerContact[i].pushing = true;
-					player->status.pushing = true;
-					return;
+					//Hault our velocity if running into sides
+					if (xDiff > 0)
+					{
+						if (player->xVel >= 0)
+						{
+							player->inertia = 0;
+							player->xVel = 0;
+						}
+					}
+					else if (xDiff < 0)
+					{
+						if (player->xVel < 0)
+						{
+							player->inertia = 0;
+							player->xVel = 0;
+						}
+					}
+					
+					//Clip out of side
+					player->x.pos -= xDiff;
+					
+					//Contact on ground: Set side touch and set pushing flags
+					if (!player->status.inAir)
+					{
+						if (solidTouch != nullptr)
+							solidTouch->side[i] = true;
+						playerContact[i].pushing = true;
+						player->status.pushing = true;
+						return;
+					}
 				}
+				
+				//Contact in mid-air: Set side touch and clear pushing flags
+				if (solidTouch != nullptr)
+					solidTouch->side[i] = true;
+				playerContact[i].pushing = false;
+				player->status.pushing = false;
+				return;
 			}
-			
-			//Contact in mid-air: Set side touch and clear pushing flags
-			if (solidTouch != nullptr)
-				solidTouch->side[i] = true;
-			playerContact[i].pushing = false;
-			player->status.pushing = false;
-			return;
 		}
 	}
 	
@@ -631,19 +670,24 @@ bool OBJECT::Update()
 
 void OBJECT::Draw()
 {
-	//On-screen check (done here in the original kind of)
-	int alignX = renderFlags.alignPlane ? gLevel->camera->x : 0;
-	int alignY = renderFlags.alignPlane ? gLevel->camera->y : 0;
-	
-	renderFlags.isOnscreen = false;
-	
-	if (!(x.pos - alignX < -widthPixels || x.pos - alignX > gRenderSpec.width + widthPixels) &&
-		!(y.pos - alignY < -heightPixels || y.pos - alignY > gRenderSpec.height + heightPixels))
+	if (drawInstances.size() > 0)
 	{
-		//Draw our draw instances if on-screen and set flag
-		for (size_t i = 0; i < drawInstances.size(); i++)
-			drawInstances[i]->Draw();
-		renderFlags.isOnscreen = true;
+		//On-screen check (checks the first draw instance, which is basically how the original does it)
+		int alignX = renderFlags.alignPlane ? gLevel->camera->x : 0;
+		int alignY = renderFlags.alignPlane ? gLevel->camera->y : 0;
+		int16_t xPos = drawInstances[0]->xPos;
+		int16_t yPos = drawInstances[0]->yPos;
+		
+		renderFlags.isOnscreen = false;
+		
+		if (!(xPos - alignX < -widthPixels || xPos - alignX > gRenderSpec.width + widthPixels) &&
+			!(yPos - alignY < -heightPixels || yPos - alignY > gRenderSpec.height + heightPixels))
+		{
+			//Draw our draw instances if on-screen and set flag
+			for (size_t i = 0; i < drawInstances.size(); i++)
+				drawInstances[i]->Draw();
+			renderFlags.isOnscreen = true;
+		}
 	}
 	
 	for (size_t i = 0; i < children.size(); i++)

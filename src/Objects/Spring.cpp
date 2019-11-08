@@ -104,7 +104,7 @@ void ObjSpring(OBJECT *object)
 		case ROUTINE_DOWN: //Downwards
 		{
 			//Act as solid
-			OBJECT_SOLIDTOUCH touch = object->SolidObject(27, 8, 16, object->x.pos);
+			OBJECT_SOLIDTOUCH touch = object->SolidObject(27, 8, 16, object->x.pos, true, nullptr, false);
 			
 			//Check if any players touched the top of us
 			for (size_t i = 0; i < gLevel->playerList.size(); i++)
@@ -187,7 +187,7 @@ void ObjSpring(OBJECT *object)
 		case 2: //Horizontal
 		{
 			//Act as solid
-			OBJECT_SOLIDTOUCH touch = object->SolidObject(19, 14, 15, object->x.pos);
+			OBJECT_SOLIDTOUCH touch = object->SolidObject(19, 14, 15, object->x.pos, true, nullptr, false);
 			
 			//Check if any players touched our sides
 			for (size_t i = 0; i < gLevel->playerList.size(); i++)

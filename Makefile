@@ -78,6 +78,7 @@ SOURCES = \
 	Objects/Crabmeat \
 	Objects/GHZWaterfallSound \
 	Objects/GHZPlatform \
+	Objects/GHZLedge \
 	Objects/GHZEdgeWall \
 	Objects/PurpleRock \
 	Objects/SwingingPlatform \

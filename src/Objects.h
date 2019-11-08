@@ -21,6 +21,7 @@ void ObjChopper(OBJECT *object);
 void ObjCrabmeat(OBJECT *object);
 void ObjGHZWaterfallSound(OBJECT *object);
 void ObjGHZPlatform(OBJECT *object);
+void ObjGHZLedge(OBJECT *object);
 void ObjGHZEdgeWall(OBJECT *object);
 void ObjPurpleRock(OBJECT *object);
 void ObjSwingingPlatform(OBJECT *object);

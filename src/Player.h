@@ -420,7 +420,7 @@ class PLAYER
 		void TouchResponse();
 		
 		void AttachToObject(OBJECT *object, size_t i);
-		void MoveOnPlatform(OBJECT *platform, int16_t height, int16_t lastXPos);
+		void MoveOnPlatform(OBJECT *platform, int16_t width, int16_t height, int16_t lastXPos, const int8_t *slope, bool doubleSlope);
 		
 		void GiveSpeedShoes();
 		void GiveInvincibility();
