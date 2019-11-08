@@ -411,7 +411,7 @@ void OBJECT::SolidObjectCont(OBJECT_SOLIDTOUCH *solidTouch, PLAYER *player, size
 	if (xDiff >= 0 && xDiff <= (width * 2))
 	{
 		//Offset by our slope
-		int8_t slopeOff = 0, slopeHOff = 0;
+		int8_t slopeOff = 0, hOff = height * 2;
 		
 		if (slope != nullptr)
 		{
@@ -429,7 +429,7 @@ void OBJECT::SolidObjectCont(OBJECT_SOLIDTOUCH *solidTouch, PLAYER *player, size
 			{
 				//Apply our slope (double slope)
 				slopeOff = slope[xOff * 2] - *slope;
-				slopeHOff = slope[xOff * 2];
+				hOff += slope[xOff * 2];
 			}
 		}
 		
@@ -440,7 +440,8 @@ void OBJECT::SolidObjectCont(OBJECT_SOLIDTOUCH *solidTouch, PLAYER *player, size
 		else
 			yDiff = (player->y.pos - (y.pos - slopeOff) + 4) + (height += player->yRadius);
 		
-		if (yDiff >= 0 && yDiff <= ((height += slopeHOff) * 2))
+		int16_t heightHalve = hOff + player->yRadius;
+		if (yDiff >= 0 && yDiff <= (height = heightHalve + player->yRadius))
 		{
 			//Perform main collision checks if within range and not under the influence of another object
 			if (!player->objectControl.disableObjectInteract)
@@ -458,9 +459,9 @@ void OBJECT::SolidObjectCont(OBJECT_SOLIDTOUCH *solidTouch, PLAYER *player, size
 				}
 				
 				int16_t yClip = yDiff;
-				if (yDiff >= height)
+				if (yDiff >= heightHalve)
 				{
-					yDiff -= (4 + (height * 2));
+					yDiff -= (4 + height);
 					yClip = -yDiff;
 				}
 				
