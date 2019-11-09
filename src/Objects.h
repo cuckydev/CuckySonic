@@ -19,6 +19,7 @@ void ObjSonic1Scenery(OBJECT *object);
 void ObjMotobug(OBJECT *object);
 void ObjChopper(OBJECT *object);
 void ObjCrabmeat(OBJECT *object);
+void ObjBuzzBomber(OBJECT *object);
 void ObjGHZWaterfallSound(OBJECT *object);
 void ObjGHZPlatform(OBJECT *object);
 void ObjGHZLedge(OBJECT *object);

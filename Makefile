@@ -76,6 +76,7 @@ SOURCES = \
 	Objects/Motobug \
 	Objects/Chopper \
 	Objects/Crabmeat \
+	Objects/BuzzBomber \
 	Objects/GHZWaterfallSound \
 	Objects/GHZPlatform \
 	Objects/GHZLedge \

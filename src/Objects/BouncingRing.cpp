@@ -8,7 +8,8 @@
 #include "../Audio.h"
 #include "../MathUtil.h"
 
-//#define BOUNCINGRING_BLINK	//When set, the rings will blink shortly before despawning
+//#define BOUNCINGRING_BLINK		//When set, the rings will blink shortly before despawning
+//#define BOUNCINGRING_ONLY_FLOOR	//When set, like in the originals, bouncing rings will only check for floor collision
 
 static const uint8_t animationCollect[] =	{0x05,0x04,0x05,0x06,0x07,0xFC};
 
@@ -159,6 +160,7 @@ void ObjBouncingRing(OBJECT *object)
 					object->yVel = object->yVel * 3 / -4;
 				}
 			}
+		#ifndef BOUNCINGRING_ONLY_FLOOR
 			else
 			{
 				int16_t distance = FindFloor(object->x.pos, object->y.pos - object->yRadius, COLLISIONLAYER_NORMAL_LRB, true, nullptr);
@@ -194,6 +196,7 @@ void ObjBouncingRing(OBJECT *object)
 					object->xVel = object->xVel / -2;
 				}
 			}
+		#endif
 			
 			//Animate
 			if (object->scratchU8[SCRATCHU8_ANIM_COUNT] != 0)

@@ -55,7 +55,7 @@ void ObjCrabmeatProjectile(OBJECT *object)
 		case 1:
 		{
 			//Move and fall, animate and draw
-			object->Animate_S1(animationList);
+			object->Animate(animationList);
 			object->MoveAndFall();
 			object->DrawInstance(object->renderFlags, object->texture, object->mappings, object->highPriority, object->priority, object->mappingFrame, object->x.pos, object->y.pos);
 			
@@ -224,7 +224,5 @@ void ObjCrabmeat(OBJECT *object)
 			object->UnloadOffscreen(object->x.pos);
 			break;
 		}
-		default:
-			break;
 	}
 }

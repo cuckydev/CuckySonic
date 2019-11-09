@@ -411,7 +411,7 @@ void OBJECT::SolidObjectCont(OBJECT_SOLIDTOUCH *solidTouch, PLAYER *player, size
 	if (xDiff >= 0 && xDiff <= (width * 2))
 	{
 		//Offset by our slope
-		int8_t slopeOff = 0, hOff = height * 2;
+		int8_t slopeOff = 0, slopeBottomOff = 0;
 		
 		if (slope != nullptr)
 		{
@@ -429,19 +429,25 @@ void OBJECT::SolidObjectCont(OBJECT_SOLIDTOUCH *solidTouch, PLAYER *player, size
 			{
 				//Apply our slope (double slope)
 				slopeOff = slope[xOff * 2] - *slope;
-				hOff += slope[xOff * 2];
+				slopeBottomOff = slope[xOff * 2];
 			}
 		}
 		
 		//Check if we're within vertical range
 		int16_t yDiff; //d3
-		if (player->status.reverseGravity)
-			yDiff = (-(player->y.pos - (y.pos - slopeOff)) + 4) + (height += player->yRadius);
-		else
-			yDiff = (player->y.pos - (y.pos - slopeOff) + 4) + (height += player->yRadius);
+		int16_t heightHalf = height + player->yRadius;
 		
-		int16_t heightHalve = hOff + player->yRadius;
-		if (yDiff >= 0 && yDiff <= (height = heightHalve + player->yRadius))
+		if (player->status.reverseGravity)
+			yDiff = (-(player->y.pos - (y.pos - slopeOff)) + 4) + heightHalf;
+		else
+			yDiff = (player->y.pos - (y.pos - slopeOff) + 4) + heightHalf;
+		
+		//Apply double slope to our actual height
+		height = heightHalf * 2;
+		if (doubleSlope)
+			height += slopeBottomOff;
+		
+		if (yDiff >= 0 && yDiff <= height)
 		{
 			//Perform main collision checks if within range and not under the influence of another object
 			if (!player->objectControl.disableObjectInteract)
@@ -459,7 +465,7 @@ void OBJECT::SolidObjectCont(OBJECT_SOLIDTOUCH *solidTouch, PLAYER *player, size
 				}
 				
 				int16_t yClip = yDiff;
-				if (yDiff >= heightHalve)
+				if (yDiff >= heightHalf)
 				{
 					yDiff -= (4 + height);
 					yClip = -yDiff;

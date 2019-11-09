@@ -27,7 +27,7 @@ void ObjPurpleRock(OBJECT *object)
 		case 1:
 		{
 			//Act as solid and draw to screen
-			object->SolidObject(27, 16, 16, object->x.pos, true, nullptr, false);
+			object->SolidObject(27, 16, 16, object->x.pos, false, nullptr, false);
 			object->DrawInstance(object->renderFlags, object->texture, object->mappings, object->highPriority, object->priority, object->mappingFrame, object->x.pos, object->y.pos);
 			object->UnloadOffscreen(object->x.pos);
 			break;

@@ -112,7 +112,7 @@ void ObjSwingingPlatform(OBJECT *object)
 			//Move, act as a platform, and draw
 			int16_t lastX = object->x.pos;
 			ObjSwingingPlatform_Move(object);
-			object->PlatformObject(object->widthPixels, object->yRadius + 1, lastX, true, nullptr);
+			object->PlatformObject(object->widthPixels, object->yRadius + 1, lastX, false, nullptr);
 			object->DrawInstance(object->renderFlags, object->texture, object->mappings, object->highPriority, object->priority, object->mappingFrame, object->x.pos, object->y.pos);
 			object->UnloadOffscreen(object->scratchS16[SCRATCHS16_ORIG_X]);
 			break;
