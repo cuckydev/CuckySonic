@@ -106,7 +106,10 @@
 #define RUN_FRAMES			4
 #define DASH_FRAMES			4
 
-#define MAPPINGFRAME_FLIP1	95
+#define MAPPINGFRAME_TUMBLE			95		//Used on corkscrews and stuff
+#define MAPPINGFRAME_IDLE_TUMBLE	95 + 12 //Similar to the above, but idle (LBZ twisty thingies)
+#define MAPPINGFRAME_TWIST			95 + 24	//Running around a twist (I think this is used in LRZ?)
+#define MAPPINGFRAME_TURN			95 + 36	//Turning (CNZ Barrels)
 
 static const uint8_t animationWalk[] =			{0xFF,0x0F,0x10,0x11,0x12,0x13,0x14,0x0D,0x0E,0xFF}; //Walk and run must match in length (run is padded with 0xFF, here)
 static const uint8_t animationRun[] =			{0xFF,0x2D,0x2E,0x2F,0x30,0xFF,0xFF,0xFF,0xFF,0xFF};
@@ -2309,137 +2312,139 @@ void PLAYER::CheckDropdashRelease()
 //Jump ability functions
 void PLAYER::JumpAbilities()
 {
-	#ifdef SONICMANIA_DROPDASH
-		if (abilityProperty > (DROPDASH_CHARGE + 1))
-		{
-			//Check for releasing the already started dropdash
-			if (!(controlHeld.a || controlHeld.b || controlHeld.c))
+	#ifndef SONIC12_NO_JUMP_ABILITY
+		#ifdef SONICMANIA_DROPDASH
+			if (abilityProperty > (DROPDASH_CHARGE + 1))
 			{
-				//Release dropdash
-				abilityProperty = 0xFF;
-				anim = PLAYERANIMATION_ROLL;
-				return;
+				//Check for releasing the already started dropdash
+				if (!(controlHeld.a || controlHeld.b || controlHeld.c))
+				{
+					//Release dropdash
+					abilityProperty = 0xFF;
+					anim = PLAYERANIMATION_ROLL;
+					return;
+				}
 			}
-		}
-		else if (abilityProperty >= 2 && abilityProperty <= (DROPDASH_CHARGE + 1))
-		{
-			//Wait for the dropdash to have charged up (DROPDASH_CHARGE frames of holding ABC)
-			if ((controlHeld.a || controlHeld.b || controlHeld.c) && ++abilityProperty > (DROPDASH_CHARGE + 1))
+			else if (abilityProperty >= 2 && abilityProperty <= (DROPDASH_CHARGE + 1))
 			{
-				//Start dropdash
-				anim = PLAYERANIMATION_DROPDASH;
-				PlaySound(SOUNDID_DROPDASH);
-				return;
+				//Wait for the dropdash to have charged up (DROPDASH_CHARGE frames of holding ABC)
+				if ((controlHeld.a || controlHeld.b || controlHeld.c) && ++abilityProperty > (DROPDASH_CHARGE + 1))
+				{
+					//Start dropdash
+					anim = PLAYERANIMATION_DROPDASH;
+					PlaySound(SOUNDID_DROPDASH);
+					return;
+				}
 			}
-		}
-	#endif
-	
-	if (jumpAbility == 0 && (controlPress.a || controlPress.b || controlPress.c))
-	{
-		#ifndef CONTROL_JA_DONT_CLEAR_ROLLJUMP
-			//Clear the roll jump flag, so we regain horizontal control
-			status.rollJumping = false;
 		#endif
 		
-		//Perform our ability
-		if (super)
+		if (jumpAbility == 0 && (controlPress.a || controlPress.b || controlPress.c))
 		{
-			if (hyper)
+			#ifndef CONTROL_JA_DONT_CLEAR_ROLLJUMP
+				//Clear the roll jump flag, so we regain horizontal control
+				status.rollJumping = false;
+			#endif
+			
+			//Perform our ability
+			if (super)
 			{
-				//Hyper dash
-			}
-		#ifndef SONICMANIA_DROPDASH
-			else
-			{
-				//Super cannot use any jump abilities, just clear jump ability
-				jumpAbility = 1;
-				return;
-			}
-		#endif
-		}
-		else if (!item.isInvincible)
-		{
-			#ifndef SONIC12_NO_SHIELD_ABILITIES
-				//Check and handle shield abilities
-				if (shield != SHIELD_NULL)
+				if (hyper)
 				{
-					if (shield == SHIELD_FIRE)
-					{
-						//Update our shield and ability flag
-						if (shieldObject != nullptr)
-							shieldObject->anim = 1;
-						jumpAbility = 1;
-						
-						//Dash in our facing direction
-						int16_t speed = 0x800;
-						if (status.xFlip)
-							speed = -speed;
-						
-						xVel = speed;
-						inertia = speed;
-						yVel = 0;
-						
-						//Make the camera lag behind us
-						scrollDelay = 0x2000;
-						ResetRecords(x.pos, y.pos);
-						PlaySound(SOUNDID_USE_FIRE_SHIELD);
-					}
-					else if (shield == SHIELD_ELECTRIC)
-					{
-						//Update our shield and ability flag
-						if (shieldObject != nullptr)
-							shieldObject->anim = 1;
-						jumpAbility = 1;
-						
-						//Electric shield double jump
-						yVel = -0x680;
-						status.jumping = false;
-						PlaySound(SOUNDID_USE_ELECTRIC_SHIELD);
-					}
-					else if (shield == SHIELD_BUBBLE)
-					{
-						//Update our shield and ability flag
-						if (shieldObject != nullptr)
-							shieldObject->anim = 1;
-						jumpAbility = 1;
-						
-						//Shoot down to the ground
-						xVel = 0;
-						inertia = 0;
-						yVel = 0x800;
-						PlaySound(SOUNDID_USE_BUBBLE_SHIELD);
-					}
-					
+					//Hyper dash
+				}
+			#ifndef SONICMANIA_DROPDASH
+				else
+				{
+					//Super cannot use any jump abilities, just clear jump ability
+					jumpAbility = 1;
 					return;
 				}
 			#endif
-			#if !(defined(SONIC1_NO_SUPER) || defined(SONIC2_SUPER_AT_PEAK))
-				if (SuperTransform())
-					return;
+			}
+			else if (!item.isInvincible)
+			{
+				#ifndef SONIC12_NO_SHIELD_ABILITIES
+					//Check and handle shield abilities
+					if (shield != SHIELD_NULL)
+					{
+						if (shield == SHIELD_FIRE)
+						{
+							//Update our shield and ability flag
+							if (shieldObject != nullptr)
+								shieldObject->anim = 1;
+							jumpAbility = 1;
+							
+							//Dash in our facing direction
+							int16_t speed = 0x800;
+							if (status.xFlip)
+								speed = -speed;
+							
+							xVel = speed;
+							inertia = speed;
+							yVel = 0;
+							
+							//Make the camera lag behind us
+							scrollDelay = 0x2000;
+							ResetRecords(x.pos, y.pos);
+							PlaySound(SOUNDID_USE_FIRE_SHIELD);
+						}
+						else if (shield == SHIELD_ELECTRIC)
+						{
+							//Update our shield and ability flag
+							if (shieldObject != nullptr)
+								shieldObject->anim = 1;
+							jumpAbility = 1;
+							
+							//Electric shield double jump
+							yVel = -0x680;
+							status.jumping = false;
+							PlaySound(SOUNDID_USE_ELECTRIC_SHIELD);
+						}
+						else if (shield == SHIELD_BUBBLE)
+						{
+							//Update our shield and ability flag
+							if (shieldObject != nullptr)
+								shieldObject->anim = 1;
+							jumpAbility = 1;
+							
+							//Shoot down to the ground
+							xVel = 0;
+							inertia = 0;
+							yVel = 0x800;
+							PlaySound(SOUNDID_USE_BUBBLE_SHIELD);
+						}
+						
+						return;
+					}
+				#endif
+				#if !(defined(SONIC1_NO_SUPER) || defined(SONIC2_SUPER_AT_PEAK))
+					if (SuperTransform())
+						return;
+				#endif
+			}
+			else if (!super)
+				return; //Invincible, but not super
+			
+			#ifndef SONIC12_NO_INSTASHIELD
+				if (!super)
+				{
+					//Update our shield and ability flag
+					if (shieldObject != nullptr)
+							shieldObject->anim = 1;
+					jumpAbility = 1;
+					PlaySound(SOUNDID_USE_INSTA_SHIELD);
+				}
+				else
+					jumpAbility = 1;
+			#endif
+			
+			#ifdef SONICMANIA_DROPDASH
+				//Check if we should initiate a dropdash
+				if (characterType == CHARACTERTYPE_SONIC)
+					abilityProperty = 2;
 			#endif
 		}
-		else if (!super)
-			return; //Invincible, but not super
-		
-		#ifndef SONIC12_NO_INSTASHIELD
-			if (!super)
-			{
-				//Update our shield and ability flag
-				if (shieldObject != nullptr)
-						shieldObject->anim = 1;
-				jumpAbility = 1;
-				PlaySound(SOUNDID_USE_INSTA_SHIELD);
-			}
-			else
-				jumpAbility = 1;
-		#endif
-		
-		#ifdef SONICMANIA_DROPDASH
-			//Check if we should initiate a dropdash
-			if (characterType == CHARACTERTYPE_SONIC)
-				abilityProperty = 2;
-		#endif
-	}
+	#endif
 }
 
 //Jumping functions
@@ -2448,15 +2453,12 @@ void PLAYER::JumpHeight()
 	if (status.jumping)
 	{
 		//Slow us down if ABC is released when jumping
-		#if (!defined(SONIC2_SUPER_AT_PEAK) || !defined(SONIC12_NO_INSTASHIELD) || !defined(SONIC12_NO_SHIELD_ABILITIES))
-			if (-jumpRelease <= yVel)
-				JumpAbilities();
-			else if (!controlHeld.a && !controlHeld.b && !controlHeld.c)
-				yVel = -jumpRelease;
-		#else
-			if (-jumpRelease > yVel && !controlHeld.a && !controlHeld.b && !controlHeld.c)
-				yVel = -jumpRelease;
-		#endif
+		if (-jumpRelease <= yVel)
+			JumpAbilities();
+		else if (!controlHeld.a && !controlHeld.b && !controlHeld.c)
+			yVel = -jumpRelease;
+		
+		cdSPTimer = 0;
 		
 		#if (!defined(SONIC1_NO_SUPER) && defined(SONIC2_SUPER_AT_PEAK))
 			if (!(yVel & 0xFF00))
@@ -2694,6 +2696,9 @@ bool PLAYER::Jump()
 //Slope gravity related functions
 void PLAYER::SlopeResist()
 {
+	if (cdSPTimer != 0)
+		return;
+	
 	if (((angle + 0x60) & 0xFF) < 0xC0)
 	{
 		//Get our slope gravity
@@ -2732,6 +2737,9 @@ void PLAYER::SlopeResist()
 
 void PLAYER::RollRepel()
 {
+	if (cdSPTimer != 0)
+		return;
+	
 	if (((angle + 0x60) & 0xFF) < 0xC0)
 	{
 		//Get our slope gravity
@@ -3561,6 +3569,7 @@ bool PLAYER::HurtCharacter(void *hit)
 	}
 	
 	//Enter hurt routine
+	cdSPTimer = 0;
 	routine = PLAYERROUTINE_HURT;
 	LandOnFloor_ExitBall();
 	status.inAir = true;
@@ -3832,7 +3841,7 @@ void PLAYER::AdvanceFrame(const uint8_t* animation)
 	animFrame++;
 }
 
-const uint8_t flipTypeMapping[] = {0, MAPPINGFRAME_FLIP1 + 12, MAPPINGFRAME_FLIP1 + 24, MAPPINGFRAME_FLIP1 + 24};
+const uint8_t flipTypeMapping[] = {0, MAPPINGFRAME_IDLE_TUMBLE, MAPPINGFRAME_TWIST, MAPPINGFRAME_TURN};
 
 void PLAYER::Animate()
 {
@@ -4086,7 +4095,7 @@ void PLAYER::Animate()
 							thisAngle += 0xB;
 						}
 						
-						mappingFrame = (thisAngle / 0x16) + MAPPINGFRAME_FLIP1;
+						mappingFrame = (thisAngle / 0x16) + MAPPINGFRAME_TUMBLE;
 						animFrameDuration = 0;
 					}
 					else
@@ -4109,7 +4118,7 @@ void PLAYER::Animate()
 							thisAngle += 0x8F;
 						}
 						
-						mappingFrame = (thisAngle / 0x16) + MAPPINGFRAME_FLIP1;
+						mappingFrame = (thisAngle / 0x16) + MAPPINGFRAME_TUMBLE;
 						animFrameDuration = 0;
 					}
 				}
@@ -4214,7 +4223,7 @@ void PLAYER::Animate()
 									thisAngle += 0xB; //nice
 								
 								//Set our mapping frame
-								mappingFrame = (thisAngle / 0x16) + MAPPINGFRAME_FLIP1;
+								mappingFrame = (thisAngle / 0x16) + MAPPINGFRAME_TUMBLE;
 								animFrameDuration = 0;
 							}
 							else
@@ -4234,7 +4243,7 @@ void PLAYER::Animate()
 								}
 								
 								//Set our mapping frame
-								mappingFrame = (thisAngle / 0x16) + MAPPINGFRAME_FLIP1;
+								mappingFrame = (thisAngle / 0x16) + MAPPINGFRAME_TUMBLE;
 								animFrameDuration = 0;
 							}
 							break;
@@ -4248,7 +4257,7 @@ void PLAYER::Animate()
 							renderFlags.yFlip = false;
 							
 							//Set our mapping frame
-							mappingFrame = ((thisAngle + 0xB) / 0x16) + MAPPINGFRAME_FLIP1;
+							mappingFrame = ((thisAngle + 0xB) / 0x16) + MAPPINGFRAME_TUMBLE;
 							animFrameDuration = 0;
 							break;
 						}

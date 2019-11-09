@@ -62,7 +62,7 @@ void ObjBuzzBomberMissile(OBJECT *object)
 		case 1: //Charging fire
 		{
 			//Check if the buzz bomber has been destroyed
-			if (object->parentObject->function == &ObjExplosion)
+			if (object->parentObject == nullptr || object->parentObject->deleteFlag == true || object->parentObject->function == &ObjExplosion)
 			{
 				object->deleteFlag = true;
 				break;
@@ -186,7 +186,7 @@ void ObjBuzzBomber(OBJECT *object)
 							projectile->y.pos = object->y.pos + 28;
 							projectile->status = object->status;
 							projectile->parentObject = object;
-							object->children.link_back(projectile);
+							gLevel->objectList.link_back(projectile);
 							
 							//Update our state
 							object->scratchU8[SCRATCHU8_STATUS] = STATUS_FIRED;
