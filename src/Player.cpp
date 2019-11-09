@@ -26,7 +26,7 @@
 //#define FIX_ROLLJUMP_COLLISION  //In the originals, for some reason, jumping from a roll will maintain Sonic's regular collision hitbox, rather than switching to the smaller hitbox, which causes weird issues.
 //#define FIX_PEELOUT_DOWN        //In Sonic CD, the peelout acted really weird if you were to switch to holding down in the middle of it, even causing you to be able to walk through walls
 //#define FIX_GROUND_CLIPPING     //In the originals, you're allowed to clip at least 14 pixels into the ground if you manage to get into that situation, seems like a slight misunderstanding of the collision function
-#define FIX_INSTASHIELD_REFLECT //In Sonic 3 and Knuckles, Sonic's insta-shield doesn't reflect projectiles, but the code suggests that it's supposed to
+//#define FIX_INSTASHIELD_REFLECT //In Sonic 3 and Knuckles, Sonic's insta-shield doesn't reflect projectiles, but the code suggests that it's supposed to
 
 //Game differences
 //#define SONIC1_SLOPE_ANGLE          //In Sonic 2+, the floor's angle will be replaced with the player's cardinal floor angle if there's a 45+ degree difference

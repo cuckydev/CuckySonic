@@ -83,10 +83,15 @@ void ObjBuzzBomberMissile(OBJECT *object)
 			object->collisionType = COLLISIONTYPE_HURT;
 			object->touchWidth = 6;
 			object->touchHeight = 6;
+			object->hurtType.reflect = true;
+			
 			object->anim = 1;
 			
 			//Move, draw, and animate
-			object->Move();
+			if (object->collisionType == COLLISIONTYPE_HURT)
+				object->Move();
+			else
+				object->MoveAndFall();
 			object->Animate(missileAnimationList);
 			object->DrawInstance(object->renderFlags, object->texture, object->mappings, object->highPriority, object->priority, object->mappingFrame, object->x.pos, object->y.pos);
 			

@@ -100,6 +100,9 @@ void ObjCrabmeat(OBJECT *object)
 	object->ScratchAllocU8(SCRATCHU8_MAX);
 	object->ScratchAllocS16(SCRATCHS16_MAX);
 	
+	#define MODE_COLLISION	0x1
+	#define MODE_FIRE		0x2
+	
 	switch (object->routine)
 	{
 		case 0:
@@ -153,7 +156,7 @@ void ObjCrabmeat(OBJECT *object)
 					if (--object->scratchS16[SCRATCHS16_FIRE_TIME] < 0)
 					{
 						//Decide if we should fire or just turn around
-						if (object->renderFlags.isOnscreen == false || ((object->scratchU8[SCRATCHU8_MODE] ^= 0x02) & 0x02))
+						if (object->renderFlags.isOnscreen == false || ((object->scratchU8[SCRATCHU8_MODE] ^= MODE_FIRE) & MODE_FIRE))
 						{
 							//Turn around
 							object->routineSecondary = 1;
@@ -192,7 +195,7 @@ void ObjCrabmeat(OBJECT *object)
 						//Move and check for the floor
 						object->Move();
 						
-						if (((object->scratchU8[SCRATCHU8_MODE] ^= 0x01) & 0x01))
+						if (((object->scratchU8[SCRATCHU8_MODE] ^= MODE_COLLISION) & MODE_COLLISION))
 						{
 							//Check for floor to the sides of us, stop and fire if there is none
 							int16_t distance = object->CheckFloorEdge(COLLISIONLAYER_NORMAL_TOP, object->x.pos + (object->status.xFlip ? -16 : 16), object->y.pos, nullptr);
