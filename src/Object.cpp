@@ -28,12 +28,12 @@ OBJECT::OBJECT(OBJECTFUNCTION objectFunction)
 OBJECT::~OBJECT()
 {
 	//Free all scratch memory
-	free(scratchU8);
-	free(scratchS8);
-	free(scratchU16);
-	free(scratchS16);
-	free(scratchU32);
-	free(scratchS32);
+	delete[] scratchU8;
+	delete[] scratchS8;
+	delete[] scratchU16;
+	delete[] scratchS16;
+	delete[] scratchU32;
+	delete[] scratchS32;
 	
 	//Destroy draw instances and children
 	CLEAR_INSTANCE_LINKEDLIST(drawInstances);
@@ -41,7 +41,7 @@ OBJECT::~OBJECT()
 }
 
 //Scratch allocation functions
-#define SCRATCH_ALLOC(name, type, max) if (name == nullptr) { name = (type*)malloc(max * sizeof(type)); memset(name, 0, max * sizeof(type)); }
+#define SCRATCH_ALLOC(name, type, max) if (name == nullptr) { name = new type[max]; }
 
 void  OBJECT::ScratchAllocU8(size_t max) { SCRATCH_ALLOC(scratchU8,   uint8_t, max) }
 void  OBJECT::ScratchAllocS8(size_t max) { SCRATCH_ALLOC(scratchS8,    int8_t, max) }
@@ -623,12 +623,12 @@ bool OBJECT::Update()
 	if (function != prevFunction)
 	{
 		//Free all scratch memory
-		free(scratchU8);	scratchU8 =  nullptr;
-		free(scratchS8);	scratchS8 =  nullptr;
-		free(scratchU16);	scratchU16 = nullptr;
-		free(scratchS16);	scratchS16 = nullptr;
-		free(scratchU32);	scratchU32 = nullptr;
-		free(scratchS32);	scratchS32 = nullptr;
+		delete[] scratchU8;	scratchU8 =  nullptr;
+		delete[] scratchS8;	scratchS8 =  nullptr;
+		delete[] scratchU16;	scratchU16 = nullptr;
+		delete[] scratchS16;	scratchS16 = nullptr;
+		delete[] scratchU32;	scratchU32 = nullptr;
+		delete[] scratchS32;	scratchS32 = nullptr;
 		
 		//Remember this as our last function
 		prevFunction = function;

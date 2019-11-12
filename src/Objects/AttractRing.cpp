@@ -13,8 +13,6 @@ static const uint8_t *animationList[] = {
 
 void ObjAttractRing(OBJECT *object)
 {
-	const PLAYER *player = (PLAYER*)object->parent;
-	
 	switch (object->routine)
 	{
 		case 0: //Initialization
@@ -29,6 +27,7 @@ void ObjAttractRing(OBJECT *object)
 			//Initialize other properties
 			object->renderFlags.alignPlane = true;
 			object->widthPixels = 8;
+			object->heightPixels = 8;
 			object->priority = 2;
 			
 			//Collision box
@@ -40,7 +39,7 @@ void ObjAttractRing(OBJECT *object)
 		case 1: //Move towards the player
 		{
 			//If lightning shield, turn into a bouncing ring
-			if (player->shield != SHIELD_ELECTRIC)
+			if (object->parentPlayer->shield != SHIELD_ELECTRIC)
 			{
 				object->function = ObjBouncingRing;
 				object->routine = 0;
@@ -51,7 +50,7 @@ void ObjAttractRing(OBJECT *object)
 			//Horizontal pull
 			int16_t pullX = 0x30;
 			
-			if (object->x.pos >= player->x.pos)
+			if (object->x.pos >= object->parentPlayer->x.pos)
 			{
 				pullX = -pullX;
 				if (object->xVel >= 0)
@@ -68,7 +67,7 @@ void ObjAttractRing(OBJECT *object)
 			//Vertical pull
 			int16_t pullY = 0x30;
 			
-			if (object->y.pos >= player->y.pos)
+			if (object->y.pos >= object->parentPlayer->y.pos)
 			{
 				pullY = -pullY;
 				if (object->yVel >= 0)

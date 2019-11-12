@@ -49,7 +49,7 @@ void ObjBouncingRing_Spawner(OBJECT *object)
 	{
 		//Create the ring object
 		OBJECT *ring = new OBJECT(&ObjBouncingRing);
-		ring->parent = object->parent;
+		ring->parentPlayer = object->parentPlayer;
 		ring->x.pos = object->x.pos;
 		ring->y.pos = object->y.pos;
 		gLevel->objectList.link_back(ring);
@@ -115,6 +115,7 @@ void ObjBouncingRing(OBJECT *object)
 			
 			//Initialize render properties and load graphics
 			object->widthPixels = 8;
+			object->heightPixels = 8;
 			object->texture = gLevel->GetObjectTexture("data/Object/Ring.bmp");
 			object->mappings = gLevel->GetObjectMappings("data/Object/Ring.map");
 			object->renderFlags.alignPlane = true;
@@ -134,19 +135,16 @@ void ObjBouncingRing(OBJECT *object)
 		case 1:
 		{
 			//Move and fall
-			PLAYER *parentPlayer = (PLAYER*)object->parent;
 			object->xPosLong += object->xVel * 0x100;
-			
-			if (parentPlayer->status.reverseGravity)
+			if (object->parentPlayer != nullptr && object->parentPlayer->status.reverseGravity)
 				object->yPosLong -= object->yVel * 0x100;
 			else
 				object->yPosLong += object->yVel * 0x100;
-			
 			object->yVel += 0x18;
 			
 			//Check for collision with the floor or ceiling
 			int16_t checkVel = object->yVel;
-			if (parentPlayer->status.reverseGravity)
+			if (object->parentPlayer != nullptr && object->parentPlayer->status.reverseGravity)
 				checkVel = -checkVel;
 			
 			if (checkVel >= 0)

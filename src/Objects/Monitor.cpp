@@ -51,12 +51,10 @@ void ObjMonitor_SolidObject(OBJECT *object)
 	//Check for contact with all players (followers cannot break monitors)
 	for (size_t i = 0; i < gLevel->playerList.size(); i++)
 	{
-		//Get the player
-		PLAYER *player = gLevel->playerList[i];
 		if (i == 0)
-			ObjMonitor_SolidObject_Lead(object, i, player);
+			ObjMonitor_SolidObject_Lead(object, i, gLevel->playerList[i]);
 		else
-			ObjMonitor_SolidObject_Follower(object, i, player);
+			ObjMonitor_SolidObject_Follower(object, i, gLevel->playerList[i]);
 	}
 }
 
@@ -142,7 +140,7 @@ void ObjMonitorContents(OBJECT *object)
 				object->animFrameDuration = 29;
 				
 				//Handle our item
-				PLAYER *breakPlayer = (PLAYER*)((OBJECT*)object->parent)->parent;
+				PLAYER *breakPlayer = object->parentObject->parentPlayer;
 				
 				switch (object->anim)
 				{
@@ -155,7 +153,7 @@ void ObjMonitorContents(OBJECT *object)
 					case MONITOR_ITEM_EGGMAN:
 						//Hurt the player
 						if (breakPlayer != nullptr)
-							breakPlayer->CheckHurt((void*)object);
+							breakPlayer->CheckHurt(object);
 						break;
 					case MONITOR_ITEM_RING:
 						//Give us 10 rings
@@ -276,7 +274,7 @@ void ObjMonitor(OBJECT *object)
 			content->x.pos = object->x.pos;
 			content->y.pos = object->y.pos;
 			content->anim = object->anim;
-			content->parent = (void*)object;
+			content->parentObject = object;
 			gLevel->objectList.link_back(content);
 			
 			//Create the explosion

@@ -103,6 +103,12 @@ SPECIALSTAGE::SPECIALSTAGE(const char *name)
 	rate = 0x1000;
 	rateTimer = 30 * 60;
 	
+	//Load and play music
+	AUDIO_LOCK;
+	music = new MUSIC("SpecialStage", 0, 1.0f);
+	music->playing = true;
+	AUDIO_UNLOCK;
+	
 	LOG(("Success!\n"));
 }
 
@@ -114,6 +120,11 @@ SPECIALSTAGE::~SPECIALSTAGE()
 	delete backgroundTexture;
 	delete[] layout;
 	delete[] perspectiveMap;
+	
+	//Unload music
+	AUDIO_LOCK;
+	delete music;
+	AUDIO_UNLOCK;
 }
 
 //Stage update code

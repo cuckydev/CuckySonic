@@ -2,6 +2,7 @@
 #include <stdint.h>
 #include "Render.h"
 #include "CommonMacros.h"
+#include "Audio.h"
 
 enum SPECIALSTAGE_RENDERLAYER
 {
@@ -26,6 +27,9 @@ class SPECIALSTAGE
 		TEXTURE *backgroundTexture;
 		
 		uint8_t *perspectiveMap;
+		
+		//Music
+		MUSIC *music;
 		
 		//Stage layout
 		uint16_t width, height;

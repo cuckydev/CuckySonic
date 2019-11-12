@@ -33,7 +33,8 @@
 //#define SONIC12_PUSH_CHECK          //In Sonic 3, it was changed so that you have to be facing towards a wall in order to start pushing into it
 //#define SONIC12_SANE_AIRCOLLISION   //For some reason, in Sonic 3 there was a weird modification to the airborne collision code... can't understand the purpose
 //#define SONIC123_WALL_COLLISION     //In Sonic and Knuckles, the wall collision on the ground was changed to have collision even on walls and ceilings (as long as they're cardinal directions)
-//#define SONIC12_ROLLJUMP_LAND       //In Sonic 3, they fixed the roll jump landing bug, where you'd land 5 pixels above the ground after jumping from a roll
+//#define SONIC12_ROLLJUMP_LAND       //In Sonic 3, they fixed the roll jump landing bug, where you'd land 5 pixels above the ground after jumping from a roll, but didn't just fix the damn collision size
+//#define SONIC12_DUCK_OBJECTHIT      //Before Sonic 3, ducking would give the player a smaller hitbox for generic object collision
 
 //#define SONIC1_WALK_ANIMATION       //For some reason, in Sonic 2+, the animation code was messed up, making the first frame of the walk animation last only one frame
 //#define SONIC1_SLOPE_ROTATION       //In Sonic 2+, a few lines were added to the animation code to make the floor rotation more consistent
@@ -62,7 +63,6 @@
 //#define SONIC2_SPINDASH_ANIM_BUG    //In Sonic 3, the bug where landing on the ground while spindashing plays the walk animation was fixed
 
 //Other control options
-//#define CONTROL_NO_ROLLJUMP_LOCK          //In the originals, jumping from a roll will lock your controls
 //#define CONTROL_JA_DONT_CLEAR_ROLLJUMP    //When you use a jump ability in the original, it clears the roll-jump flag
 
 //Common macros
@@ -110,6 +110,8 @@
 #define MAPPINGFRAME_IDLE_TUMBLE	95 + 12 //Similar to the above, but idle (LBZ twisty thingies)
 #define MAPPINGFRAME_TWIST			95 + 24	//Running around a twist (I think this is used in LRZ?)
 #define MAPPINGFRAME_TURN			95 + 36	//Turning (CNZ Barrels)
+
+#define MAPPINGFRAME_DUCK	77
 
 static const uint8_t animationWalk[] =			{0xFF,0x0F,0x10,0x11,0x12,0x13,0x14,0x0D,0x0E,0xFF}; //Walk and run must match in length (run is padded with 0xFF, here)
 static const uint8_t animationRun[] =			{0xFF,0x2D,0x2E,0x2F,0x30,0xFF,0xFF,0xFF,0xFF,0xFF};
@@ -259,8 +261,7 @@ static const uint8_t* animationListSpindashDust[] = {
 
 void ObjSpindashDust(OBJECT *object)
 {
-	PLAYER *player = (PLAYER*)object->parent;
-	if (player == nullptr)
+	if (object->parentPlayer == nullptr)
 		return;
 	
 	switch (object->routine)
@@ -282,24 +283,24 @@ void ObjSpindashDust(OBJECT *object)
 			if (object->anim == 1)
 			{
 				//Is the player still spindashing?
-				if (player->routine != PLAYERROUTINE_CONTROL || player->spindashing == false)
+				if (object->parentPlayer->routine != PLAYERROUTINE_CONTROL || object->parentPlayer->spindashing == false)
 				{
 					object->anim = 0;
 					break;
 				}
 				
 				//Copy the player's position
-				object->status.xFlip = player->status.xFlip;
-				object->status.yFlip = player->status.reverseGravity;
-				object->highPriority = player->highPriority;
+				object->status.xFlip = object->parentPlayer->status.xFlip;
+				object->status.yFlip = object->parentPlayer->status.reverseGravity;
+				object->highPriority = object->parentPlayer->highPriority;
 				
-				object->x.pos = player->x.pos;
-				object->y.pos = player->y.pos;
+				object->x.pos = object->parentPlayer->x.pos;
+				object->y.pos = object->parentPlayer->y.pos;
 				
 				//Offset if our height is atypical (for a short character like Tails)
-				int heightDifference = 19 - player->defaultYRadius;
+				int heightDifference = 19 - object->parentPlayer->defaultYRadius;
 				
-				if (player->status.reverseGravity)
+				if (object->parentPlayer->status.reverseGravity)
 					object->y.pos += heightDifference;
 				else
 					object->y.pos -= heightDifference;
@@ -324,8 +325,6 @@ static const uint8_t* animationListSkidDust[] = {
 
 void ObjSkidDust(OBJECT *object)
 {
-	PLAYER *player = (PLAYER*)object->parent;
-	
 	switch (object->routine)
 	{
 		case 0:
@@ -342,14 +341,14 @@ void ObjSkidDust(OBJECT *object)
 			break;
 		case 1: //Dust controller
 			//Don't run if there's no parent
-			if (player == nullptr)
+			if (object->parentPlayer == nullptr)
 				break;
 			
 			//If we're active
 			if (object->anim == 1)
 			{
 				//Is the player still skidding?
-				if (player->anim != PLAYERANIMATION_SKID)
+				if (object->parentPlayer->anim != PLAYERANIMATION_SKID)
 				{
 					object->anim = 0;
 					break;
@@ -363,16 +362,16 @@ void ObjSkidDust(OBJECT *object)
 					
 					//Create a new dust object at the player's feet
 					OBJECT *dust = new OBJECT(&ObjSkidDust);
-					dust->x.pos = player->x.pos;
-					dust->y.pos = player->y.pos + (player->status.reverseGravity ? -16 : 16);
-					dust->highPriority = player->highPriority;
+					dust->x.pos = object->parentPlayer->x.pos;
+					dust->y.pos = object->parentPlayer->y.pos + (object->parentPlayer->status.reverseGravity ? -16 : 16);
+					dust->highPriority = object->parentPlayer->highPriority;
 					dust->anim = 2;
 					gLevel->objectList.link_back(dust);
 					
 					//Offset if our height is atypical (for a short character like Tails)
-					int heightDifference = 19 - player->defaultYRadius;
+					int heightDifference = 19 - object->parentPlayer->defaultYRadius;
 					
-					if (player->status.reverseGravity)
+					if (object->parentPlayer->status.reverseGravity)
 						object->y.pos += heightDifference;
 					else
 						object->y.pos -= heightDifference;
@@ -458,19 +457,19 @@ void ObjShield(OBJECT *object)
 	
 	object->ScratchAllocU8(SCRATCHU8_MAX);
 	
-	//Get our parent player
-	PLAYER *player = (PLAYER*)object->parent;
-	if (player == nullptr)
+	//Check if we have a parent player
+	if (object->parentPlayer == nullptr)
 		return;
 	
 	//Handle super stars
-	if (player->super)
+	if (object->parentPlayer->super)
 	{
 		//Restart if wasn't super stars
 		if (object->routine != ROUTINE_SUPERSTAR)
 		{
 			object->routine = ROUTINE_SUPERSTAR;
 			object->mappingFrame = 0;
+			object->animFrameDuration = 0;
 			object->scratchU8[SCRATCHU8_MOVING] = 0;
 			object->scratchU8[SCRATCHU8_NO_COPY_POS] = 0;
 		}
@@ -484,7 +483,7 @@ void ObjShield(OBJECT *object)
 		object->widthPixels = 24;
 		object->heightPixels = 24;
 		object->renderFlags.alignPlane = true;
-		object->highPriority = player->highPriority;
+		object->highPriority = object->parentPlayer->highPriority;
 		
 		if (object->scratchU8[SCRATCHU8_MOVING])
 		{
@@ -506,8 +505,8 @@ void ObjShield(OBJECT *object)
 			//Copy position (if SCRATCHU8_NO_COPY_POS is clear), and draw to screen
 			if (!object->scratchU8[SCRATCHU8_NO_COPY_POS])
 			{
-				object->x.pos = player->x.pos;
-				object->y.pos = player->y.pos;
+				object->x.pos = object->parentPlayer->x.pos;
+				object->y.pos = object->parentPlayer->y.pos;
 			}
 			
 			object->DrawInstance(object->renderFlags, object->texture, object->mappings, object->highPriority, object->priority, object->mappingFrame, object->x.pos, object->y.pos);
@@ -515,7 +514,7 @@ void ObjShield(OBJECT *object)
 		else
 		{
 			//Wait for the player to have a high enough ground velocity
-			if (player->objectControl.disableOurMovement || player->objectControl.disableObjectInteract || abs(player->inertia) < 0x800)
+			if (object->parentPlayer->objectControl.disableOurMovement || object->parentPlayer->objectControl.disableObjectInteract || abs(object->parentPlayer->inertia) < 0x800)
 			{
 				//Stay inactive
 				object->scratchU8[SCRATCHU8_MOVING] = 0;
@@ -529,20 +528,20 @@ void ObjShield(OBJECT *object)
 				#ifdef FIX_WEIRD_SUPER_STAR_TRACKING
 					object->scratchU8[SCRATCHU8_NO_COPY_POS] = 1;
 				#endif
-				object->x.pos = player->x.pos;
-				object->y.pos = player->y.pos;
+				object->x.pos = object->parentPlayer->x.pos;
+				object->y.pos = object->parentPlayer->y.pos;
 				object->DrawInstance(object->renderFlags, object->texture, object->mappings, object->highPriority, object->priority, object->mappingFrame, object->x.pos, object->y.pos);
 			}
 		}
 	}
 	//Shield
-	else if (!player->item.isInvincible)
+	else if (!object->parentPlayer->item.isInvincible)
 	{
 		//Reset if wasn't the shield we are now
-		if ((SHIELD)object->routine != player->shield)
+		if ((SHIELD)object->routine != object->parentPlayer->shield)
 		{
 			//Copy our current shield
-			object->routine = player->shield;
+			object->routine = object->parentPlayer->shield;
 			
 			//Reset animation state
 			object->anim = 0;
@@ -552,15 +551,15 @@ void ObjShield(OBJECT *object)
 		}
 		
 		//Copy player position and high priority flag
-		object->highPriority = player->highPriority;
-		object->x.pos = player->x.pos;
-		object->y.pos = player->y.pos;
+		object->highPriority = object->parentPlayer->highPriority;
+		object->x.pos = object->parentPlayer->x.pos;
+		object->y.pos = object->parentPlayer->y.pos;
 		
 		//Do shield specific code (this includes getting our things)
 		const char *useMapping = nullptr;
 		const uint8_t **useAniList = nullptr;
 		
-		switch (player->shield)
+		switch (object->parentPlayer->shield)
 		{
 			case SHIELD_BLUE:
 				//Use blue shield mappings and animations
@@ -587,16 +586,16 @@ void ObjShield(OBJECT *object)
 				//Copy orientation (if not in dash state)
 				if (object->anim == 0)
 				{
-					object->status.xFlip = player->status.xFlip;
-					object->status.yFlip = player->status.reverseGravity;
+					object->status.xFlip = object->parentPlayer->status.xFlip;
+					object->status.yFlip = object->parentPlayer->status.reverseGravity;
 				}
 				
 				//Extinguish once in water
-				if (player->status.underwater)
+				if (object->parentPlayer->status.underwater)
 				{
-					player->shield = SHIELD_NULL;
-					player->item.shieldReflect = false;
-					player->item.immuneFire = false;
+					object->parentPlayer->shield = SHIELD_NULL;
+					object->parentPlayer->item.shieldReflect = false;
+					object->parentPlayer->item.immuneFire = false;
 					return;
 				}
 				break;
@@ -612,19 +611,19 @@ void ObjShield(OBJECT *object)
 				object->renderFlags.alignPlane = true;
 				
 				//Copy orientation
-				object->status.xFlip = player->status.xFlip;
-				object->status.yFlip = player->status.reverseGravity;
+				object->status.xFlip = object->parentPlayer->status.xFlip;
+				object->status.yFlip = object->parentPlayer->status.reverseGravity;
 				
 				//Clear animation if non-zero
 				if (object->anim)
 					object->anim = 0;
 				
 				//Extinguish once in water
-				if (player->status.underwater)
+				if (object->parentPlayer->status.underwater)
 				{
-					player->shield = SHIELD_NULL;
-					player->item.shieldReflect = false;
-					player->item.immuneFire = false;
+					object->parentPlayer->shield = SHIELD_NULL;
+					object->parentPlayer->item.shieldReflect = false;
+					object->parentPlayer->item.immuneFire = false;
 					return;
 				}
 				break;
@@ -651,12 +650,12 @@ void ObjShield(OBJECT *object)
 				object->renderFlags.alignPlane = true;
 				
 				//Copy orientation
-				object->status.xFlip = player->status.xFlip;
-				object->status.yFlip = player->status.reverseGravity;
+				object->status.xFlip = object->parentPlayer->status.xFlip;
+				object->status.yFlip = object->parentPlayer->status.reverseGravity;
 				
 				//When we reach the end of the animation, end our attack
-				if (object->mappingFrame == 7 && player->jumpAbility == 1)
-					player->jumpAbility = 2;
+				if (object->mappingFrame == 7 && object->parentPlayer->jumpAbility == 1)
+					object->parentPlayer->jumpAbility = 2;
 				break;
 		}
 		
@@ -668,7 +667,7 @@ void ObjShield(OBJECT *object)
 		object->Animate(useAniList);
 		
 		//Do post-animation shield specific code (specifically priority stuff)
-		switch (player->shield)
+		switch (object->parentPlayer->shield)
 		{
 			case SHIELD_FIRE:
 				//Check if we should be drawn behind the player
@@ -744,8 +743,7 @@ void ObjInvincibilityStars(OBJECT *object)
 	object->ScratchAllocU16(SCRATCHU16_MAX);
 	
 	//Get our parent player
-	PLAYER *player = (PLAYER*)object->parent;
-	if (player == nullptr || object->routineSecondary == 0)
+	if (object->parentPlayer == nullptr || object->routineSecondary == 0)
 		return;
 	
 	//Initialize stars
@@ -773,12 +771,12 @@ void ObjInvincibilityStars(OBJECT *object)
 		case 1:
 		{
 			//Don't draw if not invincible
-			if (!(player->super == false && player->item.isInvincible == true))
+			if (!(object->parentPlayer->super == false && object->parentPlayer->item.isInvincible == true))
 				break;
 			
 			//Copy player's position
-			int16_t xPos = (object->x.pos = player->x.pos);
-			int16_t yPos = (object->y.pos = player->y.pos);
+			int16_t xPos = (object->x.pos = object->parentPlayer->x.pos);
+			int16_t yPos = (object->y.pos = object->parentPlayer->y.pos);
 			
 			//Get our primary animation frame
 			uint16_t frame;
@@ -799,7 +797,7 @@ void ObjInvincibilityStars(OBJECT *object)
 			object->DrawInstance(object->renderFlags, object->texture, object->mappings, object->highPriority, object->priority, frame, star2XPos, star2YPos);
 			
 			//Spin around the player
-			if (player->status.xFlip)
+			if (object->parentPlayer->status.xFlip)
 				object->scratchU8[SCRATCHU8_ANGLE] += 0x12;
 			else
 				object->scratchU8[SCRATCHU8_ANGLE] -= 0x12;
@@ -808,13 +806,13 @@ void ObjInvincibilityStars(OBJECT *object)
 		case 2:
 		{
 			//Don't draw if not invincible
-			if (!(player->super == false && player->item.isInvincible == true))
+			if (!(object->parentPlayer->super == false && object->parentPlayer->item.isInvincible == true))
 				break;
 			
 			//Copy player's position
 			unsigned int trailSeek = object->subtype << 2;
-			int16_t xPos = (object->x.pos = player->record[(player->recordPos - trailSeek) % (unsigned)PLAYER_RECORD_LENGTH].x);
-			int16_t yPos = (object->y.pos = player->record[(player->recordPos - trailSeek) % (unsigned)PLAYER_RECORD_LENGTH].y);
+			int16_t xPos = (object->x.pos = object->parentPlayer->record[(object->parentPlayer->recordPos - trailSeek) % (unsigned)PLAYER_RECORD_LENGTH].x);
+			int16_t yPos = (object->y.pos = object->parentPlayer->record[(object->parentPlayer->recordPos - trailSeek) % (unsigned)PLAYER_RECORD_LENGTH].y);
 			
 			//Get our animation frames
 			const uint8_t *frameArray = invincibilityStarArray[object->subtype].frameArray;
@@ -839,7 +837,7 @@ void ObjInvincibilityStars(OBJECT *object)
 			object->DrawInstance(object->renderFlags, object->texture, object->mappings, object->highPriority, object->priority, frame1, star2XPos, star2YPos);
 			
 			//Spin around the player
-			if (player->status.xFlip)
+			if (object->parentPlayer->status.xFlip)
 				object->scratchU8[SCRATCHU8_ANGLE] += 0x02;
 			else
 				object->scratchU8[SCRATCHU8_ANGLE] -= 0x02;
@@ -955,21 +953,21 @@ PLAYER::PLAYER(const char *specPath, PLAYER *myFollow, int myController)
 	
 	//Load our objects
 	spindashDust = new OBJECT(&ObjSpindashDust);
-	spindashDust->parent = (void*)this;
+	spindashDust->parentPlayer = this;
 	gLevel->coreObjectList.link_back(spindashDust);
 	
 	skidDust = new OBJECT(&ObjSkidDust);
-	skidDust->parent = (void*)this;
+	skidDust->parentPlayer = this;
 	gLevel->coreObjectList.link_back(skidDust);
 	
 	shieldObject = new OBJECT(&ObjShield);
-	shieldObject->parent = (void*)this;
+	shieldObject->parentPlayer = this;
 	gLevel->coreObjectList.link_back(shieldObject);
 	
 	for (int i = 0; i < INVINCIBILITYSTARS; i++)
 	{
 		invincibilityStarObject[i] = new OBJECT(&ObjInvincibilityStars);
-		invincibilityStarObject[i]->parent = (void*)this;
+		invincibilityStarObject[i]->parentPlayer = this;
 		invincibilityStarObject[i]->subtype = i;
 		gLevel->coreObjectList.link_back(invincibilityStarObject[i]);
 	}
@@ -2476,9 +2474,7 @@ void PLAYER::JumpHeight()
 void PLAYER::ChgJumpDir()
 {
 	//Move left and right
-#ifndef SONICCD_ROLLJUMP
 	if (!status.rollJumping)
-#endif
 	{
 		int16_t newVelocity = xVel;
 		int16_t jumpAcceleration = acceleration << 1;
@@ -2648,44 +2644,29 @@ bool PLAYER::Jump()
 			PlaySound(SOUNDID_JUMP);
 			
 			//Handle our collision and roll state
-			#ifndef SONICCD_ROLLJUMP
-				#ifndef FIX_ROLLJUMP_COLLISION
-					xRadius = defaultXRadius;
-					yRadius = defaultYRadius;
-				#else
-					xRadius = rollXRadius;
-					yRadius = rollYRadius;
-				#endif
+			#if !(defined(SONICCD_ROLLJUMP) || defined(FIX_ROLLJUMP_COLLISION))
+				xRadius = defaultXRadius;
+				yRadius = defaultYRadius;
 			#endif
 			
 			if (!status.inBall)
 			{
 				//Go into ball form
-				#ifndef FIX_ROLLJUMP_COLLISION
-					xRadius = rollXRadius;
-					yRadius = rollYRadius;
-				#endif
-				
+				xRadius = rollXRadius;
+				yRadius = rollYRadius;
 				anim = PLAYERANIMATION_ROLL;
 				status.inBall = true;
 				
 				//Shift us down to the ground
 				YSHIFT_ON_FLOOR(-(yRadius - defaultYRadius));
 			}
+		#ifndef SONICCD_ROLLJUMP
 			else
 			{
-				#ifndef CONTROL_NO_ROLLJUMP_LOCK
-					//Set our roll jump flag (also we use the regular non-roll collision size for some reason)
-					status.rollJumping = true;
-				#else
-					//Make sure we stay in ballform
-					#ifndef FIX_ROLLJUMP_COLLISION
-						xRadius = rollXRadius;
-						yRadius = rollYRadius;
-					#endif
-					anim = PLAYERANIMATION_ROLL;
-				#endif
+				//Set our roll jump flag (original uses the regular non-roll collision size for some reason)
+				status.rollJumping = true;
 			}
+		#endif
 			return false;
 		}
 	}
@@ -3483,15 +3464,13 @@ bool PLAYER::KillCharacter(SOUNDID soundId)
 	return false;
 }
 
-bool PLAYER::CheckHurt(void *hit)
+bool PLAYER::CheckHurt(OBJECT *hit)
 {
-	OBJECT *object = (OBJECT*)hit;
-	
 	//Check our shield and invincibility state
 	if (shield != SHIELD_NULL || item.isInvincible)
 	{
 		//If we're immune to the object, don't hurt us
-		if ((item.immuneFire && object->hurtType.fire) || (item.immuneElectric && object->hurtType.electric) || (item.immuneWater && object->hurtType.water))
+		if ((item.immuneFire && hit->hurtType.fire) || (item.immuneElectric && hit->hurtType.electric) || (item.immuneWater && hit->hurtType.water))
 			return true;
 	}
 	
@@ -3503,18 +3482,18 @@ bool PLAYER::CheckHurt(void *hit)
 #endif
 	{
 		//If we should be reflected, reflect
-		if (object->hurtType.reflect)
+		if (hit->hurtType.reflect)
 		{
 			//Get the velocity to reflect at
 			int16_t xVel, yVel;
-			uint8_t angle = GetAtan(x.pos - object->x.pos, y.pos - object->y.pos);
+			uint8_t angle = GetAtan(x.pos - hit->x.pos, y.pos - hit->y.pos);
 			GetSine(angle, &yVel, &xVel);
 			
-			object->xVel = (xVel * -0x800) >> 8;
-			object->yVel = (yVel * -0x800) >> 8;
+			hit->xVel = (xVel * -0x800) >> 8;
+			hit->yVel = (yVel * -0x800) >> 8;
 			
 			//Clear the object's collision
-			object->collisionType = COLLISIONTYPE_NULL;
+			hit->collisionType = COLLISIONTYPE_NULL;
 			return true;
 		}
 	}
@@ -3528,10 +3507,8 @@ bool PLAYER::CheckHurt(void *hit)
 	return false;
 }
 
-bool PLAYER::HurtCharacter(void *hit)
+bool PLAYER::HurtCharacter(OBJECT *hit)
 {
-	OBJECT *object = (OBJECT*)hit;
-	
 	//If a spike object, use the spike hurt sound
 	SOUNDID soundId = SOUNDID_HURT;
 	
@@ -3563,7 +3540,7 @@ bool PLAYER::HurtCharacter(void *hit)
 			OBJECT *ringObject = new OBJECT(&ObjBouncingRing_Spawner);
 			ringObject->x.pos = x.pos;
 			ringObject->y.pos = y.pos;
-			ringObject->parent = (void*)this;
+			ringObject->parentPlayer = this;
 			gLevel->objectList.link_back(ringObject);
 		}
 	}
@@ -3578,7 +3555,7 @@ bool PLAYER::HurtCharacter(void *hit)
 	xVel = status.underwater ? 0x100 : 0x200;
 	yVel = status.underwater ? -0x200 : -0x400;
 	
-	if (x.pos < object->x.pos)
+	if (x.pos < hit->x.pos)
 		xVel = -xVel;
 	
 	//Other stuff for getting hurt
@@ -4885,6 +4862,7 @@ void PLAYER::RingAttractCheck(OBJECT *object)
 		if (xDiff >= 0 && xDiff <= RING_ATTRACT_RADIUS * 2 && yDiff >= 0 && yDiff <= RING_ATTRACT_RADIUS * 2)
 		{
 			//Turn this ring into an attracted ring
+			gLevel->ReleaseObjectLoad(object);
 			object->function = ObjAttractRing;
 			object->parent = (void*)this;
 		}
@@ -4957,7 +4935,6 @@ bool PLAYER::TouchResponseObject(OBJECT *object, int16_t playerLeft, int16_t pla
 					//If moving upwards, make the monitor bounce upwards
 					if (yVel < 0)
 					{
-						
 						if ((y.pos - 0x10) >= object->y.pos)
 						{
 							//Reverse our y-velocity and bump the monitor upwards (make it fall, too!)
@@ -4972,7 +4949,7 @@ bool PLAYER::TouchResponseObject(OBJECT *object, int16_t playerLeft, int16_t pla
 						//Reverse our y-velocity and destroy the monitor
 						yVel = -yVel;
 						object->routine = 2;
-						object->parent = (void*)this;
+						object->parentPlayer = this;
 					}
 					return true;
 				default:
@@ -5028,12 +5005,14 @@ void PLAYER::TouchResponse()
 		playerTop = y.pos - playerHeight;
 		playerHeight *= 2; //diameter
 		
-		//Code to handle the ducking hitbox from Sonic 1 and 2 (TODO: it's supposed to check the mapping frame)
-		if (anim == PLAYERANIMATION_DUCK)
-		{
-			playerTop += 12;
-			playerHeight = 10;
-		}
+		#ifdef SONIC12_DUCK_OBJECTHIT
+			//Give us a smaller hitbox while ducking
+			if (mappingFrame == MAPPINGFRAME_DUCK)
+			{
+				playerTop += 12;
+				playerHeight = 10;
+			}
+		#endif
 	}
 	
 	//Iterate through every object

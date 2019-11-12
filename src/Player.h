@@ -280,21 +280,6 @@ class PLAYER
 		//Character type id (ex. Sonic, Tails, Knuckles, or anything else)
 		CHARACTERTYPE characterType;
 		
-		//Player to follow (sidekick)
-		void *follow; //We can't use the PLAYER type here since we're still defining it
-		int controller;
-		
-		//CPU
-		CPUROUTINE cpuRoutine;
-		int cpuOverride;
-		unsigned int cpuTimer;
-		bool cpuJumping;
-		
-		//Controls
-		CONTROLMASK controlHeld;
-		CONTROLMASK controlPress;
-		bool controlLock;
-		
 		//Camera scrolling
 		unsigned int scrollDelay;
 		bool cameraLock;
@@ -315,6 +300,20 @@ class PLAYER
 		OBJECT *skidDust;
 		OBJECT *shieldObject;
 		OBJECT *invincibilityStarObject[INVINCIBILITYSTARS];
+		
+		//CPU and other control things
+		CPUROUTINE cpuRoutine;
+		int cpuOverride;
+		unsigned int cpuTimer;
+		bool cpuJumping;
+		
+		PLAYER *follow;
+		int controller;
+		
+		//Current input
+		CONTROLMASK controlHeld;
+		CONTROLMASK controlPress;
+		bool controlLock;
 		
 		//For linked list
 		PLAYER **list;
@@ -385,8 +384,8 @@ class PLAYER
 		void HurtStop();
 		
 		bool KillCharacter(SOUNDID soundId);
-		bool CheckHurt(void *hit);
-		bool HurtCharacter(void *hit);
+		bool CheckHurt(OBJECT *hit);
+		bool HurtCharacter(OBJECT *hit);
 		
 		void LevelBoundSide(int32_t bound);
 		void LevelBound();

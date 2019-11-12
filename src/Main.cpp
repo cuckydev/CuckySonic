@@ -19,10 +19,7 @@
 
 int main(int argc, char *argv[])
 {
-	//Print our given arguments (just for debug stuff)
-	LOG(("arguments %d\n", argc));
-	for (int i = 0; i < argc; i++)
-		LOG(("    %s\n", argv[i]));
+	(void)argc; (void)argv;
 	
 	//Initialize our backend
 	LOG(("Initializing backend... "));

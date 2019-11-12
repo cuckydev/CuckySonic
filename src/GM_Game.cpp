@@ -13,13 +13,15 @@ LEVEL *gLevel;
 int gGameLoadLevel = 0;
 int gGameLoadCharacter = 0;
 
-const char *sonicOnly[] =		{"data/Sonic/Sonic", nullptr};
-const char *sonicAndTails[] =	{"data/Sonic/Sonic", "data/Tails/Tails", nullptr};
-const char *knucklesOnly[] =	{"data/Knuckles/Knuckles", nullptr};
+static const char *sonicOnly[] =		{"data/Sonic/Sonic", nullptr};
+static const char *sonicAndTails[] =	{"data/Sonic/Sonic", "data/Tails/Tails", nullptr};
+static const char *tailsOnly[] =		{"data/Knuckles/Knuckles", nullptr};
+static const char *knucklesOnly[] =		{"data/Knuckles/Knuckles", nullptr};
 
-const char **characterSetList[] = {
+static const char **characterSetList[] = {
 	sonicOnly,
 	sonicAndTails,
+	tailsOnly,
 	knucklesOnly,
 };
 
@@ -30,7 +32,7 @@ bool GM_Game(bool *noError)
 	if (gLevel->fail != nullptr)
 		return (*noError = false);
 	
-	//Fade level to black
+	//Fade level from black
 	gLevel->SetFade(true, false);
 	
 	//Our loop
@@ -70,7 +72,7 @@ bool GM_Game(bool *noError)
 		gLevel->Draw();
 		
 		//Render our software buffer to the screen
-		if (!(*noError = gSoftwareBuffer->RenderToScreen((gLevel->background == nullptr || gLevel->background->texture == nullptr) ? nullptr : &gLevel->background->texture->loadedPalette->colour[0])))
+		if (!(*noError = gSoftwareBuffer->RenderToScreen(&gLevel->background->texture->loadedPalette->colour[0])))
 			break;
 		
 		//Go to next state if set to break this state

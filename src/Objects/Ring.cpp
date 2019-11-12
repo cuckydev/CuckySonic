@@ -26,6 +26,7 @@ void ObjRing(OBJECT *object)
 			//Initialize other properties
 			object->renderFlags.alignPlane = true;
 			object->widthPixels = 8;
+			object->heightPixels = 8;
 			object->priority = 2;
 			
 			//Collision box
