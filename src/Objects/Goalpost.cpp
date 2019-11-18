@@ -52,7 +52,7 @@ void ObjGoalpost(OBJECT *object)
 			object->routine++;
 			
 			//Load graphics
-			object->texture = gLevel->GetObjectTexture("data/Object/Goalpost.bmp");
+			object->texture = gLevel->GetObjectTexture("data/Object/Generic.bmp");
 			object->mappings = gLevel->GetObjectMappings("data/Object/Goalpost.map");
 			
 			//Initialize other properties
@@ -66,7 +66,7 @@ void ObjGoalpost(OBJECT *object)
 		{
 			//If near the end of the level, lock screen
 			int16_t boundary = gLevel->rightBoundaryTarget - gRenderSpec.width - 0x100;
-			if (gLevel->camera->x >= boundary)
+			if (gLevel->camera->xPos >= boundary)
 				gLevel->leftBoundaryTarget = boundary;
 			
 			//If the main player is near us, start spinning
@@ -110,7 +110,7 @@ void ObjGoalpost(OBJECT *object)
 				sparkle->routine = 3;
 				sparkle->x.pos = object->x.pos + goalpostSparklePos[object->scratchU8[SCRATCHU8_SPARKLE]][0];
 				sparkle->y.pos = object->y.pos + goalpostSparklePos[object->scratchU8[SCRATCHU8_SPARKLE]][1];
-				sparkle->texture = gLevel->GetObjectTexture("data/Object/Ring.bmp");
+				sparkle->texture = gLevel->GetObjectTexture("data/Object/Generic.bmp");
 				sparkle->mappings = gLevel->GetObjectMappings("data/Object/Ring.map");
 				sparkle->renderFlags.alignPlane = true;
 				sparkle->widthPixels = 8;

@@ -12,13 +12,13 @@ template <typename T> struct LL_NODE
 template <typename T> class LINKEDLIST
 {
 	public:
-		LL_NODE<T> *head;
-		LL_NODE<T> *tail;
-		size_t llSize;
+		LL_NODE<T> *head = nullptr;
+		LL_NODE<T> *tail = nullptr;
+		size_t llSize = 0;
 		
 	public:
 		//Constructor and destructor
-		LINKEDLIST() { memset(this, 0, sizeof(LINKEDLIST)); head = nullptr; tail = nullptr; }
+		LINKEDLIST() { return; }
 		~LINKEDLIST() { clear(); }
 		
 		//Linking functions

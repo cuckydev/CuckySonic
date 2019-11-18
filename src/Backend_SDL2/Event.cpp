@@ -200,10 +200,10 @@ void HandleInputEvent(SDL_Event *event)
 
 bool HandleEvents()
 {
-	bool noExit = true;
+	bool exit = false;
 	bool focusYield = false;
 	
-	while (SDL_PollEvent(nullptr) || (focusYield && noExit))
+	while (SDL_PollEvent(nullptr) || (focusYield && (!exit)))
 	{
 		//Wait for next event (instantaneous if focus gained, just polling then stopping when done)
 		SDL_Event event;
@@ -212,7 +212,7 @@ bool HandleEvents()
 		switch (event.type)
 		{
 			case SDL_QUIT:	//Window/game is closed
-				noExit = false;
+				exit = true;
 				break;
 			
 			case SDL_WINDOWEVENT:
@@ -241,6 +241,5 @@ bool HandleEvents()
 	
 	//Update our input (such as pressed keys, or analogue stick input)
 	UpdateInput();
-	
-	return noExit;
+	return exit;
 }

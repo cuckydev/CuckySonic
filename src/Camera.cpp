@@ -29,22 +29,19 @@
 
 CAMERA::CAMERA(PLAYER *trackPlayer)
 {
-	//Clear memory
-	memset(this, 0, sizeof(CAMERA));
-	
 	//Move to our given player
-	x = trackPlayer->x.pos - (gRenderSpec.width / 2);
-	y = trackPlayer->y.pos - (gRenderSpec.height / 2 + CAMERA_VSCROLL_OFFSET);
+	xPos = trackPlayer->x.pos - (gRenderSpec.width / 2);
+	yPos = trackPlayer->y.pos - (gRenderSpec.height / 2 + CAMERA_VSCROLL_OFFSET);
 	
 	//Keep inside level boundaries
-	if (x < gLevel->leftBoundary)
-		x = gLevel->leftBoundary;
-	if (x + gRenderSpec.width > gLevel->rightBoundary)
-		x = gLevel->rightBoundary - gRenderSpec.width;
-	if (y < gLevel->topBoundary)
-		y = gLevel->topBoundary;
-	if (y + gRenderSpec.height > gLevel->bottomBoundary)
-		y = gLevel->bottomBoundary - gRenderSpec.height;
+	if (xPos < gLevel->leftBoundary)
+		xPos = gLevel->leftBoundary;
+	if (xPos + gRenderSpec.width > gLevel->rightBoundary)
+		xPos = gLevel->rightBoundary - gRenderSpec.width;
+	if (yPos < gLevel->topBoundary)
+		yPos = gLevel->topBoundary;
+	if (yPos + gRenderSpec.height > gLevel->bottomBoundary)
+		yPos = gLevel->bottomBoundary - gRenderSpec.height;
 	return;
 }
 
@@ -142,7 +139,7 @@ void CAMERA::Track(PLAYER *trackPlayer)
 		trackX += xShift;
 	}
 	
-	int16_t hScrollOffset = trackX - x - xPan;
+	int16_t hScrollOffset = trackX - xPos - xPan;
 	
 	if ((hScrollOffset -= (gRenderSpec.width / 2 + CAMERA_HSCROLL_LEFT)) < 0) //Scroll to the left
 	{
@@ -151,9 +148,9 @@ void CAMERA::Track(PLAYER *trackPlayer)
 			hScrollOffset = -16;
 		
 		//Scroll and keep within level boundaries
-		x += hScrollOffset;
-		if (x < gLevel->leftBoundary)
-			x = gLevel->leftBoundary;
+		xPos += hScrollOffset;
+		if (xPos < gLevel->leftBoundary)
+			xPos = gLevel->leftBoundary;
 	}
 	else if ((hScrollOffset -= CAMERA_HSCROLL_SIZE) >= 0) //Scroll to the right
 	{
@@ -162,13 +159,13 @@ void CAMERA::Track(PLAYER *trackPlayer)
 			hScrollOffset = 16;
 		
 		//Scroll and keep within level boundaries
-		x += hScrollOffset;
-		if ((x + gRenderSpec.width) > gLevel->rightBoundary)
-			x = gLevel->rightBoundary - gRenderSpec.width;
+		xPos += hScrollOffset;
+		if ((xPos + gRenderSpec.width) > gLevel->rightBoundary)
+			xPos = gLevel->rightBoundary - gRenderSpec.width;
 	}
 	
 	//Scroll vertically to the player
-	int16_t vScrollOffset = trackPlayer->y.pos - y - (gRenderSpec.height / 2 + CAMERA_VSCROLL_OFFSET) - lookPan;
+	int16_t vScrollOffset = trackPlayer->y.pos - yPos - (gRenderSpec.height / 2 + CAMERA_VSCROLL_OFFSET) - lookPan;
 	
 	if (trackPlayer->status.reverseGravity)
 		vScrollOffset += yShift;
@@ -202,21 +199,21 @@ void CAMERA::Track(PLAYER *trackPlayer)
 		//Scroll upwards (cap to scrollSpeed)
 		if (vScrollOffset <= -scrollSpeed)
 			vScrollOffset = -scrollSpeed;
-		y += vScrollOffset;
+		yPos += vScrollOffset;
 		
 		//Keep within level boundaries
-		if (y < gLevel->topBoundary)
-			y = gLevel->topBoundary;
+		if (yPos < gLevel->topBoundary)
+			yPos = gLevel->topBoundary;
 	}
 	else if (vScrollOffset > 0)
 	{
 		//Scroll downwards (cap to scrollSpeed)
 		if (vScrollOffset > scrollSpeed)
 			vScrollOffset = scrollSpeed;
-		y += vScrollOffset;
+		yPos += vScrollOffset;
 		
 		//Keep within level boundaries
-		if (y + gRenderSpec.height > gLevel->bottomBoundary)
-			y = gLevel->bottomBoundary - gRenderSpec.height;
+		if (yPos + gRenderSpec.height > gLevel->bottomBoundary)
+			yPos = gLevel->bottomBoundary - gRenderSpec.height;
 	}
 }

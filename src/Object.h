@@ -47,46 +47,39 @@ enum COLLISIONTYPE
 //Object structures
 struct OBJECT_RENDERFLAGS
 {
-	bool xFlip : 1;
-	bool yFlip : 1;
-	bool alignPlane : 1;
-	bool isOnscreen : 1;
+	bool xFlip = false;
+	bool yFlip = false;
+	bool alignPlane = false;
+	bool isOnscreen = false;
 };
 
 struct OBJECT_STATUS
 {
 	//Properties to load from
-	bool xFlip : 1;				//Set if facing left
-	bool yFlip : 1;				//In the air
-	bool releaseDestroyed : 1;	//Don't reload if destroyed (enemies)
-	bool noBalance : 1;			//Set to make sure players don't balance on us
-	bool objectSpecific : 1;	//Used for anything any specific object wants
+	bool xFlip = false;				//Set if facing left
+	bool yFlip = false;				//In the air
+	bool releaseDestroyed = false;	//Don't reload if destroyed (enemies)
+	bool noBalance = false;			//Set to make sure players don't balance on us
+	bool objectSpecific = false;	//Used for anything any specific object wants
 };
 
 struct OBJECT_SOLIDTOUCH
 {
-	bool side[OBJECT_PLAYER_REFERENCES];
-	bool bottom[OBJECT_PLAYER_REFERENCES];
-	bool top[OBJECT_PLAYER_REFERENCES];
+	bool side[OBJECT_PLAYER_REFERENCES] = {0};
+	bool bottom[OBJECT_PLAYER_REFERENCES] = {0};
+	bool top[OBJECT_PLAYER_REFERENCES] = {0};
 };
 
 //Object drawing instance class
-class OBJECT_DRAWINSTANCE
+struct OBJECT_DRAWINSTANCE
 {
-	public:
-		//Render properties
-		OBJECT_RENDERFLAGS renderFlags;
-		TEXTURE *texture;
-		MAPPINGS *mappings;
-		bool highPriority;
-		uint8_t priority;
-		uint16_t mappingFrame;
-		int16_t xPos, yPos;
-		
-	public:
-		OBJECT_DRAWINSTANCE();
-		~OBJECT_DRAWINSTANCE();
-		void Draw();
+	OBJECT_RENDERFLAGS renderFlags;
+	TEXTURE *texture;
+	MAPPINGS *mappings;
+	bool highPriority;
+	uint8_t priority;
+	uint16_t mappingFrame;
+	int16_t xPos, yPos;
 };
 
 //Object class
@@ -94,56 +87,56 @@ class OBJECT
 {
 	public:
 		//Failure
-		const char *fail;
+		const char *fail = nullptr;
 		
 		//Object sub-type
-		unsigned int subtype;
+		unsigned int subtype = 0;
 		
 		//Rendering stuff
 		OBJECT_RENDERFLAGS renderFlags;
 		LINKEDLIST<OBJECT_DRAWINSTANCE*> drawInstances;
 		
 		//Our texture and mappings
-		TEXTURE *texture;
-		MAPPINGS *mappings;
+		TEXTURE *texture = nullptr;
+		MAPPINGS *mappings = nullptr;
 		
 		//Position
 		POSDEF(x)
 		POSDEF(y)
 		
 		//Speeds
-		int16_t xVel;		//Global X-velocity
-		int16_t yVel;		//Global Y-velocity
-		int16_t inertia;	//Generic horizontal velocity
+		int16_t xVel = 0;		//Global X-velocity
+		int16_t yVel = 0;		//Global Y-velocity
+		int16_t inertia = 0;	//Generic horizontal velocity
 		
 		//Collision properties
-		int16_t xRadius;
-		int16_t yRadius;
+		int16_t xRadius = 0;
+		int16_t yRadius = 0;
 		
-		COLLISIONTYPE collisionType;
-		int16_t touchWidth;
-		int16_t touchHeight;
+		COLLISIONTYPE collisionType = COLLISIONTYPE_NULL;
+		int16_t touchWidth = 0;
+		int16_t touchHeight = 0;
 		
 		struct
 		{
-			bool reflect : 1;	//Projectile that gets reflected
-			bool fire : 1;		//Is fire
-			bool electric : 1;	//Is electric
-			bool water : 1;		//Is water
+			bool reflect = false;	//Projectile that gets reflected
+			bool fire = false;		//Is fire
+			bool electric = false;	//Is electric
+			bool water = false;		//Is water
 		} hurtType;
 		
 		//Sprite properties
-		bool highPriority;					//Drawn above the foreground
-		unsigned int priority;					//Priority of sprite when drawing
-		int16_t widthPixels, heightPixels;	//Width and height of sprite in pixels (used for on screen checking and balancing)
+		bool highPriority = false;					//Drawn above the foreground
+		unsigned int priority = 0;					//Priority of sprite when drawing
+		int16_t widthPixels = 0, heightPixels = 0;	//Width and height of sprite in pixels (used for on screen checking and balancing)
 		
 		//Animation and mapping
-		unsigned int mappingFrame;
+		unsigned int mappingFrame = 0;
 		
-		unsigned int animFrame;
-		unsigned int anim;
-		unsigned int prevAnim;
-		signed int animFrameDuration;
+		unsigned int animFrame = 0;
+		unsigned int anim = 0;
+		unsigned int prevAnim = 0;
+		signed int animFrameDuration = 0;
 		
 		//Our status
 		OBJECT_STATUS status;
@@ -151,19 +144,19 @@ class OBJECT
 		//Player contact status
 		struct
 		{
-			bool standing : 1;
-			bool pushing : 1;
-			bool objectSpecific : 1;
+			bool standing = false;
+			bool pushing = false;
+			bool objectSpecific = false;
 		} playerContact[OBJECT_PLAYER_REFERENCES];
 		
 		//Routine
-		uint8_t routine;			//Routine
-		uint8_t routineSecondary;	//Routine Secondary
+		uint8_t routine = 0;			//Routine
+		uint8_t routineSecondary = 0;	//Routine Secondary
 		
-		uint8_t angle;	//Angle
+		uint8_t angle = 0;	//Angle
 		union //Parent
 		{
-			void *parent;
+			void *parent = nullptr;
 			OBJECT *parentObject;
 			PLAYER *parentPlayer;
 		};
@@ -172,19 +165,19 @@ class OBJECT
 		LINKEDLIST<OBJECT*> children;
 		
 		//Scratch memory
-		 uint8_t  *scratchU8;
-		  int8_t  *scratchS8;
-		uint16_t *scratchU16;
-		 int16_t *scratchS16;
-		uint32_t *scratchU32;
-		 int32_t *scratchS32;
+		 uint8_t  *scratchU8 = nullptr;
+		  int8_t  *scratchS8 = nullptr;
+		uint16_t *scratchU16 = nullptr;
+		 int16_t *scratchS16 = nullptr;
+		uint32_t *scratchU32 = nullptr;
+		 int32_t *scratchS32 = nullptr;
 		
 		//Our object-specific function
-		OBJECTFUNCTION function;
-		OBJECTFUNCTION prevFunction;
+		OBJECTFUNCTION function = nullptr;
+		OBJECTFUNCTION prevFunction = nullptr;
 		
 		//Delete flag
-		bool deleteFlag : 1;
+		bool deleteFlag = false;
 		
 	public:
 		//Constructor and destructor
@@ -228,4 +221,5 @@ class OBJECT
 		//Main update and draw functions
 		bool Update();
 		void Draw();
+		void RenderDrawInstance(OBJECT_DRAWINSTANCE *drawInstance);
 };

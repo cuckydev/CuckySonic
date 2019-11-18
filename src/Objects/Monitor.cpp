@@ -6,6 +6,10 @@
 #include "../Objects.h"
 #include "../Audio.h"
 
+//Bugfixes
+//#define MONITOR_FIX_PUSHING	//There's a bit of an issue with pushing on monitors, if you jump while pushing, it won't clear the pushing bit, and this will screw up stuff like the super transformation, and spindashing into the sides
+
+//Size constants
 #define MONITOR_WIDTH	26
 #define MONITOR_HEIGHT	15
 
@@ -35,6 +39,14 @@ void ObjMonitor_SolidObject_Lead(OBJECT *object, int i, PLAYER *player)
 		ObjMonitor_ChkOverEdge(object, i, player);
 	else if (player->anim != PLAYERANIMATION_ROLL && player->anim != PLAYERANIMATION_DROPDASH)
 		object->SolidObjectCont(nullptr, player, i, MONITOR_WIDTH, MONITOR_HEIGHT, object->x.pos, nullptr, false);
+#ifdef MONITOR_FIX_PUSHING
+	else if (object->playerContact[i].pushing)
+	{
+		//Clear pushing
+		player->status.pushing = false;
+		object->playerContact[i].pushing = false;
+	}
+#endif
 }
 
 void ObjMonitor_SolidObject_Follower(OBJECT *object, int i, PLAYER *player)
@@ -110,7 +122,7 @@ void ObjMonitorContents(OBJECT *object)
 			object->routine++;
 			
 			//Load graphics
-			object->texture = gLevel->GetObjectTexture("data/Object/Monitor.bmp");
+			object->texture = gLevel->GetObjectTexture("data/Object/Generic.bmp");
 			object->mappings = gLevel->GetObjectMappings("data/Object/MonitorContents.map");
 			
 			//Set render properties and velocity
@@ -206,7 +218,7 @@ void ObjMonitor(OBJECT *object)
 			object->yRadius = 14;
 			
 			//Load graphics
-			object->texture = gLevel->GetObjectTexture("data/Object/Monitor.bmp");
+			object->texture = gLevel->GetObjectTexture("data/Object/Generic.bmp");
 			object->mappings = gLevel->GetObjectMappings("data/Object/Monitor.map");
 			
 			//Set render properties

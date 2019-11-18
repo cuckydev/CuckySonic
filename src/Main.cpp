@@ -33,10 +33,9 @@ int main(int argc, char *argv[])
 	LOG(("Success!\n"));
 	
 	//Initialize game sub-systems
-	bool noError = true;
-	
-	if ((noError = (InitializePath() && InitializeRender() && InitializeAudio() && InitializeInput())))
-		noError = EnterGameLoop();
+	bool error = false;
+	if ((error = (InitializePath() || InitializeRender() || InitializeAudio() || InitializeInput())) == false)
+		error = EnterGameLoop();
 	
 	//End game sub-systems
 	QuitInput();
@@ -50,7 +49,7 @@ int main(int argc, char *argv[])
 	LOG(("Success!\n"));
 	
 	//Failed exit
-	if (!noError)
+	if (error)
 		return -1;
 	
 	//Successful exit

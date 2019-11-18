@@ -66,15 +66,13 @@ enum LEVELID
 
 struct LEVELTABLE
 {
-	//Zone name and act id
+	//Stage identification (name, zone, act, etc.)
 	ZONEID zone;
 	int act;
-	
-	//Zone name and subtitle
 	const char *name;
 	const char *subtitle;
 	
-	//Level data format
+	//Formats
 	LEVELFORMAT format;
 	OBJECTFORMAT objectFormat;
 	ARTFORMAT artFormat;
@@ -84,14 +82,14 @@ struct LEVELTABLE
 	const char *chunkTileReferencePath;	//For the chunk and tile definitions
 	const char *collisionReferencePath;	//For the collision data itself (height maps and angle maps)
 	const char *artReferencePath;		//For the level's art
+	const char *music;
 	
-	//Level specific functions and object function list to refer to
+	//Level specific functions and lists
+	const char **preloadTexture;
+	const char **preloadMappings;
 	BACKGROUNDFUNCTION backFunction;
 	PALETTECYCLEFUNCTION paletteFunction;
 	OBJECTFUNCTION *objectFunctionList;
-	
-	//Music
-	const char *music;
 	
 	//Start position and boundaries
 	uint16_t startX, startY;
@@ -131,12 +129,9 @@ struct TILEMAPPING
 //Layout
 struct LAYOUT
 {
-	//Dimensions
-	int width;
-	int height;
-	
-	//Map data
-	TILE *foreground;
+	size_t width = 0;
+	size_t height = 0;
+	TILE *foreground = nullptr;
 };
 
 //Collision tile data
@@ -162,15 +157,15 @@ struct OBJECT_LOAD
 	
 	//Current status
 	OBJECT *loaded = nullptr;
-	bool loadRange : 1;
-	bool specificBit : 1;
+	bool loadRange = false;
+	bool specificBit = false;
 };
 
 //Level struct
 class LEVEL
 {
 	public:
-		const char *fail;
+		const char *fail = nullptr;
 		
 		//Level ID
 		LEVELID levelId;
@@ -179,27 +174,21 @@ class LEVEL
 		int act;
 		
 		//Loaded music
-		MUSIC *stageMusic;
-		MUSIC *bossMusic;
+		MUSIC *stageMusic = nullptr;
+		MUSIC *bossMusic = nullptr;
 		
-		MUSIC *speedShoesMusic;
-		MUSIC *invincibilityMusic;
-		MUSIC *superMusic;
-		MUSIC *extraLifeMusic;
-		MUSIC *goalMusic;
-		MUSIC *gameoverMusic;
+		MUSIC *speedShoesMusic = nullptr;
+		MUSIC *invincibilityMusic = nullptr;
+		MUSIC *superMusic = nullptr;
+		MUSIC *extraLifeMusic = nullptr;
+		MUSIC *goalMusic = nullptr;
+		MUSIC *gameoverMusic = nullptr;
 		
 		//Current music state
-		MUSIC *primaryMusic;	//stageMusic or bossMusic											(played below secondaryMusic)
-		MUSIC *secondaryMusic;	//speedShoesMusic, invincibilityMusic, goalMusic, or gameoverMusic	(played below jingles)
+		MUSIC *primaryMusic = nullptr;	//stageMusic or bossMusic											(played below secondaryMusic)
+		MUSIC *secondaryMusic = nullptr;	//speedShoesMusic, invincibilityMusic, goalMusic, or gameoverMusic	(played below jingles)
 		
-		MUSIC *currentMusic;	//Any of the loaded songs
-		
-		//Game update stuff
-		int frameCounter; //Frames the level has been loaded
-		
-		bool updateTime; //If the timer should update (at the end of the level)
-		bool updateStage; //If objects and other stuff should update (player not dead)
+		MUSIC *currentMusic = nullptr;	//Any of the loaded songs
 		
 		//Oscillatory stuff
 		bool oscillateDirection[OSCILLATORY_VALUES];
@@ -207,56 +196,58 @@ class LEVEL
 		
 		//Art
 		ARTFORMAT artFormat;
-		TEXTURE *tileTexture;
-		BACKGROUND *background;
+		TEXTURE *tileTexture = nullptr;
+		BACKGROUND *background = nullptr;
 		
-		PALETTECYCLEFUNCTION paletteFunction;
+		PALETTECYCLEFUNCTION paletteFunction = nullptr;
 		
 		//Chunk and tile data
-		int chunks, tiles;
-		CHUNKMAPPING *chunkMapping;
-		TILEMAPPING *tileMapping;
+		size_t chunks = 0, tiles = 0;
+		CHUNKMAPPING *chunkMapping = nullptr;
+		TILEMAPPING *tileMapping = nullptr;
 		
 		//Layout
 		LEVELFORMAT format;
 		LAYOUT layout;
 		
 		//Collision data
-		int collisionTiles;
-		COLLISIONTILE *collisionTile;
+		size_t collisionTiles = 0;
+		COLLISIONTILE *collisionTile = nullptr;
 		
 		//Boundaries
-		uint16_t leftBoundary;
-		uint16_t rightBoundary;
-		uint16_t topBoundary;
-		uint16_t bottomBoundary;
-		uint16_t leftBoundaryTarget;
-		uint16_t rightBoundaryTarget;
-		uint16_t topBoundaryTarget;
-		uint16_t bottomBoundaryTarget;
+		uint16_t leftBoundary = 0;
+		uint16_t rightBoundary = 0;
+		uint16_t topBoundary = 0;
+		uint16_t bottomBoundary = 0;
+		
+		uint16_t leftBoundaryTarget = 0;
+		uint16_t rightBoundaryTarget = 0;
+		uint16_t topBoundaryTarget = 0;
+		uint16_t bottomBoundaryTarget = 0;
 		
 		//Players and objects
 		LINKEDLIST<PLAYER*> playerList;
 		LINKEDLIST<OBJECT*> coreObjectList;
-		CAMERA *camera;
-		
-		//Level objects
 		LINKEDLIST<OBJECT_LOAD*> objectLoadList;
 		LINKEDLIST<OBJECT*> objectList;
 		
-		//Title card and HUD
-		TITLECARD *titleCard;
-		HUD *hud;
+		//Title card, camera, and HUD
+		CAMERA *camera = nullptr;
+		TITLECARD *titleCard = nullptr;
+		HUD *hud = nullptr;
 		
 		//Object texture cache
 		LINKEDLIST<TEXTURE*> objTextureCache;
 		LINKEDLIST<MAPPINGS*> objMappingsCache;
 		
-		//State
-		bool inTitleCard;
-		bool fading;
-		bool isFadingIn;
-		bool specialFade;
+		//Other state stuff
+		int frameCounter = 0;		//Frames the level has been loaded
+		
+		bool updateTime = true;		//If the timer should update (at the end of the level)
+		bool updateStage = true;	//If objects and other stuff should update (player not dead)
+		bool fading = false;		//If we're currently fading in / out
+		bool isFadingIn = false;	//If we're fading in or not
+		bool specialFade = false;	//Fading to / from white (fades to Special Stage)
 		
 	public:
 		//Constructor and destructor
@@ -312,6 +303,7 @@ class LEVEL
 		void UpdateMusic();
 		
 		//Update and draw functions
+		bool UpdateStage();
 		bool Update();
 		void Draw();
 };

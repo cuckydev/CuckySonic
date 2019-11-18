@@ -55,7 +55,7 @@ void ObjSpring(OBJECT *object)
 		case 0:
 		{
 			//Load graphics
-			object->texture = gLevel->GetObjectTexture("data/Object/Spring.bmp");
+			object->texture = gLevel->GetObjectTexture("data/Object/Generic.bmp");
 			if (object->subtype & 0x2)
 				object->mappings = gLevel->GetObjectMappings("data/Object/YellowSpring.map");
 			else

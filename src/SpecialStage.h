@@ -59,7 +59,7 @@ class SPECIALSTAGE
 		} playerState;
 		
 		//Stage state
-		uint16_t spheresLeft;
+		uint16_t ringsLeft;
 		
 		uint16_t animFrame;
 		uint16_t paletteFrame;

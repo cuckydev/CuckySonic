@@ -35,14 +35,9 @@ bool InitializeInput()
 	delete[] gcdbPath;
 	
 	if (result < 0)
-	{
-		Error(SDL_GetError());
-		return false;
-	}
+		return Error(SDL_GetError());
 	else
-	{
 		LOG(("Successfully loaded gamepad mappings from gamecontrollerdb.txt\n"));
-	}
 	
 	//Connect controllers
 	for (int i = 0, v = 0; i < SDL_NumJoysticks(); i++)
@@ -77,7 +72,7 @@ bool InitializeInput()
 	}
 	
 	LOG(("Success!\n"));
-	return true;
+	return false;
 }
 
 void QuitInput()

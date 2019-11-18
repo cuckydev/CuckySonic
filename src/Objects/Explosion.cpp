@@ -42,7 +42,7 @@ void ObjScore(OBJECT *object)
 	{
 		case 0:
 			//Load graphics
-			object->texture = gLevel->GetObjectTexture("data/Object/Score.bmp");
+			object->texture = gLevel->GetObjectTexture("data/Object/Generic.bmp");
 			object->mappings = gLevel->GetObjectMappings("data/Object/Score.map");
 			
 			//Initialize other properties
@@ -101,7 +101,7 @@ void ObjExplosion(OBJECT *object)
 			PlaySound(SOUNDID_POP);
 			
 			//Load graphics
-			object->texture = gLevel->GetObjectTexture("data/Object/Explosion.bmp");
+			object->texture = gLevel->GetObjectTexture("data/Object/Generic.bmp");
 			object->mappings = gLevel->GetObjectMappings("data/Object/Explosion.map");
 			
 			//Initialize other properties

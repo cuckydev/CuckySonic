@@ -60,6 +60,7 @@ SOURCES = \
 	Camera \
 	TitleCard \
 	Hud \
+	BitmapFont \
 	LevelSpecific/GHZ \
 	LevelSpecific/EHZ \
 	Objects/PathSwitcher \
@@ -93,7 +94,6 @@ ifeq ($(BACKEND), SDL2)
 		Backend_SDL2/Error \
 		Backend_SDL2/Filesystem \
 		Backend_SDL2/Render \
-		Backend_SDL2/Render_Blit \
 		Backend_SDL2/Event \
 		Backend_SDL2/Input \
 		Backend_SDL2/Audio

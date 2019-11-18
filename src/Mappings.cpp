@@ -3,6 +3,7 @@
 #include "CommonMacros.h"
 #include "Filesystem.h"
 #include "Mappings.h"
+#include "Error.h"
 #include "Log.h"
 
 MAPPINGS::MAPPINGS(const char *path)
@@ -20,7 +21,7 @@ MAPPINGS::MAPPINGS(const char *path)
 	
 	if (fp == nullptr)
 	{
-		fail = GetFileError();
+		Error(fail = GetFileError());
 		return;
 	}
 	
@@ -34,7 +35,7 @@ MAPPINGS::MAPPINGS(const char *path)
 		CloseFile(fp);
 		delete[] rect;
 		delete[] origin;
-		fail = "Failed to allocate rect and origin arrays";
+		Error(fail = "Failed to allocate rect and origin arrays");
 		return;
 	}
 	

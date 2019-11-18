@@ -1,27 +1,51 @@
 #pragma once
 #include <stdint.h>
-#include "Render.h"
+#include "BitmapFont.h"
+
+enum TITLECARD_LINE
+{
+	LINE_CUCKYSONIC_LABEL,
+	LINE_LEVEL_NAME,
+	LINE_LEVEL_SUBTITLE,
+	LINE_MAX,
+};
 
 class TITLECARD
 {
 	public:
-		const char *fail;
+		//Failure
+		const char *fail = nullptr;
 		
-		//Textures
+		//Loaded texture
 		TEXTURE *texture;
-		TEXTURE *fontTexture;
 		
-		//Current zone and frame
+		//State
+		bool activeLock = true;
+		unsigned int frame = 0;
+		
+		//Text
 		const char *name;
-		const char  *subtitle;
+		const char *subtitle;
 		
-		int drawY;
-		int frame;
+		BITMAPFONT *nameFont;
+		BITMAPFONT *subtitleFont;
+		
+		//Focus position
+		int focusX, focusY;
+		
+		//Lines
+		struct LINEPOS
+		{
+			//Position and speed
+			int x, y;
+			int xsp, ysp;
+			int xAcc, yAcc;
+			int xMin, xMax, yMin, yMax;
+		} line[LINE_MAX];
 		
 	public:
 		TITLECARD(const char *levelName, const char *levelSubtitle);
 		~TITLECARD();
-		
-		void DrawText(const char *text, int x, int y);
+		void DrawRibbon(const RECT *rect, int x, int y, int width);
 		void UpdateAndDraw();
 };

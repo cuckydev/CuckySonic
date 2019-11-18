@@ -20,15 +20,15 @@ void ObjBridgeSegment(OBJECT *object)
 		//Load graphics
 		switch (gLevel->zone)
 		{
-			case ZONEID_GHZ: //Green Hill Zone
-				object->texture = gLevel->GetObjectTexture("data/Object/GHZBridge.bmp");
+			case ZONEID_GHZ:
+				object->texture = gLevel->GetObjectTexture("data/Object/GHZGeneric.bmp");
+				object->mappings = gLevel->GetObjectMappings("data/Object/GHZBridge.map");
 				break;
-			case ZONEID_EHZ: //Emerald Hill Zone
-				object->texture = gLevel->GetObjectTexture("data/Object/EHZBridge.bmp");
+			case ZONEID_EHZ:
+				object->texture = gLevel->GetObjectTexture("data/Object/EHZGeneric.bmp");
+				object->mappings = gLevel->GetObjectMappings("data/Object/EHZBridge.map");
 				break;
 		}
-		
-		object->mappings = gLevel->GetObjectMappings("data/Object/Bridge.map");
 	}
 	
 	//Draw this segment
@@ -101,8 +101,8 @@ void ObjBridge(OBJECT *object)
 			if (!touching)
 			{
 				//Decrease force if no-one is standing on us
-				if (object->scratchU8[SCRATCHU8_DEPRESS_FORCE] != 0)
-					object->scratchU8[SCRATCHU8_DEPRESS_FORCE] -= 4;
+				if (object->scratchU8[SCRATCHU8_DEPRESS_FORCE] != 0x00)
+					object->scratchU8[SCRATCHU8_DEPRESS_FORCE] -= 0x04;
 			}
 			else
 			{
@@ -151,7 +151,7 @@ void ObjBridge(OBJECT *object)
 				int16_t depress;
 				GetSine(object->scratchU8[SCRATCHU8_DEPRESS_FORCE] * angle / 0x40, &depress, nullptr);
 				
-				//Set our depression position, then do next log
+				//Set our depression position
 				object->children[j]->y.pos = object->y.pos + (depress * depressForce[object->scratchU8[SCRATCHU8_DEPRESS_POSITION]] / 0x100);
 			}
 			

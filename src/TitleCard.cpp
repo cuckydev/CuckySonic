@@ -7,141 +7,169 @@
 #include "Log.h"
 #include "Error.h"
 
-PALCOLOUR titleCardBackground;
+//Timing constants
+#define TT_SHOWEND	110 //When the title card leaves the screen
+#define TT_UNLOCK	125 //When the stage unlocks
+#define TT_END		240 //When the title card unloads
 
 //Class
-TITLECARD::TITLECARD(const char *levelName, const char *levelSubtitle)
+TITLECARD::TITLECARD(const char *levelName, const char *levelSubtitle) : name(levelName), subtitle(levelSubtitle)
 {
-	memset(this, 0, sizeof(TITLECARD));
-	
-	//Load textures
+	//Load title card sheet
 	texture = gLevel->GetObjectTexture("data/TitleCard.bmp");
-	if (texture == nullptr || texture->fail)
-	{
-		Error(fail = texture->fail);
-		return;
-	}
 	
-	fontTexture = gLevel->GetObjectTexture("data/GenericFont.bmp");
-	if (fontTexture == nullptr || fontTexture->fail)
-	{
-		Error(fail = fontTexture->fail);
-		return;
-	}
+	//Load font texture and font mappings
+	TEXTURE *fontTexture = gLevel->GetObjectTexture("data/GenericFont.bmp");
+	nameFont = new BITMAPFONT(fontTexture, 0, 0, 16, 16, 0, 0, 0x20, 0x20);
+	subtitleFont = new BITMAPFONT(fontTexture, 0, 83, 8, 11, 0, 0, 0x20, 0x20);
 	
-	//Set zone and act
-	name = levelName;
-	subtitle = levelSubtitle;
+	//Get our focus position
+	focusX = gLevel->playerList[0]->x.pos - gLevel->camera->xPos;
+	focusY = gLevel->playerList[0]->y.pos - gLevel->camera->yPos;
 	
-	//Get position to draw at
-	PLAYER *player = gLevel->playerList[0];
-	
-	drawY = (player->y.pos + (player->yRadius - player->defaultYRadius)) - gLevel->camera->y;
-	if (drawY < gRenderSpec.height / 2)
-		drawY += 48;
-	else
-		drawY -= 48;
-	
-	SetPaletteColour(&titleCardBackground, 0, 0, 0);
+	//Initialize lines
+	line[LINE_CUCKYSONIC_LABEL] = {(-64) * 0x100, (8) * 0x100, 0x400, 0x0, -0x20, 0x0, 0x90, 0x7FFF, -0x8000, 0x7FFF};
+	line[LINE_LEVEL_NAME] = {((int)strlen(levelName) * -16 + (gRenderSpec.width - 398) / 2) * 0x100, (128) * 0x100, 0x780 + ((int)strlen(levelName) * 0x10), 0x0, -0x22, 0x0, 0x180, 0x7FFF, -0x8000, 0x7FFF};
+	line[LINE_LEVEL_SUBTITLE] = {(gRenderSpec.width) * 0x100, line[LINE_LEVEL_NAME].y + (24) * 0x100, -0x500, 0x0, 0x20, 0x0, -0x8000, -0x100, -0x8000, 0x7FFF};
 }
 
 TITLECARD::~TITLECARD()
 {
-	//`texture` and `fontTexture` are freed in gLevel destructor
-	return;
+	//Free font mappings
+	delete nameFont;
+	delete subtitleFont;
 }
 
-//Main update function
-void TITLECARD::DrawText(const char *text, int x, int y)
+//Ribbon drawer
+void TITLECARD::DrawRibbon(const RECT *rect, int x, int y, int width)
 {
-	const char *current;
-	int dx = x;
-	
-	for (current = text; *current != 0; current++)
-	{
-		RECT thisCharRect = {((*current - 0x20) % 0x20) * 16, ((*current - 0x20) / 0x20) * 16, 16, 16};
-		gSoftwareBuffer->DrawTexture(fontTexture, fontTexture->loadedPalette, &thisCharRect, LEVEL_RENDERLAYER_TITLECARD, dx, y, false, false);
-		dx += 16;
-	}
+	//Draw left, middle, and right
+	gSoftwareBuffer->DrawTexture(texture, texture->loadedPalette, &rect[0], LEVEL_RENDERLAYER_TITLECARD, x, y, false, false); x += rect[0].w;
+	for (int i = 0; i < width; i++)
+		{ gSoftwareBuffer->DrawTexture(texture, texture->loadedPalette, &rect[1], LEVEL_RENDERLAYER_TITLECARD, x, y, false, false); x += rect[1].w; }
+	gSoftwareBuffer->DrawTexture(texture, texture->loadedPalette, &rect[2], LEVEL_RENDERLAYER_TITLECARD, x, y, false, false);
 }
 
-#define END_TIME 160
-#define TRANSITION_SPEED 16
-#define TRANSITION_TIME (gRenderSpec.width / TRANSITION_SPEED)
-
+//General titlecard function
 void TITLECARD::UpdateAndDraw()
 {
-	const int subT = END_TIME / 2 - 20;
-	const int finT = END_TIME / 2 + 20;
-	
-	//Quit if finished
-	if (frame >= END_TIME)
+	//Don't update or draw if ended
+	if (frame >= TT_END)
 		return;
-	if (frame == finT)
-		gLevel->inTitleCard = false;
 	
-	//Get the position of the level's name strip
-	int namePosition = 0;
-	
-	if (frame < TRANSITION_TIME)
-		namePosition = (TRANSITION_TIME - frame) * -TRANSITION_SPEED;
-	if (frame >= END_TIME - TRANSITION_TIME)
-		namePosition = (frame - END_TIME + TRANSITION_TIME) * TRANSITION_SPEED;
-	
-	//Get the position of the level's subtitle strip
-	int subtitlePosition = 0;
-	
-	if (frame < TRANSITION_TIME)
-		subtitlePosition = (TRANSITION_TIME * TRANSITION_SPEED) - (frame * TRANSITION_SPEED);
-	if (frame >= END_TIME - TRANSITION_TIME)
-		subtitlePosition = (frame - END_TIME + TRANSITION_TIME) * -TRANSITION_SPEED;
-	
-	//Draw level name
-	DrawText(name, namePosition + 32, drawY - 12);
-	
-	//Draw level subtitle
-	DrawText(subtitle, subtitlePosition + (gRenderSpec.width / 2 + 32), drawY + 12);
-	
-	//Draw the "CUCKYSONIC" label
-	RECT labelSrc = {0, 0, 64, 8};
-	gSoftwareBuffer->DrawTexture(texture, texture->loadedPalette, &labelSrc, LEVEL_RENDERLAYER_TITLECARD, namePosition * -2, gRenderSpec.height - 8, false, false);
-	
-	//Draw the strip behind the name text
-	for (int x = 0; x < gRenderSpec.width; x += 16)
+	//Update lines
+	for (size_t i = 0; i < LINE_MAX; i++)
 	{
-		RECT stripSrc = {0, 8, 16, 16};
-		gSoftwareBuffer->DrawTexture(texture, texture->loadedPalette, &stripSrc, LEVEL_RENDERLAYER_TITLECARD, x + namePosition, drawY - 12, false, false);
+		line[i].x += line[i].xsp; line[i].y += line[i].ysp;
+		line[i].xsp += line[i].xAcc; line[i].ysp += line[i].yAcc;
+		line[i].xsp = mmin(mmax(line[i].xsp, line[i].xMin), line[i].xMax); line[i].ysp = mmin(mmax(line[i].ysp, line[i].yMin), line[i].yMax);
 	}
 	
-	//Draw background (zoom out to show the player, then zoom completely out about a second later)
-	PLAYER *player = gLevel->playerList[0];
+	//Draw CuckySonic label
+	const RECT cuckyLabel = {0, 0, 96, 16};
+	const RECT cuckyRibbon[3] = {
+		{0, 34, 16, 24},
+		{17, 34, 16, 24},
+		{34, 34, 16, 24},
+	};
 	
-	int gap = 0;
-	if (frame >= finT)
-		gap = 32 + (frame - finT) * TRANSITION_SPEED;
-	else if (frame >= subT)
-		gap = mmin((frame - subT) * TRANSITION_SPEED / 2, 32);
+	gSoftwareBuffer->DrawTexture(texture, texture->loadedPalette, &cuckyLabel, LEVEL_RENDERLAYER_TITLECARD, line[LINE_CUCKYSONIC_LABEL].x / 0x100 + 16, line[LINE_CUCKYSONIC_LABEL].y / 0x100 + 4, false, false);
+	DrawRibbon(cuckyRibbon, line[LINE_CUCKYSONIC_LABEL].x / 0x100, line[LINE_CUCKYSONIC_LABEL].y / 0x100, 96 / 16);
 	
-	int16_t xg = player->x.pos - gLevel->camera->x;
-	int16_t yg = (player->y.pos + (player->yRadius - player->defaultYRadius)) - gLevel->camera->y;
+	//Draw level name
+	const RECT stageDisplay[] = {
+		{0, 60, 192, 128}, //ZONEID_GHZ
+		{0, 0, 0, 0}, //ZONEID_EHZ
+	};
 	
-	RECT left = {0, 0, xg - gap, gRenderSpec.height};
-	RECT top = {0, 0, gRenderSpec.width, yg - gap};
-	RECT right = {xg + gap, 0, gRenderSpec.width - xg - gap, gRenderSpec.height};
-	RECT bottom = {0, yg + gap, gRenderSpec.width, gRenderSpec.height - yg - gap};
+	const RECT nameRibbon[3] = {
+		{0, 17, 16, 16},
+		{17, 17, 16, 16},
+		{34, 17, 16, 16},
+	};
 	
-	gSoftwareBuffer->DrawQuad(LEVEL_RENDERLAYER_TITLECARD, &left, &titleCardBackground);
-	gSoftwareBuffer->DrawQuad(LEVEL_RENDERLAYER_TITLECARD, &right, &titleCardBackground);
-	gSoftwareBuffer->DrawQuad(LEVEL_RENDERLAYER_TITLECARD, &top, &titleCardBackground);
-	gSoftwareBuffer->DrawQuad(LEVEL_RENDERLAYER_TITLECARD, &bottom, &titleCardBackground);
+	nameFont->DrawText(name, LEVEL_RENDERLAYER_TITLECARD, line[LINE_LEVEL_NAME].x / 0x100 + 8, line[LINE_LEVEL_NAME].y / 0x100 - 8);
+	DrawRibbon(nameRibbon, line[LINE_LEVEL_NAME].x / 0x100, line[LINE_LEVEL_NAME].y / 0x100, mmax((int)strlen(name) - 1, 192 / 16));
+	gSoftwareBuffer->DrawTexture(texture, texture->loadedPalette, &stageDisplay[gLevel->zone], LEVEL_RENDERLAYER_TITLECARD, line[LINE_LEVEL_NAME].x / 0x100, line[LINE_LEVEL_NAME].y / 0x100 - 128 + 8, false, false);
 	
-	//Draw corners
-	RECT cornerSrc = {16, 8, 32, 32};
-	gSoftwareBuffer->DrawTexture(texture, texture->loadedPalette, &cornerSrc, LEVEL_RENDERLAYER_TITLECARD, xg - gap, yg - gap, false, false);
-	gSoftwareBuffer->DrawTexture(texture, texture->loadedPalette, &cornerSrc, LEVEL_RENDERLAYER_TITLECARD, xg + gap - 32, yg - gap, true, false);
-	gSoftwareBuffer->DrawTexture(texture, texture->loadedPalette, &cornerSrc, LEVEL_RENDERLAYER_TITLECARD, xg - gap, yg + gap - 32, false, true);
-	gSoftwareBuffer->DrawTexture(texture, texture->loadedPalette, &cornerSrc, LEVEL_RENDERLAYER_TITLECARD, xg + gap - 32, yg + gap - 32, true, true);
+	//Draw level subtitle
+	const RECT subtitleRibbon[3] = {
+		{51, 51, 8, 8},
+		{60, 51, 8, 8},
+		{69, 51, 8, 8},
+	};
 	
-	//Increment frame
-	frame++;
+	subtitleFont->DrawText(subtitle, LEVEL_RENDERLAYER_TITLECARD, line[LINE_LEVEL_SUBTITLE].x / 0x100 + 4, line[LINE_LEVEL_SUBTITLE].y / 0x100 - 5);
+	DrawRibbon(subtitleRibbon, line[LINE_LEVEL_SUBTITLE].x / 0x100, line[LINE_LEVEL_SUBTITLE].y / 0x100, strlen(subtitle) - 1);
+	
+	//Speed lines up when ending
+	if (frame == TT_SHOWEND)
+	{
+		for (size_t i = 0; i < LINE_MAX; i++)
+			line[i].xAcc = line[i].xAcc * -7;
+	}
+	
+	//Get our background position
+	int backX = -focusX;
+	int backY = -focusY;
+	int openRadius = 0;
+	
+	if (frame < TT_SHOWEND)
+	{
+		//Scroll to target position
+		backX += (TT_SHOWEND - frame);
+		backY += (TT_SHOWEND - frame);
+	}
+	else
+	{
+		//Open up around target position
+		openRadius += (frame - TT_SHOWEND);
+	}
+	
+	//Draw background
+	const RECT backRc[] = {
+		{51, 17, 16, 16}, //Body
+		{68, 17, 16, 16}, //TL
+		{85, 17, 16, 16}, //TR
+		{68, 34, 16, 16}, //BL
+		{85, 34, 16, 16}, //BR
+		{0, 0, 0, 0}, //Open
+	};
+	
+	for (int x = -(backX % 16u); x < gRenderSpec.width; x += 16)
+	{
+		for (int y = -(backY % 16u); y < gRenderSpec.height; y += 16)
+		{
+			//Get how to draw the hole per tile
+			const RECT *rc = &backRc[0];
+			
+			if (openRadius)
+			{
+				//Get our tile position (offset from focusX and focusY)
+				int tx = (x - focusX) / 16;
+				int ty = (y - focusY) / 16;
+				if (tx >= 0)
+					tx++;
+				if (ty >= 0)
+					ty++;
+				
+				//Open around focusX and focusY
+				int rad = (openRadius - mabs(ty));
+				if (mabs(tx) > rad)
+					rc = &backRc[0];
+				else if (mabs(tx) >= rad)
+					rc = &backRc[1 + (((ty >= 0) << 1) | (tx >= 0))];
+				else
+					rc = &backRc[5];
+			}
+			
+			//Draw tile
+			gSoftwareBuffer->DrawTexture(texture, texture->loadedPalette, rc, LEVEL_RENDERLAYER_TITLECARD, x, y, false, false);
+		}
+	}
+
+	//Increment frame and check for unlock
+	if (++frame >= TT_UNLOCK)
+		activeLock = false;
+	return;
 }

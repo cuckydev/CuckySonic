@@ -109,7 +109,7 @@ bool InitializePath()
 	}
 	
 	LOG(("Success!\n"));
-	return true;
+	return false;
 }
 
 void QuitPath()

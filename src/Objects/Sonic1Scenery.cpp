@@ -18,8 +18,8 @@ void ObjSonic1Scenery(OBJECT *object)
 				case 3:
 					//Load graphics
 					object->mappingFrame = 1;
-					object->texture = gLevel->GetObjectTexture("data/Object/GHZBridge.bmp");
-					object->mappings = gLevel->GetObjectMappings("data/Object/Bridge.map");
+					object->texture = gLevel->GetObjectTexture("data/Object/GHZGeneric.bmp");
+					object->mappings = gLevel->GetObjectMappings("data/Object/GHZBridge.map");
 					object->widthPixels = 16;
 					object->heightPixels = 32;
 					object->priority = 1;

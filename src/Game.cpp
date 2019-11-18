@@ -110,32 +110,32 @@ bool EnterGameLoop()
 	gLives = INITIAL_LIVES;
 	
 	//Run game code
-	bool noExit = true;
-	bool noError = true;
+	bool exit = false;
+	bool error = false;
 	
-	while (noExit && noError)
+	while (!(exit || error))
 	{
 		switch (gGameMode)
 		{
 			case GAMEMODE_SPLASH:
-				noExit = GM_Splash(&noError);
+				exit = GM_Splash(&error);
 				break;
 			case GAMEMODE_TITLE:
-				noExit = GM_Title(&noError);
+				exit = GM_Title(&error);
 				break;
 			case GAMEMODE_DEMO:
 			case GAMEMODE_GAME:
-				noExit = GM_Game(&noError);
+				exit = GM_Game(&error);
 				break;
 			case GAMEMODE_SPECIALSTAGE:
-				noExit = GM_SpecialStage(&noError);
+				exit = GM_SpecialStage(&error);
 				break;
 			default:
-				noExit = false;
+				exit = true;
 				break;
 		}
 	}
 	
 	//End game loop
-	return noError;
+	return error;
 }

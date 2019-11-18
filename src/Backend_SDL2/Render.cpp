@@ -20,7 +20,7 @@ SOFTWAREBUFFER *gSoftwareBuffer;
 SDL_PixelFormat *nativeFormat;
 
 //Current render specifications
-RENDERSPEC gRenderSpec = {320, 224, 2};
+RENDERSPEC gRenderSpec = {398, 224, 2};
 
 //VSync / framerate limiter
 unsigned int vsyncMultiple = 0;
@@ -41,15 +41,15 @@ TEXTURE::TEXTURE(const char *path)
 	
 	if (bitmap == nullptr)
 	{
-		fail = SDL_GetError();
+		Error(fail = SDL_GetError());
 		return;
 	}
 	
 	//Check if this format is valid
-	if (bitmap->format->palette == nullptr || bitmap->format->BytesPerPixel > 1)
+	if (bitmap->format->palette == nullptr || bitmap->format->BytesPerPixel != 1)
 	{
 		SDL_FreeSurface(bitmap);
-		fail = "Bitmap is not an 8-bit indexed .bmp";
+		Error(fail = "Bitmap is not an 8-bit indexed .bmp");
 		return;
 	}
 	
@@ -57,7 +57,7 @@ TEXTURE::TEXTURE(const char *path)
 	if ((loadedPalette = new PALETTE) == nullptr)
 	{
 		SDL_FreeSurface(bitmap);
-		fail = "Failed to allocate palette for texture";
+		Error(fail = "Failed to allocate palette for texture");
 		return;
 	}
 	
@@ -80,7 +80,7 @@ TEXTURE::TEXTURE(const char *path)
 		SDL_FreeSurface(bitmap);
 		delete loadedPalette;
 		
-		fail = "Failed to allocate texture buffer";
+		Error(fail = "Failed to allocate texture buffer");
 		return;
 	}
 	
@@ -105,7 +105,7 @@ TEXTURE::TEXTURE(uint8_t *data, int dWidth, int dHeight)
 	
 	if (texture == nullptr)
 	{
-		fail = "Failed to allocate texture buffer";
+		Error(fail = "Failed to allocate texture buffer");
 		return;
 	}
 	
@@ -340,13 +340,18 @@ bool SOFTWAREBUFFER::RenderToScreen(PALCOLOUR *backgroundColour)
 	switch (bpp)
 	{
 		case 1:
-			Blit8 (backgroundColour,  (uint8_t*)writeBuffer, writePitch / 1);
+			Blit<uint8_t>(backgroundColour,  (uint8_t*)writeBuffer, writePitch / 1);
 			break;
 		case 2:
-			Blit16(backgroundColour, (uint16_t*)writeBuffer, writePitch / 2);
+			Blit<uint16_t>(backgroundColour, (uint16_t*)writeBuffer, writePitch / 2);
 			break;
+	#ifdef uint24_t //If the compiler supports 24-bit integers, then I mean, I guess
+		case 3:
+			Blit<uint24_t>(backgroundColour, (uint24_t*)writeBuffer, writePitch / 3);
+			break;
+	#endif
 		case 4:
-			Blit32(backgroundColour, (uint32_t*)writeBuffer, writePitch / 4);
+			Blit<uint32_t>(backgroundColour, (uint32_t*)writeBuffer, writePitch / 4);
 			break;
 		default:
 			return Error("Unsupported BPP");
@@ -403,7 +408,7 @@ bool SOFTWAREBUFFER::RenderToScreen(PALCOLOUR *backgroundColour)
 		}
 	}
 	
-	return true;
+	return false;
 }
 
 //Sub-system
@@ -423,7 +428,7 @@ bool RefreshRenderer()
 	gSoftwareBuffer = new SOFTWAREBUFFER(gRenderSpec.width, gRenderSpec.height);
 	if (gSoftwareBuffer->fail)
 		return Error(gSoftwareBuffer->fail);
-	return true;
+	return false;
 }
 
 bool RenderCheckVSync()
@@ -438,7 +443,7 @@ bool RenderCheckVSync()
 	
 	if (refreshIntegral >= 1.0 && refreshFractional == 0.0)
 		vsyncMultiple = (unsigned int)refreshIntegral;
-	return true;
+	return false;
 }
 
 bool RefreshWindow()
@@ -452,8 +457,8 @@ bool RefreshWindow()
 		return Error(SDL_GetError());
 	
 	//Check our vsync
-	if (!RenderCheckVSync())
-		return false;
+	if (RenderCheckVSync())
+		return true;
 	
 	//Free old window pixel format and get new one
 	if (nativeFormat != nullptr)
@@ -470,11 +475,11 @@ bool InitializeRender()
 	LOG(("Initializing renderer... "));
 	
 	//Create window, renderer, and software buffer
-	if (!RefreshWindow())
-		return false;
+	if (RefreshWindow())
+		return true;
 	
 	LOG(("Success!\n"));
-	return true;
+	return false;
 }
 
 void QuitRender()

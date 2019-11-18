@@ -137,12 +137,12 @@ void TitleBackground(BACKGROUND *background, bool doScroll, int cameraX, int cam
 }
 
 //Gamemode code
-bool GM_Title(bool *noError)
+bool GM_Title(bool *error)
 {
 	//Load our title sheet and background
 	TEXTURE *titleTexture = new TEXTURE("data/Title.bmp");
 	if (titleTexture->fail != nullptr)
-		return (*noError = !Error(titleTexture->fail));
+		return (*error = !Error(titleTexture->fail));
 	
 	BACKGROUND *background = new BACKGROUND("data/TitleBackground.bmp", &TitleBackground);
 	
@@ -193,13 +193,12 @@ bool GM_Title(bool *noError)
 	AUDIO_UNLOCK;
 	
 	//Our loop
-	bool noExit = true;
+	bool exit = false;
 	
-	while (noExit && *noError)
+	while ((!exit) && (!(*error)))
 	{
 		//Handle events
-		if ((noExit = HandleEvents()) == false)
-			break;
+		exit = HandleEvents();
 		
 		//Fade in/out
 		bool breakThisState = false;
@@ -307,7 +306,7 @@ bool GM_Title(bool *noError)
 			selected = true;
 		
 		//Render our software buffer to the screen
-		if (!(*noError = gSoftwareBuffer->RenderToScreen(nullptr)))
+		if ((*error = gSoftwareBuffer->RenderToScreen(nullptr)) == true)
 			break;
 		
 		if (breakThisState)
@@ -349,5 +348,5 @@ bool GM_Title(bool *noError)
 	gGameLoadLevel = 0;
 	gGameLoadCharacter = 0;
 	gGameMode = GAMEMODE_GAME;
-	return noExit;
+	return exit;
 }

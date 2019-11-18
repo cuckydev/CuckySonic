@@ -48,7 +48,7 @@
 //#define SONICCD_ROLLING             //In Sonic CD, rolling to the right is weird
 //#define SONICCD_ROLLJUMP            //In Sonic CD, rolljumping was *partially* removed, the below "CONTROL_NO_ROLLJUMP_LOCK" would act differently
 
-//#define SONIC1_NO_SPINDASH          //The spindash, it needs no introduction
+//#define SONIC1_NO_SPINDASH          //The S2 spindash
 //#define SONICCD_SPINDASH            //CD spindash
 //#define SONICCD_PEELOUT             //CD super-peelout
 //#define SONIC1_NO_SUPER             //Super Sonic wasn't in Sonic 1
@@ -57,10 +57,12 @@
 //#define SONIC12_NO_INSTASHIELD      //Insta-shield
 //#define SONIC12_NO_SHIELD_ABILITIES //Other shield abilities
 //#define SONICMANIA_DROPDASH         //Sonic Mania's dropdash
+//#define SONIC3_INSTASHIELD_LAND     //In Sonic 3, if you land on the ground while performing an insta-shield, it'll cause you to be unable to use it until you jump and land once again.
+//#define SONIC3_BUBBLE_SUPER         //In Sonic 3, pressing ABC in mid-air will make you bounce like you have the bubble shield if you have it once you touch the ground, this was fixed in S3K
 
 //#define SONIC1_DEATH_BOUNDARY       //In Sonic 2, the death boundary code was fixed so that it doesn't use the camera's boundary but the level boundary, so that you don't die while the camera boundary is scrolling
 //#define SONIC12_DEATH_RESPAWN       //In Sonic 3, it was changed so that death respawns you once you go off-screen, not when you leave the level boundaries, since this was a very buggy check
-//#define SONIC2_SPINDASH_ANIM_BUG    //In Sonic 3, the bug where landing on the ground while spindashing plays the walk animation was fixed
+//#define SONIC2REV01_SUPER_SOFTLOCK  //In Sonic 2 revisions 0 and 1, you can transform into Super Sonic at the end of a level, where it'll then softlock due to interrupting the transition
 
 //Other control options
 //#define CONTROL_JA_DONT_CLEAR_ROLLJUMP    //When you use a jump ability in the original, it clears the roll-jump flag
@@ -113,13 +115,13 @@
 
 #define MAPPINGFRAME_DUCK	77
 
-static const uint8_t animationWalk[] =			{0xFF,0x0F,0x10,0x11,0x12,0x13,0x14,0x0D,0x0E,0xFF}; //Walk and run must match in length (run is padded with 0xFF, here)
+static const uint8_t animationWalk[] =			{0xFF,0x0F,0x10,0x11,0x12,0x13,0x14,0x0D,0x0E,0xFF}; //Walk and run must match in length (run is padded with 0xFF)
 static const uint8_t animationRun[] =			{0xFF,0x2D,0x2E,0x2F,0x30,0xFF,0xFF,0xFF,0xFF,0xFF};
 static const uint8_t animationDash[] =			{0xFF,0xD6,0xD7,0xD8,0xD9,0xFF,0xFF,0xFF,0xFF,0xFF};
-static const uint8_t animationRoll[] =			{0xFE,0x3D,0x41,0x3E,0x41,0x3F,0x41,0x40,0x41,0xFF}; //Roll and roll2 must match in length
+static const uint8_t animationRoll[] =			{0xFE,0x3D,0x41,0x3E,0x41,0x3F,0x41,0x40,0x41,0xFF}; //Roll and roll2 must match in length (roll2 is padded with 0xFF)
 static const uint8_t animationRoll2[] =			{0xFE,0x3D,0x41,0x3E,0x41,0x3F,0x41,0x40,0x41,0xFF};
 static const uint8_t animationDropdash[] =		{0x00,0xE6,0xE8,0xE7,0xE9,0xE6,0xEA,0xE7,0xEB,0xE6,0xEC,0xE7,0xED,0xE6,0xEE,0xE7,0xEF,0xFF};
-static const uint8_t animationPush[] =			{0xFD,0x48,0x49,0x4A,0x4B,0xFF,0xFF,0xFF,0xFF,0xFF}; //Push must also match the length of run and walk (padded with 0xFF here)
+static const uint8_t animationPush[] =			{0xFD,0x48,0x49,0x4A,0x4B,0xFF,0xFF,0xFF,0xFF,0xFF}; //Push must also match the length of run and walk (padded with 0xFF)
 static const uint8_t animationIdle[] =			{0x05,0x01,0x01,0x01,0x01,0x01,0x01,0x01,0x01,0x01,0x01,0x01,0x01,0x01,0x01,
 												 0x01,0x01,0x01,0x01,0x01,0x01,0x01,0x01,0x01,0x01,0x01,0x01,0x01,0x01,0x01,
 												 0x01,0x02,0x03,0x03,0x03,0x03,0x03,0x04,0x04,0x04,0x05,0x05,0x05,0x04,0x04,
@@ -268,7 +270,7 @@ void ObjSpindashDust(OBJECT *object)
 	{
 		case 0:
 			//Initialize render properties
-			object->texture = gLevel->GetObjectTexture("data/Object/SpindashDust.bmp");
+			object->texture = gLevel->GetObjectTexture("data/Object/PlayerGeneric.bmp");
 			object->mappings = gLevel->GetObjectMappings("data/Object/SpindashDust.map");
 			
 			object->priority = 1;
@@ -329,7 +331,7 @@ void ObjSkidDust(OBJECT *object)
 	{
 		case 0:
 			//Initialize render properties
-			object->texture = gLevel->GetObjectTexture("data/Object/SkidDust.bmp");
+			object->texture = gLevel->GetObjectTexture("data/Object/PlayerGeneric.bmp");
 			object->mappings = gLevel->GetObjectMappings("data/Object/SkidDust.map");
 			
 			object->priority = 1;
@@ -475,7 +477,7 @@ void ObjShield(OBJECT *object)
 		}
 		
 		//Load mappings and textures
-		object->texture = gLevel->GetObjectTexture("data/Object/InvincibilitySuperStars.bmp");
+		object->texture = gLevel->GetObjectTexture("data/Object/PlayerGeneric.bmp");
 		object->mappings = gLevel->GetObjectMappings("data/Object/SuperStars.map");
 		
 		//Set our render properties
@@ -593,9 +595,7 @@ void ObjShield(OBJECT *object)
 				//Extinguish once in water
 				if (object->parentPlayer->status.underwater)
 				{
-					object->parentPlayer->shield = SHIELD_NULL;
-					object->parentPlayer->item.shieldReflect = false;
-					object->parentPlayer->item.immuneFire = false;
+					object->parentPlayer->GiveShield(SOUNDID_NULL, SHIELD_NULL);
 					return;
 				}
 				break;
@@ -621,9 +621,7 @@ void ObjShield(OBJECT *object)
 				//Extinguish once in water
 				if (object->parentPlayer->status.underwater)
 				{
-					object->parentPlayer->shield = SHIELD_NULL;
-					object->parentPlayer->item.shieldReflect = false;
-					object->parentPlayer->item.immuneFire = false;
+					object->parentPlayer->GiveShield(SOUNDID_NULL, SHIELD_NULL);
 					return;
 				}
 				break;
@@ -654,13 +652,18 @@ void ObjShield(OBJECT *object)
 				object->status.yFlip = object->parentPlayer->status.reverseGravity;
 				
 				//When we reach the end of the animation, end our attack
-				if (object->mappingFrame == 7 && object->parentPlayer->jumpAbility == 1)
-					object->parentPlayer->jumpAbility = 2;
+				if (object->mappingFrame == 7)
+				{
+				#ifndef SONIC3_INSTASHIELD_LAND
+					if (object->parentPlayer->jumpAbility == 1)
+				#endif
+						object->parentPlayer->jumpAbility = 2;
+				}
 				break;
 		}
 		
 		//Load the given mappings and textures
-		object->texture = gLevel->GetObjectTexture("data/Object/Shield.bmp");
+		object->texture = gLevel->GetObjectTexture("data/Object/PlayerGeneric.bmp");
 		object->mappings = gLevel->GetObjectMappings(useMapping);
 		
 		//Animate
@@ -750,7 +753,7 @@ void ObjInvincibilityStars(OBJECT *object)
 	if (object->routine == 0)
 	{
 		//Load mappings and textures
-		object->texture = gLevel->GetObjectTexture("data/Object/InvincibilitySuperStars.bmp");
+		object->texture = gLevel->GetObjectTexture("data/Object/PlayerGeneric.bmp");
 		object->mappings = gLevel->GetObjectMappings("data/Object/InvincibilityStars.map");
 		
 		//Set our render properties
@@ -849,14 +852,8 @@ void ObjInvincibilityStars(OBJECT *object)
 //Player class
 #define READ_SPEEDDEFINITION(definition)	definition.top = ReadFile_BE16(playerSpec); definition.acceleration = ReadFile_BE16(playerSpec); definition.deceleration = ReadFile_BE16(playerSpec); definition.rollDeceleration = ReadFile_BE16(playerSpec); definition.jumpForce = ReadFile_BE16(playerSpec); definition.jumpRelease = ReadFile_BE16(playerSpec);
 
-PLAYER::PLAYER(const char *specPath, PLAYER *myFollow, int myController)
+PLAYER::PLAYER(const char *specPath, PLAYER *myFollow, size_t myController) : controller(myController), follow(myFollow)
 {
-	LOG(("Creating a player with spec %s and controlled by controller %d...\n", specPath, myController));
-	memset(this, 0, sizeof(PLAYER));
-	
-	//Equivalent of routine 0
-	routine = PLAYERROUTINE_CONTROL;
-	
 	//Load art and mappings
 	char *texPath = AllocPath(specPath, ".bmp", nullptr);
 	texture = gLevel->GetObjectTexture(texPath);
@@ -864,7 +861,7 @@ PLAYER::PLAYER(const char *specPath, PLAYER *myFollow, int myController)
 	
 	if (texture->fail != nullptr)
 	{
-		Error(fail = texture->fail);
+		fail = texture->fail;
 		return;
 	}
 	
@@ -874,7 +871,7 @@ PLAYER::PLAYER(const char *specPath, PLAYER *myFollow, int myController)
 	
 	if (mappings->fail != nullptr)
 	{
-		Error(fail = mappings->fail);
+		fail = mappings->fail;
 		return;
 	}
 	
@@ -926,27 +923,8 @@ PLAYER::PLAYER(const char *specPath, PLAYER *myFollow, int myController)
 			SetSpeedFromDefinition(status.underwater ? underwaterSuperSpeedShoesSD : superSpeedShoesSD);
 	}
 	
-	//Set render properties
-	priority = 2;
-	widthPixels = 24;
-	heightPixels = 24;
-	
 	//Render flags
 	renderFlags.alignPlane = true;
-	
-	//Collision
-	topSolidLayer = COLLISIONLAYER_NORMAL_TOP;
-	lrbSolidLayer = COLLISIONLAYER_NORMAL_LRB;
-	
-	//Flipping stuff
-	flipsRemaining = 0;
-	flipSpeed = 4;
-	
-	//Set our following person
-	follow = myFollow;
-	
-	//Set the controller to use
-	controller = myController;
 	
 	//Initialize our record arrays
 	ResetRecords(x.pos - 0x20, y.pos - 0x04);
@@ -971,8 +949,6 @@ PLAYER::PLAYER(const char *specPath, PLAYER *myFollow, int myController)
 		invincibilityStarObject[i]->subtype = i;
 		gLevel->coreObjectList.link_back(invincibilityStarObject[i]);
 	}
-	
-	LOG(("Success!\n"));
 }
 
 PLAYER::~PLAYER()
@@ -1788,11 +1764,7 @@ void PLAYER::DoLevelCollision()
 //Functions for landing on the ground
 void PLAYER::LandOnFloor()
 {
-#ifndef SONIC2_SPINDASH_ANIM_BUG
 	if (status.pinballMode || spindashing)
-#else
-	if (status.pinballMode)
-#endif
 	{
 		//Do not exit ball form if in pinball mode
 		LandOnFloor_SetState();
@@ -1853,7 +1825,9 @@ void PLAYER::LandOnFloor_SetState()
 		if (jumpAbility != 0)
 		{
 			//Handle jump abilities on landing
-			if (characterType == CHARACTERTYPE_SONIC)
+		#ifndef SONIC3_BUBBLE_SUPER
+			if (characterType == CHARACTERTYPE_SONIC && super == false)
+		#endif
 			{
 				//Bubble shield bounce
 				if (shield == SHIELD_BUBBLE)
@@ -2310,139 +2284,146 @@ void PLAYER::CheckDropdashRelease()
 //Jump ability functions
 void PLAYER::JumpAbilities()
 {
-	#ifndef SONIC12_NO_JUMP_ABILITY
-		#ifdef SONICMANIA_DROPDASH
-			if (abilityProperty > (DROPDASH_CHARGE + 1))
+	#ifdef SONICMANIA_DROPDASH
+		//Handle the dropdash charging
+		if (abilityProperty > (DROPDASH_CHARGE + 1))
+		{
+			//Check for releasing the already started dropdash
+			if (!(controlHeld.a || controlHeld.b || controlHeld.c))
 			{
-				//Check for releasing the already started dropdash
-				if (!(controlHeld.a || controlHeld.b || controlHeld.c))
-				{
-					//Release dropdash
-					abilityProperty = 0xFF;
-					anim = PLAYERANIMATION_ROLL;
-					return;
-				}
+				//Release dropdash
+				abilityProperty = 0xFF;
+				anim = PLAYERANIMATION_ROLL;
+				return;
 			}
-			else if (abilityProperty >= 2 && abilityProperty <= (DROPDASH_CHARGE + 1))
+		}
+		else if (abilityProperty >= 2 && abilityProperty <= (DROPDASH_CHARGE + 1))
+		{
+			//Wait for the dropdash to have charged up (DROPDASH_CHARGE frames of holding ABC)
+			if ((controlHeld.a || controlHeld.b || controlHeld.c) && ++abilityProperty > (DROPDASH_CHARGE + 1))
 			{
-				//Wait for the dropdash to have charged up (DROPDASH_CHARGE frames of holding ABC)
-				if ((controlHeld.a || controlHeld.b || controlHeld.c) && ++abilityProperty > (DROPDASH_CHARGE + 1))
-				{
-					//Start dropdash
-					anim = PLAYERANIMATION_DROPDASH;
-					PlaySound(SOUNDID_DROPDASH);
-					return;
-				}
+				//Start dropdash
+				anim = PLAYERANIMATION_DROPDASH;
+				PlaySound(SOUNDID_DROPDASH);
+				return;
 			}
+		}
+	#endif
+	
+	//If we've pressed ABC, check for our jump abilities
+	if (jumpAbility == 0 && (controlPress.a || controlPress.b || controlPress.c))
+	{
+		//Clear the roll jump flag, so we regain horizontal control
+		#ifndef CONTROL_JA_DONT_CLEAR_ROLLJUMP
+			status.rollJumping = false;
 		#endif
 		
-		if (jumpAbility == 0 && (controlPress.a || controlPress.b || controlPress.c))
+		//Handle our super and hyper abilities
+		if (super)
 		{
-			#ifndef CONTROL_JA_DONT_CLEAR_ROLLJUMP
-				//Clear the roll jump flag, so we regain horizontal control
-				status.rollJumping = false;
-			#endif
-			
-			//Perform our ability
-			if (super)
+			if (!hyper)
 			{
-				if (hyper)
-				{
-					//Hyper dash
-				}
-			#ifndef SONICMANIA_DROPDASH
-				else
-				{
-					//Super cannot use any jump abilities, just clear jump ability
-					jumpAbility = 1;
-					return;
-				}
-			#endif
+				//Set our jump ability flag... but don't do anything? (In Sonic 3 this caused conflicts with the bubble shield)
+				jumpAbility = 1;
+				
+				//Check if we should initiate a dropdash
+				#ifdef SONICMANIA_DROPDASH
+					if (characterType == CHARACTERTYPE_SONIC)
+						abilityProperty = 2;
+				#endif
+				return;
 			}
-			else if (!item.isInvincible)
+			else
 			{
-				#ifndef SONIC12_NO_SHIELD_ABILITIES
-					//Check and handle shield abilities
-					if (shield != SHIELD_NULL)
-					{
-						if (shield == SHIELD_FIRE)
-						{
-							//Update our shield and ability flag
-							if (shieldObject != nullptr)
-								shieldObject->anim = 1;
-							jumpAbility = 1;
-							
-							//Dash in our facing direction
-							int16_t speed = 0x800;
-							if (status.xFlip)
-								speed = -speed;
-							
-							xVel = speed;
-							inertia = speed;
-							yVel = 0;
-							
-							//Make the camera lag behind us
-							scrollDelay = 0x2000;
-							ResetRecords(x.pos, y.pos);
-							PlaySound(SOUNDID_USE_FIRE_SHIELD);
-						}
-						else if (shield == SHIELD_ELECTRIC)
-						{
-							//Update our shield and ability flag
-							if (shieldObject != nullptr)
-								shieldObject->anim = 1;
-							jumpAbility = 1;
-							
-							//Electric shield double jump
-							yVel = -0x680;
-							status.jumping = false;
-							PlaySound(SOUNDID_USE_ELECTRIC_SHIELD);
-						}
-						else if (shield == SHIELD_BUBBLE)
-						{
-							//Update our shield and ability flag
-							if (shieldObject != nullptr)
-								shieldObject->anim = 1;
-							jumpAbility = 1;
-							
-							//Shoot down to the ground
-							xVel = 0;
-							inertia = 0;
-							yVel = 0x800;
-							PlaySound(SOUNDID_USE_BUBBLE_SHIELD);
-						}
-						
-						return;
-					}
-				#endif
-				#if !(defined(SONIC1_NO_SUPER) || defined(SONIC2_SUPER_AT_PEAK))
-					if (SuperTransform())
-						return;
-				#endif
+				//Hyper dash (unimplemented the code is dumb.)
 			}
-			else if (!super)
-				return; //Invincible, but not super
-			
-			#ifndef SONIC12_NO_INSTASHIELD
-				if (!super)
+		}
+		
+		if (!item.isInvincible)
+		{
+			//Check for shield abilities
+			switch (shield)
+			{
+				case SHIELD_FIRE:
 				{
 					//Update our shield and ability flag
 					if (shieldObject != nullptr)
-							shieldObject->anim = 1;
+						shieldObject->anim = 1;
 					jumpAbility = 1;
-					PlaySound(SOUNDID_USE_INSTA_SHIELD);
+					
+					//Dash in our facing direction
+					int16_t speed = 0x800;
+					if (status.xFlip)
+						speed = -speed;
+					
+					xVel = speed;
+					inertia = speed;
+					yVel = 0;
+					
+					//Make the camera lag behind us
+					scrollDelay = 0x2000;
+					ResetRecords(x.pos, y.pos);
+					PlaySound(SOUNDID_USE_FIRE_SHIELD);
+					return;
 				}
-				else
+				case SHIELD_ELECTRIC:
+				{
+					//Update our shield and ability flag
+					if (shieldObject != nullptr)
+						shieldObject->anim = 1;
 					jumpAbility = 1;
+					
+					//Electric shield double jump
+					yVel = -0x680;
+					status.jumping = false;
+					PlaySound(SOUNDID_USE_ELECTRIC_SHIELD);
+					return;
+				}
+				case SHIELD_BUBBLE:
+				{
+					//Update our shield and ability flag
+					if (shieldObject != nullptr)
+						shieldObject->anim = 1;
+					jumpAbility = 1;
+					
+					//Shoot down to the ground
+					xVel = 0;
+					inertia = 0;
+					yVel = 0x800;
+					PlaySound(SOUNDID_USE_BUBBLE_SHIELD);
+					return;
+				}
+				default:
+					break;
+			}
+			
+			//Check if we should do our super transformation
+			#if !(defined(SONIC1_NO_SUPER) || defined(SONIC2_SUPER_AT_PEAK))
+				if (SuperTransform())
+					return;
 			#endif
 			
-			#ifdef SONICMANIA_DROPDASH
-				//Check if we should initiate a dropdash
-				if (characterType == CHARACTERTYPE_SONIC)
+			if (characterType == CHARACTERTYPE_SONIC)
+			{
+				//Check for insta-shield
+				#ifndef SONIC12_NO_INSTASHIELD
+					if (shield == SHIELD_NULL)
+					{
+						//Update our shield and ability flag
+						if (shieldObject != nullptr)
+								shieldObject->anim = 1;
+						jumpAbility = 1;
+						PlaySound(SOUNDID_USE_INSTA_SHIELD);
+					}
+				#endif
+				
+				//Initiate dropdash
+				#ifdef SONICMANIA_DROPDASH
 					abilityProperty = 2;
-			#endif
+				#endif
+			}
 		}
-	#endif
+	}
 }
 
 //Jumping functions
@@ -2452,12 +2433,22 @@ void PLAYER::JumpHeight()
 	{
 		//Slow us down if ABC is released when jumping
 		if (-jumpRelease <= yVel)
-			JumpAbilities();
+		{
+			//Check for jump abilities
+			#ifndef SONIC12_NO_JUMP_ABILITY
+				JumpAbilities();
+			#endif
+		}
 		else if (!controlHeld.a && !controlHeld.b && !controlHeld.c)
+		{
+			//We're not holding ABC, slow us down
 			yVel = -jumpRelease;
+		}
 		
+		//Cancel spindash
 		cdSPTimer = 0;
 		
+		//Transform if near peak of jump
 		#if (!defined(SONIC1_NO_SUPER) && defined(SONIC2_SUPER_AT_PEAK))
 			if (!(yVel & 0xFF00))
 				SuperTransform();
@@ -2465,8 +2456,8 @@ void PLAYER::JumpHeight()
 	}
 	else
 	{
-		//Cap our upwards velocity
-		if (!status.pinballMode && yVel < -0xFC0)
+		//Cap our upwards velocity if in pinball mode / spindashing
+		if (!(status.pinballMode || spindashing) && yVel < -0xFC0)
 			yVel = -0xFC0;
 	}
 }
@@ -3214,7 +3205,7 @@ void PLAYER::RollSpeed()
 	if (!status.isSliding)
 	{
 		//Decelerate if pulling back
-		if (!status.pinballMode && !moveLock)
+		if (!(status.pinballMode || spindashing) && !moveLock)
 		{
 			if (controlHeld.left)
 				RollLeft();
@@ -3306,7 +3297,7 @@ void PLAYER::RollSpeed()
 		if (inertia == 0)
 	#endif
 		{
-			if (!status.pinballMode)
+			if (!(status.pinballMode || spindashing))
 			{
 				//Exit ball form
 				status.inBall = false;
@@ -3346,7 +3337,7 @@ void PLAYER::RollSpeed()
 void PLAYER::DeadCheckRespawn()
 {
 	//Lock our camera
-	int16_t cameraY = gLevel->camera->y;
+	int16_t cameraY = gLevel->camera->yPos;
 	cameraLock = true;
 	
 	//Stop the timer
@@ -3660,7 +3651,7 @@ void PLAYER::SuperPaletteCycle()
 			if (paletteFrame >= 6)
 			{
 				paletteState = PALETTESTATE_SUPER;
-				memset(&objectControl, 0, sizeof(objectControl));
+				objectControl = {};
 			}
 			
 			SET_PALETTE_FROM_ENTRY(sonicPalette[prevFrame]);
@@ -3704,7 +3695,12 @@ void PLAYER::SuperPaletteCycle()
 
 bool PLAYER::SuperTransform()
 {
-	if (!super && gLevel->updateTime && gRings >= 50) //Super transformation
+	#ifndef SONIC2REV01_SUPER_SOFTLOCK
+		if (!gLevel->updateTime)
+			return false;
+	#endif
+	
+	if (!super && gRings >= 50) //Super transformation
 	{
 		//Set our super state
 		paletteState = PALETTESTATE_FADING_IN;
@@ -4330,7 +4326,7 @@ void PLAYER::ControlRoutine()
 	}
 	else if (status.inBall == true && status.inAir == false)
 	{
-		if (status.pinballMode || Jump())
+		if ((status.pinballMode || spindashing) || Jump())
 		{
 			//Handle slope gravity and our movement
 			RollRepel();
@@ -4709,8 +4705,8 @@ void PLAYER::DrawToScreen()
 			if (renderFlags.yFlip)
 				origY = mapRect->h - origY;
 			
-			int alignX = renderFlags.alignPlane ? gLevel->camera->x : 0;
-			int alignY = renderFlags.alignPlane ? gLevel->camera->y : 0;
+			int alignX = renderFlags.alignPlane ? gLevel->camera->xPos : 0;
+			int alignY = renderFlags.alignPlane ? gLevel->camera->yPos : 0;
 			
 			//Check if on-screen
 			renderFlags.isOnscreen = false;
@@ -4750,7 +4746,7 @@ void PLAYER::RestoreStateDebug()
 	y.sub = 0;
 	
 	//Clear other state stuff
-	memset(&objectControl, 0, sizeof(objectControl));
+	objectControl = {};
 	spindashing = false;
 	
 	//Clear speeds and inertia
@@ -4759,7 +4755,7 @@ void PLAYER::RestoreStateDebug()
 	inertia = 0;
 	
 	//Clear our status and return to the control routine
-	memset(&status, 0, sizeof(status));
+	status = {};
 	routine = PLAYERROUTINE_CONTROL;
 }
 
@@ -5149,10 +5145,10 @@ void PLAYER::GiveShield(SOUNDID sound, SHIELD type)
 {
 	//Give us the shield and play sound
 	shield = type;
-	item.shieldReflect =	type == SHIELD_NULL ? false : (type != SHIELD_BLUE);
-	item.immuneFire =		type == SHIELD_NULL ? false : (type == SHIELD_FIRE);
-	item.immuneElectric =	type == SHIELD_NULL ? false : (type == SHIELD_ELECTRIC);
-	item.immuneWater =		type == SHIELD_NULL ? false : (type == SHIELD_BUBBLE);
+	item.shieldReflect =	(type != SHIELD_BLUE && type != SHIELD_NULL);
+	item.immuneFire =		(type == SHIELD_FIRE);
+	item.immuneElectric =	(type == SHIELD_ELECTRIC);
+	item.immuneWater =		(type == SHIELD_BUBBLE);
 	
 	if (sound != SOUNDID_NULL)
 		PlaySound(sound);

@@ -15,7 +15,7 @@ void ObjPurpleRock(OBJECT *object)
 			
 			//Load graphics
 			object->texture = gLevel->GetObjectTexture("data/Object/GHZGeneric.bmp");
-			object->mappings = gLevel->GetObjectMappings("data/Object/PurpleRock.map");
+			object->mappings = gLevel->GetObjectMappings("data/Object/GHZPurpleRock.map");
 			
 			//Set render properties
 			object->renderFlags.alignPlane = true;

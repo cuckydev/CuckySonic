@@ -11,25 +11,24 @@
 
 #define SPLASH_TIME 120
 
-bool GM_Splash(bool *noError)
+bool GM_Splash(bool *error)
 {
 	//Load our splash image
 	TEXTURE *splashTexture = new TEXTURE("data/Splash.bmp");
 	if (splashTexture->fail != nullptr)
-		return (*noError = !Error(splashTexture->fail));
+		return (*error = Error(splashTexture->fail));
 	
 	//Make our palette white for fade-in
 	FillPaletteWhite(splashTexture->loadedPalette);
 	
 	//Our loop
-	bool noExit = true;
+	bool exit = false;
 	
 	int frame = 0;
-	while (noExit && *noError)
+	while (!(exit || *error))
 	{
 		//Handle events
-		if ((noExit = HandleEvents()) == false)
-			break;
+		exit = HandleEvents();
 		
 		//Fade in/out
 		if (frame < SPLASH_TIME - FADE_TIME)
@@ -56,7 +55,7 @@ bool GM_Splash(bool *noError)
 		gSoftwareBuffer->DrawTexture(splashTexture, splashTexture->loadedPalette, &src, 0, (gRenderSpec.width - splashTexture->width) / 2, (gRenderSpec.height - splashTexture->height) / 2, false, false);
 		
 		//Render our software buffer to the screen (using the first colour of our splash texture, should be white)
-		if (!(*noError = gSoftwareBuffer->RenderToScreen(&splashTexture->loadedPalette->colour[0])))
+		if ((*error = gSoftwareBuffer->RenderToScreen(&splashTexture->loadedPalette->colour[0])) == true)
 			break;
 		
 		//Increment frame counter (and end once we reach splash time)
@@ -69,5 +68,5 @@ bool GM_Splash(bool *noError)
 	
 	//Go to title
 	gGameMode = GAMEMODE_TITLE;
-	return noExit;
+	return exit;
 }

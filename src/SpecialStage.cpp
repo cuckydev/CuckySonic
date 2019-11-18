@@ -74,7 +74,7 @@ SPECIALSTAGE::SPECIALSTAGE(const char *name)
 	playerState.direction = (ReadFile_BE16(fp)) >> 8;	//Original game sucks, read as a word into the byte's address (68000 is big-endian, so it only uses the high byte)
 	playerState.xPosLong =   ReadFile_BE16(fp)  << 8;	//The original game stores the positions in the native 8.8 format, extend to 16.16
 	playerState.yPosLong =   ReadFile_BE16(fp)  << 8;
-	spheresLeft = ReadFile_BE16(fp);
+	ringsLeft = ReadFile_BE16(fp);
 	CloseFile(fp);
 	
 	//Open the perspective map file
@@ -136,9 +136,9 @@ void SPECIALSTAGE::Update()
 //Stage drawing code
 void SPECIALSTAGE::PalCycle()
 {
+	//Handle a different palette frame when turning
 	uint16_t frame = animFrame;
 	
-	//Handle a different palette frame when turning
 	if (frame >= 0x10)
 	{
 		if (playerState.turn >= 0)
@@ -175,14 +175,6 @@ void SPECIALSTAGE::Draw()
 	for (int x = -(backX % backgroundTexture->width); x < gRenderSpec.width; x += backgroundTexture->width)
 		for (int y = -(backY % backgroundTexture->height); y < gRenderSpec.height; y += backgroundTexture->height)
 			gSoftwareBuffer->DrawTexture(backgroundTexture, backgroundTexture->loadedPalette, nullptr, SPECIALSTAGE_RENDERLAYER_BACKGROUND, x, y, false, false);
-	
-	static int a = 0;
-	if (a++ & 0x1)
-		animFrame = (animFrame + 1) & 0xF;
-	backY += 3;
-	
-	//Update the stage's palette cycle
-	PalCycle();
 	
 	//Draw the stage
 	int stageFrame = 0;

@@ -55,8 +55,8 @@ void ObjSwingingPlatform(OBJECT *object)
 			object->routine++;
 			
 			//Load graphics
-			object->texture = gLevel->GetObjectTexture("data/Object/GHZSwingingPlatform.bmp");
-			object->mappings = gLevel->GetObjectMappings("data/Object/SwingingPlatform.map");
+			object->texture = gLevel->GetObjectTexture("data/Object/GHZGeneric.bmp");
+			object->mappings = gLevel->GetObjectMappings("data/Object/GHZSwingingPlatform.map");
 			
 			//Initialize render properties
 			object->renderFlags.alignPlane = true;
@@ -79,8 +79,8 @@ void ObjSwingingPlatform(OBJECT *object)
 			{
 				//Create a segment
 				OBJECT *newSegment = new OBJECT(&ObjSwingingPlatform);
-				newSegment->texture = gLevel->GetObjectTexture("data/Object/GHZSwingingPlatform.bmp");
-				newSegment->mappings = gLevel->GetObjectMappings("data/Object/SwingingPlatform.map");
+				newSegment->texture = gLevel->GetObjectTexture("data/Object/GHZGeneric.bmp");
+				newSegment->mappings = gLevel->GetObjectMappings("data/Object/GHZSwingingPlatform.map");
 				newSegment->renderFlags.alignPlane = true;
 				newSegment->widthPixels = 8;
 				newSegment->heightPixels = 32;

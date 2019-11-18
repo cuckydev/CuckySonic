@@ -1,22 +1,20 @@
 #pragma once
-#include "Render.h"
+#include "BitmapFont.h"
 
 class HUD
 {
 	public:
 		//Failure
-		const char *fail;
+		const char *fail = nullptr;
 		
 		//Texture
 		TEXTURE *texture;
+		BITMAPFONT *font;
 		
 	public:
 		HUD();
 		~HUD();
 		
-		void DrawCharacter(int xPos, int yPos, int srcX);
-		void DrawNumber(int xPos, int yPos, unsigned int number, unsigned int forceDigits, bool fromRight);
-		void DrawElement(int xPos, int yPos, int srcX, int srcY);
-		
+		void DrawLabel(int xPos, int yPos, int srcX, int srcY);
 		void Draw();
 };

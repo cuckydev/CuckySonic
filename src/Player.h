@@ -16,7 +16,7 @@ class OBJECT;
 #define INVINCIBILITYSTARS		4
 
 //Routines
-enum PLAYERROUTINE
+enum PLAYER_ROUTINE
 {
 	PLAYERROUTINE_CONTROL,
 	PLAYERROUTINE_HURT,
@@ -24,7 +24,7 @@ enum PLAYERROUTINE
 	PLAYERROUTINE_RESET_LEVEL,
 };
 
-enum CPUROUTINE
+enum PLAYERCPU_ROUTINE
 {
 	CPUROUTINE_INIT,
 	CPUROUTINE_SPAWNING,
@@ -109,31 +109,31 @@ class PLAYER
 {
 	public:
 		//Fail
-		const char *fail;
+		const char *fail = nullptr;
 		
 		//Rendering stuff
 		struct
 		{
-			bool xFlip : 1;
-			bool yFlip : 1;
-			bool alignPlane : 1;
-			bool isOnscreen : 1;
+			bool xFlip = false;
+			bool yFlip = false;
+			bool alignPlane = false;
+			bool isOnscreen = false;
 		} renderFlags;
 		
-		bool isDrawing;
+		bool isDrawing = false;
 		
 		//Our texture and mappings
-		TEXTURE *texture;
-		MAPPINGS *mappings;
+		TEXTURE *texture = nullptr;
+		MAPPINGS *mappings = nullptr;
 		
 		//Position
 		POSDEF(x)
 		POSDEF(y)
 		
 		//Speeds
-		int16_t xVel;		//Global X-velocity
-		int16_t yVel;		//Global Y-velocity
-		int16_t inertia;	//Horizontal velocity (on ground)
+		int16_t xVel = 0;		//Global X-velocity
+		int16_t yVel = 0;		//Global Y-velocity
+		int16_t inertia = 0;	//Horizontal velocity (on ground)
 		
 		//Collision box size
 		uint8_t xRadius;
@@ -145,114 +145,114 @@ class PLAYER
 		uint8_t rollYRadius;
 		
 		//Sprite properties
-		bool highPriority;					//Drawn above the foreground
-		uint8_t priority;					//Priority of sprite when drawing
-		uint8_t widthPixels, heightPixels;	//Width and height of sprite in pixels
+		bool highPriority = false;						//Drawn above the foreground
+		uint8_t priority = 2;							//Priority of sprite when drawing
+		uint8_t widthPixels = 24, heightPixels = 24;	//Width and height of sprite in pixels
 		
 		//Animation and mapping
-		uint16_t mappingFrame;
+		uint16_t mappingFrame = 0;
 		
-		uint16_t animFrame;
-		PLAYERANIMATION anim;
-		PLAYERANIMATION prevAnim;
-		int16_t animFrameDuration;
+		uint16_t animFrame = 0;
+		PLAYERANIMATION anim = (PLAYERANIMATION)0;
+		PLAYERANIMATION prevAnim = (PLAYERANIMATION)0;
+		int16_t animFrameDuration = 0;
 		
 		//Our status
-		struct STATUS
+		struct PLAYER_STATUS
 		{
-			bool xFlip : 1;				//Set if facing left
-			bool inAir : 1;				//In the air
-			bool inBall : 1;			//In ball-form
-			bool shouldNotFall : 1;		//Typically set while standing on an object (the "Slope Glitch")
-			bool rollJumping : 1;		//If set, we don't have control in mid-air when we jump from a roll
-			bool pushing : 1;			//Pushing against a wall
-			bool underwater : 1;		//In water
-			bool jumping : 1;			//Set if we're jumping
-			bool isSliding : 1;			//If set, the player will slide about at their previous speed (Oil Ocean's oil slides)
-			bool pinballMode : 1;		//If set, the player is forced to be rolling constantly (S-tubes, Casino Night things)
-			bool stickToConvex : 1;		//If set, the collision will never detect us as running off of a ledge, or when we would normally detach from a ramp when going too fast (the wheel glitch from Carnival Night)
-			bool reverseGravity : 1;	//If set, gravity is reversed (No, really?)
-			bool windTunnel : 1;		//Inside a wind tunnel (Labyrinth Zone, Hydrocity)
+			bool xFlip = false;				//Set if facing left
+			bool inAir = false;				//In the air
+			bool inBall = false;			//In ball-form
+			bool shouldNotFall = false;		//Typically set while standing on an object (the "Slope Glitch")
+			bool rollJumping = false;		//If set, we don't have control in mid-air when we jump from a roll
+			bool pushing = false;			//Pushing against a wall
+			bool underwater = false;		//In water
+			bool jumping = false;			//Set if we're jumping
+			bool isSliding = false;			//If set, the player will slide about at their previous speed (Oil Ocean's oil slides)
+			bool pinballMode = false;		//If set, the player is forced to be rolling constantly (S-tubes, Casino Night things)
+			bool stickToConvex = false;		//If set, the collision will never detect us as running off of a ledge, or when we would normally detach from a ramp when going too fast (the wheel glitch from Carnival Night)
+			bool reverseGravity = false;	//If set, gravity is reversed (No, really?)
+			bool windTunnel = false;		//Inside a wind tunnel (Labyrinth Zone, Hydrocity)
 		} status;
 		
 		//Items we have
 		struct
 		{
-			bool isInvincible : 1;	//Do we have invincibility
-			bool hasSpeedShoes : 1;	//Do we have speed shoes
+			bool isInvincible = false;	//Do we have invincibility
+			bool hasSpeedShoes = false;	//Do we have speed shoes
 			
 			//Shield effects
-			bool shieldReflect : 1;		//Reflects projectile
-			bool immuneFire : 1;		//Immune to fire
-			bool immuneElectric : 1;	//Immune to electric
-			bool immuneWater : 1;		//Immune to water
+			bool shieldReflect = false;		//Reflects projectile
+			bool immuneFire = false;		//Immune to fire
+			bool immuneElectric = false;	//Immune to electric
+			bool immuneWater = false;		//Immune to water
 		} item;
 		
-		SHIELD shield;				//Our shield type
-		uint8_t jumpAbility;		//Our jump ability (can we use shield ability, insta-shield, dropdash, etc.)
-		uint8_t abilityProperty;	//Tails's flying time, Knuckles' gliding speed(?)
+		SHIELD shield = SHIELD_NULL;	//Our shield type
+		uint8_t jumpAbility = 0;		//Our jump ability (can we use shield ability, insta-shield, dropdash, etc.)
+		uint8_t abilityProperty = 0;	//Tails's flying time, Knuckles' gliding speed(?)
 		
-		uint16_t invulnerabilityTime;
-		uint16_t invincibilityTime;
-		uint16_t speedShoesTime;
+		uint16_t invulnerabilityTime = 0;
+		uint16_t invincibilityTime = 0;
+		uint16_t speedShoesTime = 0;
 		
-		uint8_t routine;	//Routine
+		PLAYER_ROUTINE routine = PLAYERROUTINE_CONTROL;	//Routine
 		
-		uint8_t angle;		//Angle
-		uint8_t moveLock;	//Player cannot move if this is non-zero (decrements every frame)
+		uint8_t angle = 0;		//Angle
+		uint8_t moveLock = 0;	//Player cannot move if this is non-zero (decrements every frame)
 		
 		//These two are used for collision, usually represent the player's two ground point angles
-		uint8_t primaryAngle;
-		uint8_t secondaryAngle;
+		uint8_t primaryAngle = 0;
+		uint8_t secondaryAngle = 0;
 		
 		//These are the above, basically, but from the last frame
-		uint8_t tilt;		//set to Secondary Angle
-		uint8_t nextTilt;	//set to Primary Angle
+		uint8_t tilt = 0;		//set to Secondary Angle
+		uint8_t nextTilt = 0;	//set to Primary Angle
 		
 		//Object control
 		struct
 		{
-			bool disableOurMovement : 1;		//Disables our movement functions
-			bool disableAnimation : 1;			//Disables animation
-			bool disableWallCollision : 1;		//Disables collision with walls
-			bool disableObjectInteract : 1;		//Disables generic interaction with objects (we'll still otherwise collide with objects that have separate detection, such as bubbles, springs, and other solid objects, though)
+			bool disableOurMovement = false;		//Disables our movement functions
+			bool disableAnimation = false;			//Disables animation
+			bool disableWallCollision = false;		//Disables collision with walls
+			bool disableObjectInteract = false;		//Disables generic interaction with objects (we'll still otherwise collide with objects that have separate detection, such as bubbles, springs, and other solid objects, though)
 		} objectControl;
 		
-		OBJECT *interact;	//Object we're touching
+		OBJECT *interact = nullptr;	//Object we're touching
 		
 		//Chain point counter
-		uint16_t chainPointCounter;
+		uint16_t chainPointCounter = 0;
 		
 		//Spindash
-		bool spindashing;			//Set if we're spindashing
-		uint16_t spindashCounter;	//Our counter for spindashing
+		bool spindashing = false;		//Set if we're spindashing
+		uint16_t spindashCounter = 0;	//Our counter for spindashing
 		
 		//CD Spindash/Peelout
-		uint8_t cdSPTimer;
-		uint8_t cdChargeDelay;
+		uint8_t cdSPTimer = 0;
+		uint8_t cdChargeDelay = 0;
 		
 		//Flipping (hit a spring that causes the player to spin about, or running off of that curved ramp in Angel Island Zone)
-		uint8_t flipType;
-		uint8_t flipAngle;
-		uint8_t flipsRemaining;
-		uint8_t flipSpeed;
+		uint8_t flipType = 0;
+		uint8_t flipAngle = 0;
+		uint8_t flipsRemaining = 0;
+		uint8_t flipSpeed = 0;
 		
 		//Air left
-		uint8_t airRemaining;
+		uint8_t airRemaining = 0;
 		
 		//Our collision layers
-		COLLISIONLAYER topSolidLayer;
-		COLLISIONLAYER lrbSolidLayer;
+		COLLISIONLAYER topSolidLayer = COLLISIONLAYER_NORMAL_TOP;
+		COLLISIONLAYER lrbSolidLayer = COLLISIONLAYER_NORMAL_LRB;
 		
-		uint16_t restartCountdown;	//Timer for the level restarting after death
-		bool inGameover;			//If got a game-over
+		uint16_t restartCountdown = 0;	//Timer for the level restarting after death
+		bool inGameover = false;			//If got a game-over
 		
 		//Speeds
-		uint16_t top;
-		uint16_t acceleration;
-		uint16_t deceleration;
-		uint16_t rollDeceleration;
-		uint16_t jumpForce, jumpRelease;
+		uint16_t top = 0;
+		uint16_t acceleration = 0;
+		uint16_t deceleration = 0;
+		uint16_t rollDeceleration = 0;
+		uint16_t jumpForce = 0, jumpRelease = 0;
 		
 		SPEEDDEFINITION normalSD;
 		SPEEDDEFINITION speedShoesSD;
@@ -264,63 +264,59 @@ class PLAYER
 		SPEEDDEFINITION underwaterSuperSpeedShoesSD;
 		
 		//Super state
-		bool super, hyper;
-		int16_t superTimer;
+		bool super = false, hyper = false;
+		int16_t superTimer = 0;
 		
-		PALETTESTATE paletteState;
-		int16_t paletteTimer;
-		uint16_t paletteFrame;
+		PALETTESTATE paletteState = PALETTESTATE_REGULAR;
+		int16_t paletteTimer = 0;
+		uint16_t paletteFrame = 0;
 		
 		//In debug flag
-		uint16_t debug;
-		int debugAccel;
-		uint8_t debugSpeed;
-		int debugObject;
+		uint16_t debug = 0;
+		int debugAccel = 0;
+		uint8_t debugSpeed = 0;
+		int debugObject = 0;
 		
 		//Character type id (ex. Sonic, Tails, Knuckles, or anything else)
 		CHARACTERTYPE characterType;
 		
 		//Camera scrolling
-		unsigned int scrollDelay;
-		bool cameraLock;
+		unsigned int scrollDelay = 0;
+		bool cameraLock = false;
 		
 		//Position and status records
-		struct RECORD
+		struct PLAYER_RECORD
 		{
-			int16_t x, y;
+			int16_t x = 0, y = 0;
 			CONTROLMASK controlHeld;
 			CONTROLMASK controlPress;
-			STATUS status;
+			PLAYER_STATUS status;
 		} record[PLAYER_RECORD_LENGTH];
 		
-		int recordPos;
+		int recordPos = 0;
 		
 		//Objects that belong to us
-		OBJECT *spindashDust;
-		OBJECT *skidDust;
-		OBJECT *shieldObject;
-		OBJECT *invincibilityStarObject[INVINCIBILITYSTARS];
+		OBJECT *spindashDust = nullptr;
+		OBJECT *skidDust = nullptr;
+		OBJECT *shieldObject = nullptr;
+		OBJECT *invincibilityStarObject[INVINCIBILITYSTARS] = {nullptr};
 		
 		//CPU and other control things
-		CPUROUTINE cpuRoutine;
-		int cpuOverride;
-		unsigned int cpuTimer;
-		bool cpuJumping;
+		PLAYERCPU_ROUTINE cpuRoutine = CPUROUTINE_INIT;
+		int cpuOverride = 0;
+		unsigned int cpuTimer = 0;
+		bool cpuJumping = false;
 		
+		size_t controller;
 		PLAYER *follow;
-		int controller;
 		
 		//Current input
 		CONTROLMASK controlHeld;
 		CONTROLMASK controlPress;
-		bool controlLock;
-		
-		//For linked list
-		PLAYER **list;
-		PLAYER *next;
+		bool controlLock = false;
 		
 	public:
-		PLAYER(const char *specPath, PLAYER *myFollow, int myController);
+		PLAYER(const char *specPath, PLAYER *myFollow, size_t myController);
 		~PLAYER();
 		
 		void SetSpeedFromDefinition(SPEEDDEFINITION definition);

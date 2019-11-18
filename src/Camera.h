@@ -2,15 +2,16 @@
 #include <stdint.h>
 #include "Player.h"
 
+//Camera
 class CAMERA
 {
 	public:
-		int16_t x;
-		int16_t y;
-		int16_t xPan;
-		int16_t yPan;
-		int16_t lookPan;
-		int16_t lookTimer;
+		int16_t xPos;
+		int16_t yPos;
+		int16_t xPan = 0;
+		int16_t yPan = 0;
+		int16_t lookPan = 0;
+		int16_t lookTimer = 0;
 		
 	public:
 		CAMERA(PLAYER *trackPlayer);

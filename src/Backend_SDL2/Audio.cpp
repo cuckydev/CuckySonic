@@ -26,7 +26,7 @@ SOUNDDEFINITION soundDefinition[SOUNDID_MAX] = {
 	{SOUNDCHANNEL_FM3,  "data/Audio/Sound/Roll.wav", SOUNDID_NULL},
 	{SOUNDCHANNEL_PSG1, "data/Audio/Sound/Skid.wav", SOUNDID_NULL},
 	
-	{SOUNDCHANNEL_NULL, nullptr, SOUNDID_NULL}, //SOUNDID_SPINDASH_REV
+	{SOUNDCHANNEL_FM4, nullptr, SOUNDID_NULL}, //SOUNDID_SPINDASH_REV
 	{SOUNDCHANNEL_FM4,  "data/Audio/Sound/SpindashRev0.wav", SOUNDID_NULL},
 	{SOUNDCHANNEL_FM4,  "data/Audio/Sound/SpindashRev1.wav", SOUNDID_NULL},
 	{SOUNDCHANNEL_FM4,  "data/Audio/Sound/SpindashRev2.wav", SOUNDID_NULL},
@@ -56,7 +56,7 @@ SOUNDDEFINITION soundDefinition[SOUNDID_MAX] = {
 	{SOUNDCHANNEL_FM3,	"data/Audio/Sound/GoalpostSpin.wav", SOUNDID_NULL},
 	{SOUNDCHANNEL_FM3,	"data/Audio/Sound/Spring.wav", SOUNDID_NULL},
 	
-	{SOUNDCHANNEL_NULL,	nullptr, SOUNDID_NULL}, //SOUNDID_WATERFALL
+	{SOUNDCHANNEL_FM3,	nullptr, SOUNDID_NULL}, //SOUNDID_WATERFALL
 	{SOUNDCHANNEL_FM3,	"data/Audio/Sound/Waterfall1.wav", SOUNDID_NULL},
 	{SOUNDCHANNEL_FM3,	"data/Audio/Sound/Waterfall2.wav", SOUNDID_NULL},
 	
@@ -427,10 +427,7 @@ bool spindashLast = false;	//Set to 1 if spindash was the last sound, set to 0 i
 
 void PlaySound(SOUNDID id)
 {
-	//Wait for audio device to be locked before modifying sound effect
-	AUDIO_LOCK;
-	
-	//Play sound (there's specific sound stuff here though, such as ring panning, or spindash rev frequency)
+	//Handle sound specific stuff
 	if (id != SOUNDID_SPINDASH_REV)
 		spindashLast = false;
 	
@@ -474,13 +471,13 @@ void PlaySound(SOUNDID id)
 	
 	//Stop sounds of the same channel and play the sound
 	StopChannel(soundDefinition[id].channel);
+	
+	AUDIO_LOCK;
 	if (sounds[id] != nullptr)
 	{
 		sounds[id]->sample = 0.0;
 		sounds[id]->playing = true;
 	}
-	
-	//Unlock the audio buffer
 	AUDIO_UNLOCK;
 	return;
 }
@@ -512,6 +509,7 @@ bool LoadAllSoundEffects()
 	//Load all of the defined sound effects
 	for (int i = 0; i < SOUNDID_MAX; i++)
 	{
+		//Load the sound from it's path or parent
 		if (soundDefinition[i].path != nullptr)
 			sounds[i] = new SOUND(soundDefinition[i].path); //Load from path
 		else if (soundDefinition[i].parent != SOUNDID_NULL)
@@ -522,13 +520,14 @@ bool LoadAllSoundEffects()
 			continue;
 		}
 		
-		if (sounds[i]->fail)
-			return false;
+		if (sounds[i]->fail != nullptr)
+			return true;
 		
+		//Link to sound list for mixing
 		soundList.link_back(sounds[i]);
 	}
 	
-	return true;
+	return false;
 }
 
 //Subsystem functions
@@ -549,13 +548,13 @@ bool InitializeAudio()
 		return Error(SDL_GetError());
 	
 	//Load all of our sound effects
-	if (!LoadAllSoundEffects())
-		return false;
+	if (LoadAllSoundEffects())
+		return true;
 	
 	//Allow our audio device to play audio
 	SDL_PauseAudioDevice(gAudioDevice, 0);
 	LOG(("Success!\n"));
-	return true;
+	return false;
 }
 
 void QuitAudio()

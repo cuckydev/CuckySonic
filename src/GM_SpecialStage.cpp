@@ -8,28 +8,27 @@
 #include "Input.h"
 #include "SpecialStage.h"
 
-bool GM_SpecialStage(bool *noError)
+bool GM_SpecialStage(bool *error)
 {
 	//Load the special stage
 	SPECIALSTAGE *stage = new SPECIALSTAGE("data/SpecialStage/Stage/1");
 	if (stage->fail != nullptr)
-		return (*noError = false);
+		return (*error = true);
 	
 	//Our loop
-	bool noExit = true;
+	bool exit = false;
 	
-	while (noExit && *noError)
+	while ((!exit) && (!(*error)))
 	{
 		//Handle events
-		if ((noExit = HandleEvents()) == false)
-			break;
+		exit = HandleEvents();
 		
 		//Update and draw stage
 		stage->Update();
 		stage->Draw();
 		
 		//Render our software buffer to the screen
-		if (!(*noError = gSoftwareBuffer->RenderToScreen(&stage->backgroundTexture->loadedPalette->colour[0])))
+		if ((*error = gSoftwareBuffer->RenderToScreen(&stage->backgroundTexture->loadedPalette->colour[0])) == true)
 			break;
 		
 		if (gController[0].press.a)
@@ -41,5 +40,5 @@ bool GM_SpecialStage(bool *noError)
 	
 	//Return to stage
 	gGameMode = GAMEMODE_GAME;
-	return noExit;
+	return exit;
 }

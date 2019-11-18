@@ -116,7 +116,7 @@ void ObjBouncingRing(OBJECT *object)
 			//Initialize render properties and load graphics
 			object->widthPixels = 8;
 			object->heightPixels = 8;
-			object->texture = gLevel->GetObjectTexture("data/Object/Ring.bmp");
+			object->texture = gLevel->GetObjectTexture("data/Object/Generic.bmp");
 			object->mappings = gLevel->GetObjectMappings("data/Object/Ring.map");
 			object->renderFlags.alignPlane = true;
 			object->priority = 3;

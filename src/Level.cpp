@@ -67,13 +67,97 @@ OBJECTFUNCTION objFuncSonic2[] = {
 	nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
 };
 
+//Preload lists - Generic
+const char *preloadTexture[] = {
+	"data/Object/Generic.bmp",
+	nullptr,
+};
+
+const char *preloadMappings[] = {
+	"data/Object/Ring.map",
+	"data/Object/Monitor.map",
+	"data/Object/MonitorContents.map",
+	"data/Object/YellowSpring.map",
+	"data/Object/RedSpring.map",
+	"data/Object/Goalpost.map",
+	"data/Object/Explosion.map",
+	"data/Object/Score.map",
+	
+	"data/Object/SpindashDust.map",
+	"data/Object/SkidDust.map",
+	"data/Object/InvincibilityStars.map",
+	"data/Object/SuperStars.map",
+	"data/Object/InstaShield.map",
+	"data/Object/BlueShield.map",
+	"data/Object/FireShield.map",
+	"data/Object/ElectricShield.map",
+	"data/Object/BubbleShield.map",
+	nullptr,
+};
+
+//Preload lists - Green Hill Zone
+const char *preloadTexture_GHZ[] = {
+	"data/Object/GHZGeneric.bmp",
+	"data/Object/Sonic1Badnik.bmp",
+	nullptr,
+};
+
+const char *preloadMappings_GHZ[] = {
+	"data/Object/GHZBridge.map",
+	"data/Object/GHZEdgeWall.map",
+	"data/Object/GHZLedge.map",
+	"data/Object/GHZPlatform.map",
+	"data/Object/GHZSwingingPlatform.map",
+	"data/Object/BuzzBomber.map",
+	"data/Object/BuzzBomberMissile.map",
+	"data/Object/Motobug.map",
+	"data/Object/Crabmeat.map",
+	"data/Object/Chopper.map",
+	"data/Object/GHZPurpleRock.map",
+	nullptr,
+};
+
+//Preload lists - Emerald Hill Zone
+const char *preloadTexture_EHZ[] = {
+	"data/Object/Generic.bmp",
+	"data/Object/EHZGeneric.bmp",
+	nullptr,
+};
+
+const char *preloadMappings_EHZ[] = {
+	"data/Object/Explosion.map",
+	"data/Object/Score.map",
+	"data/Object/MonitorContents.map",
+	"data/Object/InstaShield.map",
+	"data/Object/BlueShield.map",
+	"data/Object/FireShield.map",
+	"data/Object/ElectricShield.map",
+	"data/Object/BubbleShield.map",
+	"data/Object/InvincibilityStars.map",
+	"data/Object/SuperStars.map",
+	nullptr,
+};
+
 //Our level table
 LEVELTABLE gLevelTable[LEVELID_MAX] = {
 	//ZONEID_GHZ
-		/*LEVELID_GHZ1*/ {ZONEID_GHZ, 0, "Green Hill Zone", "Act 1", LEVELFORMAT_CHUNK128_SONIC2, OBJECTFORMAT_SONIC1, ARTFORMAT_BMP, "data/Level/GHZ/ghz1", "data/Level/GHZ/ghz", "data/Level/sonic1", "data/Level/GHZ/ghz", &GHZ_Background, &GHZ_PaletteCycle, objFuncSonic1, "GHZ", 0x0050, 0x03B0, 0x0000, 0x255F, 0x0000, 0x03E0},
-		/*LEVELID_GHZ2*/ {ZONEID_GHZ, 1, "Green Hill Zone", "Act 2", LEVELFORMAT_CHUNK128_SONIC2, OBJECTFORMAT_SONIC1, ARTFORMAT_BMP, "data/Level/GHZ/ghz2", "data/Level/GHZ/ghz", "data/Level/sonic1", "data/Level/GHZ/ghz", &GHZ_Background, &GHZ_PaletteCycle, objFuncSonic1, "GHZ", 0x0050, 0x00FC, 0x0000, 0x214B, 0x0000, 0x03E0},
+		/*LEVELID_GHZ1*/ {ZONEID_GHZ, 0, "Green Hill Zone", "Act 1",
+							LEVELFORMAT_CHUNK128_SONIC2, OBJECTFORMAT_SONIC1, ARTFORMAT_BMP,
+							"data/Level/GHZ/ghz1", "data/Level/GHZ/ghz", "data/Level/sonic1", "data/Level/GHZ/ghz", "GHZ",
+							preloadTexture_GHZ, preloadMappings_GHZ, &GHZ_Background, &GHZ_PaletteCycle, objFuncSonic1,
+							0x0050, 0x03B0, 0x0000, 0x255F, 0x0000, 0x03E0},
+		/*LEVELID_GHZ2*/ {ZONEID_GHZ, 1, "Green Hill Zone", "Act 2",
+							LEVELFORMAT_CHUNK128_SONIC2, OBJECTFORMAT_SONIC1, ARTFORMAT_BMP,
+							"data/Level/GHZ/ghz2", "data/Level/GHZ/ghz", "data/Level/sonic1", "data/Level/GHZ/ghz", "GHZ",
+							preloadTexture_GHZ, preloadMappings_GHZ, &GHZ_Background, &GHZ_PaletteCycle, objFuncSonic1,
+							0x0050, 0x00FC, 0x0000, 0x214B, 0x0000, 0x03E0},
+	
 	//ZONEID_EHZ
-		/*LEVELID_EHZ1*/ {ZONEID_EHZ, 0, "Emerald Hill Zone", "Act 1", LEVELFORMAT_CHUNK128_SONIC2, OBJECTFORMAT_SONIC2, ARTFORMAT_BMP, "data/Level/EHZ/ehz1", "data/Level/EHZ/ehz", "data/Level/sonic2", "data/Level/EHZ/ehz", &EHZ_Background, &EHZ_PaletteCycle, objFuncSonic2, "EHZ", 0x0060, 0x028F, 0x0000, 0x2A40, 0x0000, 0x0400},
+		/*LEVELID_EHZ1*/ {ZONEID_EHZ, 0, "Emerald Hill Zone", "Act 1",
+							LEVELFORMAT_CHUNK128_SONIC2, OBJECTFORMAT_SONIC2, ARTFORMAT_BMP,
+							"data/Level/EHZ/ehz1", "data/Level/EHZ/ehz", "data/Level/sonic2", "data/Level/EHZ/ehz", "EHZ",
+							preloadTexture_EHZ, preloadMappings_EHZ, &EHZ_Background, &EHZ_PaletteCycle, objFuncSonic2,
+							0x0060, 0x028F, 0x0000, 0x2A40, 0x0000, 0x0400},
 };
 
 //Loading functions
@@ -110,7 +194,7 @@ bool LEVEL::LoadMappings(LEVELTABLE *tableEntry)
 			}
 			
 			//Read the mapping data
-			for (int i = 0; i < chunks; i++)
+			for (size_t i = 0; i < chunks; i++)
 			{
 				for (int v = 0; v < (8 * 8); v++)
 				{
@@ -155,7 +239,7 @@ bool LEVEL::LoadLayout(LEVELTABLE *tableEntry)
 	}
 	
 	//Read our layout file
-	switch (format = tableEntry->format)
+	switch (format)
 	{
 		case LEVELFORMAT_CHUNK128_SONIC2:
 		case LEVELFORMAT_CHUNK128:
@@ -182,10 +266,10 @@ bool LEVEL::LoadLayout(LEVELTABLE *tableEntry)
 			}
 			
 			//Read our layout file and convert to tiles
-			for (int cy = 0; cy < layout.height; cy += 8)
+			for (size_t cy = 0; cy < layout.height; cy += 8)
 			{
 				//Read foreground line
-				for (int cx = 0; cx < layout.width; cx += 8)
+				for (size_t cx = 0; cx < layout.width; cx += 8)
 				{
 					//Read our chunk index
 					uint8_t chunk = ReadFile_Byte(layoutFile);
@@ -217,7 +301,7 @@ bool LEVEL::LoadLayout(LEVELTABLE *tableEntry)
 			}
 			
 			//Read our layout file
-			for (int tv = 0; tv < layout.width * layout.height; tv++)
+			for (size_t tv = 0; tv < layout.width * layout.height; tv++)
 			{
 				uint16_t tmap = ReadFile_BE16(layoutFile);
 				layout.foreground[tv].altLRB	= (tmap & 0x8000) != 0;
@@ -288,7 +372,7 @@ bool LEVEL::LoadCollisionTiles(LEVELTABLE *tableEntry)
 		return true;
 	}
 	
-	for (int i = 0; i < tiles; i++)
+	for (size_t i = 0; i < tiles; i++)
 	{
 		tileMapping[i].normalColTile = ReadFile_Byte(norMapFile);
 		tileMapping[i].alternateColTile = ReadFile_Byte(altMapFile);
@@ -345,7 +429,7 @@ bool LEVEL::LoadCollisionTiles(LEVELTABLE *tableEntry)
 	}
 	
 	//Read our collision tile data
-	for (int i = 0; i < collisionTiles; i++)
+	for (size_t i = 0; i < collisionTiles; i++)
 	{
 		for (int v = 0; v < 0x10; v++)
 		{
@@ -598,50 +682,19 @@ void LEVEL::UnloadAll()
 	AUDIO_UNLOCK;
 }
 
-//Assets to pre-load (Assets that are loaded by objects that are usually created mid-game)
-const char *preloadTexture[] = {
-	"data/Object/Explosion.bmp",
-	"data/Object/Score.bmp",
-	"data/Object/Shield.bmp",
-	"data/Object/InvincibilitySuperStars.bmp",
-	nullptr,
-};
-
-const char *preloadMappings[] = {
-	"data/Object/Explosion.map",
-	"data/Object/Score.map",
-	"data/Object/MonitorContents.map",
-	"data/Object/InstaShield.map",
-	"data/Object/BlueShield.map",
-	"data/Object/FireShield.map",
-	"data/Object/ElectricShield.map",
-	"data/Object/BubbleShield.map",
-	"data/Object/InvincibilityStars.map",
-	"data/Object/SuperStars.map",
-	nullptr,
-};
-
 //Level class
 LEVEL::LEVEL(int id, const char *players[])
 {
 	LOG(("Loading level ID %d...\n", id));
 	
-	//Reset memory, then reinitialize linked lists
-	memset(this, 0, sizeof(LEVEL));
-	
-	playerList = LINKEDLIST<PLAYER*>();
-	objectList = LINKEDLIST<OBJECT*>();
-	coreObjectList = LINKEDLIST<OBJECT*>();
-	objTextureCache = LINKEDLIST<TEXTURE*>();
-	objMappingsCache = LINKEDLIST<MAPPINGS*>();
-	
 	//Set us as the global level
 	gLevel = this;
 	
-	//Copy zone and act id
+	//Get data from this table entry
 	LEVELTABLE *tableEntry = &gLevelTable[levelId = (LEVELID)id];
 	zone = tableEntry->zone;
 	act = tableEntry->act;
+	format = tableEntry->format;
 	
 	//Load data
 	if (LoadMappings(tableEntry) || LoadLayout(tableEntry) || LoadCollisionTiles(tableEntry) || LoadObjects(tableEntry) || LoadArt(tableEntry))
@@ -651,11 +704,51 @@ LEVEL::LEVEL(int id, const char *players[])
 		return;
 	}
 	
-	//Pre-load assets
+	//Preload generic assets
 	for (int i = 0; preloadTexture[i] != nullptr; i++)
-		GetObjectTexture(preloadTexture[i]);
+	{
+		TEXTURE *tex = GetObjectTexture(preloadTexture[i]);
+		if (tex->fail != nullptr)
+		{
+			fail = tex->fail;
+			UnloadAll();
+			return;
+		}
+	}
+			
 	for (int i = 0; preloadMappings[i] != nullptr; i++)
-		GetObjectMappings(preloadMappings[i]);
+	{
+		MAPPINGS *map = GetObjectMappings(preloadMappings[i]);
+		if (map->fail != nullptr)
+		{
+			fail = map->fail;
+			UnloadAll();
+			return;
+		}
+	}
+	
+	//Preload stage's assets
+	for (int i = 0; tableEntry->preloadTexture[i] != nullptr; i++)
+	{
+		TEXTURE *tex = GetObjectTexture(tableEntry->preloadTexture[i]);
+		if (tex->fail != nullptr)
+		{
+			fail = tex->fail;
+			UnloadAll();
+			return;
+		}
+	}
+			
+	for (int i = 0; tableEntry->preloadMappings[i] != nullptr; i++)
+	{
+		MAPPINGS *map = GetObjectMappings(tableEntry->preloadMappings[i]);
+		if (map->fail != nullptr)
+		{
+			fail = map->fail;
+			UnloadAll();
+			return;
+		}
+	}
 	
 	//Create our players
 	PLAYER *follow = nullptr;
@@ -682,18 +775,16 @@ LEVEL::LEVEL(int id, const char *players[])
 	
 	//Title-card
 	titleCard = new TITLECARD(tableEntry->name, tableEntry->subtitle);
-	if (titleCard->fail)
+	if (titleCard->fail != nullptr)
 	{
 		fail = titleCard->fail;
 		UnloadAll();
 		return;
 	}
 	
-	inTitleCard = true;
-	
 	//HUD
 	hud = new HUD();
-	if (hud->fail)
+	if (hud->fail != nullptr)
 	{
 		fail = hud->fail;
 		UnloadAll();
@@ -702,9 +793,6 @@ LEVEL::LEVEL(int id, const char *players[])
 	
 	//Initialize state
 	OscillatoryInit();
-	
-	updateTime = true;
-	updateStage = true;
 	
 	//Lock audio device so we can load new music
 	AUDIO_LOCK;
@@ -734,40 +822,12 @@ LEVEL::LEVEL(int id, const char *players[])
 	//Initialize scores
 	InitializeScores();
 	
-	//Load objects near us
+	//Load objects near the player
 	CheckObjectLoad();
 	
-	//Run players code (with input reset)
+	//Update stage for initialization
 	ClearControllerInput();
-	for (size_t i = 0; i < playerList.size(); i++)
-		playerList[i]->Update();
-	
-	//Update object and check for deletion
-	for (size_t i = 0; i < objectList.size(); i++)
-	{
-		if (objectList[i]->Update())
-		{
-			Error(fail = objectList[i]->fail);
-			UnloadAll();
-			return;
-		}
-	}
-	
-	for (size_t i = 0; i < coreObjectList.size(); i++)
-	{
-		if (coreObjectList[i]->Update())
-		{
-			Error(fail = coreObjectList[i]->fail);
-			UnloadAll();
-			return;
-		}
-	}
-	
-	CHECK_LINKEDLIST_OBJECTDELETE(objectList)
-	CHECK_LINKEDLIST_OBJECTDELETE(coreObjectList)
-	
-	//Set the camera to follow the player
-	camera->Track(playerList[0]);
+	UpdateStage();
 	
 	LOG(("Success!\n"));
 }
@@ -843,7 +903,7 @@ void LEVEL::DynamicEvents()
 			{
 				//Get this player and the tile we're on
 				PLAYER *player = playerList[i];
-				if (player->x.pos < 0 || player->x.pos >= gLevel->layout.width * 16 || player->y.pos < 0 || player->y.pos >= gLevel->layout.height * 16)
+				if (player->x.pos < 0 || player->x.pos >= (int16_t)(gLevel->layout.width * 16) || player->y.pos < 0 || player->y.pos >= (int16_t)(gLevel->layout.height * 16))
 					continue;
 				TILE *tile = &gLevel->layout.foreground[(player->y.pos / 16) * gLevel->layout.width + (player->x.pos / 16)];;
 				
@@ -873,7 +933,7 @@ void LEVEL::DynamicEvents()
 	}
 	
 	//Level specific events
-	int16_t checkX = camera->x + (gRenderSpec.width - 320) / 2;
+	int16_t checkX = camera->xPos + (gRenderSpec.width - 320) / 2;
 	
 	switch (levelId)
 	{
@@ -903,8 +963,8 @@ void LEVEL::DynamicEvents()
 	if (bottomBoundaryTarget < bottomBoundary)
 	{
 		//Move up to the boundary smoothly
-		if ((camera->y + gRenderSpec.height) > bottomBoundaryTarget)
-			bottomBoundary = (camera->y + gRenderSpec.height);
+		if ((camera->yPos + gRenderSpec.height) > bottomBoundaryTarget)
+			bottomBoundary = (camera->yPos + gRenderSpec.height);
 		
 		//Move
 		bottomBoundary -= move;
@@ -914,7 +974,7 @@ void LEVEL::DynamicEvents()
 	else if (bottomBoundaryTarget > bottomBoundary)
 	{
 		//Move faster if in mid-air
-		if ((camera->y + 8 + gRenderSpec.height) >= bottomBoundary && playerList[0]->status.inAir)
+		if ((camera->yPos + 8 + gRenderSpec.height) >= bottomBoundary && playerList[0]->status.inAir)
 			move *= 4;
 		
 		//Move
@@ -924,8 +984,8 @@ void LEVEL::DynamicEvents()
 	}
 	
 	//Set boundaries to target
-	int16_t left = camera->x;
-	int16_t right = camera->x + gRenderSpec.width;
+	int16_t left = camera->xPos;
+	int16_t right = camera->xPos + gRenderSpec.width;
 	
 	if (leftBoundary < leftBoundaryTarget)
 	{
@@ -1032,7 +1092,7 @@ void LEVEL::CheckObjectLoad()
 	for (size_t i = 0; i < objectLoadList.size(); i++)
 	{
 		//Check if this object load is in load range
-		uint16_t xOff = (objectLoadList[i]->x.pos & 0xFF80) - ((camera->x - 0x80) & 0xFF80);
+		uint16_t xOff = (objectLoadList[i]->x.pos & 0xFF80) - ((camera->xPos - 0x80) & 0xFF80);
 		bool isLoadRange = xOff <= upperRound(0x80 + gRenderSpec.width + 0x80, 0x80);
 		
 		//Check if we're just now in range, and load object if so
@@ -1273,26 +1333,9 @@ void LEVEL::UpdateMusic()
 	AUDIO_UNLOCK;
 }
 
-
 //Level update and draw
-bool LEVEL::Update()
+bool LEVEL::UpdateStage()
 {
-	//Update the music
-	UpdateMusic();
-	
-	//Update title card
-	titleCard->UpdateAndDraw();
-	if (inTitleCard)
-		return true;
-	
-	//Quit if fading
-	if (fading)
-		return true;
-	
-	//Increment frame counter
-	frameCounter++;
-	
-	//Update players
 	if (updateStage)
 	{
 		//Update players and objects
@@ -1302,13 +1345,19 @@ bool LEVEL::Update()
 		for (size_t i = 0; i < objectList.size(); i++)
 		{
 			if (objectList[i]->Update())
-				return Error(fail = objectList[i]->fail);
+			{
+				fail = objectList[i]->fail;
+				return true;
+			}
 		}
 		
 		for (size_t i = 0; i < coreObjectList.size(); i++)
 		{
 			if (coreObjectList[i]->Update())
-				return Error(fail = coreObjectList[i]->fail);
+			{
+				fail = coreObjectList[i]->fail;
+				return true;
+			}
 		}
 	}
 	else
@@ -1320,17 +1369,41 @@ bool LEVEL::Update()
 		for (size_t i = 0; i < coreObjectList.size(); i++)
 		{
 			if (coreObjectList[i]->Update())
-				return Error(fail = coreObjectList[i]->fail);
+			{
+				fail = coreObjectList[i]->fail;
+				return true;
+			}
 		}
 	}
 	
-	//Check to delete objects
-	CHECK_LINKEDLIST_OBJECTDELETE(objectList);
-	CHECK_LINKEDLIST_OBJECTDELETE(coreObjectList);
+	//Check for object deletion
+	CHECK_LINKEDLIST_OBJECTDELETE(objectList)
+	CHECK_LINKEDLIST_OBJECTDELETE(coreObjectList)
 	
 	//Update camera
 	if (camera != nullptr)
 		camera->Track(playerList[0]);
+	return false;
+}
+
+bool LEVEL::Update()
+{
+	//Update the music
+	UpdateMusic();
+	
+	//Update title card
+	titleCard->UpdateAndDraw();
+	if (titleCard->activeLock)
+		return false;
+	
+	//Quit if fading
+	if (fading)
+		return false;
+	
+	//Update the stage
+	if (UpdateStage())
+		return true;
+	frameCounter++;
 	
 	//Update level dynamic events
 	if (playerList.size())
@@ -1343,7 +1416,7 @@ bool LEVEL::Update()
 	//Increase our time
 	if (gLevel->updateTime)
 		gTime++;
-	return true;
+	return false;
 }
 
 void LEVEL::Draw()
@@ -1360,15 +1433,15 @@ void LEVEL::Draw()
 	
 	//Draw and scroll background
 	if (background != nullptr && camera != nullptr)
-		background->Draw(updateStage, camera->x, camera->y);
+		background->Draw(updateStage, camera->xPos, camera->yPos);
 	
 	//Draw foreground
 	if (layout.foreground != nullptr && tileTexture != nullptr && camera != nullptr)
 	{
-		int cLeft = mmax(camera->x / 16, 0);
-		int cTop = mmax(camera->y / 16, 0);
-		int cRight = mmin((camera->x + gRenderSpec.width + 15) / 16, gLevel->layout.width - 1);
-		int cBottom = mmin((camera->y + gRenderSpec.height + 15) / 16, gLevel->layout.height - 1);
+		int cLeft = mmax(camera->xPos / 16, 0);
+		int cTop = mmax(camera->yPos / 16, 0);
+		int cRight = mmin(upperRound(camera->xPos + (int)gRenderSpec.width, 16) / 16, (int)gLevel->layout.width - 1);
+		int cBottom = mmin(upperRound(camera->yPos + (int)gRenderSpec.height, 16) / 16, (int)gLevel->layout.height - 1);
 		
 		for (int ty = cTop; ty < cBottom; ty++)
 		{
@@ -1383,8 +1456,8 @@ void LEVEL::Draw()
 				//Draw tile
 				RECT backSrc = {0, tile->tile * 16, 16, 16};
 				RECT frontSrc = {16, tile->tile * 16, 16, 16};
-				gSoftwareBuffer->DrawTexture(tileTexture, tileTexture->loadedPalette, &backSrc, LEVEL_RENDERLAYER_FOREGROUND_LOW, tx * 16 - camera->x, ty * 16 - camera->y, tile->xFlip, tile->yFlip);
-				gSoftwareBuffer->DrawTexture(tileTexture, tileTexture->loadedPalette, &frontSrc, LEVEL_RENDERLAYER_FOREGROUND_HIGH, tx * 16 - camera->x, ty * 16 - camera->y, tile->xFlip, tile->yFlip);
+				gSoftwareBuffer->DrawTexture(tileTexture, tileTexture->loadedPalette, &backSrc, LEVEL_RENDERLAYER_FOREGROUND_LOW, tx * 16 - camera->xPos, ty * 16 - camera->yPos, tile->xFlip, tile->yFlip);
+				gSoftwareBuffer->DrawTexture(tileTexture, tileTexture->loadedPalette, &frontSrc, LEVEL_RENDERLAYER_FOREGROUND_HIGH, tx * 16 - camera->xPos, ty * 16 - camera->yPos, tile->xFlip, tile->yFlip);
 			}
 		}
 	}

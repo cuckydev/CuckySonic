@@ -20,7 +20,7 @@ void ObjRing(OBJECT *object)
 			object->routine++;
 			
 			//Load graphics
-			object->texture = gLevel->GetObjectTexture("data/Object/Ring.bmp");
+			object->texture = gLevel->GetObjectTexture("data/Object/Generic.bmp");
 			object->mappings = gLevel->GetObjectMappings("data/Object/Ring.map");
 			
 			//Initialize other properties

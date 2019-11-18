@@ -11,19 +11,11 @@
 #include "MathUtil.h"
 #include "Player.h"
 
+//Bugfixes
+//#define FIX_LAZY_CONTACT_CLEAR	//For some reason, the original code for clearing solid object contact is lazy, and will put the player into the air state if they were pushing (obviously incorrect), causes issues with stuff like spindashing into monitors
+
 //Object class
-OBJECT::OBJECT(OBJECTFUNCTION objectFunction)
-{
-	//Reset memory
-	memset(this, 0, sizeof(OBJECT));
-	
-	//Reset children and draw instance linked lists
-	drawInstances = LINKEDLIST<OBJECT_DRAWINSTANCE*>();
-	children = LINKEDLIST<OBJECT*>();
-	
-	//Set function
-	function = objectFunction;
-}
+OBJECT::OBJECT(OBJECTFUNCTION objectFunction) : function(objectFunction) { return; }
 
 OBJECT::~OBJECT()
 {
@@ -41,7 +33,7 @@ OBJECT::~OBJECT()
 }
 
 //Scratch allocation functions
-#define SCRATCH_ALLOC(name, type, max) if (name == nullptr) { name = new type[max]; }
+#define SCRATCH_ALLOC(name, type, max) if (name == nullptr) { name = new type[max]; memset(name, 0, sizeof(type) * max); }
 
 void  OBJECT::ScratchAllocU8(size_t max) { SCRATCH_ALLOC(scratchU8,   uint8_t, max) }
 void  OBJECT::ScratchAllocS8(size_t max) { SCRATCH_ALLOC(scratchS8,    int8_t, max) }
@@ -186,7 +178,7 @@ int16_t OBJECT::CheckFloorEdge(COLLISIONLAYER layer, int16_t xPos, int16_t yPos,
 void OBJECT::DrawInstance(OBJECT_RENDERFLAGS iRenderFlags, TEXTURE *iTexture, MAPPINGS *iMappings, bool iHighPriority, uint8_t iPriority, uint16_t iMappingFrame, int16_t iXPos, int16_t iYPos)
 {
 	//Create a draw instance with the properties given
-	OBJECT_DRAWINSTANCE *newInstance = new OBJECT_DRAWINSTANCE();
+	OBJECT_DRAWINSTANCE *newInstance = new OBJECT_DRAWINSTANCE;
 	newInstance->renderFlags = iRenderFlags;
 	newInstance->texture = iTexture;
 	newInstance->mappings = iMappings;
@@ -201,7 +193,7 @@ void OBJECT::DrawInstance(OBJECT_RENDERFLAGS iRenderFlags, TEXTURE *iTexture, MA
 void OBJECT::UnloadOffscreen(int16_t xPos)
 {
 	//Check if we're within loaded range
-	uint16_t xOff = (xPos & 0xFF80) - ((gLevel->camera->x - 0x80) & 0xFF80);
+	uint16_t xOff = (xPos & 0xFF80) - ((gLevel->camera->xPos - 0x80) & 0xFF80);
 	if (xOff > upperRound(0x80 + gRenderSpec.width + 0x80, 0x80))
 		deleteFlag = true;
 }
@@ -265,18 +257,35 @@ void OBJECT::ClearSolidContact()
 		//Get the player
 		PLAYER *player = gLevel->playerList[i];
 		
-		//Clear pushing and standing
-		if (playerContact[i].standing || playerContact[i].pushing)
-		{
-			//Clear our contact flags
-			player->status.shouldNotFall = false;
-			player->status.pushing = false;
-			playerContact[i].standing = false;
-			playerContact[i].pushing = false;
+		#ifndef FIX_LAZY_CONTACT_CLEAR
+			//Clear pushing and standing together
+			if (playerContact[i].standing || playerContact[i].pushing)
+			{
+				//Clear all of our contact flags
+				player->status.shouldNotFall = false;
+				player->status.pushing = false;
+				playerContact[i].standing = false;
+				playerContact[i].pushing = false;
+				player->status.inAir = true;
+			}
+		#else
+			//Clear standing
+			if (playerContact[i].standing)
+			{
+				//Clear all of our contact flags
+				player->status.shouldNotFall = false;
+				playerContact[i].standing = false;
+				player->status.inAir = true;
+			}
 			
-			//Place the player in mid-air, this is weird and stupid god damn
-			player->status.inAir = true;
-		}
+			//Clear pushing
+			if (playerContact[i].pushing)
+			{
+				//Clear all of our contact flags
+				player->status.pushing = false;
+				playerContact[i].pushing = false;
+			}
+		#endif
 	}
 }
 
@@ -364,14 +373,11 @@ void OBJECT::ExitPlatform(PLAYER *player, size_t i, bool setAirOnExit)
 		player->status.inAir = true;
 }
 
-//Solid object and its variants
 OBJECT_SOLIDTOUCH OBJECT::SolidObject(int16_t width, int16_t height_air, int16_t height_standing, int16_t lastXPos, bool setAirOnExit, const int8_t *slope, bool doubleSlope)
 {
-	//Initialize solid touch
+	//Check all players for solid contact
 	OBJECT_SOLIDTOUCH solidTouch;
-	memset(&solidTouch, 0, sizeof(OBJECT_SOLIDTOUCH));
 	
-	//Check all players
 	for (size_t i = 0; i < gLevel->playerList.size(); i++)
 	{
 		//Get the player
@@ -645,9 +651,16 @@ bool OBJECT::Update()
 	
 	//Check if any of our assets failed to load
 	if (texture != nullptr && texture->fail != nullptr)
-		return Error(fail = texture->fail);
+	{
+		fail = texture->fail;
+		return true;
+	}
+	
 	if (mappings != nullptr && mappings->fail != nullptr)
-		return Error(fail = mappings->fail);
+	{
+		fail = mappings->fail;
+		return true;
+	}
 	
 	//Check for regular deletion
 	if (deleteFlag)
@@ -680,8 +693,8 @@ void OBJECT::Draw()
 	if (drawInstances.size() > 0)
 	{
 		//On-screen check (checks the first draw instance, which is basically how the original does it)
-		int alignX = renderFlags.alignPlane ? gLevel->camera->x : 0;
-		int alignY = renderFlags.alignPlane ? gLevel->camera->y : 0;
+		int alignX = renderFlags.alignPlane ? gLevel->camera->xPos : 0;
+		int alignY = renderFlags.alignPlane ? gLevel->camera->yPos : 0;
 		int16_t xPos = drawInstances[0]->xPos;
 		int16_t yPos = drawInstances[0]->yPos;
 		
@@ -692,7 +705,7 @@ void OBJECT::Draw()
 		{
 			//Draw our draw instances if on-screen and set flag
 			for (size_t i = 0; i < drawInstances.size(); i++)
-				drawInstances[i]->Draw();
+				RenderDrawInstance(drawInstances[i]);
 			renderFlags.isOnscreen = true;
 		}
 	}
@@ -701,37 +714,26 @@ void OBJECT::Draw()
 		children[i]->Draw();
 }
 
-//Object drawing instance class
-OBJECT_DRAWINSTANCE::OBJECT_DRAWINSTANCE()
-{
-	//Reset memory
-	memset(this, 0, sizeof(OBJECT_DRAWINSTANCE));
-}
-
-OBJECT_DRAWINSTANCE::~OBJECT_DRAWINSTANCE()
-{
-	return;
-}
-
-void OBJECT_DRAWINSTANCE::Draw()
+//Draw instance draw function
+void OBJECT::RenderDrawInstance(OBJECT_DRAWINSTANCE *drawInstance)
 {
 	//Don't draw if we don't have textures or mappings
-	if (texture != nullptr && mappings != nullptr && mappingFrame < mappings->size)
+	if (drawInstance->texture != nullptr && drawInstance->mappings != nullptr && drawInstance->mappingFrame < drawInstance->mappings->size)
 	{
 		//Draw our sprite
-		RECT *mapRect = &mappings->rect[mappingFrame];
-		POINT *mapOrig = &mappings->origin[mappingFrame];
+		RECT *mapRect = &drawInstance->mappings->rect[drawInstance->mappingFrame];
+		POINT *mapOrig = &drawInstance->mappings->origin[drawInstance->mappingFrame];
 		
 		int origX = mapOrig->x;
 		int origY = mapOrig->y;
-		if (renderFlags.xFlip)
+		if (drawInstance->renderFlags.xFlip)
 			origX = mapRect->w - origX;
-		if (renderFlags.yFlip)
+		if (drawInstance->renderFlags.yFlip)
 			origY = mapRect->h - origY;
 		
 		//Draw to screen at the given position
-		int alignX = renderFlags.alignPlane ? gLevel->camera->x : 0;
-		int alignY = renderFlags.alignPlane ? gLevel->camera->y : 0;
-		gSoftwareBuffer->DrawTexture(texture, texture->loadedPalette, mapRect, gLevel->GetObjectLayer(highPriority, priority), xPos - origX - alignX, yPos - origY - alignY, renderFlags.xFlip, renderFlags.yFlip);
+		int alignX = drawInstance->renderFlags.alignPlane ? gLevel->camera->xPos : 0;
+		int alignY = drawInstance->renderFlags.alignPlane ? gLevel->camera->yPos : 0;
+		gSoftwareBuffer->DrawTexture(drawInstance->texture, drawInstance->texture->loadedPalette, mapRect, gLevel->GetObjectLayer(highPriority, priority), drawInstance->xPos - origX - alignX, drawInstance->yPos - origY - alignY, drawInstance->renderFlags.xFlip, drawInstance->renderFlags.yFlip);
 	}
 }
