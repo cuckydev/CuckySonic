@@ -125,14 +125,9 @@ void ObjGHZPlatform_Move(OBJECT *object)
 			break;
 		}
 	}
-}
-
-void ObjGHZPlatform_Nudge(OBJECT *object)
-{
-	//Get the force
-	int16_t sin;
-	GetSine(object->scratchU8[SCRATCHU8_WEIGHT], &sin, nullptr);
-	object->y.pos = (object->scratchS32[SCRATCHS32_Y] >> 16) + ((sin * 0x400) >> 16);
+	
+	//Set our y position according to our position and the weight of a player above us
+	object->y.pos = (object->scratchS32[SCRATCHS32_Y] >> 16) + ((GetSin(object->scratchU8[SCRATCHU8_WEIGHT]) * 0x400) >> 16);
 }
 
 void ObjGHZPlatform(OBJECT *object)
@@ -150,7 +145,7 @@ void ObjGHZPlatform(OBJECT *object)
 			
 			//Load graphics
 			object->texture = gLevel->GetObjectTexture("data/Object/GHZGeneric.bmp");
-			object->mappings = gLevel->GetObjectMappings("data/Object/GHZPlatform.map");
+			object->mapping.mappings = gLevel->GetObjectMappings("data/Object/GHZPlatform.map");
 			
 			//Initialize render properties
 			object->renderFlags.alignPlane = true;
@@ -196,12 +191,11 @@ void ObjGHZPlatform(OBJECT *object)
 			//Handle all other routines
 			int16_t lastX = object->x.pos;
 			ObjGHZPlatform_Move(object);
-			ObjGHZPlatform_Nudge(object);
 			if (object->routine == 1)
 				object->PlatformObject(object->widthPixels, 9, lastX, false, nullptr);
 			
 			//Draw
-			object->DrawInstance(object->renderFlags, object->texture, object->mappings, object->highPriority, object->priority, object->mappingFrame, object->x.pos, object->y.pos);
+			object->DrawInstance(object->renderFlags, object->texture, object->mapping, object->highPriority, object->priority, object->mappingFrame, object->x.pos, object->y.pos);
 			object->UnloadOffscreen(object->scratchS32[SCRATCHS32_ORIG_X] >> 16);
 			break;
 		}
@@ -209,8 +203,7 @@ void ObjGHZPlatform(OBJECT *object)
 		{
 			//Handle routines and draw
 			ObjGHZPlatform_Move(object);
-			ObjGHZPlatform_Nudge(object);
-			object->DrawInstance(object->renderFlags, object->texture, object->mappings, object->highPriority, object->priority, object->mappingFrame, object->x.pos, object->y.pos);
+			object->DrawInstance(object->renderFlags, object->texture, object->mapping, object->highPriority, object->priority, object->mappingFrame, object->x.pos, object->y.pos);
 			object->UnloadOffscreen(object->scratchS32[SCRATCHS32_ORIG_X] >> 16);
 			break;
 		}

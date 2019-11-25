@@ -36,7 +36,7 @@ void ObjCrabmeatProjectile(OBJECT *object)
 			
 			//Load graphics
 			object->texture = gLevel->GetObjectTexture("data/Object/Sonic1Badnik.bmp");
-			object->mappings = gLevel->GetObjectMappings("data/Object/Crabmeat.map");
+			object->mapping.mappings = gLevel->GetObjectMappings("data/Object/Crabmeat.map");
 			
 			//Initialize other properties
 			object->renderFlags.alignPlane = true;
@@ -57,7 +57,7 @@ void ObjCrabmeatProjectile(OBJECT *object)
 			//Move and fall, animate and draw
 			object->Animate(animationList);
 			object->MoveAndFall();
-			object->DrawInstance(object->renderFlags, object->texture, object->mappings, object->highPriority, object->priority, object->mappingFrame, object->x.pos, object->y.pos);
+			object->DrawInstance(object->renderFlags, object->texture, object->mapping, object->highPriority, object->priority, object->mappingFrame, object->x.pos, object->y.pos);
 			
 			//Delete if fell off stage
 			if (object->y.pos >= gLevel->bottomBoundaryTarget)
@@ -113,7 +113,7 @@ void ObjCrabmeat(OBJECT *object)
 			
 			//Load graphics
 			object->texture = gLevel->GetObjectTexture("data/Object/Sonic1Badnik.bmp");
-			object->mappings = gLevel->GetObjectMappings("data/Object/Crabmeat.map");
+			object->mapping.mappings = gLevel->GetObjectMappings("data/Object/Crabmeat.map");
 			
 			//Initialize other properties
 			object->renderFlags.alignPlane = true;
@@ -223,7 +223,7 @@ void ObjCrabmeat(OBJECT *object)
 			
 			//Animate and draw
 			object->Animate_S1(animationList);
-			object->DrawInstance(object->renderFlags, object->texture, object->mappings, object->highPriority, object->priority, object->mappingFrame, object->x.pos, object->y.pos);
+			object->DrawInstance(object->renderFlags, object->texture, object->mapping, object->highPriority, object->priority, object->mappingFrame, object->x.pos, object->y.pos);
 			object->UnloadOffscreen(object->x.pos);
 			break;
 		}

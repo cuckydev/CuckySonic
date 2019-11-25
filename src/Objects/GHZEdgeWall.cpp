@@ -102,7 +102,7 @@ void ObjGHZEdgeWall_Solid_Individual(PLAYER *player, int i, OBJECT *object, int1
 		//No collision, clear pushing flags
 		if (object->playerContact[i].pushing)
 		{
-			if (player->anim != PLAYERANIMATION_ROLL)
+			if (player->anim != PLAYERANIMATION_ROLL && player->anim != PLAYERANIMATION_DROPDASH)
 				player->anim = PLAYERANIMATION_RUN; //wrong animation again
 			object->playerContact[i].pushing = false;
 			player->status.pushing = false;
@@ -130,7 +130,7 @@ void ObjGHZEdgeWall(OBJECT *object)
 			
 			//Load graphics
 			object->texture = gLevel->GetObjectTexture("data/Object/GHZGeneric.bmp");
-			object->mappings = gLevel->GetObjectMappings("data/Object/GHZEdgeWall.map");
+			object->mapping.mappings = gLevel->GetObjectMappings("data/Object/GHZEdgeWall.map");
 			
 			//Set other render properties
 			object->renderFlags.alignPlane = true;
@@ -147,7 +147,7 @@ void ObjGHZEdgeWall(OBJECT *object)
 				ObjGHZEdgeWall_Solid(object, 19, 40);
 			
 			//Draw
-			object->DrawInstance(object->renderFlags, object->texture, object->mappings, object->highPriority, object->priority, object->mappingFrame, object->x.pos, object->y.pos);
+			object->DrawInstance(object->renderFlags, object->texture, object->mapping, object->highPriority, object->priority, object->mappingFrame, object->x.pos, object->y.pos);
 			object->UnloadOffscreen(object->x.pos);
 			break;
 		}

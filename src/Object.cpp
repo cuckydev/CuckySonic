@@ -9,10 +9,15 @@
 #include "Log.h"
 #include "Error.h"
 #include "MathUtil.h"
+#include "Audio.h"
 #include "Player.h"
 
 //Bugfixes
 //#define FIX_LAZY_CONTACT_CLEAR	//For some reason, the original code for clearing solid object contact is lazy, and will put the player into the air state if they were pushing (obviously incorrect), causes issues with stuff like spindashing into monitors
+
+//Game differences
+//#define SONIC12_SOLIDOBJECT_VERTICAL          //In Sonic 3, the Solid Object routine was adjusted to prefer vertical collision
+//#define SONIC12_SOLIDOBJECT_BOTTOM_INERTIA    //In Sonic 3, touching the bottom of an object clears your inertia
 
 //Object class
 OBJECT::OBJECT(OBJECTFUNCTION objectFunction) : function(objectFunction) { return; }
@@ -33,7 +38,7 @@ OBJECT::~OBJECT()
 }
 
 //Scratch allocation functions
-#define SCRATCH_ALLOC(name, type, max) if (name == nullptr) { name = new type[max]; memset(name, 0, sizeof(type) * max); }
+#define SCRATCH_ALLOC(name, type, max) if (name == nullptr) { name = new type[max]{0}; }
 
 void  OBJECT::ScratchAllocU8(size_t max) { SCRATCH_ALLOC(scratchU8,   uint8_t, max) }
 void  OBJECT::ScratchAllocS8(size_t max) { SCRATCH_ALLOC(scratchS8,    int8_t, max) }
@@ -175,13 +180,13 @@ int16_t OBJECT::CheckFloorEdge(COLLISIONLAYER layer, int16_t xPos, int16_t yPos,
 	return distance;
 }
 
-void OBJECT::DrawInstance(OBJECT_RENDERFLAGS iRenderFlags, TEXTURE *iTexture, MAPPINGS *iMappings, bool iHighPriority, uint8_t iPriority, uint16_t iMappingFrame, int16_t iXPos, int16_t iYPos)
+void OBJECT::DrawInstance(OBJECT_RENDERFLAGS iRenderFlags, TEXTURE *iTexture, OBJECT_MAPPING iMapping, bool iHighPriority, uint8_t iPriority, uint16_t iMappingFrame, int16_t iXPos, int16_t iYPos)
 {
 	//Create a draw instance with the properties given
 	OBJECT_DRAWINSTANCE *newInstance = new OBJECT_DRAWINSTANCE;
 	newInstance->renderFlags = iRenderFlags;
 	newInstance->texture = iTexture;
-	newInstance->mappings = iMappings;
+	newInstance->mapping = iMapping;
 	newInstance->highPriority = iHighPriority;
 	newInstance->priority = iPriority;
 	newInstance->mappingFrame = iMappingFrame;
@@ -289,6 +294,71 @@ void OBJECT::ClearSolidContact()
 	}
 }
 
+void OBJECT::Smash(size_t num, const OBJECT_SMASHMAP *smashmap, OBJECTFUNCTION fragmentFunction)
+{
+	//Get our rect to use
+	RECT mapRect;
+	POINT mapOrig;
+	
+	if (!renderFlags.staticMapping)
+	{
+		mapRect = mapping.mappings->rect[mappingFrame];
+		mapOrig = mapping.mappings->origin[mappingFrame];
+	}
+	else
+	{
+		mapRect = mapping.rect;
+		mapOrig = mapping.origin;
+	}
+	
+	//Get our origin for top-left point
+	int origX = mapOrig.x;
+	int origY = mapOrig.y;
+	if (renderFlags.xFlip)
+		origX = mapRect.w - origX;
+	if (renderFlags.yFlip)
+		origY = mapRect.h - origY;
+	
+	//Create smash fragments based on copies of us and the smash map
+	for (size_t i = 0; i < num; i++)
+	{
+		//Create a fragment
+		OBJECT *newFragment = new OBJECT(fragmentFunction);
+		newFragment->texture = texture;
+		newFragment->mapping.rect = {mapRect.x + smashmap->rect.x, mapRect.y + smashmap->rect.y, smashmap->rect.w, smashmap->rect.h};
+		newFragment->mapping.origin = {smashmap->rect.w / 2, smashmap->rect.h / 2};
+		newFragment->renderFlags = renderFlags;
+		newFragment->renderFlags.staticMapping = true;
+		newFragment->priority = priority;
+		newFragment->widthPixels = widthPixels;
+		newFragment->heightPixels = heightPixels;
+		
+		//Get our position difference
+		int offX = (smashmap->rect.x + smashmap->rect.w / 2) - mapRect.w / 2;
+		int offY = (smashmap->rect.y + smashmap->rect.h / 2) - mapRect.h / 2;
+		if (renderFlags.xFlip)
+			offX = mapRect.w - offX;
+		if (renderFlags.yFlip)
+			offY = mapRect.h - offY;
+		
+		//Set our fragment position and velocity
+		newFragment->x.pos = x.pos + offX;
+		newFragment->y.pos = y.pos + offY;
+		newFragment->xVel = smashmap->xVel;
+		newFragment->yVel = smashmap->yVel;
+		
+		//Do an initial update, and link to level
+		fragmentFunction(newFragment);
+		gLevel->objectList.link_back(newFragment);
+		smashmap++;
+	}
+	
+	//Delete us and play smash sound
+	deleteFlag = true;
+	if (status.releaseDestroyed)
+		gLevel->ReleaseObjectLoad(this); //The original doesn't explicitly do this, but it does forget to clear the loaded bit for the object load
+	PlaySound(SOUNDID_WALL_SMASH);
+}
 
 //Object collision functions
 void OBJECT::PlatformObject(int16_t width, int16_t height, int16_t lastXPos, bool setAirOnExit, const int8_t *slope)
@@ -429,12 +499,12 @@ void OBJECT::SolidObjectCont(OBJECT_SOLIDTOUCH *solidTouch, PLAYER *player, size
 			if (!doubleSlope)
 			{
 				//Apply our slope (single slope)
-				slopeOff = slope[xOff] - *slope;
+				slopeOff = slope[xOff];
 			}
 			else
 			{
 				//Apply our slope (double slope)
-				slopeOff = slope[xOff * 2] - *slope;
+				slopeOff = slope[xOff * 2];
 				slopeBottomOff = slope[xOff * 2];
 			}
 		}
@@ -446,7 +516,7 @@ void OBJECT::SolidObjectCont(OBJECT_SOLIDTOUCH *solidTouch, PLAYER *player, size
 		if (player->status.reverseGravity)
 			yDiff = (-(player->y.pos - (y.pos - slopeOff)) + 4) + heightHalf;
 		else
-			yDiff = (player->y.pos - (y.pos - slopeOff) + 4) + heightHalf;
+			yDiff = ( (player->y.pos - (y.pos - slopeOff)) + 4) + heightHalf;
 		
 		//Apply double slope to our actual height
 		height = heightHalf * 2;
@@ -477,26 +547,69 @@ void OBJECT::SolidObjectCont(OBJECT_SOLIDTOUCH *solidTouch, PLAYER *player, size
 					yClip = -yDiff;
 				}
 				
-				//If our horizontal difference is greater than the vertical difference (we're above / below the object)
-				if (yClip <= xClip)
+				//Check if we're above / below or to the sides of the object
+			#ifndef SONIC12_SOLIDOBJECT_VERTICAL
+				if (xClip >= yClip || yClip <= 4)
+			#else
+				if (xClip >= yClip)
+			#endif
 				{
-					if (yDiff >= 0)
+					if (yDiff < 0) //If colliding from below
+					{
+						if (player->status.inAir == false && player->yVel == 0)
+						{
+							if (mabs(xClip) >= 16)
+							{
+								//Crush the player and set the bottom touch flag
+								player->KillCharacter(SOUNDID_HURT);
+								if (solidTouch != nullptr)
+									solidTouch->bottom[i] = true;
+								return;
+							}
+							
+							//Fallthrough into horizontal check
+						}
+						else
+						{
+							if (player->yVel < 0 && yDiff < 0) //Why is yDiff checked to be negative?
+							{
+								#ifndef SONIC12_SOLIDOBJECT_BOTTOM_INERTIA
+									//Clear inertia if in mid-air
+									if (player->status.inAir)
+										player->inertia = 0;
+								#endif
+							
+								//Clip us out of the bottom
+								if (player->status.reverseGravity)
+									yDiff = -yDiff;
+								player->y.pos -= yDiff;
+								player->yVel = 0;
+							}
+							
+							//Set bottom touch flag
+							if (solidTouch != nullptr)
+								solidTouch->bottom[i] = true;
+							return;
+						}
+					}
+					else
 					{
 						//Check our vertical difference
 						if (yDiff < 16)
 						{
+							//Subtract 4 from yDiff to undo the offset done before
+							yDiff -= 4;
+							
 							//Check our horizontal range
 							int16_t xDiff2 = (player->x.pos - lastXPos) + widthPixels;
 							
 							if (xDiff2 >= 0 && xDiff2 < widthPixels * 2 && player->yVel >= 0)
 							{
 								//Land on the object
-								yDiff -= 4;
 								if (player->status.reverseGravity)
 									player->y.pos += (yDiff + 1);
 								else
 									player->y.pos -= (yDiff + 1);
-								
 								player->AttachToObject(this, i);
 								
 								//Set top touch flag
@@ -511,93 +624,54 @@ void OBJECT::SolidObjectCont(OBJECT_SOLIDTOUCH *solidTouch, PLAYER *player, size
 						SolidObjectClearPush(player, i);
 						return;
 					}
-					else
-					{
-						if (player->yVel != 0)
-						{
-							//Clip us out of the top (why does it check if yOff is negative?)
-							if (player->yVel < 0 && yDiff < 0)
-							{
-								if (player->status.reverseGravity)
-									yDiff = -yDiff;
-								
-								player->y.pos -= yDiff;
-								player->yVel = 0;
-							}
-							
-							//Set bottom touch flag
-							if (solidTouch != nullptr)
-								solidTouch->bottom[i] = true;
-							return;
-						}
-						else
-						{
-							if (!player->status.inAir)
-							{
-								int16_t absXDiff = abs(xClip);
-								
-								if (absXDiff >= 16)
-								{
-									//Crush the player and set the bottom touch flag
-									player->KillCharacter(SOUNDID_HURT);
-									if (solidTouch != nullptr)
-										solidTouch->bottom[i] = true;
-									return;
-								}
-								
-								//Fallthrough into horizontal check
-							}
-							else
-							{
-								//Set bottom touch flag
-								if (solidTouch != nullptr)
-									solidTouch->bottom[i] = true;
-								return;
-							}
-						}
-					}
 				}
 				
-				//Horizontal checking (if yClip is greater than xClip or it fell-through to here)
-				if (yClip > 4)
-				{
-					//Hault our velocity if running into sides
-					if (xDiff > 0)
+				#ifdef SONIC12_SOLIDOBJECT_VERTICAL
+					//Don't perform wall collision if clipped under 4 pixels vertically
+					if (yClip <= 4)
 					{
-						if (player->xVel >= 0)
-						{
-							player->inertia = 0;
-							player->xVel = 0;
-						}
-					}
-					else if (xDiff < 0)
-					{
-						if (player->xVel < 0)
-						{
-							player->inertia = 0;
-							player->xVel = 0;
-						}
-					}
-					
-					//Clip out of side
-					player->x.pos -= xDiff;
-					
-					//Contact on ground: Set side touch and set pushing flags
-					if (!player->status.inAir)
-					{
-						if (solidTouch != nullptr)
-							solidTouch->side[i] = true;
-						playerContact[i].pushing = true;
-						player->status.pushing = true;
+						SolidObjectClearPush(player, i);
 						return;
 					}
+				#endif
+				
+				//Hault our velocity if running into sides
+				if (xDiff > 0)
+				{
+					if (player->xVel >= 0)
+					{
+						player->inertia = 0;
+						player->xVel = 0;
+					}
+				}
+				else if (xDiff < 0)
+				{
+					if (player->xVel < 0)
+					{
+						player->inertia = 0;
+						player->xVel = 0;
+					}
 				}
 				
-				//Contact in mid-air: Set side touch and clear pushing flags
-				if (solidTouch != nullptr)
-					solidTouch->side[i] = true;
-				playerContact[i].pushing = false;
-				player->status.pushing = false;
+				//Clip out of side
+				player->x.pos -= xDiff;
+				
+				if (!player->status.inAir)
+				{
+					//Contact on ground: Set side touch and set pushing flags
+					if (solidTouch != nullptr)
+						solidTouch->side[i] = true;
+					playerContact[i].pushing = true;
+					player->status.pushing = true;
+				}
+				else
+				{
+					//Contact in mid-air: Set side touch and clear pushing flags
+					if (solidTouch != nullptr)
+						solidTouch->side[i] = true;
+					playerContact[i].pushing = false;
+					player->status.pushing = false;
+				}
 				return;
 			}
 		}
@@ -613,7 +687,7 @@ void OBJECT::SolidObjectClearPush(PLAYER *player, size_t i)
 	if (playerContact[i].pushing)
 	{
 		//Reset animation
-		if (player->anim != PLAYERANIMATION_ROLL)
+		if (player->anim != PLAYERANIMATION_ROLL && player->anim != PLAYERANIMATION_DROPDASH && player->anim != PLAYERANIMATION_SPINDASH)
 			player->anim = PLAYERANIMATION_RUN; //wrong animation id
 		
 		//Clear pushing flags
@@ -647,7 +721,7 @@ bool OBJECT::Update()
 	if (function != nullptr)
 		function(this);
 	else
-		deleteFlag = true; //Delete, we're useless!
+		deleteFlag = true; //We're just a waste of memory, delete
 	
 	//Check if any of our assets failed to load
 	if (texture != nullptr && texture->fail != nullptr)
@@ -656,16 +730,16 @@ bool OBJECT::Update()
 		return true;
 	}
 	
-	if (mappings != nullptr && mappings->fail != nullptr)
+	if (mapping.mappings != nullptr && mapping.mappings->fail != nullptr)
 	{
-		fail = mappings->fail;
+		fail = mapping.mappings->fail;
 		return true;
 	}
 	
-	//Check for regular deletion
+	//Delete if flag is set
 	if (deleteFlag)
 	{
-		//Remove player references to us
+		//Remove player references to us (prevent terrible crashes, we're no longer on Genesis hardware)
 		for (size_t i = 0; i < gLevel->playerList.size(); i++)
 		{
 			PLAYER *player = gLevel->playerList[i];
@@ -718,22 +792,39 @@ void OBJECT::Draw()
 void OBJECT::RenderDrawInstance(OBJECT_DRAWINSTANCE *drawInstance)
 {
 	//Don't draw if we don't have textures or mappings
-	if (drawInstance->texture != nullptr && drawInstance->mappings != nullptr && drawInstance->mappingFrame < drawInstance->mappings->size)
+	if (drawInstance->texture != nullptr)
 	{
 		//Draw our sprite
-		RECT *mapRect = &drawInstance->mappings->rect[drawInstance->mappingFrame];
-		POINT *mapOrig = &drawInstance->mappings->origin[drawInstance->mappingFrame];
+		RECT mapRect;
+		POINT mapOrig;
 		
-		int origX = mapOrig->x;
-		int origY = mapOrig->y;
+		if (!drawInstance->renderFlags.staticMapping)
+		{
+			//Reject if out of bounds or no mappings are defined
+			if (drawInstance->mapping.mappings == nullptr || drawInstance->mappingFrame >= drawInstance->mapping.mappings->size)
+				return;
+			
+			//Pull rect and origin from mappings list using mappingFrame
+			mapRect = drawInstance->mapping.mappings->rect[drawInstance->mappingFrame];
+			mapOrig = drawInstance->mapping.mappings->origin[drawInstance->mappingFrame];
+		}
+		else
+		{
+			//Just use our static rect and origin
+			mapRect = drawInstance->mapping.rect;
+			mapOrig = drawInstance->mapping.origin;
+		}
+		
+		int origX = mapOrig.x;
+		int origY = mapOrig.y;
 		if (drawInstance->renderFlags.xFlip)
-			origX = mapRect->w - origX;
+			origX = mapRect.w - origX;
 		if (drawInstance->renderFlags.yFlip)
-			origY = mapRect->h - origY;
+			origY = mapRect.h - origY;
 		
 		//Draw to screen at the given position
 		int alignX = drawInstance->renderFlags.alignPlane ? gLevel->camera->xPos : 0;
 		int alignY = drawInstance->renderFlags.alignPlane ? gLevel->camera->yPos : 0;
-		gSoftwareBuffer->DrawTexture(drawInstance->texture, drawInstance->texture->loadedPalette, mapRect, gLevel->GetObjectLayer(highPriority, priority), drawInstance->xPos - origX - alignX, drawInstance->yPos - origY - alignY, drawInstance->renderFlags.xFlip, drawInstance->renderFlags.yFlip);
+		gSoftwareBuffer->DrawTexture(drawInstance->texture, drawInstance->texture->loadedPalette, &mapRect, gLevel->GetObjectLayer(highPriority, priority), drawInstance->xPos - origX - alignX, drawInstance->yPos - origY - alignY, drawInstance->renderFlags.xFlip, drawInstance->renderFlags.yFlip);
 	}
 }

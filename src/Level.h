@@ -1,4 +1,5 @@
 #pragma once
+#include <string>
 #include <stdint.h>
 
 #include "LinkedList.h"
@@ -14,7 +15,6 @@
 #include "Hud.h"
 #include "Background.h"
 
-#define PALETTE_CYCLES 8
 #define OSCILLATORY_VALUES 16
 
 //Level render layer
@@ -66,11 +66,10 @@ enum LEVELID
 
 struct LEVELTABLE
 {
-	//Stage identification (name, zone, act, etc.)
+	//Stage identification (name, zone, etc.)
 	ZONEID zone;
-	int act;
-	const char *name;
-	const char *subtitle;
+	std::string name;
+	std::string subtitle;
 	
 	//Formats
 	LEVELFORMAT format;
@@ -92,7 +91,7 @@ struct LEVELTABLE
 	OBJECTFUNCTION *objectFunctionList;
 	
 	//Start position and boundaries
-	uint16_t startX, startY;
+	int16_t startX, startY;
 	uint16_t leftBoundary, rightBoundary, topBoundary, bottomBoundary;
 };
 
@@ -167,11 +166,9 @@ class LEVEL
 	public:
 		const char *fail = nullptr;
 		
-		//Level ID
+		//Level IDs
 		LEVELID levelId;
-		
 		ZONEID zone;
-		int act;
 		
 		//Loaded music
 		MUSIC *stageMusic = nullptr;
@@ -195,10 +192,8 @@ class LEVEL
 		uint16_t oscillate[OSCILLATORY_VALUES][2];
 		
 		//Art
-		ARTFORMAT artFormat;
 		TEXTURE *tileTexture = nullptr;
 		BACKGROUND *background = nullptr;
-		
 		PALETTECYCLEFUNCTION paletteFunction = nullptr;
 		
 		//Chunk and tile data
@@ -206,8 +201,7 @@ class LEVEL
 		CHUNKMAPPING *chunkMapping = nullptr;
 		TILEMAPPING *tileMapping = nullptr;
 		
-		//Layout
-		LEVELFORMAT format;
+		//Stage layout
 		LAYOUT layout;
 		
 		//Collision data

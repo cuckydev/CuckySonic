@@ -215,7 +215,7 @@ class PLAYER
 			bool disableOurMovement = false;		//Disables our movement functions
 			bool disableAnimation = false;			//Disables animation
 			bool disableWallCollision = false;		//Disables collision with walls
-			bool disableObjectInteract = false;		//Disables generic interaction with objects (we'll still otherwise collide with objects that have separate detection, such as bubbles, springs, and other solid objects, though)
+			bool disableObjectInteract = false;		//Disables generic interaction with objects (we'll still otherwise collide with objects that have separate collision, such as bubbles)
 		} objectControl;
 		
 		OBJECT *interact = nullptr;	//Object we're touching

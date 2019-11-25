@@ -15,7 +15,7 @@ void ObjPurpleRock(OBJECT *object)
 			
 			//Load graphics
 			object->texture = gLevel->GetObjectTexture("data/Object/GHZGeneric.bmp");
-			object->mappings = gLevel->GetObjectMappings("data/Object/GHZPurpleRock.map");
+			object->mapping.mappings = gLevel->GetObjectMappings("data/Object/GHZPurpleRock.map");
 			
 			//Set render properties
 			object->renderFlags.alignPlane = true;
@@ -28,7 +28,7 @@ void ObjPurpleRock(OBJECT *object)
 		{
 			//Act as solid and draw to screen
 			object->SolidObject(27, 16, 16, object->x.pos, false, nullptr, false);
-			object->DrawInstance(object->renderFlags, object->texture, object->mappings, object->highPriority, object->priority, object->mappingFrame, object->x.pos, object->y.pos);
+			object->DrawInstance(object->renderFlags, object->texture, object->mapping, object->highPriority, object->priority, object->mappingFrame, object->x.pos, object->y.pos);
 			object->UnloadOffscreen(object->x.pos);
 			break;
 		}

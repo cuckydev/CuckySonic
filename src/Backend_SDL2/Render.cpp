@@ -340,18 +340,18 @@ bool SOFTWAREBUFFER::RenderToScreen(PALCOLOUR *backgroundColour)
 	switch (bpp)
 	{
 		case 1:
-			Blit<uint8_t>(backgroundColour,  (uint8_t*)writeBuffer, writePitch / 1);
+			BlitQueue<uint8_t>(backgroundColour,  (uint8_t*)writeBuffer, writePitch / 1);
 			break;
 		case 2:
-			Blit<uint16_t>(backgroundColour, (uint16_t*)writeBuffer, writePitch / 2);
+			BlitQueue<uint16_t>(backgroundColour, (uint16_t*)writeBuffer, writePitch / 2);
 			break;
 	#ifdef uint24_t //If the compiler supports 24-bit integers, then I mean, I guess
 		case 3:
-			Blit<uint24_t>(backgroundColour, (uint24_t*)writeBuffer, writePitch / 3);
+			BlitQueue<uint24_t>(backgroundColour, (uint24_t*)writeBuffer, writePitch / 3);
 			break;
 	#endif
 		case 4:
-			Blit<uint32_t>(backgroundColour, (uint32_t*)writeBuffer, writePitch / 4);
+			BlitQueue<uint32_t>(backgroundColour, (uint32_t*)writeBuffer, writePitch / 4);
 			break;
 		default:
 			return Error("Unsupported BPP");

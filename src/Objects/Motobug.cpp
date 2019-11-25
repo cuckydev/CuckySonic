@@ -31,7 +31,7 @@ void ObjMotobug(OBJECT *object)
 	{
 		//Load graphics
 		object->texture = gLevel->GetObjectTexture("data/Object/Sonic1Badnik.bmp");
-		object->mappings = gLevel->GetObjectMappings("data/Object/Motobug.map");
+		object->mapping.mappings = gLevel->GetObjectMappings("data/Object/Motobug.map");
 		
 		//Initialize other properties
 		object->routine++;
@@ -130,7 +130,7 @@ void ObjMotobug(OBJECT *object)
 			
 			//Animate and draw
 			object->Animate_S1(animationList);
-			object->DrawInstance(object->renderFlags, object->texture, object->mappings, object->highPriority, object->priority, object->mappingFrame, object->x.pos, object->y.pos);
+			object->DrawInstance(object->renderFlags, object->texture, object->mapping, object->highPriority, object->priority, object->mappingFrame, object->x.pos, object->y.pos);
 			object->UnloadOffscreen(object->x.pos);
 			break;
 		}
@@ -138,7 +138,7 @@ void ObjMotobug(OBJECT *object)
 		{
 			//Animate and draw
 			object->Animate_S1(animationList);
-			object->DrawInstance(object->renderFlags, object->texture, object->mappings, object->highPriority, object->priority, object->mappingFrame, object->x.pos, object->y.pos);
+			object->DrawInstance(object->renderFlags, object->texture, object->mapping, object->highPriority, object->priority, object->mappingFrame, object->x.pos, object->y.pos);
 			break;
 		}
 		case 4: //Smoke deletion

@@ -1,4 +1,5 @@
 #pragma once
+#include <string>
 #include <stdint.h>
 #include "BitmapFont.h"
 
@@ -24,8 +25,8 @@ class TITLECARD
 		unsigned int frame = 0;
 		
 		//Text
-		const char *name;
-		const char *subtitle;
+		std::string name;
+		std::string subtitle;
 		
 		BITMAPFONT *nameFont;
 		BITMAPFONT *subtitleFont;
@@ -44,7 +45,7 @@ class TITLECARD
 		} line[LINE_MAX];
 		
 	public:
-		TITLECARD(const char *levelName, const char *levelSubtitle);
+		TITLECARD(std::string levelName, std::string levelSubtitle);
 		~TITLECARD();
 		void DrawRibbon(const RECT *rect, int x, int y, int width);
 		void UpdateAndDraw();

@@ -19,7 +19,7 @@ void ObjSonic1Scenery(OBJECT *object)
 					//Load graphics
 					object->mappingFrame = 1;
 					object->texture = gLevel->GetObjectTexture("data/Object/GHZGeneric.bmp");
-					object->mappings = gLevel->GetObjectMappings("data/Object/GHZBridge.map");
+					object->mapping.mappings = gLevel->GetObjectMappings("data/Object/GHZBridge.map");
 					object->widthPixels = 16;
 					object->heightPixels = 32;
 					object->priority = 1;
@@ -34,7 +34,7 @@ void ObjSonic1Scenery(OBJECT *object)
 	//Fallthrough
 		case 1:
 		{
-			object->DrawInstance(object->renderFlags, object->texture, object->mappings, object->highPriority, object->priority, object->mappingFrame, object->x.pos, object->y.pos);
+			object->DrawInstance(object->renderFlags, object->texture, object->mapping, object->highPriority, object->priority, object->mappingFrame, object->x.pos, object->y.pos);
 			object->UnloadOffscreen(object->x.pos);
 			break;
 		}

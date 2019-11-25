@@ -13,6 +13,17 @@ const int8_t ledgeSlope[] = {
 
 void ObjGHZLedge(OBJECT *object)
 {
+	//Scratch
+	enum SCRATCH
+	{
+		//U8
+		SCRATCHU8_FLAG =	0,
+		SCRATCHU8_DELAY =	1,
+		SCRATCHU8_MAX =		2,
+	};
+	
+	object->ScratchAllocU8(SCRATCHU8_MAX);
+	
 	switch (object->routine)
 	{
 		case 0:
@@ -21,7 +32,7 @@ void ObjGHZLedge(OBJECT *object)
 			
 			//Load graphics
 			object->texture = gLevel->GetObjectTexture("data/Object/GHZGeneric.bmp");
-			object->mappings = gLevel->GetObjectMappings("data/Object/GHZLedge.map");
+			object->mapping.mappings = gLevel->GetObjectMappings("data/Object/GHZLedge.map");
 			
 			//Initialize render properties
 			object->renderFlags.alignPlane = true;
@@ -33,11 +44,19 @@ void ObjGHZLedge(OBJECT *object)
 	//Fallthrough
 		case 1:
 		{
-			//Draw and act as solid
-			object->PlatformObject(48, 32, object->x.pos, false, ledgeSlope);
-			object->DrawInstance(object->renderFlags, object->texture, object->mappings, object->highPriority, object->priority, object->mappingFrame, object->x.pos, object->y.pos);
-			object->UnloadOffscreen(object->x.pos);
-			break;
+			if (object->scratchU8[SCRATCHU8_FLAG] == 0 || (object->scratchU8[SCRATCHU8_DELAY] != 0 && object->scratchU8[SCRATCHU8_DELAY]-- != 0))
+			{
+				//Draw and act as solid
+				object->PlatformObject(48, 32, object->x.pos, false, ledgeSlope);
+				object->DrawInstance(object->renderFlags, object->texture, object->mapping, object->highPriority, object->priority, object->mappingFrame, object->x.pos, object->y.pos);
+				object->UnloadOffscreen(object->x.pos);
+				break;
+			}
+		}
+	//Fallthrough (potentially)
+		case 2:
+		{
+			
 		}
 	}
 }

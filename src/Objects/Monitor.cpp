@@ -123,7 +123,7 @@ void ObjMonitorContents(OBJECT *object)
 			
 			//Load graphics
 			object->texture = gLevel->GetObjectTexture("data/Object/Generic.bmp");
-			object->mappings = gLevel->GetObjectMappings("data/Object/MonitorContents.map");
+			object->mapping.mappings = gLevel->GetObjectMappings("data/Object/MonitorContents.map");
 			
 			//Set render properties and velocity
 			object->renderFlags.alignPlane = true;
@@ -191,7 +191,7 @@ void ObjMonitorContents(OBJECT *object)
 				}
 			}
 			
-			object->DrawInstance(object->renderFlags, object->texture, object->mappings, object->highPriority, object->priority, object->mappingFrame, object->x.pos, object->y.pos);
+			object->DrawInstance(object->renderFlags, object->texture, object->mapping, object->highPriority, object->priority, object->mappingFrame, object->x.pos, object->y.pos);
 			break;
 		}
 		case 2: //Waiting for deletion
@@ -200,7 +200,7 @@ void ObjMonitorContents(OBJECT *object)
 			if (--object->animFrameDuration < 0)
 				object->deleteFlag = true;
 			else
-				object->DrawInstance(object->renderFlags, object->texture, object->mappings, object->highPriority, object->priority, object->mappingFrame, object->x.pos, object->y.pos);
+				object->DrawInstance(object->renderFlags, object->texture, object->mapping, object->highPriority, object->priority, object->mappingFrame, object->x.pos, object->y.pos);
 		}
 	}
 }
@@ -219,7 +219,7 @@ void ObjMonitor(OBJECT *object)
 			
 			//Load graphics
 			object->texture = gLevel->GetObjectTexture("data/Object/Generic.bmp");
-			object->mappings = gLevel->GetObjectMappings("data/Object/Monitor.map");
+			object->mapping.mappings = gLevel->GetObjectMappings("data/Object/Monitor.map");
 			
 			//Set render properties
 			object->renderFlags.alignPlane = true;
@@ -267,7 +267,7 @@ void ObjMonitor(OBJECT *object)
 			
 			//Act as solid, draw and animate
 			ObjMonitor_SolidObject(object);
-			object->DrawInstance(object->renderFlags, object->texture, object->mappings, object->highPriority, object->priority, object->mappingFrame, object->x.pos, object->y.pos);
+			object->DrawInstance(object->renderFlags, object->texture, object->mapping, object->highPriority, object->priority, object->mappingFrame, object->x.pos, object->y.pos);
 			object->Animate(animationList);
 			object->UnloadOffscreen(object->x.pos);
 			break;
@@ -299,13 +299,13 @@ void ObjMonitor(OBJECT *object)
 			//Set to broken animation and draw
 			gLevel->GetObjectLoad(object)->specificBit = true;
 			object->anim = MONITOR_ITEM_BROKEN;
-			object->DrawInstance(object->renderFlags, object->texture, object->mappings, object->highPriority, object->priority, object->mappingFrame, object->x.pos, object->y.pos);
+			object->DrawInstance(object->renderFlags, object->texture, object->mapping, object->highPriority, object->priority, object->mappingFrame, object->x.pos, object->y.pos);
 			break;
 		}
 		case 3: //Broken
 		{
 			//Draw and animate
-			object->DrawInstance(object->renderFlags, object->texture, object->mappings, object->highPriority, object->priority, object->mappingFrame, object->x.pos, object->y.pos);
+			object->DrawInstance(object->renderFlags, object->texture, object->mapping, object->highPriority, object->priority, object->mappingFrame, object->x.pos, object->y.pos);
 			object->Animate(animationList);
 			object->UnloadOffscreen(object->x.pos);
 			break;

@@ -23,7 +23,7 @@ void ObjMinecart(OBJECT *object)
 		{
 			//Load graphics
 			object->texture = gLevel->GetObjectTexture("data/Object/Minecart.bmp");
-			object->mappings = gLevel->GetObjectMappings("data/Object/Minecart.map");
+			object->mapping.mappings = gLevel->GetObjectMappings("data/Object/Minecart.map");
 			
 			//Initialize other properties
 			object->routine++;
@@ -58,11 +58,8 @@ void ObjMinecart(OBJECT *object)
 			if (!object->routineSecondary) //On-ground
 			{
 				//Move
-				int16_t sin, cos;
-				GetSine(object->angle, &sin, &cos);
-				object->xVel = (object->inertia * cos) / 0x100;
-				object->yVel = (object->inertia * sin) / 0x100;
-				
+				object->xVel = (object->inertia * GetCos(object->angle)) / 0x100;
+				object->yVel = (object->inertia * GetSin(object->angle)) / 0x100;
 				object->Move();
 				
 				//Check for collision with the floor
@@ -80,20 +77,20 @@ void ObjMinecart(OBJECT *object)
 					object->y.pos += floorDistance;
 					
 					//Slope gravity
-					sin = (sin * 0x40) / 0x100;
+					int16_t force = (GetSin(object->angle) * 0x40) / 0x100;
 					
 					//Apply our slope gravity
 					if (object->inertia >= 0)
 					{
-						if (sin < 0)
-							sin /= 4;
-						object->inertia += sin;
+						if (force < 0)
+							force >>= 2;
+						object->inertia += force;
 					}
 					else
 					{
-						if (sin >= 0)
-							sin /= 4;
-						object->inertia += sin;
+						if (force >= 0)
+							force >>= 2;
+						object->inertia += force;
 					}
 					
 					//Set our mapping frame
@@ -260,7 +257,7 @@ void ObjMinecart(OBJECT *object)
 			else if (object->xVel < 0)
 				object->renderFlags.xFlip = true;
 			
-			object->DrawInstance(object->renderFlags, object->texture, object->mappings, object->highPriority, object->priority, object->mappingFrame, object->x.pos, object->y.pos);
+			object->DrawInstance(object->renderFlags, object->texture, object->mapping, object->highPriority, object->priority, object->mappingFrame, object->x.pos, object->y.pos);
 			break;
 		}
 		case 3: //Breaking
@@ -294,7 +291,7 @@ void ObjMinecart(OBJECT *object)
 			if ((int8_t)(--object->routineSecondary) < 0)
 				object->deleteFlag = true;
 			else if (object->routineSecondary & 0x1)
-				object->DrawInstance(object->renderFlags, object->texture, object->mappings, object->highPriority, object->priority, object->mappingFrame, object->x.pos, object->y.pos);
+				object->DrawInstance(object->renderFlags, object->texture, object->mapping, object->highPriority, object->priority, object->mappingFrame, object->x.pos, object->y.pos);
 		}
 	}
 	

@@ -1,5 +1,3 @@
-#include <string.h>
-
 #include "Player.h"
 #include "MathUtil.h"
 #include "Audio.h"
@@ -25,7 +23,6 @@
 //#define FIX_ROLL_YSHIFT         //In the originals, when you roll, you're always shifted up / down globally, this can cause weird behaviour such as falling off of ceilings
 //#define FIX_ROLLJUMP_COLLISION  //In the originals, for some reason, jumping from a roll will maintain Sonic's regular collision hitbox, rather than switching to the smaller hitbox, which causes weird issues.
 //#define FIX_PEELOUT_DOWN        //In Sonic CD, the peelout acted really weird if you were to switch to holding down in the middle of it, even causing you to be able to walk through walls
-//#define FIX_GROUND_CLIPPING     //In the originals, you're allowed to clip at least 14 pixels into the ground if you manage to get into that situation, seems like a slight misunderstanding of the collision function
 //#define FIX_INSTASHIELD_REFLECT //In Sonic 3 and Knuckles, Sonic's insta-shield doesn't reflect projectiles, but the code suggests that it's supposed to
 
 //Game differences
@@ -46,7 +43,7 @@
 //#define SONIC12_AIR_CAP             //In Sonic 1 and 2, your speed in the air is capped to your top speed when above it, even if you're already above it
 //#define SONIC123_ROLL_DUCK          //In Sonic and Knuckles, they added a greater margin of speed for ducking and rolling, so you can duck while moving
 //#define SONICCD_ROLLING             //In Sonic CD, rolling to the right is weird
-//#define SONICCD_ROLLJUMP            //In Sonic CD, rolljumping was *partially* removed, the below "CONTROL_NO_ROLLJUMP_LOCK" would act differently
+//#define SONICCD_ROLLJUMP            //In Sonic CD, rolljumping was removed
 
 //#define SONIC1_NO_SPINDASH          //The S2 spindash
 //#define SONICCD_SPINDASH            //CD spindash
@@ -271,7 +268,7 @@ void ObjSpindashDust(OBJECT *object)
 		case 0:
 			//Initialize render properties
 			object->texture = gLevel->GetObjectTexture("data/Object/PlayerGeneric.bmp");
-			object->mappings = gLevel->GetObjectMappings("data/Object/SpindashDust.map");
+			object->mapping.mappings = gLevel->GetObjectMappings("data/Object/SpindashDust.map");
 			
 			object->priority = 1;
 			object->widthPixels = 24;
@@ -312,7 +309,7 @@ void ObjSpindashDust(OBJECT *object)
 	
 	//Draw and animate
 	object->Animate(animationListSpindashDust);
-	object->DrawInstance(object->renderFlags, object->texture, object->mappings, object->highPriority, object->priority, object->mappingFrame, object->x.pos, object->y.pos);
+	object->DrawInstance(object->renderFlags, object->texture, object->mapping, object->highPriority, object->priority, object->mappingFrame, object->x.pos, object->y.pos);
 }
 
 //Skid dust
@@ -332,7 +329,7 @@ void ObjSkidDust(OBJECT *object)
 		case 0:
 			//Initialize render properties
 			object->texture = gLevel->GetObjectTexture("data/Object/PlayerGeneric.bmp");
-			object->mappings = gLevel->GetObjectMappings("data/Object/SkidDust.map");
+			object->mapping.mappings = gLevel->GetObjectMappings("data/Object/SkidDust.map");
 			
 			object->priority = 1;
 			object->widthPixels = 4;
@@ -382,7 +379,7 @@ void ObjSkidDust(OBJECT *object)
 			break;
 		case 2: //Dust instance
 			object->Animate(animationListSkidDust);
-			object->DrawInstance(object->renderFlags, object->texture, object->mappings, object->highPriority, object->priority, object->mappingFrame, object->x.pos, object->y.pos);
+			object->DrawInstance(object->renderFlags, object->texture, object->mapping, object->highPriority, object->priority, object->mappingFrame, object->x.pos, object->y.pos);
 			break;
 		case 3: //Dust deleting
 			object->deleteFlag = true;
@@ -478,7 +475,7 @@ void ObjShield(OBJECT *object)
 		
 		//Load mappings and textures
 		object->texture = gLevel->GetObjectTexture("data/Object/PlayerGeneric.bmp");
-		object->mappings = gLevel->GetObjectMappings("data/Object/SuperStars.map");
+		object->mapping.mappings = gLevel->GetObjectMappings("data/Object/SuperStars.map");
 		
 		//Set our render properties
 		object->priority = 1;
@@ -511,12 +508,12 @@ void ObjShield(OBJECT *object)
 				object->y.pos = object->parentPlayer->y.pos;
 			}
 			
-			object->DrawInstance(object->renderFlags, object->texture, object->mappings, object->highPriority, object->priority, object->mappingFrame, object->x.pos, object->y.pos);
+			object->DrawInstance(object->renderFlags, object->texture, object->mapping, object->highPriority, object->priority, object->mappingFrame, object->x.pos, object->y.pos);
 		}
 		else
 		{
 			//Wait for the player to have a high enough ground velocity
-			if (object->parentPlayer->objectControl.disableOurMovement || object->parentPlayer->objectControl.disableObjectInteract || abs(object->parentPlayer->inertia) < 0x800)
+			if (object->parentPlayer->objectControl.disableOurMovement || object->parentPlayer->objectControl.disableObjectInteract || mabs(object->parentPlayer->inertia) < 0x800)
 			{
 				//Stay inactive
 				object->scratchU8[SCRATCHU8_MOVING] = 0;
@@ -532,7 +529,7 @@ void ObjShield(OBJECT *object)
 				#endif
 				object->x.pos = object->parentPlayer->x.pos;
 				object->y.pos = object->parentPlayer->y.pos;
-				object->DrawInstance(object->renderFlags, object->texture, object->mappings, object->highPriority, object->priority, object->mappingFrame, object->x.pos, object->y.pos);
+				object->DrawInstance(object->renderFlags, object->texture, object->mapping, object->highPriority, object->priority, object->mappingFrame, object->x.pos, object->y.pos);
 			}
 		}
 	}
@@ -664,7 +661,7 @@ void ObjShield(OBJECT *object)
 		
 		//Load the given mappings and textures
 		object->texture = gLevel->GetObjectTexture("data/Object/PlayerGeneric.bmp");
-		object->mappings = gLevel->GetObjectMappings(useMapping);
+		object->mapping.mappings = gLevel->GetObjectMappings(useMapping);
 		
 		//Animate
 		object->Animate(useAniList);
@@ -691,7 +688,7 @@ void ObjShield(OBJECT *object)
 		}
 		
 		//Draw to screen
-		object->DrawInstance(object->renderFlags, object->texture, object->mappings, object->highPriority, object->priority, object->mappingFrame, object->x.pos, object->y.pos);
+		object->DrawInstance(object->renderFlags, object->texture, object->mapping, object->highPriority, object->priority, object->mappingFrame, object->x.pos, object->y.pos);
 	}
 	else
 	{
@@ -754,7 +751,7 @@ void ObjInvincibilityStars(OBJECT *object)
 	{
 		//Load mappings and textures
 		object->texture = gLevel->GetObjectTexture("data/Object/PlayerGeneric.bmp");
-		object->mappings = gLevel->GetObjectMappings("data/Object/InvincibilityStars.map");
+		object->mapping.mappings = gLevel->GetObjectMappings("data/Object/InvincibilityStars.map");
 		
 		//Set our render properties
 		object->priority = 1;
@@ -792,12 +789,12 @@ void ObjInvincibilityStars(OBJECT *object)
 			//Draw star 1
 			int16_t star1XPos, star1YPos;
 			ObjInvincibilityStars_GetPosition(invincibilityStarPosArray, object->scratchU8[SCRATCHU8_ANGLE], xPos, yPos, &star1XPos, &star1YPos);
-			object->DrawInstance(object->renderFlags, object->texture, object->mappings, object->highPriority, object->priority, frame, star1XPos, star1YPos);
+			object->DrawInstance(object->renderFlags, object->texture, object->mapping, object->highPriority, object->priority, frame, star1XPos, star1YPos);
 			
 			//Draw star 2
 			int16_t star2XPos, star2YPos;
 			ObjInvincibilityStars_GetPosition(invincibilityStarPosArray, object->scratchU8[SCRATCHU8_ANGLE] + 0x12, xPos, yPos, &star2XPos, &star2YPos);
-			object->DrawInstance(object->renderFlags, object->texture, object->mappings, object->highPriority, object->priority, frame, star2XPos, star2YPos);
+			object->DrawInstance(object->renderFlags, object->texture, object->mapping, object->highPriority, object->priority, frame, star2XPos, star2YPos);
 			
 			//Spin around the player
 			if (object->parentPlayer->status.xFlip)
@@ -832,12 +829,12 @@ void ObjInvincibilityStars(OBJECT *object)
 			//Draw star 1
 			int16_t star1XPos, star1YPos;
 			ObjInvincibilityStars_GetPosition(invincibilityStarPosArray, object->scratchU8[SCRATCHU8_ANGLE], xPos, yPos, &star1XPos, &star1YPos);
-			object->DrawInstance(object->renderFlags, object->texture, object->mappings, object->highPriority, object->priority, frame2, star1XPos, star1YPos);
+			object->DrawInstance(object->renderFlags, object->texture, object->mapping, object->highPriority, object->priority, frame2, star1XPos, star1YPos);
 			
 			//Draw star 2
 			int16_t star2XPos, star2YPos;
 			ObjInvincibilityStars_GetPosition(invincibilityStarPosArray, object->scratchU8[SCRATCHU8_ANGLE] + 0x12, xPos, yPos, &star2XPos, &star2YPos);
-			object->DrawInstance(object->renderFlags, object->texture, object->mappings, object->highPriority, object->priority, frame1, star2XPos, star2YPos);
+			object->DrawInstance(object->renderFlags, object->texture, object->mapping, object->highPriority, object->priority, frame1, star2XPos, star2YPos);
 			
 			//Spin around the player
 			if (object->parentPlayer->status.xFlip)
@@ -1029,7 +1026,7 @@ int16_t PLAYER::ChkFloorEdge(COLLISIONLAYER layer, int16_t xPos, int16_t yPos, u
 	//Get floor distance and angle
 	int16_t distance = FindFloor(xPos, yPos + (status.reverseGravity ? -yRadius : yRadius), layer, status.reverseGravity, &primaryAngle);
 	if (outAngle != nullptr)
-		*outAngle = (primaryAngle & 1) ? 0 : primaryAngle;
+		*outAngle = (primaryAngle & 0x01) ? 0 : primaryAngle;
 	return distance;
 }
 
@@ -1249,16 +1246,13 @@ void PLAYER::AnglePos()
 				
 				if (nearestDifference < 0)
 				{
-					#ifndef FIX_GROUND_CLIPPING
-					//I'm not sure why this checks for a specific range, if the distance is negative, it will be colliding with a floor for sure
 					if (nearestDifference >= -14)
-					#endif
 						y.pos += nearestDifference;
 				}
 				else if (nearestDifference > 0)
 				{
 					//Get how far we can clip down to the floor
-					uint8_t clipLength = abs(xVel >> 8) + 4;
+					uint8_t clipLength = mabs(xVel >> 8) + 4;
 					if (clipLength >= 14)
 						clipLength = 14;
 
@@ -1286,16 +1280,13 @@ void PLAYER::AnglePos()
 				
 				if (nearestDifference < 0)
 				{
-					#ifndef FIX_GROUND_CLIPPING
-					//I'm not sure why this checks for a specific range, if the distance is negative, it will be colliding with a floor for sure
 					if (nearestDifference >= -14)
-					#endif
 						x.pos -= nearestDifference;
 				}
 				else if (nearestDifference > 0)
 				{
 					//Get how far we can clip down to the floor
-					uint8_t clipLength = abs(yVel >> 8) + 4;
+					uint8_t clipLength = mabs(yVel >> 8) + 4;
 					if (clipLength >= 14)
 						clipLength = 14;
 
@@ -1323,16 +1314,13 @@ void PLAYER::AnglePos()
 				
 				if (nearestDifference < 0)
 				{
-					#ifndef FIX_GROUND_CLIPPING
-					//I'm not sure why this checks for a specific range, if the distance is negative, it will be colliding with a floor for sure
 					if (nearestDifference >= -14)
-					#endif
 						y.pos -= nearestDifference;
 				}
 				else if (nearestDifference > 0)
 				{
 					//Get how far we can clip down to the floor
-					uint8_t clipLength = abs(xVel >> 8) + 4;
+					uint8_t clipLength = mabs(xVel >> 8) + 4;
 					if (clipLength >= 14)
 						clipLength = 14;
 
@@ -1360,16 +1348,13 @@ void PLAYER::AnglePos()
 				
 				if (nearestDifference < 0)
 				{
-					#ifndef FIX_GROUND_CLIPPING
-					//I'm not sure why this checks for a specific range, if the distance is negative, it will be colliding with a floor for sure
 					if (nearestDifference >= -14)
-					#endif
 						x.pos += nearestDifference;
 				}
 				else if (nearestDifference > 0)
 				{
 					//Get how far we can clip down to the floor
-					uint8_t clipLength = abs(yVel >> 8) + 4;
+					uint8_t clipLength = mabs(yVel >> 8) + 4;
 					if (clipLength >= 14)
 						clipLength = 14;
 
@@ -1408,12 +1393,10 @@ void PLAYER::CheckWallsOnGround()
 #endif
 	{
 		uint8_t faceAngle = angle + (inertia < 0 ? 0x40 : -0x40);
-		int16_t distance = CalcRoomInFront(faceAngle);
+		int16_t distance = CalcRoomInFront(faceAngle) << 8;
 
 		if (distance < 0)
 		{
-			distance *= 0x100;
-
 			switch ((faceAngle + 0x20) & 0xC0)
 			{
 				case 0x00:
@@ -1838,10 +1821,8 @@ void PLAYER::LandOnFloor_SetState()
 						bounceForce = 0x400;
 					
 					//Bounce us up from the ground
-					int16_t sin, cos;
-					GetSine(angle - 0x40, &sin, &cos);
-					xVel += (cos * bounceForce) >> 8;
-					yVel += (sin * bounceForce) >> 8;
+					xVel += (GetCos(angle - 0x40) * bounceForce) >> 8;
+					yVel += (GetSin(angle - 0x40) * bounceForce) >> 8;
 					
 					//Put us back into the air state
 					status.inAir = true;
@@ -1958,10 +1939,8 @@ bool PLAYER::Spindash()
 			
 			#ifdef FIX_SPINDASH_JUMP
 				//Convert our inertia into global speeds
-				int16_t sin, cos;
-				GetSine(angle, &sin, &cos);
-				xVel = (cos * inertia) >> 8;
-				yVel = (sin * inertia) >> 8;
+				xVel = (GetCos(angle) * inertia) >> 8;
+				yVel = (GetSin(angle) * inertia) >> 8;
 			#endif
 		}
 		//Charging spindash
@@ -2155,17 +2134,18 @@ bool PLAYER::CDPeeloutSpindash()
 				cdChargeDelay = 0;
 			return false;
 		}
+		
 		anim = PLAYERANIMATION_DUCK;
 		if (cdSPTimer != 0 || !(controlPress.a || controlPress.b || controlPress.c))
 			return false;
 		
 		//Start spindashing
-		PlaySound(SOUNDID_CD_CHARGE);
 		cdSPTimer = 1;
 		inertia = 0x16;
 		if (status.xFlip)
 			inertia = -inertia;
 		
+		PlaySound(SOUNDID_CD_CHARGE);
 		ChkRoll();
 		return false;
 	}
@@ -2273,7 +2253,7 @@ void PLAYER::CheckDropdashRelease()
 			
 			//Lag screen behind us
 			ResetRecords(x.pos, y.pos);
-			scrollDelay = 0x2000 - (abs(inertia) - 0x800) * 2;
+			scrollDelay = 0x2000 - (mabs(inertia) - 0x800) * 2;
 		}
 		
 		//Clear ability property
@@ -2282,6 +2262,20 @@ void PLAYER::CheckDropdashRelease()
 }
 
 //Jump ability functions
+const int16_t hyperDashVel[][2] = {
+	{     0,      0}, //No input (not in the original array)
+	{     0, -0x800}, //Up
+	{     0,  0x800}, //Down
+	{     0,      0}, //Up + Down (should be illegal input)
+	{-0x800,      0}, //Left
+	{-0x800, -0x800}, //Left + Up
+	{-0x800,  0x800}, //Left + Down
+	{     0,      0}, //Left + Up + Down (should be illegal input)
+	{ 0x800,      0}, //Right
+	{ 0x800, -0x800}, //Right + Up
+	{ 0x800,  0x800}, //Right + Down
+};
+
 void PLAYER::JumpAbilities()
 {
 	#ifdef SONICMANIA_DROPDASH
@@ -2326,8 +2320,8 @@ void PLAYER::JumpAbilities()
 				//Set our jump ability flag... but don't do anything? (In Sonic 3 this caused conflicts with the bubble shield)
 				jumpAbility = 1;
 				
-				//Check if we should initiate a dropdash
 				#ifdef SONICMANIA_DROPDASH
+					//Check if we should initiate a dropdash
 					if (characterType == CHARACTERTYPE_SONIC)
 						abilityProperty = 2;
 				#endif
@@ -2335,7 +2329,36 @@ void PLAYER::JumpAbilities()
 			}
 			else
 			{
-				//Hyper dash (unimplemented the code is dumb.)
+				//Make the camera lag behind us and set jump ability flag
+				scrollDelay = 0x2000;
+				ResetRecords(x.pos, y.pos);
+				jumpAbility = 1;
+				
+				//Get our velocity index from our input
+				size_t index = 0;
+				
+				if (controlHeld.up)
+					index |= (1 << 0);
+				if (controlHeld.down)
+					index |= (1 << 1);
+				if (controlHeld.left)
+					index |= (1 << 2);
+				if (controlHeld.right)
+					index |= (1 << 3);
+				
+				//If not holding any direction, dash left or right
+				if (index == 0 || index >= 0xB)
+				{
+					if (status.xFlip)
+						index = (1 << 2);
+					else
+						index = (1 << 3);
+				}
+				
+				//Set our velocity
+				xVel = hyperDashVel[index][0]; inertia = xVel;
+				yVel = hyperDashVel[index][1];
+				return;
 			}
 		}
 		
@@ -2445,7 +2468,7 @@ void PLAYER::JumpHeight()
 			yVel = -jumpRelease;
 		}
 		
-		//Cancel spindash
+		//Cancel spindash / peelout
 		cdSPTimer = 0;
 		
 		//Transform if near peak of jump
@@ -2620,11 +2643,8 @@ bool PLAYER::Jump()
 		if (CalcRoomOverHead(headAngle) >= 6)
 		{
 			//Apply the velocity
-			int16_t sin, cos;
-			GetSine(angle - 0x40, &sin, &cos);
-			
-			xVel += (cos * jumpForce) >> 8;
-			yVel += (sin * jumpForce) >> 8;
+			xVel += (GetCos(angle - 0x40) * jumpForce) >> 8;
+			yVel += (GetSin(angle - 0x40) * jumpForce) >> 8;
 			
 			//Put us in the jump state
 			status.inAir = true;
@@ -2674,34 +2694,33 @@ void PLAYER::SlopeResist()
 	if (((angle + 0x60) & 0xFF) < 0xC0)
 	{
 		//Get our slope gravity
-		int16_t sin;
-		GetSine(angle, &sin, nullptr);
-		sin = (sin * 0x20) >> 8;
+		int16_t force = (GetSin(angle) * 0x20) >> 8;
 		
 		#ifndef SONIC12_SLOPE_RESIST
 			//Apply our slope gravity (if our inertia is non-zero, always apply, if it is 0, apply if the force is at least 0xD units per frame)
 			if (inertia != 0)
 			{
 				if (inertia < 0)
-					inertia += sin;
-				else if (sin != 0)
-					inertia += sin;
+					inertia += force;
+				else if (force != 0)
+					inertia += force;
 			}
 			else
 			{
-				
-				if (abs(sin) >= 0xD)
-					inertia += sin;
+				//Apply force only if it's greater than $D units per frame (so we can stand on shallow floors)
+				if (mabs(force) >= 0xD)
+					inertia += force;
 			}
 		#else
+			//Apply our slope gravity (with some redundant ass checks)
 			if (inertia > 0)
 			{
-				if (sin != 0)
-					inertia += sin;
+				if (force != 0)
+					inertia += force;
 			}
 			else if (inertia < 0)
 			{
-				inertia += sin;
+				inertia += force;
 			}
 		#endif
 	}
@@ -2714,23 +2733,20 @@ void PLAYER::RollRepel()
 	
 	if (((angle + 0x60) & 0xFF) < 0xC0)
 	{
-		//Get our slope gravity
-		int16_t sin;
-		GetSine(angle, &sin, nullptr);
-		sin = (sin * 0x50) >> 8;
+		//Get the sin of the floor and force
+		int16_t force = (GetSin(angle) * 0x50) >> 8;
 		
-		//Apply our slope gravity (divide by 4 if opposite to our inertia sign)
 		if (inertia >= 0)
 		{
-			if (sin < 0)
-				sin >>= 2;
-			inertia += sin;
+			if (force < 0)
+				force >>= 2;
+			inertia += force;
 		}
 		else
 		{
-			if (sin >= 0)
-				sin >>= 2;
-			inertia += sin;
+			if (force >= 0)
+				force >>= 2;
+			inertia += force;
 		}
 	}
 }
@@ -2743,7 +2759,7 @@ void PLAYER::SlopeRepel()
 		{
 			#ifndef SONIC12_SLOPE_REPEL
 				//Are we on a steep enough slope and going too slow?
-				if (((angle + 0x18) & 0xFF) >= 0x30 && abs(inertia) < 0x280)
+				if (((angle + 0x18) & 0xFF) >= 0x30 && mabs(inertia) < 0x280)
 				{
 					//Lock our controls for 30 frames (half a second)
 					moveLock = 30;
@@ -2758,7 +2774,7 @@ void PLAYER::SlopeRepel()
 				}
 			#else
 				//Are we on a steep enough slope and going too slow?
-				if (((angle + 0x20) & 0xC0) && abs(inertia) < 0x280)
+				if (((angle + 0x20) & 0xC0) && mabs(inertia) < 0x280)
 				{
 					inertia = 0;
 					status.inAir = true;
@@ -2902,6 +2918,7 @@ void PLAYER::Move()
 			
 			if (((angle + 0x20) & 0xC0) == 0 && (inertia == 0 || cdSPTimer != 0))
 			{
+				//If not moving, stop pushing and use idle animation
 				if (inertia == 0)
 				{
 					status.pushing = false;
@@ -2983,10 +3000,13 @@ void PLAYER::Move()
 					//If Sonic's middle bottom point is 12 pixels away from the floor, start balancing
 					if (ChkFloorEdge(topSolidLayer, x.pos, y.pos, nullptr) >= 12)
 					{
-						//Stop peelout prematurely
-						cdSPTimer = 0;
-						inertia = 0;
-						StopChannel(SOUNDCHANNEL_FM4);
+						if (cdSPTimer != 0)
+						{
+							//Stop peelout prematurely
+							cdSPTimer = 0;
+							inertia = 0;
+							StopChannel(SOUNDCHANNEL_FM4);
+						}
 						
 						if (nextTilt == 3) //If there's no floor to the left of us
 						{
@@ -3055,6 +3075,7 @@ void PLAYER::Move()
 						//Handle charge delay
 						if (cdChargeDelay & 0x0F)
 							cdChargeDelay = (cdChargeDelay + 0x01) & 0xCF;
+						
 						//Update peelout / spindash and looking up / down
 						if (CDPeeloutSpindash())
 							return;
@@ -3098,10 +3119,8 @@ void PLAYER::Move()
 	}
 	
 	//Convert our inertia into global speeds
-	int16_t sin, cos;
-	GetSine(angle, &sin, &cos);
-	xVel = (cos * inertia) >> 8;
-	yVel = (sin * inertia) >> 8;
+	xVel = (GetCos(angle) * inertia) >> 8;
+	yVel = (GetSin(angle) * inertia) >> 8;
 	
 	//Collide with walls
 	CheckWallsOnGround();
@@ -3122,7 +3141,7 @@ void PLAYER::ChkRoll()
 		YSHIFT_ON_FLOOR(5);
 		
 		//Play the sound (if not charging a CD spindash)
-		if (!cdSPTimer)
+		if (cdSPTimer == 0)
 			PlaySound(SOUNDID_ROLL);
 		
 		#ifndef SONICCD_ROLLING
@@ -3144,7 +3163,7 @@ void PLAYER::Roll()
 		#ifndef SONIC123_ROLL_DUCK
 			if (controlHeld.down)
 			{
-				if (abs(inertia) >= 0x100)
+				if (mabs(inertia) >= 0x100)
 					ChkRoll();
 				else if (cdSPTimer == 0)
 				{
@@ -3164,7 +3183,7 @@ void PLAYER::Roll()
 				anim = PLAYERANIMATION_WALK;
 			}
 		#else
-			if (controlHeld.down && abs(inertia) >= 0x80)
+			if (controlHeld.down && mabs(inertia) >= 0x80)
 				ChkRoll();
 		#endif
 	}
@@ -3292,7 +3311,7 @@ void PLAYER::RollSpeed()
 		
 		//Stop if slowed down
 	#ifndef SONIC123_ROLL_DUCK
-		if (abs(inertia) < 0x80)
+		if (mabs(inertia) < 0x80)
 	#else
 		if (inertia == 0)
 	#endif
@@ -3318,10 +3337,8 @@ void PLAYER::RollSpeed()
 	}
 	
 	//Convert our inertia into global speeds
-	int16_t sin, cos;
-	GetSine(angle, &sin, &cos);
-	xVel = (cos * inertia) >> 8;
-	yVel = (sin * inertia) >> 8;
+	xVel = (GetCos(angle) * inertia) >> 8;
+	yVel = (GetSin(angle) * inertia) >> 8;
 	
 	//Cap our global horizontal speed
 	if (xVel <= -0x1000)
@@ -3475,13 +3492,10 @@ bool PLAYER::CheckHurt(OBJECT *hit)
 		//If we should be reflected, reflect
 		if (hit->hurtType.reflect)
 		{
-			//Get the velocity to reflect at
-			int16_t xVel, yVel;
+			//Get the velocity to reflect at (bounce directly away from player using atan2)
 			uint8_t angle = GetAtan(x.pos - hit->x.pos, y.pos - hit->y.pos);
-			GetSine(angle, &yVel, &xVel);
-			
-			hit->xVel = (xVel * -0x800) >> 8;
-			hit->yVel = (yVel * -0x800) >> 8;
+			hit->xVel = (GetCos(angle) * -0x800) >> 8;
+			hit->yVel = (GetSin(angle) * -0x800) >> 8;
 			
 			//Clear the object's collision
 			hit->collisionType = COLLISIONTYPE_NULL;
@@ -3647,13 +3661,11 @@ void PLAYER::SuperPaletteCycle()
 			
 			//Increment frame and check for fade-in completion
 			int16_t prevFrame = paletteFrame++;
-			
 			if (paletteFrame >= 6)
 			{
 				paletteState = PALETTESTATE_SUPER;
 				objectControl = {};
 			}
-			
 			SET_PALETTE_FROM_ENTRY(sonicPalette[prevFrame]);
 			break;
 		}
@@ -3680,13 +3692,11 @@ void PLAYER::SuperPaletteCycle()
 			
 			//Decrement frame and check for fade-out completion
 			int16_t prevFrame = paletteFrame--;
-			
 			if (paletteFrame >= prevFrame)
 			{
 				paletteState = PALETTESTATE_REGULAR;
 				paletteFrame = 0;
 			}
-			
 			SET_PALETTE_FROM_ENTRY(sonicPalette[prevFrame]);
 			break;
 		}
@@ -3712,16 +3722,6 @@ bool PLAYER::SuperTransform()
 		objectControl.disableOurMovement = true;
 		objectControl.disableObjectInteract = true;
 		anim = PLAYERANIMATION_TRANSFORM;
-		
-		//Super and hyper specific stuff (stars and trail stuff)
-		if (0)
-		{
-			//TODO: Super effects
-		}
-		else
-		{
-			//TODO: Hyper effects
-		}
 		
 		//Become invincible and set speed
 		invincibilityTime = 0;
@@ -3897,7 +3897,7 @@ void PLAYER::Animate()
 					uint8_t angleIncrement = (rotAngle / 0x20) & 0x3; //Halved from the original, so this is the actual increment
 					
 					//Get our speed factor
-					uint16_t speedFactor = abs(inertia);
+					uint16_t speedFactor = mabs(inertia);
 					if (status.isSliding)
 						speedFactor *= 2;
 					
@@ -4031,7 +4031,7 @@ void PLAYER::Animate()
 					#endif
 					
 					//Set frame duration
-					uint16_t speedFactor = -abs(inertia) + 0x800;
+					uint16_t speedFactor = -mabs(inertia) + 0x800;
 					if (speedFactor >= 0x8000)
 						speedFactor = 0;
 					animFrameDuration = speedFactor / 0x40;
@@ -4249,7 +4249,7 @@ void PLAYER::Animate()
 				return;
 			
 			//Get our speed factor
-			uint16_t speedFactor = abs(inertia);
+			uint16_t speedFactor = mabs(inertia);
 			
 			//Set our roll animation and duration
 			if (speedFactor < 0x600)
@@ -4976,7 +4976,7 @@ void PLAYER::TouchResponse()
 	int16_t playerLeft, playerTop, playerWidth, playerHeight;
 	
 	if ((shield == SHIELD_NULL && item.isInvincible == false && jumpAbility == 1)
-		|| (status.shouldNotFall && interact != nullptr && interact->function == ObjMinecart && abs(interact->xVel) >= 0x200))
+		|| (status.shouldNotFall && interact != nullptr && interact->function == ObjMinecart && mabs(interact->xVel) >= 0x200))
 	{
 		//Use insta-shield extended hitbox
 		playerWidth = 24; //radius
@@ -5060,17 +5060,8 @@ void PLAYER::AttachToObject(OBJECT *object, size_t i)
 
 void PLAYER::MoveOnPlatform(OBJECT *platform, int16_t width, int16_t height, int16_t lastXPos, const int8_t *slope, bool doubleSlope)
 {
-	//Get our top with or without slope
-	int top;
-	
-	if (slope == nullptr)
-	{
-		if (status.reverseGravity)
-			top = platform->y.pos + height;
-		else
-			top = platform->y.pos - height;
-	}
-	else
+	//Offset height according to our slope
+	if (slope != nullptr)
 	{
 		if (!status.shouldNotFall) //????
 			return;
@@ -5086,14 +5077,25 @@ void PLAYER::MoveOnPlatform(OBJECT *platform, int16_t width, int16_t height, int
 			//Double xDiff because slope will be interleaved, and if reverse gravity, use the bottom slope
 			xDiff *= 2;
 			if (status.reverseGravity)
-				xDiff++;
+				height += slope[xDiff + 1] - slope[xDiff];
+			else
+				height += slope[xDiff];
 		}
-		
-		if (status.reverseGravity)
-			top = platform->y.pos + (height + slope[xDiff]);
 		else
-			top = platform->y.pos - (height + slope[xDiff]);
+		{
+			if (status.reverseGravity)
+				height -= slope[xDiff];
+			else
+				height += slope[xDiff];
+		}
 	}
+	
+	//Get our top
+	int16_t top;
+	if (status.reverseGravity)
+		top = platform->y.pos + height;
+	else
+		top = platform->y.pos - height;
 	
 	//Check if we're in an intangible state
 	if (objectControl.disableObjectInteract || routine == PLAYERROUTINE_DEATH || debug != 0)

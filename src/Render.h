@@ -117,13 +117,12 @@ class SOFTWAREBUFFER
 		bool RenderToScreen(PALCOLOUR *backgroundColour);
 		
 		//Blit function
-		template <typename T> void Blit(PALCOLOUR *backgroundColour, T *buffer, int pitch)
+		template <typename T> inline void BlitQueue(PALCOLOUR *backgroundColour, T *buffer, int pitch)
 		{
 			//Clear to the given background colour
 			if (backgroundColour != nullptr)
 			{
 				T *clrBuffer = buffer;
-				
 				for (int i = 0; i < pitch * height; i++)
 					*clrBuffer++ = backgroundColour->colour;
 			}

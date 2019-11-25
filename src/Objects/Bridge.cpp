@@ -22,17 +22,17 @@ void ObjBridgeSegment(OBJECT *object)
 		{
 			case ZONEID_GHZ:
 				object->texture = gLevel->GetObjectTexture("data/Object/GHZGeneric.bmp");
-				object->mappings = gLevel->GetObjectMappings("data/Object/GHZBridge.map");
+				object->mapping.mappings = gLevel->GetObjectMappings("data/Object/GHZBridge.map");
 				break;
 			case ZONEID_EHZ:
 				object->texture = gLevel->GetObjectTexture("data/Object/EHZGeneric.bmp");
-				object->mappings = gLevel->GetObjectMappings("data/Object/EHZBridge.map");
+				object->mapping.mappings = gLevel->GetObjectMappings("data/Object/EHZBridge.map");
 				break;
 		}
 	}
 	
 	//Draw this segment
-	object->DrawInstance(object->renderFlags, object->texture, object->mappings, object->highPriority, object->priority, object->mappingFrame, object->x.pos, object->y.pos);
+	object->DrawInstance(object->renderFlags, object->texture, object->mapping, object->highPriority, object->priority, object->mappingFrame, object->x.pos, object->y.pos);
 }
 
 void ObjBridge(OBJECT *object)
@@ -147,12 +147,8 @@ void ObjBridge(OBJECT *object)
 				else
 					angle = (0x40 * (object->subtype - j)) / (object->subtype - object->scratchU8[SCRATCHU8_DEPRESS_POSITION]); //To the right of the depress position
 				
-				//Get the depression value from the value above, scaled by the force of the players on it (0x00 with no-one on it, 0x40 when someone is on it)
-				int16_t depress;
-				GetSine(object->scratchU8[SCRATCHU8_DEPRESS_FORCE] * angle / 0x40, &depress, nullptr);
-				
-				//Set our depression position
-				object->children[j]->y.pos = object->y.pos + (depress * depressForce[object->scratchU8[SCRATCHU8_DEPRESS_POSITION]] / 0x100);
+				//Set our depression position according to the force of a player above us and the angle of the log as gotten above
+				object->children[j]->y.pos = object->y.pos + (GetSin(object->scratchU8[SCRATCHU8_DEPRESS_FORCE] * angle / 0x40) * depressForce[object->scratchU8[SCRATCHU8_DEPRESS_POSITION]] / 0x100);
 			}
 			
 			//Act as a solid platform

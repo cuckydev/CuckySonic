@@ -35,7 +35,7 @@ void ObjChopper(OBJECT *object)
 			
 			//Load graphics
 			object->texture = gLevel->GetObjectTexture("data/Object/Sonic1Badnik.bmp");
-			object->mappings = gLevel->GetObjectMappings("data/Object/Chopper.map");
+			object->mapping.mappings = gLevel->GetObjectMappings("data/Object/Chopper.map");
 			
 			//Initialize render properties
 			object->renderFlags.alignPlane = true;
@@ -82,7 +82,7 @@ void ObjChopper(OBJECT *object)
 			}
 			
 			//Draw
-			object->DrawInstance(object->renderFlags, object->texture, object->mappings, object->highPriority, object->priority, object->mappingFrame, object->x.pos, object->y.pos);
+			object->DrawInstance(object->renderFlags, object->texture, object->mapping, object->highPriority, object->priority, object->mappingFrame, object->x.pos, object->y.pos);
 			break;
 		}
 	}

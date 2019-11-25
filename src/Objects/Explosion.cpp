@@ -43,7 +43,7 @@ void ObjScore(OBJECT *object)
 		case 0:
 			//Load graphics
 			object->texture = gLevel->GetObjectTexture("data/Object/Generic.bmp");
-			object->mappings = gLevel->GetObjectMappings("data/Object/Score.map");
+			object->mapping.mappings = gLevel->GetObjectMappings("data/Object/Score.map");
 			
 			//Initialize other properties
 			object->renderFlags.alignPlane = true;
@@ -64,7 +64,7 @@ void ObjScore(OBJECT *object)
 			//Move, fall, and draw to screen
 			object->Move();
 			object->yVel += 0x18;
-			object->DrawInstance(object->renderFlags, object->texture, object->mappings, object->highPriority, object->priority, object->mappingFrame, object->x.pos, object->y.pos);
+			object->DrawInstance(object->renderFlags, object->texture, object->mapping, object->highPriority, object->priority, object->mappingFrame, object->x.pos, object->y.pos);
 			break;
 	}
 }
@@ -102,7 +102,7 @@ void ObjExplosion(OBJECT *object)
 			
 			//Load graphics
 			object->texture = gLevel->GetObjectTexture("data/Object/Generic.bmp");
-			object->mappings = gLevel->GetObjectMappings("data/Object/Explosion.map");
+			object->mapping.mappings = gLevel->GetObjectMappings("data/Object/Explosion.map");
 			
 			//Initialize other properties
 			object->renderFlags.xFlip = false;
@@ -137,7 +137,7 @@ void ObjExplosion(OBJECT *object)
 			}
 			
 			//Draw
-			object->DrawInstance(object->renderFlags, object->texture, object->mappings, object->highPriority, object->priority, object->mappingFrame, object->x.pos, object->y.pos);
+			object->DrawInstance(object->renderFlags, object->texture, object->mapping, object->highPriority, object->priority, object->mappingFrame, object->x.pos, object->y.pos);
 			break;
 		}
 	}

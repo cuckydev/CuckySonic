@@ -139,7 +139,7 @@ void SPECIALSTAGE::PalCycle()
 	//Handle a different palette frame when turning
 	uint16_t frame = animFrame;
 	
-	if (frame >= 0x10)
+	if (frame >= 16)
 	{
 		if (playerState.turn >= 0)
 			return;
@@ -176,10 +176,10 @@ void SPECIALSTAGE::Draw()
 		for (int y = -(backY % backgroundTexture->height); y < gRenderSpec.height; y += backgroundTexture->height)
 			gSoftwareBuffer->DrawTexture(backgroundTexture, backgroundTexture->loadedPalette, nullptr, SPECIALSTAGE_RENDERLAYER_BACKGROUND, x, y, false, false);
 	
-	//Draw the stage
+	//Draw the stage (first 16 are just a palette cycle using the first frame, next 8 are just turning animation)
 	int stageFrame = 0;
 	if (animFrame >= 16)
-		stageFrame = (animFrame - 16) + 1;
+		stageFrame = animFrame - 16;
 	
 	RECT stageRect = {0, stageFrame * 240, stageTexture->width, 240};
 	gSoftwareBuffer->DrawTexture(stageTexture, stageTexture->loadedPalette, &stageRect, SPECIALSTAGE_RENDERLAYER_STAGE, xCenter - stageTexture->width / 2, yCenter - 240 / 2, false, false);

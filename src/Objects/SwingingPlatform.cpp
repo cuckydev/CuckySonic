@@ -34,9 +34,7 @@ void ObjSwingingPlatform_Move(OBJECT *object)
 		oscillate = (-oscillate) - 0x80;
 	
 	//Move all child objects (and self)
-	int16_t sin, cos;
-	GetSine(oscillate, &sin, &cos);
-	
+	int16_t sin = GetSin(oscillate), cos = GetCos(oscillate);
 	for (size_t i = 0; i < object->children.size(); i++)
 		ObjSwingingPlatform_Move_Individual(object, object->children[i], sin, cos);
 	ObjSwingingPlatform_Move_Individual(object, object, sin, cos);
@@ -56,7 +54,7 @@ void ObjSwingingPlatform(OBJECT *object)
 			
 			//Load graphics
 			object->texture = gLevel->GetObjectTexture("data/Object/GHZGeneric.bmp");
-			object->mappings = gLevel->GetObjectMappings("data/Object/GHZSwingingPlatform.map");
+			object->mapping.mappings = gLevel->GetObjectMappings("data/Object/GHZSwingingPlatform.map");
 			
 			//Initialize render properties
 			object->renderFlags.alignPlane = true;
@@ -80,7 +78,7 @@ void ObjSwingingPlatform(OBJECT *object)
 				//Create a segment
 				OBJECT *newSegment = new OBJECT(&ObjSwingingPlatform);
 				newSegment->texture = gLevel->GetObjectTexture("data/Object/GHZGeneric.bmp");
-				newSegment->mappings = gLevel->GetObjectMappings("data/Object/GHZSwingingPlatform.map");
+				newSegment->mapping.mappings = gLevel->GetObjectMappings("data/Object/GHZSwingingPlatform.map");
 				newSegment->renderFlags.alignPlane = true;
 				newSegment->widthPixels = 8;
 				newSegment->heightPixels = 32;
@@ -113,14 +111,14 @@ void ObjSwingingPlatform(OBJECT *object)
 			int16_t lastX = object->x.pos;
 			ObjSwingingPlatform_Move(object);
 			object->PlatformObject(object->widthPixels, object->yRadius + 1, lastX, false, nullptr);
-			object->DrawInstance(object->renderFlags, object->texture, object->mappings, object->highPriority, object->priority, object->mappingFrame, object->x.pos, object->y.pos);
+			object->DrawInstance(object->renderFlags, object->texture, object->mapping, object->highPriority, object->priority, object->mappingFrame, object->x.pos, object->y.pos);
 			object->UnloadOffscreen(object->scratchS16[SCRATCHS16_ORIG_X]);
 			break;
 		}
 		case 2:
 		{
 			//Draw
-			object->DrawInstance(object->renderFlags, object->texture, object->mappings, object->highPriority, object->priority, object->mappingFrame, object->x.pos, object->y.pos);
+			object->DrawInstance(object->renderFlags, object->texture, object->mapping, object->highPriority, object->priority, object->mappingFrame, object->x.pos, object->y.pos);
 			break;
 		}
 	}

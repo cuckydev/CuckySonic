@@ -47,7 +47,7 @@ void ObjBuzzBomberMissile(OBJECT *object)
 			
 			//Load graphics
 			object->texture = gLevel->GetObjectTexture("data/Object/Sonic1Badnik.bmp");
-			object->mappings = gLevel->GetObjectMappings("data/Object/BuzzBomberMissile.map");
+			object->mapping.mappings = gLevel->GetObjectMappings("data/Object/Missile.map");
 			
 			//Initialize other properties
 			object->renderFlags.alignPlane = true;
@@ -74,7 +74,7 @@ void ObjBuzzBomberMissile(OBJECT *object)
 			
 			//Draw and animate
 			object->Animate(missileAnimationList);
-			object->DrawInstance(object->renderFlags, object->texture, object->mappings, object->highPriority, object->priority, object->mappingFrame, object->x.pos, object->y.pos);
+			object->DrawInstance(object->renderFlags, object->texture, object->mapping, object->highPriority, object->priority, object->mappingFrame, object->x.pos, object->y.pos);
 			break;
 		}
 		case 2: //Missile hitbox initialization
@@ -96,7 +96,7 @@ void ObjBuzzBomberMissile(OBJECT *object)
 			else
 				object->MoveAndFall();
 			object->Animate(missileAnimationList);
-			object->DrawInstance(object->renderFlags, object->texture, object->mappings, object->highPriority, object->priority, object->mappingFrame, object->x.pos, object->y.pos);
+			object->DrawInstance(object->renderFlags, object->texture, object->mapping, object->highPriority, object->priority, object->mappingFrame, object->x.pos, object->y.pos);
 			
 			//Delete if below stage
 			if (object->y.pos >= gLevel->bottomBoundaryTarget)
@@ -135,7 +135,7 @@ void ObjBuzzBomber(OBJECT *object)
 			
 			//Load graphics
 			object->texture = gLevel->GetObjectTexture("data/Object/Sonic1Badnik.bmp");
-			object->mappings = gLevel->GetObjectMappings("data/Object/BuzzBomber.map");
+			object->mapping.mappings = gLevel->GetObjectMappings("data/Object/BuzzBomber.map");
 			
 			//Initialize other properties
 			object->renderFlags.alignPlane = true;
@@ -162,10 +162,11 @@ void ObjBuzzBomber(OBJECT *object)
 							//If not near a player, fly for a bit longer
 							object->routineSecondary = 1;
 							object->scratchS16[SCRATCHS16_TIME_DELAY] = 127;
-							object->xVel = 0x400;
 							object->anim = 1;
-							if (!object->status.xFlip)
-								object->xVel = -object->xVel;
+							if (object->status.xFlip)
+								object->xVel = 0x400;
+							else
+								object->xVel = -0x400;
 						}
 						else
 						{
@@ -237,7 +238,7 @@ void ObjBuzzBomber(OBJECT *object)
 					{
 						//Change direction
 						object->scratchU8[SCRATCHU8_STATUS] = 0;
-						object->status.xFlip = -object->status.xFlip;
+						object->status.xFlip = !object->status.xFlip;
 						object->scratchS16[SCRATCHS16_TIME_DELAY] = 59;
 					}
 					
@@ -250,7 +251,7 @@ void ObjBuzzBomber(OBJECT *object)
 			
 			//Animate and draw
 			object->Animate(animationList);
-			object->DrawInstance(object->renderFlags, object->texture, object->mappings, object->highPriority, object->priority, object->mappingFrame, object->x.pos, object->y.pos);
+			object->DrawInstance(object->renderFlags, object->texture, object->mapping, object->highPriority, object->priority, object->mappingFrame, object->x.pos, object->y.pos);
 			object->UnloadOffscreen(object->x.pos);
 			break;
 		}

@@ -53,7 +53,7 @@ void ObjGoalpost(OBJECT *object)
 			
 			//Load graphics
 			object->texture = gLevel->GetObjectTexture("data/Object/Generic.bmp");
-			object->mappings = gLevel->GetObjectMappings("data/Object/Goalpost.map");
+			object->mapping.mappings = gLevel->GetObjectMappings("data/Object/Goalpost.map");
 			
 			//Initialize other properties
 			object->renderFlags.alignPlane = true;
@@ -111,7 +111,7 @@ void ObjGoalpost(OBJECT *object)
 				sparkle->x.pos = object->x.pos + goalpostSparklePos[object->scratchU8[SCRATCHU8_SPARKLE]][0];
 				sparkle->y.pos = object->y.pos + goalpostSparklePos[object->scratchU8[SCRATCHU8_SPARKLE]][1];
 				sparkle->texture = gLevel->GetObjectTexture("data/Object/Generic.bmp");
-				sparkle->mappings = gLevel->GetObjectMappings("data/Object/Ring.map");
+				sparkle->mapping.mappings = gLevel->GetObjectMappings("data/Object/Ring.map");
 				sparkle->renderFlags.alignPlane = true;
 				sparkle->widthPixels = 8;
 				gLevel->objectList.link_back(sparkle);
@@ -153,5 +153,5 @@ void ObjGoalpost(OBJECT *object)
 	
 	//Animate and draw sprite
 	object->Animate(animationList);
-	object->DrawInstance(object->renderFlags, object->texture, object->mappings, object->highPriority, object->priority, object->mappingFrame, object->x.pos, object->y.pos);
+	object->DrawInstance(object->renderFlags, object->texture, object->mapping, object->highPriority, object->priority, object->mappingFrame, object->x.pos, object->y.pos);
 }

@@ -8,6 +8,7 @@
 #define upperRound(x, inc)	((((x) + inc - 1) / inc) * inc)
 #define lowerRound(x, inc)	(((x) / inc) * inc)
 
-void GetSine(uint8_t angle, int16_t *sin, int16_t *cos);
+int16_t GetSin(uint8_t angle);
+int16_t GetCos(uint8_t angle);
 uint8_t GetAtan(int16_t x, int16_t y);
 uint32_t RandomNumber();

@@ -23,10 +23,10 @@ typedef void (*OBJECTFUNCTION)(OBJECT*);
 														node = linkedList.head;	\
 														for (; node != nullptr; node = node->next)	\
 														{	\
-															if (node->nodeEntry->deleteFlag)	\
+															if (node->node_entry->deleteFlag)	\
 															{	\
-																delete node->nodeEntry;	\
-																linkedList.eraseNode(node);	\
+																delete node->node_entry;	\
+																linkedList.erase_node(node);	\
 																break;	\
 															}	\
 														}	\
@@ -51,11 +51,11 @@ struct OBJECT_RENDERFLAGS
 	bool yFlip = false;
 	bool alignPlane = false;
 	bool isOnscreen = false;
+	bool staticMapping = false;
 };
 
 struct OBJECT_STATUS
 {
-	//Properties to load from
 	bool xFlip = false;				//Set if facing left
 	bool yFlip = false;				//In the air
 	bool releaseDestroyed = false;	//Don't reload if destroyed (enemies)
@@ -70,12 +70,25 @@ struct OBJECT_SOLIDTOUCH
 	bool top[OBJECT_PLAYER_REFERENCES] = {0};
 };
 
+struct OBJECT_SMASHMAP
+{
+	RECT rect;
+	int16_t xVel, yVel;
+};
+
+struct OBJECT_MAPPING
+{
+	RECT rect;
+	POINT origin;
+	MAPPINGS *mappings = nullptr;
+};
+
 //Object drawing instance class
 struct OBJECT_DRAWINSTANCE
 {
 	OBJECT_RENDERFLAGS renderFlags;
 	TEXTURE *texture;
-	MAPPINGS *mappings;
+	OBJECT_MAPPING mapping;
 	bool highPriority;
 	uint8_t priority;
 	uint16_t mappingFrame;
@@ -98,7 +111,7 @@ class OBJECT
 		
 		//Our texture and mappings
 		TEXTURE *texture = nullptr;
-		MAPPINGS *mappings = nullptr;
+		OBJECT_MAPPING mapping;
 		
 		//Position
 		POSDEF(x)
@@ -201,9 +214,11 @@ class OBJECT
 		
 		int16_t CheckFloorEdge(COLLISIONLAYER layer, int16_t xPos, int16_t yPos, uint8_t *outAngle);
 		
-		void DrawInstance(OBJECT_RENDERFLAGS iRenderFlags, TEXTURE *iTexture, MAPPINGS *iMappings, bool iHighPriority, uint8_t iPriority, uint16_t iMappingFrame, int16_t iXPos, int16_t iYPos);
+		void DrawInstance(OBJECT_RENDERFLAGS iRenderFlags, TEXTURE *iTexture, OBJECT_MAPPING iMapping, bool iHighPriority, uint8_t iPriority, uint16_t iMappingFrame, int16_t iXPos, int16_t iYPos);
 		
 		void UnloadOffscreen(int16_t xPos);
+		
+		void Smash(size_t num, const OBJECT_SMASHMAP *smashmap, OBJECTFUNCTION fragmentFunction);
 		
 		//Object interaction functions
 		bool Hurt(PLAYER *player);

@@ -57,12 +57,9 @@ void ObjBouncingRing_Spawner(OBJECT *object)
 		//Get the ring's velocity
 		if (angleSpeed >= 0)
 		{
-			//Get this velocity
-			int16_t sin, cos;
-			GetSine(asInd.angle, &sin, &cos);
-			
-			xVel = sin * (1 << asInd.speed);
-			yVel = cos * (1 << asInd.speed);
+			//Set our velocity
+			xVel = GetSin(asInd.angle) * (1 << asInd.speed);
+			yVel = GetCos(asInd.angle) * (1 << asInd.speed);
 			
 			//Get the next angle and speed
 			asInd.angle += 0x10;
@@ -117,7 +114,7 @@ void ObjBouncingRing(OBJECT *object)
 			object->widthPixels = 8;
 			object->heightPixels = 8;
 			object->texture = gLevel->GetObjectTexture("data/Object/Generic.bmp");
-			object->mappings = gLevel->GetObjectMappings("data/Object/Ring.map");
+			object->mapping.mappings = gLevel->GetObjectMappings("data/Object/Ring.map");
 			object->renderFlags.alignPlane = true;
 			object->priority = 3;
 			
@@ -211,7 +208,7 @@ void ObjBouncingRing(OBJECT *object)
 		#ifdef BOUNCINGRING_BLINK
 			if (object->scratchU8[SCRATCHU8_ANIM_COUNT] > 60 || gLevel->frameCounter & (object->scratchU8[SCRATCHU8_ANIM_COUNT] > 30 ? 0x4 : 0x2))
 		#endif
-				object->DrawInstance(object->renderFlags, object->texture, object->mappings, object->highPriority, object->priority, object->mappingFrame, object->x.pos, object->y.pos);
+				object->DrawInstance(object->renderFlags, object->texture, object->mapping, object->highPriority, object->priority, object->mappingFrame, object->x.pos, object->y.pos);
 			break;
 		}
 		case 2: //Touched player, collect a ring
@@ -230,7 +227,7 @@ void ObjBouncingRing(OBJECT *object)
 		case 3: //Sparkling
 		{
 			object->Animate(animationList);
-			object->DrawInstance(object->renderFlags, object->texture, object->mappings, object->highPriority, object->priority, object->mappingFrame, object->x.pos, object->y.pos);
+			object->DrawInstance(object->renderFlags, object->texture, object->mapping, object->highPriority, object->priority, object->mappingFrame, object->x.pos, object->y.pos);
 			break;
 		}
 		case 4: //Deleting after sparkle

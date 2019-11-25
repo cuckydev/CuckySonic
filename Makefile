@@ -60,7 +60,6 @@ SOURCES = \
 	Camera \
 	TitleCard \
 	Hud \
-	BitmapFont \
 	LevelSpecific/GHZ \
 	LevelSpecific/EHZ \
 	Objects/PathSwitcher \
@@ -78,10 +77,12 @@ SOURCES = \
 	Objects/Chopper \
 	Objects/Crabmeat \
 	Objects/BuzzBomber \
+	Objects/Newtron \
 	Objects/GHZWaterfallSound \
 	Objects/GHZPlatform \
 	Objects/GHZLedge \
 	Objects/GHZEdgeWall \
+	Objects/GHZSmashableWall \
 	Objects/PurpleRock \
 	Objects/SwingingPlatform \
 	Objects/Minecart \

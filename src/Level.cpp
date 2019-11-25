@@ -21,8 +21,8 @@ OBJECTFUNCTION objFuncSonic1[] = {
 	nullptr, nullptr, &ObjBuzzBomber, nullptr, nullptr, &ObjRingSpawner, &ObjMonitor, nullptr,
 	nullptr, nullptr, nullptr, &ObjChopper, nullptr, nullptr, nullptr, nullptr,
 	nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
-	nullptr, nullptr, nullptr, &ObjPurpleRock, nullptr, nullptr, nullptr, nullptr,
-	&ObjMotobug, &ObjSpring, nullptr, nullptr, &ObjGHZEdgeWall, nullptr, nullptr, nullptr,
+	nullptr, nullptr, nullptr, &ObjPurpleRock, &ObjGHZSmashableWall, nullptr, nullptr, nullptr,
+	&ObjMotobug, &ObjSpring, &ObjNewtron, nullptr, &ObjGHZEdgeWall, nullptr, nullptr, nullptr,
 	nullptr, &ObjGHZWaterfallSound, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
 	nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
 	nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
@@ -69,11 +69,15 @@ OBJECTFUNCTION objFuncSonic2[] = {
 
 //Preload lists - Generic
 const char *preloadTexture[] = {
+	//Stage objects
 	"data/Object/Generic.bmp",
+	//Player objects / effects
+	"data/Object/PlayerGeneric.bmp",
 	nullptr,
 };
 
 const char *preloadMappings[] = {
+	//Stage objects
 	"data/Object/Ring.map",
 	"data/Object/Monitor.map",
 	"data/Object/MonitorContents.map",
@@ -83,6 +87,7 @@ const char *preloadMappings[] = {
 	"data/Object/Explosion.map",
 	"data/Object/Score.map",
 	
+	//Player objects
 	"data/Object/SpindashDust.map",
 	"data/Object/SkidDust.map",
 	"data/Object/InvincibilityStars.map",
@@ -97,63 +102,62 @@ const char *preloadMappings[] = {
 
 //Preload lists - Green Hill Zone
 const char *preloadTexture_GHZ[] = {
+	//Stage objects
 	"data/Object/GHZGeneric.bmp",
+	//Badniks
 	"data/Object/Sonic1Badnik.bmp",
 	nullptr,
 };
 
 const char *preloadMappings_GHZ[] = {
+	//Stage objects
 	"data/Object/GHZBridge.map",
 	"data/Object/GHZEdgeWall.map",
 	"data/Object/GHZLedge.map",
 	"data/Object/GHZPlatform.map",
 	"data/Object/GHZSwingingPlatform.map",
+	"data/Object/GHZPurpleRock.map",
+	"data/Object/GHZSmashableWall.map",
+	//Badniks
 	"data/Object/BuzzBomber.map",
-	"data/Object/BuzzBomberMissile.map",
 	"data/Object/Motobug.map",
 	"data/Object/Crabmeat.map",
 	"data/Object/Chopper.map",
-	"data/Object/GHZPurpleRock.map",
+	"data/Object/NewtronBlue.map",
+	"data/Object/NewtronGreen.map",
+	"data/Object/Missile.map",
 	nullptr,
 };
 
 //Preload lists - Emerald Hill Zone
 const char *preloadTexture_EHZ[] = {
-	"data/Object/Generic.bmp",
+	//Stage objects
 	"data/Object/EHZGeneric.bmp",
 	nullptr,
 };
 
 const char *preloadMappings_EHZ[] = {
-	"data/Object/Explosion.map",
-	"data/Object/Score.map",
-	"data/Object/MonitorContents.map",
-	"data/Object/InstaShield.map",
-	"data/Object/BlueShield.map",
-	"data/Object/FireShield.map",
-	"data/Object/ElectricShield.map",
-	"data/Object/BubbleShield.map",
-	"data/Object/InvincibilityStars.map",
-	"data/Object/SuperStars.map",
+	//Stage objects
+	"data/Object/EHZBridge.map",
 	nullptr,
 };
 
 //Our level table
 LEVELTABLE gLevelTable[LEVELID_MAX] = {
 	//ZONEID_GHZ
-		/*LEVELID_GHZ1*/ {ZONEID_GHZ, 0, "Green Hill Zone", "Act 1",
+		/*LEVELID_GHZ1*/ {ZONEID_GHZ, "Green Hill Zone", "Act 1",
 							LEVELFORMAT_CHUNK128_SONIC2, OBJECTFORMAT_SONIC1, ARTFORMAT_BMP,
 							"data/Level/GHZ/ghz1", "data/Level/GHZ/ghz", "data/Level/sonic1", "data/Level/GHZ/ghz", "GHZ",
 							preloadTexture_GHZ, preloadMappings_GHZ, &GHZ_Background, &GHZ_PaletteCycle, objFuncSonic1,
 							0x0050, 0x03B0, 0x0000, 0x255F, 0x0000, 0x03E0},
-		/*LEVELID_GHZ2*/ {ZONEID_GHZ, 1, "Green Hill Zone", "Act 2",
+		/*LEVELID_GHZ2*/ {ZONEID_GHZ, "Green Hill Zone", "Act 2",
 							LEVELFORMAT_CHUNK128_SONIC2, OBJECTFORMAT_SONIC1, ARTFORMAT_BMP,
 							"data/Level/GHZ/ghz2", "data/Level/GHZ/ghz", "data/Level/sonic1", "data/Level/GHZ/ghz", "GHZ",
 							preloadTexture_GHZ, preloadMappings_GHZ, &GHZ_Background, &GHZ_PaletteCycle, objFuncSonic1,
 							0x0050, 0x00FC, 0x0000, 0x214B, 0x0000, 0x03E0},
 	
 	//ZONEID_EHZ
-		/*LEVELID_EHZ1*/ {ZONEID_EHZ, 0, "Emerald Hill Zone", "Act 1",
+		/*LEVELID_EHZ1*/ {ZONEID_EHZ, "Emerald Hill Zone", "Act 1",
 							LEVELFORMAT_CHUNK128_SONIC2, OBJECTFORMAT_SONIC2, ARTFORMAT_BMP,
 							"data/Level/EHZ/ehz1", "data/Level/EHZ/ehz", "data/Level/sonic2", "data/Level/EHZ/ehz", "EHZ",
 							preloadTexture_EHZ, preloadMappings_EHZ, &EHZ_Background, &EHZ_PaletteCycle, objFuncSonic2,
@@ -166,7 +170,7 @@ bool LEVEL::LoadMappings(LEVELTABLE *tableEntry)
 	LOG(("Loading mappings... "));
 	
 	//Load chunk mappings
-	switch (format)
+	switch (tableEntry->format)
 	{
 		case LEVELFORMAT_CHUNK128_SONIC2:
 		case LEVELFORMAT_CHUNK128:
@@ -215,7 +219,7 @@ bool LEVEL::LoadMappings(LEVELTABLE *tableEntry)
 		}
 		
 		default:
-			LOG(("Level format %d doesn't use chunk mappings\n", format));
+			LOG(("Level format %d doesn't use chunk mappings\n", tableEntry->format));
 			break;
 	}
 	
@@ -239,12 +243,12 @@ bool LEVEL::LoadLayout(LEVELTABLE *tableEntry)
 	}
 	
 	//Read our layout file
-	switch (format)
+	switch (tableEntry->format)
 	{
 		case LEVELFORMAT_CHUNK128_SONIC2:
 		case LEVELFORMAT_CHUNK128:
 			//Get our level dimensions (upscaled to tiles)
-			if (format == LEVELFORMAT_CHUNK128)
+			if (tableEntry->format == LEVELFORMAT_CHUNK128)
 			{
 				layout.width = ReadFile_BE16(layoutFile) * 8;
 				layout.height = ReadFile_BE16(layoutFile) * 8;
@@ -693,8 +697,6 @@ LEVEL::LEVEL(int id, const char *players[])
 	//Get data from this table entry
 	LEVELTABLE *tableEntry = &gLevelTable[levelId = (LEVELID)id];
 	zone = tableEntry->zone;
-	act = tableEntry->act;
-	format = tableEntry->format;
 	
 	//Load data
 	if (LoadMappings(tableEntry) || LoadLayout(tableEntry) || LoadCollisionTiles(tableEntry) || LoadObjects(tableEntry) || LoadArt(tableEntry))
@@ -791,7 +793,7 @@ LEVEL::LEVEL(int id, const char *players[])
 		return;
 	}
 	
-	//Initialize state
+	//Initialize oscillatory values
 	OscillatoryInit();
 	
 	//Lock audio device so we can load new music

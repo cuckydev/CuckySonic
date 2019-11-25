@@ -1,5 +1,3 @@
-#include <string.h>
-
 #include "Level.h"
 #include "Game.h"
 #include "TitleCard.h"
@@ -13,7 +11,7 @@
 #define TT_END		240 //When the title card unloads
 
 //Class
-TITLECARD::TITLECARD(const char *levelName, const char *levelSubtitle) : name(levelName), subtitle(levelSubtitle)
+TITLECARD::TITLECARD(std::string levelName, std::string levelSubtitle) : name(levelName), subtitle(levelSubtitle)
 {
 	//Load title card sheet
 	texture = gLevel->GetObjectTexture("data/TitleCard.bmp");
@@ -29,7 +27,7 @@ TITLECARD::TITLECARD(const char *levelName, const char *levelSubtitle) : name(le
 	
 	//Initialize lines
 	line[LINE_CUCKYSONIC_LABEL] = {(-64) * 0x100, (8) * 0x100, 0x400, 0x0, -0x20, 0x0, 0x90, 0x7FFF, -0x8000, 0x7FFF};
-	line[LINE_LEVEL_NAME] = {((int)strlen(levelName) * -16 + (gRenderSpec.width - 398) / 2) * 0x100, (128) * 0x100, 0x780 + ((int)strlen(levelName) * 0x10), 0x0, -0x22, 0x0, 0x180, 0x7FFF, -0x8000, 0x7FFF};
+	line[LINE_LEVEL_NAME] = {((int)levelName.length() * -16 + (gRenderSpec.width - 398) / 2) * 0x100, (128) * 0x100, 0x780 + ((int)levelName.length() * 0x10), 0x0, -0x22, 0x0, 0x180, 0x7FFF, -0x8000, 0x7FFF};
 	line[LINE_LEVEL_SUBTITLE] = {(gRenderSpec.width) * 0x100, line[LINE_LEVEL_NAME].y + (24) * 0x100, -0x500, 0x0, 0x20, 0x0, -0x8000, -0x100, -0x8000, 0x7FFF};
 }
 
@@ -88,8 +86,8 @@ void TITLECARD::UpdateAndDraw()
 		{34, 17, 16, 16},
 	};
 	
-	nameFont->DrawText(name, LEVEL_RENDERLAYER_TITLECARD, line[LINE_LEVEL_NAME].x / 0x100 + 8, line[LINE_LEVEL_NAME].y / 0x100 - 8);
-	DrawRibbon(nameRibbon, line[LINE_LEVEL_NAME].x / 0x100, line[LINE_LEVEL_NAME].y / 0x100, mmax((int)strlen(name) - 1, 192 / 16));
+	nameFont->DrawString(name, LEVEL_RENDERLAYER_TITLECARD, line[LINE_LEVEL_NAME].x / 0x100 + 8, line[LINE_LEVEL_NAME].y / 0x100 - 8);
+	DrawRibbon(nameRibbon, line[LINE_LEVEL_NAME].x / 0x100, line[LINE_LEVEL_NAME].y / 0x100, mmax((int)name.length() - 1, 192 / 16));
 	gSoftwareBuffer->DrawTexture(texture, texture->loadedPalette, &stageDisplay[gLevel->zone], LEVEL_RENDERLAYER_TITLECARD, line[LINE_LEVEL_NAME].x / 0x100, line[LINE_LEVEL_NAME].y / 0x100 - 128 + 8, false, false);
 	
 	//Draw level subtitle
@@ -99,8 +97,8 @@ void TITLECARD::UpdateAndDraw()
 		{69, 51, 8, 8},
 	};
 	
-	subtitleFont->DrawText(subtitle, LEVEL_RENDERLAYER_TITLECARD, line[LINE_LEVEL_SUBTITLE].x / 0x100 + 4, line[LINE_LEVEL_SUBTITLE].y / 0x100 - 5);
-	DrawRibbon(subtitleRibbon, line[LINE_LEVEL_SUBTITLE].x / 0x100, line[LINE_LEVEL_SUBTITLE].y / 0x100, strlen(subtitle) - 1);
+	subtitleFont->DrawString(subtitle, LEVEL_RENDERLAYER_TITLECARD, line[LINE_LEVEL_SUBTITLE].x / 0x100 + 4, line[LINE_LEVEL_SUBTITLE].y / 0x100 - 5);
+	DrawRibbon(subtitleRibbon, line[LINE_LEVEL_SUBTITLE].x / 0x100, line[LINE_LEVEL_SUBTITLE].y / 0x100, subtitle.length() - 1);
 	
 	//Speed lines up when ending
 	if (frame == TT_SHOWEND)

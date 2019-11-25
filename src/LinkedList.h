@@ -4,7 +4,7 @@
 
 template <typename T> struct LL_NODE
 {
-	T nodeEntry;
+	T node_entry;
 	LL_NODE<T> *next;
 	LL_NODE<T> *prev;
 };
@@ -26,7 +26,7 @@ template <typename T> class LINKEDLIST
 		{
 			//Allocate a new node and link to the head
 			LL_NODE<T> *newNode = new LL_NODE<T>;
-			newNode->nodeEntry = push;
+			newNode->node_entry = push;
 			newNode->next = head;
 			
 			//If the tail is null, we must be also at the end of the list, set tail to our new node
@@ -46,7 +46,7 @@ template <typename T> class LINKEDLIST
 		{
 			//Allocate a new node and link to the tail
 			LL_NODE<T> *newNode = new LL_NODE<T>;
-			newNode->nodeEntry = push;
+			newNode->node_entry = push;
 			newNode->prev = tail;
 			newNode->next = nullptr;
 			
@@ -63,6 +63,23 @@ template <typename T> class LINKEDLIST
 			return newNode;
 		}
 		
+		//Position identification
+		inline size_t pos_of_node(LL_NODE<T> want)
+		{
+			size_t i = 0;
+			for (LL_NODE<T> *node = head; node != want; node = node->next)
+				i++;
+			return i;
+		}
+		
+		inline size_t pos_of_val(T want)
+		{
+			size_t i = 0;
+			for (LL_NODE<T> *node = head; node->node_entry != want; node = node->next)
+				i++;
+			return i;
+		}
+		
 		//Random access and size
 		inline LL_NODE<T> *nodeAt(size_t index)
 		{
@@ -77,7 +94,7 @@ template <typename T> class LINKEDLIST
 		inline T at(size_t index)
 		{
 			//Find the given entry at the given index (from head)
-			return nodeAt(index)->nodeEntry;
+			return nodeAt(index)->node_entry;
 		}
 
 		inline size_t size() { return llSize; }
@@ -86,17 +103,17 @@ template <typename T> class LINKEDLIST
 		inline void erase(size_t index)
 		{
 			//Find the node at the given index (from head) and destroy it
-			eraseNode(nodeAt(index));
+			erase_node(nodeAt(index));
 		}
 		
 		inline void erase(size_t from, size_t to)
 		{
 			//Erase entries from "from" to "to"
 			for (size_t i = from; i < to; i++)
-				eraseNode(nodeAt(from));
+				erase_node(nodeAt(from));
 		}
 		
-		inline void eraseNode(LL_NODE<T> *node)
+		inline void erase_node(LL_NODE<T> *node)
 		{
 			//Adjust linked list correctly and destroy node
 			if (node->prev != nullptr)
@@ -115,7 +132,7 @@ template <typename T> class LINKEDLIST
 		{
 			//Destroy every node until empty
 			while (head)
-				eraseNode(head);
+				erase_node(head);
 			head = nullptr;
 			tail = nullptr;
 		}
@@ -126,6 +143,6 @@ template <typename T> class LINKEDLIST
 
 #define CLEAR_INSTANCE_LINKEDLIST(linkedList)	while (linkedList.head)	\
 												{	\
-													delete linkedList.head->nodeEntry;	\
-													linkedList.eraseNode(linkedList.head);	\
+													delete linkedList.head->node_entry;	\
+													linkedList.erase_node(linkedList.head);	\
 												}
