@@ -34,13 +34,13 @@ enum PLAYERCPU_ROUTINE
 };
 
 //Other enumerations
-enum SHIELD
+enum BARRIER
 {
-	SHIELD_NULL,
-	SHIELD_BLUE,
-	SHIELD_FIRE,
-	SHIELD_ELECTRIC,
-	SHIELD_BUBBLE,
+	BARRIER_NULL,
+	BARRIER_BLUE,
+	BARRIER_FLAME,
+	BARRIER_LIGHTNING,
+	BARRIER_AQUA,
 };
 
 enum CHARACTERTYPE
@@ -130,10 +130,12 @@ class PLAYER
 		POSDEF(x)
 		POSDEF(y)
 		
-		//Speeds
-		int16_t xVel = 0;		//Global X-velocity
-		int16_t yVel = 0;		//Global Y-velocity
-		int16_t inertia = 0;	//Horizontal velocity (on ground)
+		//Current routine
+		PLAYER_ROUTINE routine = PLAYERROUTINE_CONTROL;
+		
+		//Death state
+		unsigned int restartCountdown = 0;	//Timer for the level restarting after death
+		bool inGameover = false;			//If got a game-over
 		
 		//Collision box size
 		uint8_t xRadius;
@@ -175,39 +177,42 @@ class PLAYER
 			bool windTunnel = false;		//Inside a wind tunnel (Labyrinth Zone, Hydrocity)
 		} status;
 		
-		//Items we have
+		//Movement speeds and state
+		int16_t xVel = 0;		//Global X-velocity
+		int16_t yVel = 0;		//Global Y-velocity
+		int16_t inertia = 0;	//Horizontal velocity (on ground)
+		
+		uint8_t moveLock = 0;	//Player cannot move if this is non-zero (decrements every frame)
+		
+		//Current item status
 		struct
 		{
+			//Status
 			bool isInvincible = false;	//Do we have invincibility
 			bool hasSpeedShoes = false;	//Do we have speed shoes
 			
-			//Shield effects
-			bool shieldReflect = false;		//Reflects projectile
-			bool immuneFire = false;		//Immune to fire
-			bool immuneElectric = false;	//Immune to electric
-			bool immuneWater = false;		//Immune to water
+			//Barrier effects
+			bool barrierReflect = false;	//Reflects projectiles
+			bool immuneFlame = false;		//Flame immunity
+			bool immuneLightning = false;	//Thunder immunity
+			bool immuneAqua = false;		//Water immunity
 		} item;
 		
-		SHIELD shield = SHIELD_NULL;	//Our shield type
-		uint8_t jumpAbility = 0;		//Our jump ability (can we use shield ability, insta-shield, dropdash, etc.)
+		BARRIER barrier = BARRIER_NULL;	//Our current barrier
+		uint8_t jumpAbility = 0;		//Our current jump ability state (0 = can use, >= 1 = used)
 		uint8_t abilityProperty = 0;	//Tails's flying time, Knuckles' gliding speed(?)
 		
 		uint16_t invulnerabilityTime = 0;
 		uint16_t invincibilityTime = 0;
 		uint16_t speedShoesTime = 0;
 		
-		PLAYER_ROUTINE routine = PLAYERROUTINE_CONTROL;	//Routine
+		//Current angles
+		uint8_t angle = 0; //Current movement / visual angle
 		
-		uint8_t angle = 0;		//Angle
-		uint8_t moveLock = 0;	//Player cannot move if this is non-zero (decrements every frame)
-		
-		//These two are used for collision, usually represent the player's two ground point angles
-		uint8_t primaryAngle = 0;
-		uint8_t secondaryAngle = 0;
-		
-		//These are the above, basically, but from the last frame
-		uint8_t tilt = 0;		//set to Secondary Angle
-		uint8_t nextTilt = 0;	//set to Primary Angle
+		uint8_t floorAngle1 = 0;
+		uint8_t floorAngle2 = 0;
+		uint8_t lastFloorAngle1 = 0;
+		uint8_t lastFloorAngle2 = 0;
 		
 		//Object control
 		struct
@@ -223,13 +228,13 @@ class PLAYER
 		//Chain point counter
 		uint16_t chainPointCounter = 0;
 		
-		//Spindash
+		//Spindash state
 		bool spindashing = false;		//Set if we're spindashing
 		uint16_t spindashCounter = 0;	//Our counter for spindashing
 		
 		//CD Spindash/Peelout
-		uint8_t cdSPTimer = 0;
-		uint8_t cdChargeDelay = 0;
+		uint8_t cdSPTimer = 0;		//Actual timer for if we're fully charged or not
+		uint8_t cdChargeDelay = 0;	//Makes sure we can't spindash / peelout if we double tap up or down
 		
 		//Flipping (hit a spring that causes the player to spin about, or running off of that curved ramp in Angel Island Zone)
 		uint8_t flipType = 0;
@@ -237,15 +242,12 @@ class PLAYER
 		uint8_t flipsRemaining = 0;
 		uint8_t flipSpeed = 0;
 		
-		//Air left
+		//Air remaining in seconds before drowning
 		uint8_t airRemaining = 0;
 		
 		//Our collision layers
 		COLLISIONLAYER topSolidLayer = COLLISIONLAYER_NORMAL_TOP;
 		COLLISIONLAYER lrbSolidLayer = COLLISIONLAYER_NORMAL_LRB;
-		
-		uint16_t restartCountdown = 0;	//Timer for the level restarting after death
-		bool inGameover = false;			//If got a game-over
 		
 		//Speeds
 		uint16_t top = 0;
@@ -267,24 +269,25 @@ class PLAYER
 		bool super = false, hyper = false;
 		int16_t superTimer = 0;
 		
+		//Palette state
 		PALETTESTATE paletteState = PALETTESTATE_REGULAR;
 		int16_t paletteTimer = 0;
 		uint16_t paletteFrame = 0;
 		
-		//In debug flag
+		//Debug state
 		uint16_t debug = 0;
 		int debugAccel = 0;
 		uint8_t debugSpeed = 0;
 		int debugObject = 0;
 		
-		//Character type id (ex. Sonic, Tails, Knuckles, or anything else)
+		//Character type id (ex. Sonic, Tails, Knuckles, or anyone else)
 		CHARACTERTYPE characterType;
 		
 		//Camera scrolling
 		unsigned int scrollDelay = 0;
 		bool cameraLock = false;
 		
-		//Position and status records
+		//Records
 		struct PLAYER_RECORD
 		{
 			int16_t x = 0, y = 0;
@@ -292,25 +295,25 @@ class PLAYER
 			CONTROLMASK controlPress;
 			PLAYER_STATUS status;
 		} record[PLAYER_RECORD_LENGTH];
-		
-		int recordPos = 0;
+		size_t recordPos = 0;
 		
 		//Objects that belong to us
 		OBJECT *spindashDust = nullptr;
 		OBJECT *skidDust = nullptr;
-		OBJECT *shieldObject = nullptr;
+		OBJECT *barrierObject = nullptr;
 		OBJECT *invincibilityStarObject[INVINCIBILITYSTARS] = {nullptr};
 		
-		//CPU and other control things
+		//CPU state
 		PLAYERCPU_ROUTINE cpuRoutine = CPUROUTINE_INIT;
 		int cpuOverride = 0;
 		unsigned int cpuTimer = 0;
 		bool cpuJumping = false;
 		
+		//Input specification (controller and player to follow)
 		size_t controller;
 		PLAYER *follow;
 		
-		//Current input
+		//Current input state
 		CONTROLMASK controlHeld;
 		CONTROLMASK controlPress;
 		bool controlLock = false;
@@ -321,29 +324,26 @@ class PLAYER
 		
 		void SetSpeedFromDefinition(SPEEDDEFINITION definition);
 		
-		uint8_t AngleIn(uint8_t angleSide, int16_t *distance, int16_t *distance2);
-		void CheckFloor(COLLISIONLAYER layer, int16_t *distance, int16_t *distance2, uint8_t *outAngle);
-		void CheckCeiling(COLLISIONLAYER layer, int16_t *distance, int16_t *distance2, uint8_t *outAngle);
-		
-		int16_t ChkFloorEdge(COLLISIONLAYER layer, int16_t xPos, int16_t yPos, uint8_t *outAngle);
+		uint8_t GetCloserFloor_General(uint8_t angleSide, int16_t *distance, int16_t *distance2);
+		void CheckCollisionDown_2Point(COLLISIONLAYER layer, int16_t xPos, int16_t yPos, int16_t *distance, int16_t *distance2, uint8_t *outAngle);
+		void CheckCollisionUp_2Point(COLLISIONLAYER layer, int16_t xPos, int16_t yPos, int16_t *distance, int16_t *distance2, uint8_t *outAngle);
+		void CheckCollisionLeft_2Point(COLLISIONLAYER layer, int16_t xPos, int16_t yPos, int16_t *distance, int16_t *distance2, uint8_t *outAngle);
+		void CheckCollisionRight_2Point(COLLISIONLAYER layer, int16_t xPos, int16_t yPos, int16_t *distance, int16_t *distance2, uint8_t *outAngle);
 		
 		uint8_t AngleSide(uint8_t angleSide);
-		int16_t CheckFloorDist(int16_t xPos, int16_t yPos, COLLISIONLAYER layer, uint8_t *outAngle);
-		int16_t CheckCeilingDist(int16_t xPos, int16_t yPos, COLLISIONLAYER layer, uint8_t *outAngle);
-		int16_t CheckLeftWallDist(int16_t xPos, int16_t yPos, COLLISIONLAYER layer, uint8_t *outAngle);
-		int16_t CheckRightWallDist(int16_t xPos, int16_t yPos, COLLISIONLAYER layer, uint8_t *outAngle);
-		
-		int16_t CheckLeftCeilingDist(COLLISIONLAYER layer, uint8_t *outAngle);
-		int16_t CheckRightCeilingDist(COLLISIONLAYER layer, uint8_t *outAngle);
+		int16_t CheckCollisionDown_1Point(COLLISIONLAYER layer, int16_t xPos, int16_t yPos, uint8_t *outAngle);
+		int16_t CheckCollisionUp_1Point(COLLISIONLAYER layer, int16_t xPos, int16_t yPos, uint8_t *outAngle);
+		int16_t CheckCollisionLeft_1Point(COLLISIONLAYER layer, int16_t xPos, int16_t yPos, uint8_t *outAngle);
+		int16_t CheckCollisionRight_1Point(COLLISIONLAYER layer, int16_t xPos, int16_t yPos, uint8_t *outAngle);
 
-		int16_t CalcRoomOverHead(uint8_t upAngle);
-		int16_t CalcRoomInFront(uint8_t moveAngle);
+		int16_t GetDistancePerpendicular(uint8_t inAngle);
+		int16_t GetWallDistance(uint8_t inAngle);
 		
-		int16_t Angle(int16_t distance, int16_t distance2);
-		void AnglePos();
-		void CheckWallsOnGround();
+		int16_t GetCloserFloor_Ground(int16_t distance, int16_t distance2);
+		void GroundFloorCollision();
+		void GroundWallCollision();
 		
-		void DoLevelCollision();
+		void AirCollision();
 		
 		void LandOnFloor();
 		void LandOnFloor_ExitBall();
@@ -358,33 +358,33 @@ class PLAYER
 		
 		void JumpAbilities();
 		void JumpHeight();
-		void ChgJumpDir();
-		void JumpAngle();
+		void AirMovement();
+		void UpdateAngleInAir();
 		bool Jump();
 		
-		void SlopeResist();
-		void RollRepel();
-		void SlopeRepel();
+		void RegularSlopeGravity();
+		void RollingSlopeGravity();
+		void WallDetach();
 		
-		void MoveLeft();
-		void MoveRight();
-		void Move();
+		void GroundMoveLeft();
+		void GroundMoveRight();
+		void GroundMovement();
 		
-		void ChkRoll();
+		void PerformRoll();
 		void Roll();
-		void RollLeft();
-		void RollRight();
-		void RollSpeed();
+		void RollMoveLeft();
+		void RollMoveRight();
+		void RollMovement();
 		
-		void DeadCheckRespawn();
-		void HurtStop();
+		void DeadCheckOffscreen();
+		void HurtCheckGround();
 		
-		bool KillCharacter(SOUNDID soundId);
-		bool CheckHurt(OBJECT *hit);
-		bool HurtCharacter(OBJECT *hit);
+		bool Kill(SOUNDID soundId);
+		bool Hurt(OBJECT *hit);
+		bool HurtFromObject(OBJECT *hit);
 		
 		void LevelBoundSide(int32_t bound);
-		void LevelBound();
+		void LevelBoundaries();
 		
 		void SuperPaletteCycle();
 		bool SuperTransform();
@@ -400,9 +400,9 @@ class PLAYER
 		void ControlRoutine();
 		void Update();
 		
-		void Display();
-		
 		void Draw();
+		void Draw_UpdateStatus();
+		
 		void DrawToScreen();
 		
 		void RestoreStateDebug();
@@ -411,13 +411,13 @@ class PLAYER
 		
 		void RingAttractCheck(OBJECT *object);
 		
-		bool TouchResponseObject(OBJECT *object, int16_t playerLeft, int16_t playerTop, int16_t playerWidth, int16_t playerHeight);
-		void TouchResponse();
+		bool ObjectTouch(OBJECT *object, int16_t playerLeft, int16_t playerTop, int16_t playerWidth, int16_t playerHeight);
+		void CheckObjectTouch();
 		
 		void AttachToObject(OBJECT *object, size_t i);
 		void MoveOnPlatform(OBJECT *platform, int16_t width, int16_t height, int16_t lastXPos, const int8_t *slope, bool doubleSlope);
 		
 		void GiveSpeedShoes();
 		void GiveInvincibility();
-		void GiveShield(SOUNDID sound, SHIELD type);
+		void GiveBarrier(SOUNDID sound, BARRIER type);
 };

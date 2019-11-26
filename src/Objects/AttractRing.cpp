@@ -38,8 +38,8 @@ void ObjAttractRing(OBJECT *object)
 	//Fallthrough
 		case 1: //Move towards the player
 		{
-			//If lightning shield, turn into a bouncing ring
-			if (object->parentPlayer->shield != SHIELD_ELECTRIC)
+			//If player lost the lightning barrier, turn into a bouncing ring
+			if (object->parentPlayer->barrier != BARRIER_LIGHTNING)
 			{
 				object->function = ObjBouncingRing;
 				object->routine = 0;

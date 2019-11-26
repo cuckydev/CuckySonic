@@ -19,14 +19,14 @@
 
 struct CONTROLMASK
 {
-	bool start : 1;
-	bool a : 1;
-	bool b : 1;
-	bool c : 1;
-	bool right : 1;
-	bool left : 1;
-	bool down : 1;
-	bool up : 1;
+	bool start = false;
+	bool a = false;
+	bool b = false;
+	bool c = false;
+	bool right = false;
+	bool left = false;
+	bool down = false;
+	bool up = false;
 };
 
 struct BUTTONBINDS
@@ -55,8 +55,8 @@ struct CONTROLLER
 	
 	//Our game controller
 	BACKEND_CONTROLLER *controller;
-	int16_t axisX;
-	int16_t axisY;
+	int16_t axisX = 0;
+	int16_t axisY = 0;
 };
 
 extern CONTROLLER gController[CONTROLLERS];

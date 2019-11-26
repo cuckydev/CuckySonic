@@ -61,15 +61,15 @@ SOUNDDEFINITION soundDefinition[SOUNDID_MAX] = {
 	{SOUNDCHANNEL_FM3,	"data/Audio/Sound/Waterfall1.wav", SOUNDID_NULL},
 	{SOUNDCHANNEL_FM3,	"data/Audio/Sound/Waterfall2.wav", SOUNDID_NULL},
 	
-	{SOUNDCHANNEL_FM4,	"data/Audio/Sound/GetBlueShield.wav", SOUNDID_NULL},
-	{SOUNDCHANNEL_FM4,	"data/Audio/Sound/GetFireShield.wav", SOUNDID_NULL},
-	{SOUNDCHANNEL_FM4,	"data/Audio/Sound/GetElectricShield.wav", SOUNDID_NULL},
-	{SOUNDCHANNEL_FM4,	"data/Audio/Sound/GetBubbleShield.wav", SOUNDID_NULL},
+	{SOUNDCHANNEL_FM4,	"data/Audio/Sound/GetBlueBarrier.wav", SOUNDID_NULL},
+	{SOUNDCHANNEL_FM4,	"data/Audio/Sound/GetFlameBarrier.wav", SOUNDID_NULL},
+	{SOUNDCHANNEL_FM4,	"data/Audio/Sound/GetLightningBarrier.wav", SOUNDID_NULL},
+	{SOUNDCHANNEL_FM4,	"data/Audio/Sound/GetAquaBarrier.wav", SOUNDID_NULL},
 	
-	{SOUNDCHANNEL_PSG2,	"data/Audio/Sound/UseInstaShield.wav", SOUNDID_NULL},
-	{SOUNDCHANNEL_PSG2,	"data/Audio/Sound/UseFireShield.wav", SOUNDID_NULL},
-	{SOUNDCHANNEL_FM4,	"data/Audio/Sound/UseElectricShield.wav", SOUNDID_NULL},
-	{SOUNDCHANNEL_FM4,	"data/Audio/Sound/UseBubbleShield.wav", SOUNDID_NULL},
+	{SOUNDCHANNEL_PSG2,	"data/Audio/Sound/DoubleSpinAttack.wav", SOUNDID_NULL},
+	{SOUNDCHANNEL_PSG2,	"data/Audio/Sound/UseFlameBarrier.wav", SOUNDID_NULL},
+	{SOUNDCHANNEL_FM4,	"data/Audio/Sound/UseLightningBarrier.wav", SOUNDID_NULL},
+	{SOUNDCHANNEL_FM4,	"data/Audio/Sound/UseAquaBarrier.wav", SOUNDID_NULL},
 	
 	{SOUNDCHANNEL_FM4 | SOUNDCHANNEL_PSG1 | SOUNDCHANNEL_PSG2,	"data/Audio/Sound/SuperTransform.wav", SOUNDID_NULL},
 	

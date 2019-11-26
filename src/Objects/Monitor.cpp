@@ -78,13 +78,13 @@ enum MONITOR_ITEM
 	MONITOR_ITEM_EGGMAN,
 	MONITOR_ITEM_RING,
 	MONITOR_ITEM_SPEED_SHOES,
-	MONITOR_ITEM_SHIELD,
+	MONITOR_ITEM_BARRIER,
 	MONITOR_ITEM_INVINCIBILITY,
 	MONITOR_ITEM_BROKEN,
 };
 
-const MONITOR_ITEM zoneItemSonic1[] = {MONITOR_ITEM_STATIC, MONITOR_ITEM_EGGMAN, MONITOR_ITEM_EXTRA_LIFE, MONITOR_ITEM_SPEED_SHOES, MONITOR_ITEM_SHIELD, MONITOR_ITEM_INVINCIBILITY, MONITOR_ITEM_RING};
-const MONITOR_ITEM zoneItemSonic2[] = {MONITOR_ITEM_STATIC, MONITOR_ITEM_EXTRA_LIFE, MONITOR_ITEM_EXTRA_LIFE, MONITOR_ITEM_EGGMAN, MONITOR_ITEM_RING, MONITOR_ITEM_SPEED_SHOES, MONITOR_ITEM_SHIELD, MONITOR_ITEM_INVINCIBILITY};
+const MONITOR_ITEM zoneItemSonic1[] = {MONITOR_ITEM_STATIC, MONITOR_ITEM_EGGMAN, MONITOR_ITEM_EXTRA_LIFE, MONITOR_ITEM_SPEED_SHOES, MONITOR_ITEM_BARRIER, MONITOR_ITEM_INVINCIBILITY, MONITOR_ITEM_RING};
+const MONITOR_ITEM zoneItemSonic2[] = {MONITOR_ITEM_STATIC, MONITOR_ITEM_EXTRA_LIFE, MONITOR_ITEM_EXTRA_LIFE, MONITOR_ITEM_EGGMAN, MONITOR_ITEM_RING, MONITOR_ITEM_SPEED_SHOES, MONITOR_ITEM_BARRIER, MONITOR_ITEM_INVINCIBILITY};
 
 const MONITOR_ITEM *zoneItemByZone[] = {
 	zoneItemSonic1, //ZONEID_GHZ
@@ -96,7 +96,7 @@ static const uint8_t animationExtraLife[] =		{0x07,0x00,0x02,0x02,0x01,0x02,0x02
 static const uint8_t animationEggman[] =		{0x07,0x00,0x03,0x03,0x01,0x03,0x03,0xFF}; //vvv
 static const uint8_t animationRing[] =			{0x07,0x00,0x04,0x04,0x01,0x04,0x04,0xFF};
 static const uint8_t animationSpeedShoes[] =	{0x07,0x00,0x05,0x05,0x01,0x05,0x05,0xFF};
-static const uint8_t animationShield[] =		{0x07,0x00,0x06,0x06,0x01,0x06,0x06,0xFF};
+static const uint8_t animationBarrier[] =		{0x07,0x00,0x06,0x06,0x01,0x06,0x06,0xFF};
 static const uint8_t animationInvincibility[] =	{0x07,0x00,0x07,0x07,0x01,0x07,0x07,0xFF};
 static const uint8_t animationBroken[] =		{0x02,0x00,0x01,0x08,0xFE,0x01}; //static 1, static 2, > broken <
 
@@ -106,7 +106,7 @@ static const uint8_t *animationList[] = {
 	animationEggman,
 	animationRing,
 	animationSpeedShoes,
-	animationShield,
+	animationBarrier,
 	animationInvincibility,
 	animationBroken,
 };
@@ -165,7 +165,7 @@ void ObjMonitorContents(OBJECT *object)
 					case MONITOR_ITEM_EGGMAN:
 						//Hurt the player
 						if (breakPlayer != nullptr)
-							breakPlayer->CheckHurt(object);
+							breakPlayer->HurtFromObject(object);
 						break;
 					case MONITOR_ITEM_RING:
 						//Give us 10 rings
@@ -176,10 +176,10 @@ void ObjMonitorContents(OBJECT *object)
 						if (breakPlayer != nullptr)
 							breakPlayer->GiveSpeedShoes();
 						break;
-					case MONITOR_ITEM_SHIELD:
-						//Give the player who hit us a shield
+					case MONITOR_ITEM_BARRIER:
+						//Give the player who hit us a barrier
 						if (breakPlayer != nullptr)
-							breakPlayer->GiveShield(SOUNDID_GET_BLUE_SHIELD, SHIELD_BLUE);
+							breakPlayer->GiveBarrier(SOUNDID_GET_BLUE_BARRIER, BARRIER_BLUE);
 						break;
 					case MONITOR_ITEM_INVINCIBILITY:
 						//Give the player who hit us invincibility

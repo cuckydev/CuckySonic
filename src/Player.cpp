@@ -18,48 +18,48 @@
 
 //Bug-fixes
 //#define FIX_SPINDASH_JUMP       //When you jump the frame after you spindash, you'll jump straight upwards
-//#define FIX_HORIZONTAL_WRAP     //In the originals, for some reason, the LevelBound uses unsigned checks, meaning if you go off to the left, you'll be sent to the right boundary
+//#define FIX_HORIZONTAL_WRAP     //In the originals, for some reason, the LevelBoundaries uses unsigned checks, meaning if you go off to the left, you'll be sent to the right boundary
 //#define FIX_DUCK_CONDITION      //In Sonic and Knuckles, the conditions for ducking are so loose, you can duck (and spindash) in unexpected situations.
 //#define FIX_ROLL_YSHIFT         //In the originals, when you roll, you're always shifted up / down globally, this can cause weird behaviour such as falling off of ceilings
 //#define FIX_ROLLJUMP_COLLISION  //In the originals, for some reason, jumping from a roll will maintain Sonic's regular collision hitbox, rather than switching to the smaller hitbox, which causes weird issues.
 //#define FIX_PEELOUT_DOWN        //In Sonic CD, the peelout acted really weird if you were to switch to holding down in the middle of it, even causing you to be able to walk through walls
-//#define FIX_INSTASHIELD_REFLECT //In Sonic 3 and Knuckles, Sonic's insta-shield doesn't reflect projectiles, but the code suggests that it's supposed to
+//#define FIX_SPINATTACK_REFLECT  //In Sonic 3 and Knuckles, Sonic's double spin attack doesn't reflect projectiles, but the code suggests that it's supposed to
 
 //Game differences
-//#define SONIC1_SLOPE_ANGLE          //In Sonic 2+, the floor's angle will be replaced with the player's cardinal floor angle if there's a 45+ degree difference
-//#define SONIC12_PUSH_CHECK          //In Sonic 3, it was changed so that you have to be facing towards a wall in order to start pushing into it
-//#define SONIC12_SANE_AIRCOLLISION   //For some reason, in Sonic 3 there was a weird modification to the airborne collision code... can't understand the purpose
-//#define SONIC123_WALL_COLLISION     //In Sonic and Knuckles, the wall collision on the ground was changed to have collision even on walls and ceilings (as long as they're cardinal directions)
-//#define SONIC12_ROLLJUMP_LAND       //In Sonic 3, they fixed the roll jump landing bug, where you'd land 5 pixels above the ground after jumping from a roll, but didn't just fix the damn collision size
-//#define SONIC12_DUCK_OBJECTHIT      //Before Sonic 3, ducking would give the player a smaller hitbox for generic object collision
+//#define SONIC1_SLOPE_ANGLE           //In Sonic 2+, the floor's angle will be replaced with the player's cardinal floor angle if there's a 45+ degree difference
+//#define SONIC12_PUSH_CHECK           //In Sonic 3, it was changed so that you have to be facing towards a wall in order to start pushing into it
+//#define SONIC12_SANE_AIRCOLLISION    //For some reason, in Sonic 3 there was a weird modification to the airborne collision code... can't understand the purpose
+//#define SONIC123_WALL_COLLISION      //In Sonic and Knuckles, the wall collision on the ground was changed to have collision even on walls and ceilings (as long as they're cardinal directions)
+//#define SONIC12_ROLLJUMP_LAND        //In Sonic 3, they fixed the roll jump landing bug, where you'd land 5 pixels above the ground after jumping from a roll, but didn't just fix the damn collision size
+//#define SONIC12_DUCK_OBJECTHIT       //Before Sonic 3, ducking would give the player a smaller hitbox for generic object collision
 
-//#define SONIC1_WALK_ANIMATION       //For some reason, in Sonic 2+, the animation code was messed up, making the first frame of the walk animation last only one frame
-//#define SONIC1_SLOPE_ROTATION       //In Sonic 2+, a few lines were added to the animation code to make the floor rotation more consistent
-//#define SONICCD_DASH_ANIMATION      //Sonic CD gives Sonic a third running animation, a dash animation
+//#define SONIC1_WALK_ANIMATION        //For some reason, in Sonic 2+, the animation code was messed up, making the first frame of the walk animation last only one frame
+//#define SONIC1_SLOPE_ROTATION        //In Sonic 2+, a few lines were added to the animation code to make the floor rotation more consistent
+//#define SONICCD_DASH_ANIMATION       //Sonic CD gives Sonic a third running animation, a dash animation
 
-//#define SONIC12_SLOPE_RESIST        //In Sonic 3, they made it so you're always affected by slope gravity unless you're on a shallow floor
-//#define SONIC12_SLOPE_REPEL         //In Sonic 3, the code to make it so you fall off of walls and ceilings when going too slow was completely redone
-//#define SONIC1_GROUND_CAP           //In Sonic 1, your speed on the ground is capped to your top speed when above it, even if you're already above it
-//#define SONIC12_AIR_CAP             //In Sonic 1 and 2, your speed in the air is capped to your top speed when above it, even if you're already above it
-//#define SONIC123_ROLL_DUCK          //In Sonic and Knuckles, they added a greater margin of speed for ducking and rolling, so you can duck while moving
-//#define SONICCD_ROLLING             //In Sonic CD, rolling to the right is weird
-//#define SONICCD_ROLLJUMP            //In Sonic CD, rolljumping was removed
+//#define SONIC12_SLOPE_RESIST         //In Sonic 3, they made it so you're always affected by slope gravity unless you're on a shallow floor
+//#define SONIC12_SLOPE_REPEL          //In Sonic 3, the code to make it so you fall off of walls and ceilings when going too slow was completely redone
+//#define SONIC1_GROUND_CAP            //In Sonic 1, your speed on the ground is capped to your top speed when above it, even if you're already above it
+//#define SONIC12_AIR_CAP              //In Sonic 1 and 2, your speed in the air is capped to your top speed when above it, even if you're already above it
+//#define SONIC123_ROLL_DUCK           //In Sonic and Knuckles, they added a greater margin of speed for ducking and rolling, so you can duck while moving
+//#define SONICCD_ROLLING              //In Sonic CD, rolling to the right is weird
+//#define SONICCD_ROLLJUMP             //In Sonic CD, rolljumping was removed
 
-//#define SONIC1_NO_SPINDASH          //The S2 spindash
-//#define SONICCD_SPINDASH            //CD spindash
-//#define SONICCD_PEELOUT             //CD super-peelout
-//#define SONIC1_NO_SUPER             //Super Sonic wasn't in Sonic 1
-//#define SONIC123_NO_HYPER           //DOES NOTHING, UNIMPLEMENTED! - Hyper Sonic wasn't introduced until S3K
-//#define SONIC2_SUPER_AT_PEAK        //In Sonic 2, you'd turn super at the peak of a jump, no matter what, while in Sonic 3, this was moved to the jump ability code
-//#define SONIC12_NO_INSTASHIELD      //Insta-shield
-//#define SONIC12_NO_SHIELD_ABILITIES //Other shield abilities
-//#define SONICMANIA_DROPDASH         //Sonic Mania's dropdash
-//#define SONIC3_INSTASHIELD_LAND     //In Sonic 3, if you land on the ground while performing an insta-shield, it'll cause you to be unable to use it until you jump and land once again.
-//#define SONIC3_BUBBLE_SUPER         //In Sonic 3, pressing ABC in mid-air will make you bounce like you have the bubble shield if you have it once you touch the ground, this was fixed in S3K
+//#define SONIC1_NO_SPINDASH           //The S2 spindash
+//#define SONICCD_SPINDASH             //CD spindash
+//#define SONICCD_PEELOUT              //CD super-peelout
+//#define SONIC1_NO_SUPER              //Super Sonic wasn't in Sonic 1
+//#define SONIC123_NO_HYPER            //DOES NOTHING, UNIMPLEMENTED! - Hyper Sonic wasn't introduced until S3K
+//#define SONIC2_SUPER_AT_PEAK         //In Sonic 2, you'd turn super at the peak of a jump, no matter what, while in Sonic 3, this was moved to the jump ability code
+//#define SONIC12_NO_SPINATTACK        //Double spin attack
+//#define SONIC12_NO_BARRIER_ABILITIES //Elemental barrier abilities
+//#define SONICMANIA_DROPDASH          //Sonic Mania's dropdash
+//#define SONIC3_SPINATTACK_LAND       //In Sonic 3, if you land on the ground while performing the double spin attack, it'll cause you to be unable to use any jump abilities until you jump and land once again.
+//#define SONIC3_BUBBLE_SUPER          //In Sonic 3, pressing ABC in mid-air will make you bounce like you have the water barrier if you have it once you touch the ground, this was fixed in S3K
 
-//#define SONIC1_DEATH_BOUNDARY       //In Sonic 2, the death boundary code was fixed so that it doesn't use the camera's boundary but the level boundary, so that you don't die while the camera boundary is scrolling
-//#define SONIC12_DEATH_RESPAWN       //In Sonic 3, it was changed so that death respawns you once you go off-screen, not when you leave the level boundaries, since this was a very buggy check
-//#define SONIC2REV01_SUPER_SOFTLOCK  //In Sonic 2 revisions 0 and 1, you can transform into Super Sonic at the end of a level, where it'll then softlock due to interrupting the transition
+//#define SONIC1_DEATH_BOUNDARY        //In Sonic 2, the death boundary code was fixed so that it doesn't use the camera's boundary but the level boundary, so that you don't die while the camera boundary is scrolling
+//#define SONIC12_DEATH_RESPAWN        //In Sonic 3, it was changed so that death respawns you once you go off-screen, not when you leave the level boundaries, since this was a very buggy check
+//#define SONIC2REV01_SUPER_SOFTLOCK   //In Sonic 2 revisions 0 and 1, you can transform into Super Sonic at the end of a level, where it'll then softlock due to interrupting the transition
 
 //Other control options
 //#define CONTROL_JA_DONT_CLEAR_ROLLJUMP    //When you use a jump ability in the original, it clears the roll-jump flag
@@ -387,57 +387,57 @@ void ObjSkidDust(OBJECT *object)
 	}
 }
 
-//Shield animation (insta-shield)
-static const uint8_t animationInstaShieldNull[] =	{0x1F,0x06,0xFF};
-static const uint8_t animationInstaShieldUse[] =	{0x00,0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x06,0x06,0x06,0x06,0x06,0x06,0x07,0xFD,0x00};
+//Barrier animation (Double Spin Attack)
+static const uint8_t animationSpinAttackNull[] =	{0x1F,0x06,0xFF};
+static const uint8_t animationSpinAttackUse[] =	{0x00,0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x06,0x06,0x06,0x06,0x06,0x06,0x07,0xFD,0x00};
 
-static const uint8_t* animationListInstaShield[] = {
-	animationInstaShieldNull,
-	animationInstaShieldUse,
+static const uint8_t* animationListSpinAttack[] = {
+	animationSpinAttackNull,
+	animationSpinAttackUse,
 };
 
-//Shield animation (blue shield)
-static const uint8_t animationBlueShield[] =			{0x00,0x05,0x00,0x05,0x01,0x05,0x02,0x05,0x03,0x05,0x04,0xFF};
+//Barrier animation (Blue Barrier)
+static const uint8_t animationBlueBarrier[] =			{0x00,0x05,0x00,0x05,0x01,0x05,0x02,0x05,0x03,0x05,0x04,0xFF};
 
-static const uint8_t* animationListBlueShield[] = {
-	animationBlueShield,
+static const uint8_t* animationListBlueBarrier[] = {
+	animationBlueBarrier,
 };
 
-//Shield animation (fire shield)
-static const uint8_t animationFireShieldIdle[] =		{0x01,0x00,0x0F,0x01,0x10,0x02,0x11,0x03,0x12,0x04,0x13,0x05,0x14,0x06,0x15,0x07,0x16,0x08,0x17,0xFF};
-static const uint8_t animationFireShieldUse[] =			{0x01,0x09,0x0A,0x0B,0x0C,0x0D,0x0E,0x09,0x0A,0x0B,0x0C,0x0D,0x0E,0xFD,0x00,0x00};
+//Barrier animation (Flame Barrier)
+static const uint8_t animationFlameBarrierIdle[] =		{0x01,0x00,0x0F,0x01,0x10,0x02,0x11,0x03,0x12,0x04,0x13,0x05,0x14,0x06,0x15,0x07,0x16,0x08,0x17,0xFF};
+static const uint8_t animationFlameBarrierUse[] =			{0x01,0x09,0x0A,0x0B,0x0C,0x0D,0x0E,0x09,0x0A,0x0B,0x0C,0x0D,0x0E,0xFD,0x00,0x00};
 
-static const uint8_t* animationListFireShield[] = {
-	animationFireShieldIdle,
-	animationFireShieldUse,
+static const uint8_t* animationListFlameBarrier[] = {
+	animationFlameBarrierIdle,
+	animationFlameBarrierUse,
 };
 
-//Shield animation (electric shield)
-static const uint8_t animationElectricShieldIdle[] =	{0x01,0x00,0x00,0x01,0x01,0x02,0x02,0x03,0x03,0x04,0x04,0x05,0x05,0x06,0x06,0x07,0x07,0x08,0x08,0x09,0x0A,0x0B,0x16,0x16,0x15,0x15,0x14,0x14,0x13,0x13,0x12,0x12,0x11,0x11,0x10,0x10,0x0F,0x0F,0x0E,0x0E,0x09,0x0A,0x0B,0xFF};
-static const uint8_t animationElectricShieldUse[] =		{0x00,0x0C,0x0D,0x17,0x0C,0x0D,0x17,0x0C,0x0D,0x17,0x0C,0x0D,0x17,0x0C,0x0D,0x17,0x0C,0x0D,0x17,0x0C,0x0D,0xFC,0xFF};
-static const uint8_t animationElectricShield2[] =		{0x03,0x00,0x01,0x02,0xFC,0xFF,0x00};
+//Barrier animation (Lightning Barrier)
+static const uint8_t animationLightningBarrierIdle[] =	{0x01,0x00,0x00,0x01,0x01,0x02,0x02,0x03,0x03,0x04,0x04,0x05,0x05,0x06,0x06,0x07,0x07,0x08,0x08,0x09,0x0A,0x0B,0x16,0x16,0x15,0x15,0x14,0x14,0x13,0x13,0x12,0x12,0x11,0x11,0x10,0x10,0x0F,0x0F,0x0E,0x0E,0x09,0x0A,0x0B,0xFF};
+static const uint8_t animationLightningBarrierUse[] =		{0x00,0x0C,0x0D,0x17,0x0C,0x0D,0x17,0x0C,0x0D,0x17,0x0C,0x0D,0x17,0x0C,0x0D,0x17,0x0C,0x0D,0x17,0x0C,0x0D,0xFC,0xFF};
+static const uint8_t animationLightningBarrierSpark[] =	{0x03,0x00,0x01,0x02,0xFC,0xFF,0x00};
 
-static const uint8_t* animationListElectricShield[] = {
-	animationElectricShieldIdle,
-	animationElectricShieldUse,
-	animationElectricShield2,
+static const uint8_t* animationListLightningBarrier[] = {
+	animationLightningBarrierIdle,
+	animationLightningBarrierUse,
+	animationLightningBarrierSpark,
 };
 
-//Shield animation (bubble shield)
-static const uint8_t animationBubbleShieldIdle[] =		{0x01,0x00,0x09,0x00,0x09,0x00,0x09,0x01,0x0A,0x01,0x0A,0x01,0x0A,0x02,0x09,0x02,0x09,0x02,0x09,0x03,0x0A,0x03,0x0A,0x03,0x0A,0x04,0x09,0x04,0x09,0x04,0x09,0x05,0x0A,0x05,0x0A,0x05,0x0A,0x06,0x09,0x06,0x09,0x06,0x09,0x07,0x0A,0x07,0x0A,0x07,0x0A,0x08,0x09,0x08,0x09,0x08,0x09,0xFF};
-static const uint8_t animationBubbleShieldUse[] =		{0x05,0x09,0x0B,0x0B,0x0B,0xFD,0x00};
-static const uint8_t animationBubbleShieldSquish[] =	{0x05,0x0C,0x0C,0x0B,0xFD,0x00,0x00};
+//Barrier animation (Aqua Barrier)
+static const uint8_t animationAquaBarrierIdle[] =	{0x01,0x00,0x09,0x00,0x09,0x00,0x09,0x01,0x0A,0x01,0x0A,0x01,0x0A,0x02,0x09,0x02,0x09,0x02,0x09,0x03,0x0A,0x03,0x0A,0x03,0x0A,0x04,0x09,0x04,0x09,0x04,0x09,0x05,0x0A,0x05,0x0A,0x05,0x0A,0x06,0x09,0x06,0x09,0x06,0x09,0x07,0x0A,0x07,0x0A,0x07,0x0A,0x08,0x09,0x08,0x09,0x08,0x09,0xFF};
+static const uint8_t animationAquaBarrierUse[] =	{0x05,0x09,0x0B,0x0B,0x0B,0xFD,0x00};
+static const uint8_t animationAquaBarrierSquish[] =	{0x05,0x0C,0x0C,0x0B,0xFD,0x00,0x00};
 
-static const uint8_t* animationListBubbleShield[] = {
-	animationBubbleShieldIdle,
-	animationBubbleShieldUse,
-	animationBubbleShieldSquish,
+static const uint8_t* animationListAquaBarrier[] = {
+	animationAquaBarrierIdle,
+	animationAquaBarrierUse,
+	animationAquaBarrierSquish,
 };
 
-//Shield, invincibility stars, and super stars object
+//Barrier and super stars object
 //#define FIX_WEIRD_SUPER_STAR_TRACKING   //For some reason, when the super stars first appear when you reach the required speed, they follow the player until it loops, where it then trails behind
 
-void ObjShield(OBJECT *object)
+void ObjBarrier(OBJECT *object)
 {
 	enum ROUTINE
 	{
@@ -533,14 +533,14 @@ void ObjShield(OBJECT *object)
 			}
 		}
 	}
-	//Shield
+	//Barrier
 	else if (!object->parentPlayer->item.isInvincible)
 	{
-		//Reset if wasn't the shield we are now
-		if ((SHIELD)object->routine != object->parentPlayer->shield)
+		//Reset if wasn't the barrier we are now
+		if ((BARRIER)object->routine != object->parentPlayer->barrier)
 		{
-			//Copy our current shield
-			object->routine = object->parentPlayer->shield;
+			//Copy our current barrier
+			object->routine = object->parentPlayer->barrier;
 			
 			//Reset animation state
 			object->anim = 0;
@@ -554,16 +554,16 @@ void ObjShield(OBJECT *object)
 		object->x.pos = object->parentPlayer->x.pos;
 		object->y.pos = object->parentPlayer->y.pos;
 		
-		//Do shield specific code (this includes getting our things)
+		//Do barrier specific code (this includes getting our things)
 		const char *useMapping = nullptr;
 		const uint8_t **useAniList = nullptr;
 		
-		switch (object->parentPlayer->shield)
+		switch (object->parentPlayer->barrier)
 		{
-			case SHIELD_BLUE:
-				//Use blue shield mappings and animations
-				useMapping = "data/Object/BlueShield.map";
-				useAniList = animationListBlueShield;
+			case BARRIER_BLUE:
+				//Use blue barrier mappings and animations
+				useMapping = "data/Object/BlueBarrier.map";
+				useAniList = animationListBlueBarrier;
 				
 				//Set our render properties
 				object->priority = 1;
@@ -571,10 +571,10 @@ void ObjShield(OBJECT *object)
 				object->heightPixels = 24;
 				object->renderFlags.alignPlane = true;
 				break;
-			case SHIELD_FIRE:
-				//Use fire shield mappings and animations
-				useMapping = "data/Object/FireShield.map";
-				useAniList = animationListFireShield;
+			case BARRIER_FLAME:
+				//Use flame barrier mappings and animations
+				useMapping = "data/Object/FlameBarrier.map";
+				useAniList = animationListFlameBarrier;
 				
 				//Set our render properties
 				object->priority = 1;
@@ -592,14 +592,14 @@ void ObjShield(OBJECT *object)
 				//Extinguish once in water
 				if (object->parentPlayer->status.underwater)
 				{
-					object->parentPlayer->GiveShield(SOUNDID_NULL, SHIELD_NULL);
+					object->parentPlayer->GiveBarrier(SOUNDID_NULL, BARRIER_NULL);
 					return;
 				}
 				break;
-			case SHIELD_ELECTRIC:
-				//Use electric shield mappings and animations
-				useMapping = "data/Object/ElectricShield.map";
-				useAniList = animationListElectricShield;
+			case BARRIER_LIGHTNING:
+				//Use lightning barrier mappings and animations
+				useMapping = "data/Object/LightningBarrier.map";
+				useAniList = animationListLightningBarrier;
 				
 				//Set our render properties
 				object->priority = 1;
@@ -618,14 +618,14 @@ void ObjShield(OBJECT *object)
 				//Extinguish once in water
 				if (object->parentPlayer->status.underwater)
 				{
-					object->parentPlayer->GiveShield(SOUNDID_NULL, SHIELD_NULL);
+					object->parentPlayer->GiveBarrier(SOUNDID_NULL, BARRIER_NULL);
 					return;
 				}
 				break;
-			case SHIELD_BUBBLE:
-				//Use bubble shield mappings and animations
-				useMapping = "data/Object/BubbleShield.map";
-				useAniList = animationListBubbleShield;
+			case BARRIER_AQUA:
+				//Use aqua barrier mappings and animations
+				useMapping = "data/Object/AquaBarrier.map";
+				useAniList = animationListAquaBarrier;
 				
 				//Set our render properties
 				object->priority = 1;
@@ -633,10 +633,10 @@ void ObjShield(OBJECT *object)
 				object->heightPixels = 24;
 				object->renderFlags.alignPlane = true;
 				break;
-			default: //Insta-shield
-				//Use insta-shield mappings and animations
-				useMapping = "data/Object/InstaShield.map";
-				useAniList = animationListInstaShield;
+			default: //Double spin attack
+				//Use spin attack mappings and animations
+				useMapping = "data/Object/DoubleSpinAttack.map";
+				useAniList = animationListSpinAttack;
 				
 				//Set our render properties
 				object->priority = 1;
@@ -651,7 +651,7 @@ void ObjShield(OBJECT *object)
 				//When we reach the end of the animation, end our attack
 				if (object->mappingFrame == 7)
 				{
-				#ifndef SONIC3_INSTASHIELD_LAND
+				#ifndef SONIC3_SPINATTACK_LAND
 					if (object->parentPlayer->jumpAbility == 1)
 				#endif
 						object->parentPlayer->jumpAbility = 2;
@@ -666,17 +666,17 @@ void ObjShield(OBJECT *object)
 		//Animate
 		object->Animate(useAniList);
 		
-		//Do post-animation shield specific code (specifically priority stuff)
-		switch (object->parentPlayer->shield)
+		//Do post-animation barrier specific code (specifically priority stuff)
+		switch (object->parentPlayer->barrier)
 		{
-			case SHIELD_FIRE:
+			case BARRIER_FLAME:
 				//Check if we should be drawn behind the player
 				if (object->mappingFrame < 0x0F)
 					object->priority = 1;
 				else
 					object->priority = 4;
 				break;
-			case SHIELD_ELECTRIC:
+			case BARRIER_LIGHTNING:
 				//Check if we should be drawn behind the player
 				if (object->mappingFrame < 0x0E)
 					object->priority = 1;
@@ -692,7 +692,7 @@ void ObjShield(OBJECT *object)
 	}
 	else
 	{
-		//Set our routine to invincibility star so we resume shield state properly
+		//Set our routine to invincibility star so we resume barrier / star state properly
 		object->routine = ROUTINE_INVINCIBILITYSTAR;
 	}
 }
@@ -935,9 +935,9 @@ PLAYER::PLAYER(const char *specPath, PLAYER *myFollow, size_t myController) : co
 	skidDust->parentPlayer = this;
 	gLevel->coreObjectList.link_back(skidDust);
 	
-	shieldObject = new OBJECT(&ObjShield);
-	shieldObject->parentPlayer = this;
-	gLevel->coreObjectList.link_back(shieldObject);
+	barrierObject = new OBJECT(&ObjBarrier);
+	barrierObject->parentPlayer = this;
+	gLevel->coreObjectList.link_back(barrierObject);
 	
 	for (int i = 0; i < INVINCIBILITYSTARS; i++)
 	{
@@ -963,14 +963,14 @@ void PLAYER::SetSpeedFromDefinition(SPEEDDEFINITION definition)
 	jumpRelease = definition.jumpRelease;
 }
 
-//Generic collision functions
-uint8_t PLAYER::AngleIn(uint8_t angleSide, int16_t *distance, int16_t *distance2)
+//General floor choosing function
+uint8_t PLAYER::GetCloserFloor_General(uint8_t angleSide, int16_t *distance, int16_t *distance2)
 {
-	uint8_t outAngle = secondaryAngle;
-
+	//Get the closer floor and use that
+	uint8_t outAngle = floorAngle2;
 	if (*distance2 > *distance)
 	{
-		outAngle = primaryAngle;
+		outAngle = floorAngle1;
 
 		int16_t temp = *distance; //Keep a copy because we're swapping the distances
 		*distance = *distance2;
@@ -983,202 +983,177 @@ uint8_t PLAYER::AngleIn(uint8_t angleSide, int16_t *distance, int16_t *distance2
 	return outAngle;
 }
 
-void PLAYER::CheckFloor(COLLISIONLAYER layer, int16_t *distance, int16_t *distance2, uint8_t *outAngle)
+//2-point collision checks
+void PLAYER::CheckCollisionDown_2Point(COLLISIONLAYER layer, int16_t xPos, int16_t yPos, int16_t *distance, int16_t *distance2, uint8_t *outAngle)
 {
-	int16_t retDistance = FindFloor(x.pos + xRadius, y.pos + yRadius, layer, false, &primaryAngle);
-	int16_t retDistance2 = FindFloor(x.pos - xRadius, y.pos + yRadius, layer, false, &secondaryAngle);
+	int16_t retDistance = GetCollisionV(xPos + xRadius, yPos + yRadius, layer, false, &floorAngle1);
+	int16_t retDistance2 = GetCollisionV(xPos - xRadius, yPos + yRadius, layer, false, &floorAngle2);
 
-	uint8_t retAngle = AngleIn(0x00, &retDistance, &retDistance2);
-
+	uint8_t retAngle = GetCloserFloor_General(0x00, &retDistance, &retDistance2);
 	if (distance != nullptr)
 		*distance = retDistance;
-
 	if (distance2 != nullptr)
 		*distance2 = retDistance2;
-
 	if (outAngle != nullptr)
 		*outAngle = retAngle;
 }
 
-void PLAYER::CheckCeiling(COLLISIONLAYER layer, int16_t *distance, int16_t *distance2, uint8_t *outAngle)
+void PLAYER::CheckCollisionUp_2Point(COLLISIONLAYER layer, int16_t xPos, int16_t yPos, int16_t *distance, int16_t *distance2, uint8_t *outAngle)
 {
-	int16_t retDistance = FindFloor(x.pos + xRadius, y.pos - yRadius, layer, true, &primaryAngle);
-	int16_t retDistance2 = FindFloor(x.pos - xRadius, y.pos - yRadius, layer, true, &secondaryAngle);
+	int16_t retDistance = GetCollisionV(xPos + xRadius, yPos - yRadius, layer, true, &floorAngle1);
+	int16_t retDistance2 = GetCollisionV(xPos - xRadius, yPos - yRadius, layer, true, &floorAngle2);
 
-	uint8_t retAngle = AngleIn(0x80, &retDistance, &retDistance2);
-
+	uint8_t retAngle = GetCloserFloor_General(0x80, &retDistance, &retDistance2);
 	if (distance != nullptr)
 		*distance = retDistance;
-
 	if (distance2 != nullptr)
 		*distance2 = retDistance2;
-	
 	if (outAngle != nullptr)
 		*outAngle = retAngle;
 }
 
-//Check floor distance
-int16_t PLAYER::ChkFloorEdge(COLLISIONLAYER layer, int16_t xPos, int16_t yPos, uint8_t *outAngle)
+void PLAYER::CheckCollisionLeft_2Point(COLLISIONLAYER layer, int16_t xPos, int16_t yPos, int16_t *distance, int16_t *distance2, uint8_t *outAngle)
 {
-	//Clear primary angle
-	primaryAngle = 0;
-	
-	//Get floor distance and angle
-	int16_t distance = FindFloor(xPos, yPos + (status.reverseGravity ? -yRadius : yRadius), layer, status.reverseGravity, &primaryAngle);
+	int16_t retDistance = GetCollisionH(xPos - yRadius, yPos - xRadius, layer, true, &floorAngle1);
+	int16_t retDistance2 = GetCollisionH(xPos - yRadius, yPos + xRadius, layer, true, &floorAngle2);
+
+	uint8_t retAngle = GetCloserFloor_General(0x40, &retDistance, &retDistance2);
+	if (distance != nullptr)
+		*distance = retDistance;
+	if (distance2 != nullptr)
+		*distance2 = retDistance2;
 	if (outAngle != nullptr)
-		*outAngle = (primaryAngle & 0x01) ? 0 : primaryAngle;
-	return distance;
+		*outAngle = retAngle;
+}
+
+void PLAYER::CheckCollisionRight_2Point(COLLISIONLAYER layer, int16_t xPos, int16_t yPos, int16_t *distance, int16_t *distance2, uint8_t *outAngle)
+{
+	int16_t retDistance = GetCollisionH(xPos + yRadius, yPos - xRadius, layer, false, &floorAngle1);
+	int16_t retDistance2 = GetCollisionH(xPos + yRadius, yPos + xRadius, layer, false, &floorAngle2);
+
+	uint8_t retAngle = GetCloserFloor_General(0xC0, &retDistance, &retDistance2);
+	if (distance != nullptr)
+		*distance = retDistance;
+	if (distance2 != nullptr)
+		*distance2 = retDistance2;
+	if (outAngle != nullptr)
+		*outAngle = retAngle;
 }
 
 //Get distance functions
-uint8_t PLAYER::AngleSide(uint8_t angleSide)
-{
-	return (primaryAngle & 0x01) ? angleSide : primaryAngle;
-}
+uint8_t PLAYER::AngleSide(uint8_t angleSide) { return (floorAngle1 & 0x01) ? angleSide : floorAngle1; }
 
-int16_t PLAYER::CheckFloorDist(int16_t xPos, int16_t yPos, COLLISIONLAYER layer, uint8_t *outAngle)
+int16_t PLAYER::CheckCollisionDown_1Point(COLLISIONLAYER layer, int16_t xPos, int16_t yPos, uint8_t *outAngle)
 {
-	int16_t distance = FindFloor(xPos, yPos + 10, layer, false, &primaryAngle);
+	int16_t distance = GetCollisionV(xPos, yPos + 10, layer, false, &floorAngle1);
 	if (outAngle != nullptr)
 		*outAngle = AngleSide(0x00);
 	return distance;
 }
 
-int16_t PLAYER::CheckCeilingDist(int16_t xPos, int16_t yPos, COLLISIONLAYER layer, uint8_t *outAngle)
+int16_t PLAYER::CheckCollisionUp_1Point(COLLISIONLAYER layer, int16_t xPos, int16_t yPos, uint8_t *outAngle)
 {
-	int16_t distance = FindFloor(xPos, yPos - 10, layer, true, &primaryAngle);
+	int16_t distance = GetCollisionV(xPos, yPos - 10, layer, true, &floorAngle1);
 	if (outAngle != nullptr)
 		*outAngle = AngleSide(0x80);
 	return distance;
 }
 
-int16_t PLAYER::CheckLeftWallDist(int16_t xPos, int16_t yPos, COLLISIONLAYER layer, uint8_t *outAngle)
+int16_t PLAYER::CheckCollisionLeft_1Point(COLLISIONLAYER layer, int16_t xPos, int16_t yPos, uint8_t *outAngle)
 {
-	int16_t distance = FindWall(xPos - 10, yPos, layer, true, &primaryAngle);
+	int16_t distance = GetCollisionH(xPos - 10, yPos, layer, true, &floorAngle1);
 	if (outAngle != nullptr)
 		*outAngle = AngleSide(0x40);
 	return distance;
 }
 
-int16_t PLAYER::CheckRightWallDist(int16_t xPos, int16_t yPos, COLLISIONLAYER layer, uint8_t *outAngle)
+int16_t PLAYER::CheckCollisionRight_1Point(COLLISIONLAYER layer, int16_t xPos, int16_t yPos, uint8_t *outAngle)
 {
-	int16_t distance = FindWall(xPos + 10, yPos, layer, false, &primaryAngle);
+	int16_t distance = GetCollisionH(xPos + 10, yPos, layer, false, &floorAngle1);
 	if (outAngle != nullptr)
 		*outAngle = AngleSide(0xC0);
 	return distance;
 }
 
-//Left and right ceiling distance functions
-int16_t PLAYER::CheckLeftCeilingDist(COLLISIONLAYER layer, uint8_t *outAngle)
+//Calculate room perpendicular to the given angle (90 degrees clockwise)
+int16_t PLAYER::GetDistancePerpendicular(uint8_t inAngle)
 {
-	int16_t distance = FindWall(x.pos - yRadius, y.pos - xRadius, layer, true, &primaryAngle);
-	int16_t distance2 = FindWall(x.pos - yRadius, y.pos + xRadius, layer, true, &secondaryAngle);
-
-	uint8_t angle = AngleIn(0x40, &distance, &distance2);
-
-	if (outAngle)
-		*outAngle = angle;
-
-	return distance2;
-}
-
-int16_t PLAYER::CheckRightCeilingDist(COLLISIONLAYER layer, uint8_t *outAngle)
-{
-	int16_t distance = FindWall(x.pos + yRadius, y.pos - xRadius, layer, false, &primaryAngle);
-	int16_t distance2 = FindWall(x.pos + yRadius, y.pos + xRadius, layer, false, &secondaryAngle);
-
-	uint8_t angle = AngleIn(0xC0, &distance, &distance2);
-
-	if (outAngle)
-		*outAngle = angle;
-
-	return distance2;
-}
-
-//Calculate room on top of us
-int16_t PLAYER::CalcRoomOverHead(uint8_t upAngle)
-{
-	primaryAngle = upAngle;
-	secondaryAngle = upAngle;
+	floorAngle1 = inAngle;
+	floorAngle2 = inAngle;
 
 	int16_t distance = 0;
-	switch ((upAngle + 0x20) & 0xC0)
+	switch ((inAngle + 0x20) & 0xC0)
 	{
-		case 0:
-			CheckFloor(topSolidLayer, nullptr, &distance, nullptr);
+		case 0x00:
+			CheckCollisionDown_2Point(topSolidLayer, x.pos, y.pos, nullptr, &distance, nullptr);
 			break;
 		case 0x40:
-			distance = CheckLeftCeilingDist(lrbSolidLayer, nullptr);
+			CheckCollisionLeft_2Point(lrbSolidLayer, x.pos, y.pos, nullptr, &distance, nullptr);
 			break;
 		case 0x80:
-			CheckCeiling(lrbSolidLayer, nullptr, &distance, nullptr);
+			CheckCollisionUp_2Point(lrbSolidLayer, x.pos, y.pos, nullptr, &distance, nullptr);
 			break;
 		case 0xC0:
-			distance = CheckRightCeilingDist(lrbSolidLayer, nullptr);
+			CheckCollisionRight_2Point(lrbSolidLayer, x.pos, y.pos, nullptr, &distance, nullptr);
 			break;
 	}
 
 	return distance;
 }
 
-//Calculate room in front of us
-int16_t PLAYER::CalcRoomInFront(uint8_t moveAngle)
+//Get distance of walls in front of us (and a frame ahead)
+int16_t PLAYER::GetWallDistance(uint8_t inAngle)
 {
 	int16_t xPos = (xPosLong + (xVel << 8)) >> 16;
 	int16_t yPos = (yPosLong + (yVel * (status.reverseGravity ? -0x100 : 0x100))) >> 16;
 
-	primaryAngle = moveAngle;
-	secondaryAngle = moveAngle;
-	uint8_t offAngle = moveAngle;
-
+	floorAngle1 = inAngle;
+	floorAngle2 = inAngle;
+	
+	uint8_t offAngle = inAngle;
 	if (offAngle + 0x20 >= 0x80)
 	{
 		if (offAngle >= 0x80)
 			--offAngle;
-
 		offAngle += 0x20;
 	}
 	else
 	{
 		if (offAngle >= 0x80)
 			++offAngle;
-
 		offAngle += 0x1F;
 	}
 
-	offAngle &= 0xC0;
-
-	if (offAngle == 0)
+	switch (offAngle & 0xC0)
 	{
-		return CheckFloorDist(xPos, yPos, lrbSolidLayer, nullptr);
+		case 0x00: //Downwards
+			return CheckCollisionDown_1Point(lrbSolidLayer, xPos, yPos, nullptr);
+		case 0x80: //Upwards
+			return CheckCollisionUp_1Point(lrbSolidLayer, xPos, yPos, nullptr);
+		case 0x40: //Left
+			//If at a shallow angle, offset the position down 8 pixels (keep us from clipping up small steps)
+			if ((angle & 0x38) == 0)
+				yPos += 8;
+			return CheckCollisionLeft_1Point(lrbSolidLayer, xPos, yPos, nullptr);
+		case 0xC0: //Right
+			//If at a shallow angle, offset the position down 8 pixels (keep us from clipping up small steps)
+			if ((angle & 0x38) == 0)
+				yPos += 8;
+			return CheckCollisionRight_1Point(lrbSolidLayer, xPos, yPos, nullptr);
 	}
-	else if (offAngle == 0x80)
-	{
-		return CheckCeilingDist(xPos, yPos, lrbSolidLayer, nullptr);
-	}
-	else
-	{
-		//If at a low angle, offset the position down 8 pixels
-		if ((angle & 0x38) == 0)
-			yPos += 8;
-		
-		if (offAngle == 0x40)
-			return CheckLeftWallDist(xPos, yPos, lrbSolidLayer, nullptr);
-		else
-			return CheckRightWallDist(xPos, yPos, lrbSolidLayer, nullptr);
-	}
+	return 0;
 }
 
 //Ground collision function
-int16_t PLAYER::Angle(int16_t distance, int16_t distance2)
+int16_t PLAYER::GetCloserFloor_Ground(int16_t distance, int16_t distance2)
 {
 	//Get which distance is closer and use that for our calculation purposes
 	int16_t outDistance = distance2;
-	uint8_t thisAngle = secondaryAngle;
+	uint8_t thisAngle = floorAngle2;
 	
 	if (distance2 > distance)
 	{
-		thisAngle = distance2 > distance ? primaryAngle : secondaryAngle;
+		thisAngle = distance2 > distance ? floorAngle1 : floorAngle2;
 		outDistance = distance;
 	}
 
@@ -1201,7 +1176,7 @@ int16_t PLAYER::Angle(int16_t distance, int16_t distance2)
 	return outDistance;
 }
 
-void PLAYER::AnglePos()
+void PLAYER::GroundFloorCollision()
 {
 	//Invert angle if gravity is reversed
 	bool reverseGravity = status.reverseGravity;
@@ -1211,14 +1186,14 @@ void PLAYER::AnglePos()
 	if (status.shouldNotFall)
 	{
 		//Default to just standing on flat ground if we're standing on an object or something
-		primaryAngle = 0;
-		secondaryAngle = 0;
+		floorAngle1 = 0;
+		floorAngle2 = 0;
 	}
 	else
 	{
 		//Set primary and secondary angle to 3
-		primaryAngle = 3;
-		secondaryAngle = 3;
+		floorAngle1 = 3;
+		floorAngle2 = 3;
 		
 		//Get the angle to use for determining our ground orientation (floor, wall, or ceiling)
 		uint8_t offAngle = angle;
@@ -1240,9 +1215,9 @@ void PLAYER::AnglePos()
 		{
 			case 0x00: //Floor
 			{
-				int16_t distance = FindFloor(x.pos + xRadius, y.pos + yRadius, topSolidLayer, false, &primaryAngle);
-				int16_t distance2 = FindFloor(x.pos - xRadius, y.pos + yRadius, topSolidLayer, false, &secondaryAngle);
-				int16_t nearestDifference = Angle(distance, distance2);
+				int16_t distance = GetCollisionV(x.pos + xRadius, y.pos + yRadius, topSolidLayer, false, &floorAngle1);
+				int16_t distance2 = GetCollisionV(x.pos - xRadius, y.pos + yRadius, topSolidLayer, false, &floorAngle2);
+				int16_t nearestDifference = GetCloserFloor_Ground(distance, distance2);
 				
 				if (nearestDifference < 0)
 				{
@@ -1274,9 +1249,9 @@ void PLAYER::AnglePos()
 			
 			case 0x40: //Wall to the left of us
 			{
-				int16_t distance = FindWall(x.pos - yRadius, y.pos - xRadius, topSolidLayer, true, &primaryAngle);
-				int16_t distance2 = FindWall(x.pos - yRadius, y.pos + xRadius, topSolidLayer, true, &secondaryAngle);
-				int16_t nearestDifference = Angle(distance, distance2);
+				int16_t distance = GetCollisionH(x.pos - yRadius, y.pos - xRadius, topSolidLayer, true, &floorAngle1);
+				int16_t distance2 = GetCollisionH(x.pos - yRadius, y.pos + xRadius, topSolidLayer, true, &floorAngle2);
+				int16_t nearestDifference = GetCloserFloor_Ground(distance, distance2);
 				
 				if (nearestDifference < 0)
 				{
@@ -1308,9 +1283,9 @@ void PLAYER::AnglePos()
 			
 			case 0x80: //Ceiling
 			{
-				int16_t distance = FindFloor(x.pos + xRadius, y.pos - yRadius, topSolidLayer, true, &primaryAngle);
-				int16_t distance2 = FindFloor(x.pos - xRadius, y.pos - yRadius, topSolidLayer, true, &secondaryAngle);
-				int16_t nearestDifference = Angle(distance, distance2);
+				int16_t distance = GetCollisionV(x.pos + xRadius, y.pos - yRadius, topSolidLayer, true, &floorAngle1);
+				int16_t distance2 = GetCollisionV(x.pos - xRadius, y.pos - yRadius, topSolidLayer, true, &floorAngle2);
+				int16_t nearestDifference = GetCloserFloor_Ground(distance, distance2);
 				
 				if (nearestDifference < 0)
 				{
@@ -1342,9 +1317,9 @@ void PLAYER::AnglePos()
 			
 			case 0xC0: //Wall to the right of us
 			{
-				int16_t distance = FindWall(x.pos + yRadius, y.pos - xRadius, topSolidLayer, false, &primaryAngle);
-				int16_t distance2 = FindWall(x.pos + yRadius, y.pos + xRadius, topSolidLayer, false, &secondaryAngle);
-				int16_t nearestDifference = Angle(distance, distance2);
+				int16_t distance = GetCollisionH(x.pos + yRadius, y.pos - xRadius, topSolidLayer, false, &floorAngle1);
+				int16_t distance2 = GetCollisionH(x.pos + yRadius, y.pos + xRadius, topSolidLayer, false, &floorAngle2);
+				int16_t nearestDifference = GetCloserFloor_Ground(distance, distance2);
 				
 				if (nearestDifference < 0)
 				{
@@ -1381,7 +1356,7 @@ void PLAYER::AnglePos()
 		angle = -(angle + 0x40) - 0x40;
 }
 
-void PLAYER::CheckWallsOnGround()
+void PLAYER::GroundWallCollision()
 {
 	if (objectControl.disableWallCollision)
 		return;
@@ -1393,7 +1368,7 @@ void PLAYER::CheckWallsOnGround()
 #endif
 	{
 		uint8_t faceAngle = angle + (inertia < 0 ? 0x40 : -0x40);
-		int16_t distance = CalcRoomInFront(faceAngle) << 8;
+		int16_t distance = GetWallDistance(faceAngle) << 8;
 
 		if (distance < 0)
 		{
@@ -1435,7 +1410,7 @@ void PLAYER::CheckWallsOnGround()
 }
 
 //Air collision functions
-void PLAYER::DoLevelCollision()
+void PLAYER::AirCollision()
 {
 	//Remember our previous jump ability property
 	uint8_t prevProperty = abilityProperty;
@@ -1450,7 +1425,7 @@ void PLAYER::DoLevelCollision()
 			int16_t distance, distance2;
 			
 			//Check for wall collisions
-			distance = CheckLeftWallDist(x.pos, y.pos, lrbSolidLayer, nullptr);
+			distance = CheckCollisionLeft_1Point(lrbSolidLayer, x.pos, y.pos, nullptr);
 			if (distance < 0)
 			{
 				//Clip out and stop our velocity
@@ -1458,7 +1433,7 @@ void PLAYER::DoLevelCollision()
 				xVel = 0;
 			}
 			
-			distance = CheckRightWallDist(x.pos, y.pos, lrbSolidLayer, nullptr);
+			distance = CheckCollisionRight_1Point(lrbSolidLayer, x.pos, y.pos, nullptr);
 			if (distance < 0)
 			{
 				//Clip out and stop our velocity
@@ -1471,11 +1446,11 @@ void PLAYER::DoLevelCollision()
 			
 			if (!status.reverseGravity)
 			{
-				CheckFloor(topSolidLayer, &distance, &distance2, &floorAngle);
+				CheckCollisionDown_2Point(topSolidLayer, x.pos, y.pos, &distance, &distance2, &floorAngle);
 			}
 			else
 			{
-				CheckCeiling(lrbSolidLayer, &distance, &distance2, &floorAngle);
+				CheckCollisionUp_2Point(lrbSolidLayer, x.pos, y.pos, &distance, &distance2, &floorAngle);
 				floorAngle = -(floorAngle + 0x40) - 0x40;
 			}
 			
@@ -1524,7 +1499,7 @@ void PLAYER::DoLevelCollision()
 		case 0x40: //Moving to the left
 		{
 			//Collide with walls to the left of us
-			int16_t distance = CheckLeftWallDist(x.pos, y.pos, lrbSolidLayer, nullptr);
+			int16_t distance = CheckCollisionLeft_1Point(lrbSolidLayer, x.pos, y.pos, nullptr);
 
 			if (distance < 0)
 			{
@@ -1539,9 +1514,9 @@ void PLAYER::DoLevelCollision()
 			{
 				//Collide with ceilings
 				if (!status.reverseGravity)
-					CheckCeiling(lrbSolidLayer, nullptr, &distance, nullptr);
+					CheckCollisionUp_2Point(lrbSolidLayer, x.pos, y.pos, nullptr, &distance, nullptr);
 				else
-					CheckFloor(topSolidLayer, nullptr, &distance, nullptr);
+					CheckCollisionDown_2Point(topSolidLayer, x.pos, y.pos, nullptr, &distance, nullptr);
 				
 				if (distance < 0)
 				{
@@ -1563,7 +1538,7 @@ void PLAYER::DoLevelCollision()
 					else
 					{
 						//Collide with walls to the right?
-						int16_t distance = CheckRightWallDist(x.pos, y.pos, lrbSolidLayer, nullptr);
+						int16_t distance = CheckCollisionRight_1Point(lrbSolidLayer, x.pos, y.pos, nullptr);
 						
 						if (distance < 0)
 						{
@@ -1579,11 +1554,11 @@ void PLAYER::DoLevelCollision()
 					uint8_t floorAngle;
 					if (!status.reverseGravity)
 					{
-						CheckFloor(topSolidLayer, nullptr, &distance, &floorAngle);
+						CheckCollisionDown_2Point(topSolidLayer, x.pos, y.pos, nullptr, &distance, &floorAngle);
 					}
 					else
 					{
-						CheckCeiling(lrbSolidLayer, nullptr, &distance, &floorAngle);
+						CheckCollisionUp_2Point(lrbSolidLayer, x.pos, y.pos, nullptr, &distance, &floorAngle);
 						floorAngle = -(floorAngle + 0x40) - 0x40;
 					}
 					
@@ -1614,7 +1589,7 @@ void PLAYER::DoLevelCollision()
 		{
 			//Check for wall collisions
 			int16_t distance;
-			distance = CheckLeftWallDist(x.pos, y.pos, lrbSolidLayer, nullptr);
+			distance = CheckCollisionLeft_1Point(lrbSolidLayer, x.pos, y.pos, nullptr);
 			if (distance < 0)
 			{
 				//Clip out of the wall and stop our velocity
@@ -1622,7 +1597,7 @@ void PLAYER::DoLevelCollision()
 				xVel = 0;
 			}
 			
-			distance = CheckRightWallDist(x.pos, y.pos, lrbSolidLayer, nullptr);
+			distance = CheckCollisionRight_1Point(lrbSolidLayer, x.pos, y.pos, nullptr);
 			if (distance < 0)
 			{
 				//Clip out of the wall and stop our velocity
@@ -1634,11 +1609,11 @@ void PLAYER::DoLevelCollision()
 			uint8_t ceilingAngle;
 			if (!status.reverseGravity)
 			{
-				CheckCeiling(lrbSolidLayer, nullptr, &distance, &ceilingAngle);
+				CheckCollisionUp_2Point(lrbSolidLayer, x.pos, y.pos, nullptr, &distance, &ceilingAngle);
 			}
 			else
 			{
-				CheckFloor(topSolidLayer, nullptr, &distance, &ceilingAngle);
+				CheckCollisionDown_2Point(topSolidLayer, x.pos, y.pos, nullptr, &distance, &ceilingAngle);
 				ceilingAngle = -(ceilingAngle + 0x40) - 0x40;
 			}
 			
@@ -1670,7 +1645,7 @@ void PLAYER::DoLevelCollision()
 		case 0xC0: //Moving to the right
 		{
 			//Collide with walls
-			int16_t distance = CheckRightWallDist(x.pos, y.pos, lrbSolidLayer, nullptr);
+			int16_t distance = CheckCollisionRight_1Point(lrbSolidLayer, x.pos, y.pos, nullptr);
 
 			if (distance < 0)
 			{
@@ -1685,9 +1660,9 @@ void PLAYER::DoLevelCollision()
 			{
 				//Collide with ceilings
 				if (!status.reverseGravity)
-					CheckCeiling(lrbSolidLayer, nullptr, &distance, nullptr);
+					CheckCollisionUp_2Point(lrbSolidLayer, x.pos, y.pos, nullptr, &distance, nullptr);
 				else
-					CheckFloor(topSolidLayer, nullptr, &distance, nullptr);
+					CheckCollisionDown_2Point(topSolidLayer, x.pos, y.pos, nullptr, &distance, nullptr);
 				
 				if (distance < 0)
 				{
@@ -1707,11 +1682,11 @@ void PLAYER::DoLevelCollision()
 					uint8_t floorAngle;
 					if (!status.reverseGravity)
 					{
-						CheckFloor(topSolidLayer, nullptr, &distance, &floorAngle);
+						CheckCollisionDown_2Point(topSolidLayer, x.pos, y.pos, nullptr, &distance, &floorAngle);
 					}
 					else
 					{
-						CheckCeiling(lrbSolidLayer, nullptr, &distance, &floorAngle);
+						CheckCollisionUp_2Point(lrbSolidLayer, x.pos, y.pos, nullptr, &distance, &floorAngle);
 						floorAngle = -(floorAngle + 0x40) - 0x40;
 					}
 					
@@ -1812,8 +1787,8 @@ void PLAYER::LandOnFloor_SetState()
 			if (characterType == CHARACTERTYPE_SONIC && super == false)
 		#endif
 			{
-				//Bubble shield bounce
-				if (shield == SHIELD_BUBBLE)
+				//Water barrier bounce
+				if (barrier == BARRIER_AQUA)
 				{
 					//Get the force of our bounce
 					int16_t bounceForce = 0x780;
@@ -1838,9 +1813,9 @@ void PLAYER::LandOnFloor_SetState()
 					YSHIFT_ON_FLOOR(-(defaultYRadius - yRadius));
 					
 					//Play the sound and play the squish animation for the bubble
-					if (shieldObject != nullptr)
-						shieldObject->anim = 2;
-					PlaySound(SOUNDID_USE_BUBBLE_SHIELD);
+					if (barrierObject != nullptr)
+						barrierObject->anim = 2;
+					PlaySound(SOUNDID_USE_AQUA_BARRIER);
 				}
 			}
 			
@@ -1979,8 +1954,8 @@ bool PLAYER::Spindash()
 		}
 		
 		//Collide with the level (S3K has code to crush you against the foreground layer from the background here)
-		LevelBound();
-		AnglePos();
+		LevelBoundaries();
+		GroundFloorCollision();
 		return false;
 	#endif
 }
@@ -2146,7 +2121,7 @@ bool PLAYER::CDPeeloutSpindash()
 			inertia = -inertia;
 		
 		PlaySound(SOUNDID_CD_CHARGE);
-		ChkRoll();
+		PerformRoll();
 		return false;
 	}
 	else
@@ -2317,7 +2292,7 @@ void PLAYER::JumpAbilities()
 		{
 			if (!hyper)
 			{
-				//Set our jump ability flag... but don't do anything? (In Sonic 3 this caused conflicts with the bubble shield)
+				//Set our jump ability flag... but don't do anything? (In Sonic 3 this caused conflicts with the water barrier)
 				jumpAbility = 1;
 				
 				#ifdef SONICMANIA_DROPDASH
@@ -2364,61 +2339,63 @@ void PLAYER::JumpAbilities()
 		
 		if (!item.isInvincible)
 		{
-			//Check for shield abilities
-			switch (shield)
-			{
-				case SHIELD_FIRE:
+			#ifndef SONIC12_NO_BARRIER_ABILITIES
+				//Check for barrier abilities
+				switch (barrier)
 				{
-					//Update our shield and ability flag
-					if (shieldObject != nullptr)
-						shieldObject->anim = 1;
-					jumpAbility = 1;
-					
-					//Dash in our facing direction
-					int16_t speed = 0x800;
-					if (status.xFlip)
-						speed = -speed;
-					
-					xVel = speed;
-					inertia = speed;
-					yVel = 0;
-					
-					//Make the camera lag behind us
-					scrollDelay = 0x2000;
-					ResetRecords(x.pos, y.pos);
-					PlaySound(SOUNDID_USE_FIRE_SHIELD);
-					return;
+					case BARRIER_FLAME:
+					{
+						//Update our barrier and ability flag
+						if (barrierObject != nullptr)
+							barrierObject->anim = 1;
+						jumpAbility = 1;
+						
+						//Dash in our facing direction
+						int16_t speed = 0x800;
+						if (status.xFlip)
+							speed = -speed;
+						
+						xVel = speed;
+						inertia = speed;
+						yVel = 0;
+						
+						//Make the camera lag behind us
+						scrollDelay = 0x2000;
+						ResetRecords(x.pos, y.pos);
+						PlaySound(SOUNDID_USE_FLAME_BARRIER);
+						return;
+					}
+					case BARRIER_LIGHTNING:
+					{
+						//Update our barrier and ability flag
+						if (barrierObject != nullptr)
+							barrierObject->anim = 1;
+						jumpAbility = 1;
+						
+						//Lightning barrier double jump
+						yVel = -0x680;
+						status.jumping = false;
+						PlaySound(SOUNDID_USE_LIGHTNING_BARRIER);
+						return;
+					}
+					case BARRIER_AQUA:
+					{
+						//Update our barrier and ability flag
+						if (barrierObject != nullptr)
+							barrierObject->anim = 1;
+						jumpAbility = 1;
+						
+						//Shoot down to the ground
+						xVel = 0;
+						inertia = 0;
+						yVel = 0x800;
+						PlaySound(SOUNDID_USE_AQUA_BARRIER);
+						return;
+					}
+					default:
+						break;
 				}
-				case SHIELD_ELECTRIC:
-				{
-					//Update our shield and ability flag
-					if (shieldObject != nullptr)
-						shieldObject->anim = 1;
-					jumpAbility = 1;
-					
-					//Electric shield double jump
-					yVel = -0x680;
-					status.jumping = false;
-					PlaySound(SOUNDID_USE_ELECTRIC_SHIELD);
-					return;
-				}
-				case SHIELD_BUBBLE:
-				{
-					//Update our shield and ability flag
-					if (shieldObject != nullptr)
-						shieldObject->anim = 1;
-					jumpAbility = 1;
-					
-					//Shoot down to the ground
-					xVel = 0;
-					inertia = 0;
-					yVel = 0x800;
-					PlaySound(SOUNDID_USE_BUBBLE_SHIELD);
-					return;
-				}
-				default:
-					break;
-			}
+			#endif
 			
 			//Check if we should do our super transformation
 			#if !(defined(SONIC1_NO_SUPER) || defined(SONIC2_SUPER_AT_PEAK))
@@ -2428,15 +2405,15 @@ void PLAYER::JumpAbilities()
 			
 			if (characterType == CHARACTERTYPE_SONIC)
 			{
-				//Check for insta-shield
-				#ifndef SONIC12_NO_INSTASHIELD
-					if (shield == SHIELD_NULL)
+				//Check for double spin attack
+				#ifndef SONIC12_NO_SPINATTACK
+					if (barrier == BARRIER_NULL)
 					{
-						//Update our shield and ability flag
-						if (shieldObject != nullptr)
-								shieldObject->anim = 1;
+						//Update our barrier and ability flag
+						if (barrierObject != nullptr)
+								barrierObject->anim = 1;
 						jumpAbility = 1;
-						PlaySound(SOUNDID_USE_INSTA_SHIELD);
+						PlaySound(SOUNDID_DOUBLE_SPIN_ATTACK);
 					}
 				#endif
 				
@@ -2485,7 +2462,7 @@ void PLAYER::JumpHeight()
 	}
 }
 
-void PLAYER::ChgJumpDir()
+void PLAYER::AirMovement()
 {
 	//Move left and right
 	if (!status.rollJumping)
@@ -2559,7 +2536,7 @@ void PLAYER::ChgJumpDir()
 	}
 }
 
-void PLAYER::JumpAngle()
+void PLAYER::UpdateAngleInAir()
 {
 	//Bring our angle down back upwards
 	if (angle != 0)
@@ -2633,14 +2610,14 @@ bool PLAYER::Jump()
 	
 	if (controlPress.a || controlPress.b || controlPress.c)
 	{
-		//Get the angle of our head
+		//Get our angle rotated 180 degrees (the perpendicular function is clockwise)
 		uint8_t headAngle = angle;
 		if (status.reverseGravity)
 			headAngle = (~(headAngle + 0x40)) - 0x40;
 		headAngle -= 0x80;
 		
 		//Don't jump if under a low ceiling
-		if (CalcRoomOverHead(headAngle) >= 6)
+		if (GetDistancePerpendicular(headAngle) >= 6)
 		{
 			//Apply the velocity
 			xVel += (GetCos(angle - 0x40) * jumpForce) >> 8;
@@ -2686,7 +2663,7 @@ bool PLAYER::Jump()
 }
 
 //Slope gravity related functions
-void PLAYER::SlopeResist()
+void PLAYER::RegularSlopeGravity()
 {
 	if (cdSPTimer != 0)
 		return;
@@ -2726,7 +2703,7 @@ void PLAYER::SlopeResist()
 	}
 }
 
-void PLAYER::RollRepel()
+void PLAYER::RollingSlopeGravity()
 {
 	if (cdSPTimer != 0)
 		return;
@@ -2751,7 +2728,7 @@ void PLAYER::RollRepel()
 	}
 }
 
-void PLAYER::SlopeRepel()
+void PLAYER::WallDetach()
 {
 	if (!status.stickToConvex)
 	{
@@ -2790,8 +2767,8 @@ void PLAYER::SlopeRepel()
 	}
 }
 
-//Movement functions
-void PLAYER::MoveLeft()
+//Ground movement
+void PLAYER::GroundMoveLeft()
 {
 	int16_t newInertia = inertia;
 	
@@ -2846,7 +2823,7 @@ void PLAYER::MoveLeft()
 	}
 }
 
-void PLAYER::MoveRight()
+void PLAYER::GroundMoveRight()
 {
 	int16_t newInertia = inertia;
 	
@@ -2901,7 +2878,7 @@ void PLAYER::MoveRight()
 	}
 }
 
-void PLAYER::Move()
+void PLAYER::GroundMovement()
 {
 	if (!status.isSliding)
 	{
@@ -2911,9 +2888,9 @@ void PLAYER::Move()
 			if (cdSPTimer == 0)
 			{
 				if (controlHeld.left)
-					MoveLeft();
+					GroundMoveLeft();
 				if (controlHeld.right)
-					MoveRight();
+					GroundMoveRight();
 			}
 			
 			if (((angle + 0x20) & 0xC0) == 0 && (inertia == 0 || cdSPTimer != 0))
@@ -2998,7 +2975,7 @@ void PLAYER::Move()
 				else
 				{
 					//If Sonic's middle bottom point is 12 pixels away from the floor, start balancing
-					if (ChkFloorEdge(topSolidLayer, x.pos, y.pos, nullptr) >= 12)
+					if (CheckCollisionDown_1Point(topSolidLayer, x.pos, y.pos + yRadius, nullptr) >= 12)
 					{
 						if (cdSPTimer != 0)
 						{
@@ -3008,13 +2985,13 @@ void PLAYER::Move()
 							StopChannel(SOUNDCHANNEL_FM4);
 						}
 						
-						if (nextTilt == 3) //If there's no floor to the left of us
+						if (lastFloorAngle1 == 3) //If there's no floor to the left of us
 						{
 							if (!super)
 							{
 								if (!status.xFlip)
 								{
-									if (ChkFloorEdge(topSolidLayer, x.pos - 6, y.pos, nullptr) >= 12)
+									if (CheckCollisionDown_1Point(topSolidLayer, x.pos - 6, y.pos + yRadius, nullptr) >= 12)
 										anim = PLAYERANIMATION_BALANCE2;	//Far over the edge
 									else
 										anim = PLAYERANIMATION_BALANCE1;	//Balancing on the edge
@@ -3022,7 +2999,7 @@ void PLAYER::Move()
 								else
 								{
 									//Facing right on ledge to the left of us...
-									if (ChkFloorEdge(topSolidLayer, x.pos - 6, y.pos, nullptr) >= 12)
+									if (CheckCollisionDown_1Point(topSolidLayer, x.pos - 6, y.pos + yRadius, nullptr) >= 12)
 									{
 										anim = PLAYERANIMATION_BALANCE4;	//Turn around to the "far over the edge" balancing animation
 										status.xFlip = false;
@@ -3037,13 +3014,13 @@ void PLAYER::Move()
 								status.xFlip = false;
 							}
 						}
-						else if (tilt == 3) //If there's no floor to the right of us
+						else if (lastFloorAngle2 == 3) //If there's no floor to the right of us
 						{
 							if (!super)
 							{
 								if (status.xFlip)
 								{
-									if (ChkFloorEdge(topSolidLayer, x.pos + 6, y.pos, nullptr) >= 12)
+									if (CheckCollisionDown_1Point(topSolidLayer, x.pos + 6, y.pos + yRadius, nullptr) >= 12)
 										anim = PLAYERANIMATION_BALANCE2;	//Far over the edge
 									else
 										anim = PLAYERANIMATION_BALANCE1;	//Balancing on the edge
@@ -3051,7 +3028,7 @@ void PLAYER::Move()
 								else
 								{
 									//Facing right on ledge to the left of us...
-									if (ChkFloorEdge(topSolidLayer, x.pos + 6, y.pos, nullptr) >= 12)
+									if (CheckCollisionDown_1Point(topSolidLayer, x.pos + 6, y.pos + yRadius, nullptr) >= 12)
 									{
 										anim = PLAYERANIMATION_BALANCE4;	//Turn around to the "far over the edge" balancing animation
 										status.xFlip = true;
@@ -3123,11 +3100,11 @@ void PLAYER::Move()
 	yVel = (GetSin(angle) * inertia) >> 8;
 	
 	//Collide with walls
-	CheckWallsOnGround();
+	GroundWallCollision();
 }
 
 //Rolling functions
-void PLAYER::ChkRoll()
+void PLAYER::PerformRoll()
 {
 	if (!status.inBall)
 	{
@@ -3164,7 +3141,7 @@ void PLAYER::Roll()
 			if (controlHeld.down)
 			{
 				if (mabs(inertia) >= 0x100)
-					ChkRoll();
+					PerformRoll();
 				else if (cdSPTimer == 0)
 				{
 					#ifndef FIX_DUCK_CONDITION
@@ -3184,12 +3161,12 @@ void PLAYER::Roll()
 			}
 		#else
 			if (controlHeld.down && mabs(inertia) >= 0x80)
-				ChkRoll();
+				PerformRoll();
 		#endif
 	}
 }
 
-void PLAYER::RollLeft()
+void PLAYER::RollMoveLeft()
 {
 	if (inertia <= 0)
 	{
@@ -3204,7 +3181,7 @@ void PLAYER::RollLeft()
 	}
 }
 	
-void PLAYER::RollRight()
+void PLAYER::RollMoveRight()
 {
 	if (inertia >= 0)
 	{
@@ -3219,7 +3196,7 @@ void PLAYER::RollRight()
 	}
 }
 
-void PLAYER::RollSpeed()
+void PLAYER::RollMovement()
 {
 	if (!status.isSliding)
 	{
@@ -3227,9 +3204,9 @@ void PLAYER::RollSpeed()
 		if (!(status.pinballMode || spindashing) && !moveLock)
 		{
 			if (controlHeld.left)
-				RollLeft();
+				RollMoveLeft();
 			if (controlHeld.right)
-				RollRight();
+				RollMoveRight();
 		}
 		
 		#ifdef SONICCD_SPINDASH
@@ -3347,11 +3324,11 @@ void PLAYER::RollSpeed()
 		xVel = 0x1000;
 	
 	//Collide with walls
-	CheckWallsOnGround();
+	GroundWallCollision();
 }
 
-//Hurt and death functions
-void PLAYER::DeadCheckRespawn()
+//Hurt and death updates
+void PLAYER::DeadCheckOffscreen()
 {
 	//Lock our camera
 	int16_t cameraY = gLevel->camera->yPos;
@@ -3384,14 +3361,14 @@ void PLAYER::DeadCheckRespawn()
 	gLives--;
 }
 
-void PLAYER::HurtStop()
+void PLAYER::HurtCheckGround()
 {
 	//Check if we've fallen off the stage, and die
 	if (status.reverseGravity)
 	{
 		if (y.pos < gLevel->topBoundaryTarget)
 		{
-			KillCharacter(SOUNDID_HURT);
+			Kill(SOUNDID_HURT);
 			return;
 		}
 	}
@@ -3399,13 +3376,13 @@ void PLAYER::HurtStop()
 	{
 		if (y.pos >= gLevel->bottomBoundaryTarget)
 		{
-			KillCharacter(SOUNDID_HURT);
+			Kill(SOUNDID_HURT);
 			return;
 		}
 	}
 	
 	//Check if we've touched the ground
-	DoLevelCollision();
+	AirCollision();
 	
 	if (!status.inAir)
 	{
@@ -3433,25 +3410,21 @@ void PLAYER::HurtStop()
 	}
 }
 
-bool PLAYER::KillCharacter(SOUNDID soundId)
+//Kill and hurt character
+bool PLAYER::Kill(SOUNDID soundId)
 {
 	if (debug == 0)
 	{
 		//Reset our state
-		shield = SHIELD_NULL;
-		item.isInvincible = false;
-		item.hasSpeedShoes = false;
-		item.shieldReflect = false;
-		item.immuneFire = false;
-		item.immuneElectric = false;
-		item.immuneWater = false;
+		barrier = BARRIER_NULL;
+		item = {};
 		
 		routine = PLAYERROUTINE_DEATH;
 		LandOnFloor_ExitBall();
 		status.inAir = true;
 		
-		//Clear shield animation so it doesn't show during death
-		shieldObject->anim = 0;
+		//Clear barrier animation so it doesn't show during death
+		barrierObject->anim = 0;
 		
 		//Set our velocity
 		xVel = 0;
@@ -3472,47 +3445,7 @@ bool PLAYER::KillCharacter(SOUNDID soundId)
 	return false;
 }
 
-bool PLAYER::CheckHurt(OBJECT *hit)
-{
-	//Check our shield and invincibility state
-	if (shield != SHIELD_NULL || item.isInvincible)
-	{
-		//If we're immune to the object, don't hurt us
-		if ((item.immuneFire && hit->hurtType.fire) || (item.immuneElectric && hit->hurtType.electric) || (item.immuneWater && hit->hurtType.water))
-			return true;
-	}
-	
-	//Don't check for reflection if we are invincible, don't have a shield (and not using insta-shield, but... this check is fucked because isInvincible is set during the insta-shield here)
-#ifndef FIX_INSTASHIELD_REFLECT
-	if ((jumpAbility == 1 || item.shieldReflect) && !item.isInvincible)
-#else
-	if ((jumpAbility == 1 || item.shieldReflect) && !(item.isInvincible && invincibilityTime))
-#endif
-	{
-		//If we should be reflected, reflect
-		if (hit->hurtType.reflect)
-		{
-			//Get the velocity to reflect at (bounce directly away from player using atan2)
-			uint8_t angle = GetAtan(x.pos - hit->x.pos, y.pos - hit->y.pos);
-			hit->xVel = (GetCos(angle) * -0x800) >> 8;
-			hit->yVel = (GetSin(angle) * -0x800) >> 8;
-			
-			//Clear the object's collision
-			hit->collisionType = COLLISIONTYPE_NULL;
-			return true;
-		}
-	}
-	
-	//Check if we can be hurt
-	if (item.isInvincible)
-		return true;
-	else if (invulnerabilityTime <= 0)
-		return HurtCharacter(hit);
-	
-	return false;
-}
-
-bool PLAYER::HurtCharacter(OBJECT *hit)
+bool PLAYER::Hurt(OBJECT *hit)
 {
 	//If a spike object, use the spike hurt sound
 	SOUNDID soundId = SOUNDID_HURT;
@@ -3522,14 +3455,14 @@ bool PLAYER::HurtCharacter(OBJECT *hit)
 	//Get which ring count to use
 	unsigned int *rings = &gRings; //TODO: multiplayer stuff
 	
-	//If we have a shield, lose it, otherwise, lose rings
-	if (shield != SHIELD_NULL)
+	//If we have a barrier, lose it, otherwise, lose rings
+	if (barrier != BARRIER_NULL)
 	{
-		shield = SHIELD_NULL;
-		item.shieldReflect = false;
-		item.immuneFire = false;
-		item.immuneElectric = false;
-		item.immuneWater = false;
+		barrier = BARRIER_NULL;
+		item.barrierReflect = false;
+		item.immuneFlame = false;
+		item.immuneLightning = false;
+		item.immuneAqua = false;
 	}
 	else
 	{
@@ -3537,7 +3470,7 @@ bool PLAYER::HurtCharacter(OBJECT *hit)
 		if (*rings == 0)
 		{
 			//Die, using the sound id we've gotten
-			return KillCharacter(soundId);
+			return Kill(soundId);
 		}
 		else
 		{
@@ -3572,6 +3505,47 @@ bool PLAYER::HurtCharacter(OBJECT *hit)
 	return true;
 }
 
+//Object hurt check
+bool PLAYER::HurtFromObject(OBJECT *hit)
+{
+	//Check our barrier and invincibility state
+	if (barrier != BARRIER_NULL || item.isInvincible)
+	{
+		//If we're immune to the object, don't hurt us
+		if ((item.immuneFlame && hit->hurtType.flame) || (item.immuneLightning && hit->hurtType.lightning) || (item.immuneAqua && hit->hurtType.aqua))
+			return true;
+	}
+	
+	//Don't check for reflection if we are invincible, don't have a barrier (and not performing the double spin attack, but... this check is fucked because isInvincible is set during it)
+#ifndef FIX_SPINATTACK_REFLECT
+	if ((jumpAbility == 1 || item.barrierReflect) && !item.isInvincible)
+#else
+	if ((jumpAbility == 1 || item.barrierReflect) && !(super || (item.isInvincible && invincibilityTime)))
+#endif
+	{
+		//If we should be reflected, reflect
+		if (hit->hurtType.reflect)
+		{
+			//Get the velocity to reflect at (bounce directly away from player using atan2)
+			uint8_t angle = GetAtan(x.pos - hit->x.pos, y.pos - hit->y.pos);
+			hit->xVel = (GetCos(angle) * -0x800) >> 8;
+			hit->yVel = (GetSin(angle) * -0x800) >> 8;
+			
+			//Clear the object's collision
+			hit->collisionType = COLLISIONTYPE_NULL;
+			return true;
+		}
+	}
+	
+	//Check if we can be hurt
+	if (item.isInvincible)
+		return true;
+	else if (invulnerabilityTime <= 0)
+		return Hurt(hit);
+	
+	return false;
+}
+
 //Level boundary function
 void PLAYER::LevelBoundSide(int32_t bound)
 {
@@ -3584,7 +3558,7 @@ void PLAYER::LevelBoundSide(int32_t bound)
 	inertia = 0;
 }
 
-void PLAYER::LevelBound()
+void PLAYER::LevelBoundaries()
 {
 	//Get our next position and boundaries
 	#ifdef FIX_HORIZONTAL_WRAP
@@ -3614,7 +3588,7 @@ void PLAYER::LevelBound()
 		x.sub = 0;
 		xVel = 0;
 		inertia = 0;
-		KillCharacter(SOUNDID_HURT);
+		Kill(SOUNDID_HURT);
 	}
 }
 
@@ -3878,7 +3852,7 @@ void PLAYER::Animate()
 				
 				rotAngle += 0x10;
 				
-				//Set our horizontal and vertical flip if tilted over 180 degrees
+				//Set our horizontal and vertical flip if lastFloorAngle1ed over 180 degrees
 				if (rotAngle >= 0x80)
 				{
 					renderFlags.xFlip = !status.xFlip;
@@ -4305,12 +4279,12 @@ void PLAYER::ControlRoutine()
 		if (Spindash() && Jump())
 		{
 			//Handle slope gravity and our movement
-			SlopeResist();
-			Move();
+			RegularSlopeGravity();
+			GroundMovement();
 			Roll();
 			
 			//Keep us in level bounds
-			LevelBound();
+			LevelBoundaries();
 			
 			//Move according to our velocity
 			xPosLong += xVel << 8;
@@ -4320,8 +4294,8 @@ void PLAYER::ControlRoutine()
 				yPosLong += yVel << 8;
 			
 			//Handle collision and falling off of slopes
-			AnglePos();
-			SlopeRepel();
+			GroundFloorCollision();
+			WallDetach();
 		}
 	}
 	else if (status.inBall == true && status.inAir == false)
@@ -4329,11 +4303,11 @@ void PLAYER::ControlRoutine()
 		if ((status.pinballMode || spindashing) || Jump())
 		{
 			//Handle slope gravity and our movement
-			RollRepel();
-			RollSpeed();
+			RollingSlopeGravity();
+			RollMovement();
 			
 			//Keep us in level bounds
-			LevelBound();
+			LevelBoundaries();
 			
 		#ifdef SONICCD_SPINDASH
 			if (cdSPTimer == 0)
@@ -4348,8 +4322,8 @@ void PLAYER::ControlRoutine()
 			}
 			
 			//Handle collision and falling off of slopes
-			AnglePos();
-			SlopeRepel();
+			GroundFloorCollision();
+			WallDetach();
 		}
 	}
 	//In mid-air
@@ -4357,10 +4331,10 @@ void PLAYER::ControlRoutine()
 	{
 		//Handle our movement
 		JumpHeight();
-		ChgJumpDir();
+		AirMovement();
 		
 		//Keep us in level bounds
-		LevelBound();
+		LevelBoundaries();
 		
 		//Move according to our velocity
 		xPosLong += xVel << 8;
@@ -4374,11 +4348,11 @@ void PLAYER::ControlRoutine()
 		if (status.underwater)
 			yVel -= 0x28;
 		
-		//Handle our angle receding when we run / jump off of a ledge
-		JumpAngle();
+		//Lower angle in mid-air and update our flip angle
+		UpdateAngleInAir();
 		
 		//Handle collision
-		DoLevelCollision();
+		AirCollision();
 	}
 }
 
@@ -4469,25 +4443,19 @@ void PLAYER::Update()
 					}
 					
 					if (objectControl.disableOurMovement)
-					{
-						//Enable our jump abilities
-						jumpAbility = 0;
-					}
+						jumpAbility = 0; //Enable our jump abilities
 					else
-					{
-						//The original uses the two bits for a jump table, but we can't do that because it'd be horrible
-						ControlRoutine();
-					}
+						ControlRoutine(); //The original uses the two bits for a jump table, but we can't do that because it'd be horrible
 					
 					//Draw, record position, and handle super and water
-					Display();
+					Draw_UpdateStatus();
 					UpdateSuper();
 					RecordPos();
 					//bsr.w	Sonic_Water
 					
-					//Copy our angles to tilt
-					nextTilt = primaryAngle;
-					tilt = secondaryAngle;
+					//Copy our angles to lastFloorAngle2
+					lastFloorAngle1 = floorAngle1;
+					lastFloorAngle2 = floorAngle2;
 					
 					//Animation
 					if (status.windTunnel && anim != PLAYERANIMATION_WALK)
@@ -4505,7 +4473,7 @@ void PLAYER::Update()
 					
 					//Interact with objects
 					if (!objectControl.disableObjectInteract)
-						TouchResponse();
+						CheckObjectTouch();
 					break;
 					
 				case PLAYERROUTINE_HURT:
@@ -4533,8 +4501,8 @@ void PLAYER::Update()
 						yVel -= 0x20;
 					
 					//Handle other movements
-					HurtStop();
-					LevelBound();
+					HurtCheckGround();
+					LevelBoundaries();
 					RecordPos();
 					
 					//Draw
@@ -4559,7 +4527,7 @@ void PLAYER::Update()
 					}
 					
 					//Check if we should respawn soon
-					DeadCheckRespawn();
+					DeadCheckOffscreen();
 					
 					//Move and fall
 					xPosLong += xVel << 8;
@@ -4580,7 +4548,7 @@ void PLAYER::Update()
 					break;
 					
 				case PLAYERROUTINE_RESET_LEVEL:
-					//After a second, fade the level out to restart
+					//After 1 second, fade the level out to restart
 					if (--restartCountdown == 0)
 						gLevel->SetFade(false, false);
 					break;
@@ -4620,21 +4588,22 @@ void PLAYER::Update()
 	}
 	if (gController[controller].press.start && gController[controller].held.c)
 	{
-		if (shield == SHIELD_NULL)
-			GiveShield(SOUNDID_GET_BLUE_SHIELD, SHIELD_BLUE);
-		else if (shield == SHIELD_BLUE)
-			GiveShield(SOUNDID_GET_FIRE_SHIELD, SHIELD_FIRE);
-		else if (shield == SHIELD_FIRE)
-			GiveShield(SOUNDID_GET_ELECTRIC_SHIELD, SHIELD_ELECTRIC);
-		else if (shield == SHIELD_ELECTRIC)
-			GiveShield(SOUNDID_GET_BUBBLE_SHIELD, SHIELD_BUBBLE);
-		else if (shield == SHIELD_BUBBLE)
-			GiveShield(SOUNDID_NULL, SHIELD_NULL);
+		if (barrier == BARRIER_NULL)
+			GiveBarrier(SOUNDID_GET_BLUE_BARRIER, BARRIER_BLUE);
+		else if (barrier == BARRIER_BLUE)
+			GiveBarrier(SOUNDID_GET_FLAME_BARRIER, BARRIER_FLAME);
+		else if (barrier == BARRIER_FLAME)
+			GiveBarrier(SOUNDID_GET_LIGHTNING_BARRIER, BARRIER_LIGHTNING);
+		else if (barrier == BARRIER_LIGHTNING)
+			GiveBarrier(SOUNDID_GET_AQUA_BARRIER, BARRIER_AQUA);
+		else if (barrier == BARRIER_AQUA)
+			GiveBarrier(SOUNDID_NULL, BARRIER_NULL);
 	}
 }
 
-//Draw our player
-void PLAYER::Display()
+//Drawing functions
+void PLAYER::Draw() { isDrawing = true; }
+void PLAYER::Draw_UpdateStatus()
 {
 	//Handle invulnerability (decrement the invulnerability time and don't draw us every 4 frames)
 	if (invulnerabilityTime == 0 || (--invulnerabilityTime & 0x4) != 0)
@@ -4681,12 +4650,7 @@ void PLAYER::Display()
 	}
 }
 
-void PLAYER::Draw()
-{
-	//Set drawing flag
-	isDrawing = true;
-}
-
+//Drawing to the screen
 void PLAYER::DrawToScreen()
 {
 	if (isDrawing)
@@ -4710,7 +4674,7 @@ void PLAYER::DrawToScreen()
 			
 			//Check if on-screen
 			renderFlags.isOnscreen = false;
-	
+			
 			if (!(x.pos - alignX < -widthPixels || x.pos - alignX > gRenderSpec.width + widthPixels) &&
 				!(y.pos - alignY < -heightPixels || y.pos - alignY > gRenderSpec.height + heightPixels))
 			{
@@ -4870,7 +4834,7 @@ void PLAYER::RingAttractCheck(OBJECT *object)
 }
 
 //Object interaction functions
-bool PLAYER::TouchResponseObject(OBJECT *object, int16_t playerLeft, int16_t playerTop, int16_t playerWidth, int16_t playerHeight)
+bool PLAYER::ObjectTouch(OBJECT *object, int16_t playerLeft, int16_t playerTop, int16_t playerWidth, int16_t playerHeight)
 {
 	//Check object
 	if (object->collisionType != COLLISIONTYPE_NULL)
@@ -4896,24 +4860,24 @@ bool PLAYER::TouchResponseObject(OBJECT *object, int16_t playerLeft, int16_t pla
 						case CHARACTERTYPE_TAILS:
 							//If not flying or underwater, hurt us
 							if (jumpAbility == 0 || status.underwater)
-								return CheckHurt(object);
+								return HurtFromObject(object);
 							
 							//If the object is just about above us, hurt them
 							if (((GetAtan(x.pos - object->x.pos, y.pos - object->y.pos) + 0x20) & 0xFF) < 0x40)
 								return object->Hurt(this);
 							
 							//Otherwise, hurt us
-							return CheckHurt(object);
+							return HurtFromObject(object);
 						case CHARACTERTYPE_KNUCKLES:
 							//If gliding or sliding after gliding, hurt the object
 							if (jumpAbility == 1 || jumpAbility == 3)
 								return object->Hurt(this);
 							
 							//Otherwise, hurt us
-							return CheckHurt(object);
+							return HurtFromObject(object);
 						default:
 							//No special abilities, hurt us
-							return CheckHurt(object);
+							return HurtFromObject(object);
 					}
 					break;
 				case COLLISIONTYPE_SPECIAL:
@@ -4921,7 +4885,7 @@ bool PLAYER::TouchResponseObject(OBJECT *object, int16_t playerLeft, int16_t pla
 					return true;
 				case COLLISIONTYPE_HURT:
 					//Hurt us and never don't do that
-					return CheckHurt(object);
+					return HurtFromObject(object);
 				case COLLISIONTYPE_OTHER:
 					//Generic collision, set to the second routine if we weren't just hit
 					if (invulnerabilityTime < 90)
@@ -4957,28 +4921,28 @@ bool PLAYER::TouchResponseObject(OBJECT *object, int16_t playerLeft, int16_t pla
 	//Iterate through children, we haven't hit the parent
 	for (size_t i = 0; i < object->children.size(); i++)
 	{
-		if (TouchResponseObject(object->children[i], playerLeft, playerTop, playerWidth, playerHeight))
+		if (ObjectTouch(object->children[i], playerLeft, playerTop, playerWidth, playerHeight))
 			return true;
 	}
 	
 	return false;
 }
 
-void PLAYER::TouchResponse()
+void PLAYER::CheckObjectTouch()
 {
 	//Check for ring attraction
-	if (shield == SHIELD_ELECTRIC)
+	if (barrier == BARRIER_LIGHTNING)
 		for (size_t i = 0; i < gLevel->objectList.size(); i++)
 			RingAttractCheck(gLevel->objectList[i]);
 	
 	//Get our collision hitbox
-	bool wasInvincible = item.isInvincible; //Remember if we were invincible, since this gets temporarily overwritten by the insta-shield hitbox
+	bool wasInvincible = item.isInvincible; //Remember if we were invincible, since this gets temporarily overwritten by the double spin attack
 	int16_t playerLeft, playerTop, playerWidth, playerHeight;
 	
-	if ((shield == SHIELD_NULL && item.isInvincible == false && jumpAbility == 1)
+	if ((barrier == BARRIER_NULL && item.isInvincible == false && jumpAbility == 1)
 		|| (status.shouldNotFall && interact != nullptr && interact->function == ObjMinecart && mabs(interact->xVel) >= 0x200))
 	{
-		//Use insta-shield extended hitbox
+		//Use the double spin attack's extended hitbox
 		playerWidth = 24; //radius
 		playerLeft = x.pos - playerWidth;
 		playerWidth *= 2; //diameter
@@ -4987,7 +4951,7 @@ void PLAYER::TouchResponse()
 		playerTop = y.pos - playerHeight;
 		playerHeight *= 2; //diameter
 		
-		//Make us invincible (don't worry, this gets undone by the time TouchResponse is ending)
+		//Make us temporarily invincible
 		item.isInvincible = true;
 	}
 	else
@@ -5015,11 +4979,11 @@ void PLAYER::TouchResponse()
 	for (size_t i = 0; i < gLevel->objectList.size(); i++)
 	{
 		//Check for collision with this object
-		if (TouchResponseObject(gLevel->objectList[i], playerLeft, playerTop, playerWidth, playerHeight))
+		if (ObjectTouch(gLevel->objectList[i], playerLeft, playerTop, playerWidth, playerHeight))
 			break;
 	}
 	
-	//Restore our original invincibility to before the insta-shield code
+	//Restore our original invincibility to before the double spin attack modified it
 	item.isInvincible = wasInvincible;
 }
 
@@ -5143,14 +5107,14 @@ void PLAYER::GiveInvincibility()
 	}
 }
 
-void PLAYER::GiveShield(SOUNDID sound, SHIELD type)
+void PLAYER::GiveBarrier(SOUNDID sound, BARRIER type)
 {
-	//Give us the shield and play sound
-	shield = type;
-	item.shieldReflect =	(type != SHIELD_BLUE && type != SHIELD_NULL);
-	item.immuneFire =		(type == SHIELD_FIRE);
-	item.immuneElectric =	(type == SHIELD_ELECTRIC);
-	item.immuneWater =		(type == SHIELD_BUBBLE);
+	//Give us the given barrier type and play sound
+	barrier = type;
+	item.barrierReflect =	(type != BARRIER_BLUE && type != BARRIER_NULL);
+	item.immuneFlame =		(type == BARRIER_FLAME);
+	item.immuneLightning =	(type == BARRIER_LIGHTNING);
+	item.immuneAqua =		(type == BARRIER_AQUA);
 	
 	if (sound != SOUNDID_NULL)
 		PlaySound(sound);

@@ -126,7 +126,7 @@ void ObjMinecart(OBJECT *object)
 			{
 				if (object->xVel > 0)
 				{
-					int16_t distance = FindWall(object->x.pos + object->xRadius, object->y.pos - 10, COLLISIONLAYER_NORMAL_LRB, false, nullptr);
+					int16_t distance = GetCollisionH(object->x.pos + object->xRadius, object->y.pos - 10, COLLISIONLAYER_NORMAL_LRB, false, nullptr);
 					
 					//If touching a wall, bounce off and enter broken state
 					if (distance < 0)
@@ -144,7 +144,7 @@ void ObjMinecart(OBJECT *object)
 				}
 				else if (object->xVel < 0)
 				{
-					int16_t distance = FindWall(object->x.pos - object->xRadius, object->y.pos - 10, COLLISIONLAYER_NORMAL_LRB, true, nullptr);
+					int16_t distance = GetCollisionH(object->x.pos - object->xRadius, object->y.pos - 10, COLLISIONLAYER_NORMAL_LRB, true, nullptr);
 					
 					//If touching a wall, bounce off and enter broken state
 					if (distance < 0)
@@ -225,7 +225,7 @@ void ObjMinecart(OBJECT *object)
 					//If player is touching a wall we're moving towards, bounce the minecart away so we don't push them in
 					if (object->xVel > 0)
 					{
-						int16_t distance = FindWall(player->x.pos + player->xRadius, player->y.pos, COLLISIONLAYER_NORMAL_LRB, false, nullptr);
+						int16_t distance = GetCollisionH(player->x.pos + player->xRadius, player->y.pos, COLLISIONLAYER_NORMAL_LRB, false, nullptr);
 						if (distance < 0)
 						{
 							player->x.pos += distance;
@@ -235,7 +235,7 @@ void ObjMinecart(OBJECT *object)
 					}
 					else if (object->xVel < 0)
 					{
-						int16_t distance = FindWall(player->x.pos - player->xRadius, player->y.pos, COLLISIONLAYER_NORMAL_LRB, true, nullptr);
+						int16_t distance = GetCollisionH(player->x.pos - player->xRadius, player->y.pos, COLLISIONLAYER_NORMAL_LRB, true, nullptr);
 						if (distance < 0)
 						{
 							player->x.pos -= distance;

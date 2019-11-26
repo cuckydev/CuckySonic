@@ -146,7 +146,7 @@ void ObjBouncingRing(OBJECT *object)
 			
 			if (checkVel >= 0)
 			{
-				int16_t distance = FindFloor(object->x.pos, object->y.pos + object->yRadius, COLLISIONLAYER_NORMAL_TOP, false, nullptr);
+				int16_t distance = GetCollisionV(object->x.pos, object->y.pos + object->yRadius, COLLISIONLAYER_NORMAL_TOP, false, nullptr);
 				
 				//If touching the floor, bounce off
 				if (distance < 0)
@@ -158,7 +158,7 @@ void ObjBouncingRing(OBJECT *object)
 		#ifndef BOUNCINGRING_ONLY_FLOOR
 			else
 			{
-				int16_t distance = FindFloor(object->x.pos, object->y.pos - object->yRadius, COLLISIONLAYER_NORMAL_LRB, true, nullptr);
+				int16_t distance = GetCollisionV(object->x.pos, object->y.pos - object->yRadius, COLLISIONLAYER_NORMAL_LRB, true, nullptr);
 				
 				//If touching a ceiling, bounce off
 				if (distance < 0)
@@ -171,7 +171,7 @@ void ObjBouncingRing(OBJECT *object)
 			//Check for collision with walls
 			if (object->xVel > 0)
 			{
-				int16_t distance = FindWall(object->x.pos + object->xRadius, object->y.pos, COLLISIONLAYER_NORMAL_LRB, false, nullptr);
+				int16_t distance = GetCollisionH(object->x.pos + object->xRadius, object->y.pos, COLLISIONLAYER_NORMAL_LRB, false, nullptr);
 				
 				//If touching a wall, bounce off
 				if (distance < 0)
@@ -182,7 +182,7 @@ void ObjBouncingRing(OBJECT *object)
 			}
 			else if (object->xVel < 0)
 			{
-				int16_t distance = FindWall(object->x.pos - object->xRadius, object->y.pos, COLLISIONLAYER_NORMAL_LRB, true, nullptr);
+				int16_t distance = GetCollisionH(object->x.pos - object->xRadius, object->y.pos, COLLISIONLAYER_NORMAL_LRB, true, nullptr);
 				
 				//If touching a wall, bounce off
 				if (distance < 0)

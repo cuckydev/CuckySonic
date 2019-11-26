@@ -70,7 +70,7 @@ void ObjGHZSmashableWall(OBJECT *object)
 			if (touch.side[i])
 			{
 				//Make sure we meet the smashing conditions, and smash depending on our direction
-				if (player->characterType == CHARACTERTYPE_KNUCKLES || player->super || (player->shield == SHIELD_FIRE && player->jumpAbility == 1) || (player->anim == PLAYERANIMATION_ROLL && mabs(oldXVel) >= 0x480 && !player->status.inAir))
+				if (player->characterType == CHARACTERTYPE_KNUCKLES || player->super || (player->barrier == BARRIER_FLAME && player->jumpAbility == 1) || (player->anim == PLAYERANIMATION_ROLL && mabs(oldXVel) >= 0x480 && !player->status.inAir))
 				{
 					//Move towards wall and smash
 					player->x.pos += 4; //Why is this done before position checking?

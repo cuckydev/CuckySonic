@@ -133,9 +133,9 @@ class OBJECT
 		struct
 		{
 			bool reflect = false;	//Projectile that gets reflected
-			bool fire = false;		//Is fire
-			bool electric = false;	//Is electric
-			bool water = false;		//Is water
+			bool flame = false;		//Flame
+			bool lightning = false;	//Lightning
+			bool aqua = false;		//Aqua
 		} hurtType;
 		
 		//Sprite properties

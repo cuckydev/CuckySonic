@@ -86,9 +86,9 @@ void HandleInputEvent(SDL_Event *event)
 					//Clear previous input
 					gController[i].axisX = 0;
 					gController[i].axisY = 0;
-					memset(&gController[i].held, 0, sizeof(CONTROLLER::held));
-					memset(&gController[i].lastHeld, 0, sizeof(CONTROLLER::lastHeld));
-					memset(&gController[i].press, 0, sizeof(CONTROLLER::press));
+					gController[i].held = {};
+					gController[i].lastHeld = {};
+					gController[i].press = {};
 					break;
 				}
 			}

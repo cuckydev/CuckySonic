@@ -92,11 +92,11 @@ const char *preloadMappings[] = {
 	"data/Object/SkidDust.map",
 	"data/Object/InvincibilityStars.map",
 	"data/Object/SuperStars.map",
-	"data/Object/InstaShield.map",
-	"data/Object/BlueShield.map",
-	"data/Object/FireShield.map",
-	"data/Object/ElectricShield.map",
-	"data/Object/BubbleShield.map",
+	"data/Object/DoubleSpinAttack.map",
+	"data/Object/BlueBarrier.map",
+	"data/Object/FlameBarrier.map",
+	"data/Object/LightningBarrier.map",
+	"data/Object/AquaBarrier.map",
 	nullptr,
 };
 
@@ -923,7 +923,7 @@ void LEVEL::DynamicEvents()
 				if (doRoll)
 				{
 					if (!player->status.pinballMode)
-						player->ChkRoll();
+						player->PerformRoll();
 					player->status.pinballMode = true;
 				}
 				else
