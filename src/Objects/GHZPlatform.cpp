@@ -192,7 +192,7 @@ void ObjGHZPlatform(OBJECT *object)
 			int16_t lastX = object->x.pos;
 			ObjGHZPlatform_Move(object);
 			if (object->routine == 1)
-				object->PlatformObject(object->widthPixels, 9, lastX, false, nullptr);
+				object->SolidObjectTop(object->widthPixels, 9, lastX, false, nullptr);
 			
 			//Draw
 			object->DrawInstance(object->renderFlags, object->texture, object->mapping, object->highPriority, object->priority, object->mappingFrame, object->x.pos, object->y.pos);

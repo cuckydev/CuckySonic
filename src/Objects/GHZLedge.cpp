@@ -47,7 +47,7 @@ void ObjGHZLedge(OBJECT *object)
 			if (object->scratchU8[SCRATCHU8_FLAG] == 0 || (object->scratchU8[SCRATCHU8_DELAY] != 0 && object->scratchU8[SCRATCHU8_DELAY]-- != 0))
 			{
 				//Draw and act as solid
-				object->PlatformObject(48, 32, object->x.pos, false, ledgeSlope);
+				object->SolidObjectTop(48, 32, object->x.pos, false, ledgeSlope);
 				object->DrawInstance(object->renderFlags, object->texture, object->mapping, object->highPriority, object->priority, object->mappingFrame, object->x.pos, object->y.pos);
 				object->UnloadOffscreen(object->x.pos);
 				break;

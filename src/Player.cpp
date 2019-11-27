@@ -986,8 +986,8 @@ uint8_t PLAYER::GetCloserFloor_General(uint8_t angleSide, int16_t *distance, int
 //2-point collision checks
 void PLAYER::CheckCollisionDown_2Point(COLLISIONLAYER layer, int16_t xPos, int16_t yPos, int16_t *distance, int16_t *distance2, uint8_t *outAngle)
 {
-	int16_t retDistance = GetCollisionV(xPos + xRadius, yPos + yRadius, layer, false, &floorAngle1);
-	int16_t retDistance2 = GetCollisionV(xPos - xRadius, yPos + yRadius, layer, false, &floorAngle2);
+	int16_t retDistance = GetCollisionV(xPos + xRadius, yPos, layer, false, &floorAngle1);
+	int16_t retDistance2 = GetCollisionV(xPos - xRadius, yPos, layer, false, &floorAngle2);
 
 	uint8_t retAngle = GetCloserFloor_General(0x00, &retDistance, &retDistance2);
 	if (distance != nullptr)
@@ -1000,8 +1000,8 @@ void PLAYER::CheckCollisionDown_2Point(COLLISIONLAYER layer, int16_t xPos, int16
 
 void PLAYER::CheckCollisionUp_2Point(COLLISIONLAYER layer, int16_t xPos, int16_t yPos, int16_t *distance, int16_t *distance2, uint8_t *outAngle)
 {
-	int16_t retDistance = GetCollisionV(xPos + xRadius, yPos - yRadius, layer, true, &floorAngle1);
-	int16_t retDistance2 = GetCollisionV(xPos - xRadius, yPos - yRadius, layer, true, &floorAngle2);
+	int16_t retDistance = GetCollisionV(xPos + xRadius, yPos, layer, true, &floorAngle1);
+	int16_t retDistance2 = GetCollisionV(xPos - xRadius, yPos, layer, true, &floorAngle2);
 
 	uint8_t retAngle = GetCloserFloor_General(0x80, &retDistance, &retDistance2);
 	if (distance != nullptr)
@@ -1014,8 +1014,8 @@ void PLAYER::CheckCollisionUp_2Point(COLLISIONLAYER layer, int16_t xPos, int16_t
 
 void PLAYER::CheckCollisionLeft_2Point(COLLISIONLAYER layer, int16_t xPos, int16_t yPos, int16_t *distance, int16_t *distance2, uint8_t *outAngle)
 {
-	int16_t retDistance = GetCollisionH(xPos - yRadius, yPos - xRadius, layer, true, &floorAngle1);
-	int16_t retDistance2 = GetCollisionH(xPos - yRadius, yPos + xRadius, layer, true, &floorAngle2);
+	int16_t retDistance = GetCollisionH(xPos, yPos - xRadius, layer, true, &floorAngle1);
+	int16_t retDistance2 = GetCollisionH(xPos, yPos + xRadius, layer, true, &floorAngle2);
 
 	uint8_t retAngle = GetCloserFloor_General(0x40, &retDistance, &retDistance2);
 	if (distance != nullptr)
@@ -1028,8 +1028,8 @@ void PLAYER::CheckCollisionLeft_2Point(COLLISIONLAYER layer, int16_t xPos, int16
 
 void PLAYER::CheckCollisionRight_2Point(COLLISIONLAYER layer, int16_t xPos, int16_t yPos, int16_t *distance, int16_t *distance2, uint8_t *outAngle)
 {
-	int16_t retDistance = GetCollisionH(xPos + yRadius, yPos - xRadius, layer, false, &floorAngle1);
-	int16_t retDistance2 = GetCollisionH(xPos + yRadius, yPos + xRadius, layer, false, &floorAngle2);
+	int16_t retDistance = GetCollisionH(xPos, yPos - xRadius, layer, false, &floorAngle1);
+	int16_t retDistance2 = GetCollisionH(xPos, yPos + xRadius, layer, false, &floorAngle2);
 
 	uint8_t retAngle = GetCloserFloor_General(0xC0, &retDistance, &retDistance2);
 	if (distance != nullptr)
@@ -1045,7 +1045,7 @@ uint8_t PLAYER::AngleSide(uint8_t angleSide) { return (floorAngle1 & 0x01) ? ang
 
 int16_t PLAYER::CheckCollisionDown_1Point(COLLISIONLAYER layer, int16_t xPos, int16_t yPos, uint8_t *outAngle)
 {
-	int16_t distance = GetCollisionV(xPos, yPos + 10, layer, false, &floorAngle1);
+	int16_t distance = GetCollisionV(xPos, yPos, layer, false, &floorAngle1);
 	if (outAngle != nullptr)
 		*outAngle = AngleSide(0x00);
 	return distance;
@@ -1053,7 +1053,7 @@ int16_t PLAYER::CheckCollisionDown_1Point(COLLISIONLAYER layer, int16_t xPos, in
 
 int16_t PLAYER::CheckCollisionUp_1Point(COLLISIONLAYER layer, int16_t xPos, int16_t yPos, uint8_t *outAngle)
 {
-	int16_t distance = GetCollisionV(xPos, yPos - 10, layer, true, &floorAngle1);
+	int16_t distance = GetCollisionV(xPos, yPos, layer, true, &floorAngle1);
 	if (outAngle != nullptr)
 		*outAngle = AngleSide(0x80);
 	return distance;
@@ -1061,7 +1061,7 @@ int16_t PLAYER::CheckCollisionUp_1Point(COLLISIONLAYER layer, int16_t xPos, int1
 
 int16_t PLAYER::CheckCollisionLeft_1Point(COLLISIONLAYER layer, int16_t xPos, int16_t yPos, uint8_t *outAngle)
 {
-	int16_t distance = GetCollisionH(xPos - 10, yPos, layer, true, &floorAngle1);
+	int16_t distance = GetCollisionH(xPos, yPos, layer, true, &floorAngle1);
 	if (outAngle != nullptr)
 		*outAngle = AngleSide(0x40);
 	return distance;
@@ -1069,7 +1069,7 @@ int16_t PLAYER::CheckCollisionLeft_1Point(COLLISIONLAYER layer, int16_t xPos, in
 
 int16_t PLAYER::CheckCollisionRight_1Point(COLLISIONLAYER layer, int16_t xPos, int16_t yPos, uint8_t *outAngle)
 {
-	int16_t distance = GetCollisionH(xPos + 10, yPos, layer, false, &floorAngle1);
+	int16_t distance = GetCollisionH(xPos, yPos, layer, false, &floorAngle1);
 	if (outAngle != nullptr)
 		*outAngle = AngleSide(0xC0);
 	return distance;
@@ -1085,16 +1085,16 @@ int16_t PLAYER::GetDistancePerpendicular(uint8_t inAngle)
 	switch ((inAngle + 0x20) & 0xC0)
 	{
 		case 0x00:
-			CheckCollisionDown_2Point(topSolidLayer, x.pos, y.pos, nullptr, &distance, nullptr);
+			CheckCollisionDown_2Point(topSolidLayer, x.pos, y.pos + yRadius, nullptr, &distance, nullptr);
 			break;
 		case 0x40:
-			CheckCollisionLeft_2Point(lrbSolidLayer, x.pos, y.pos, nullptr, &distance, nullptr);
+			CheckCollisionLeft_2Point(lrbSolidLayer, x.pos - yRadius, y.pos, nullptr, &distance, nullptr);
 			break;
 		case 0x80:
-			CheckCollisionUp_2Point(lrbSolidLayer, x.pos, y.pos, nullptr, &distance, nullptr);
+			CheckCollisionUp_2Point(lrbSolidLayer, x.pos, y.pos - yRadius, nullptr, &distance, nullptr);
 			break;
 		case 0xC0:
-			CheckCollisionRight_2Point(lrbSolidLayer, x.pos, y.pos, nullptr, &distance, nullptr);
+			CheckCollisionRight_2Point(lrbSolidLayer, x.pos + yRadius, y.pos, nullptr, &distance, nullptr);
 			break;
 	}
 
@@ -1127,19 +1127,19 @@ int16_t PLAYER::GetWallDistance(uint8_t inAngle)
 	switch (offAngle & 0xC0)
 	{
 		case 0x00: //Downwards
-			return CheckCollisionDown_1Point(lrbSolidLayer, xPos, yPos, nullptr);
+			return CheckCollisionDown_1Point(lrbSolidLayer, xPos, yPos + 10, nullptr);
 		case 0x80: //Upwards
-			return CheckCollisionUp_1Point(lrbSolidLayer, xPos, yPos, nullptr);
+			return CheckCollisionUp_1Point(lrbSolidLayer, xPos, yPos - 10, nullptr);
 		case 0x40: //Left
 			//If at a shallow angle, offset the position down 8 pixels (keep us from clipping up small steps)
 			if ((angle & 0x38) == 0)
 				yPos += 8;
-			return CheckCollisionLeft_1Point(lrbSolidLayer, xPos, yPos, nullptr);
+			return CheckCollisionLeft_1Point(lrbSolidLayer, xPos - 10, yPos, nullptr);
 		case 0xC0: //Right
 			//If at a shallow angle, offset the position down 8 pixels (keep us from clipping up small steps)
 			if ((angle & 0x38) == 0)
 				yPos += 8;
-			return CheckCollisionRight_1Point(lrbSolidLayer, xPos, yPos, nullptr);
+			return CheckCollisionRight_1Point(lrbSolidLayer, xPos + 10, yPos, nullptr);
 	}
 	return 0;
 }
@@ -1425,7 +1425,7 @@ void PLAYER::AirCollision()
 			int16_t distance, distance2;
 			
 			//Check for wall collisions
-			distance = CheckCollisionLeft_1Point(lrbSolidLayer, x.pos, y.pos, nullptr);
+			distance = CheckCollisionLeft_1Point(lrbSolidLayer, x.pos - 10, y.pos, nullptr);
 			if (distance < 0)
 			{
 				//Clip out and stop our velocity
@@ -1433,7 +1433,7 @@ void PLAYER::AirCollision()
 				xVel = 0;
 			}
 			
-			distance = CheckCollisionRight_1Point(lrbSolidLayer, x.pos, y.pos, nullptr);
+			distance = CheckCollisionRight_1Point(lrbSolidLayer, x.pos + 10, y.pos, nullptr);
 			if (distance < 0)
 			{
 				//Clip out and stop our velocity
@@ -1446,11 +1446,11 @@ void PLAYER::AirCollision()
 			
 			if (!status.reverseGravity)
 			{
-				CheckCollisionDown_2Point(topSolidLayer, x.pos, y.pos, &distance, &distance2, &floorAngle);
+				CheckCollisionDown_2Point(topSolidLayer, x.pos, y.pos + yRadius, &distance, &distance2, &floorAngle);
 			}
 			else
 			{
-				CheckCollisionUp_2Point(lrbSolidLayer, x.pos, y.pos, &distance, &distance2, &floorAngle);
+				CheckCollisionUp_2Point(lrbSolidLayer, x.pos, y.pos - yRadius, &distance, &distance2, &floorAngle);
 				floorAngle = -(floorAngle + 0x40) - 0x40;
 			}
 			
@@ -1499,7 +1499,7 @@ void PLAYER::AirCollision()
 		case 0x40: //Moving to the left
 		{
 			//Collide with walls to the left of us
-			int16_t distance = CheckCollisionLeft_1Point(lrbSolidLayer, x.pos, y.pos, nullptr);
+			int16_t distance = CheckCollisionLeft_1Point(lrbSolidLayer, x.pos - 10, y.pos, nullptr);
 
 			if (distance < 0)
 			{
@@ -1514,9 +1514,9 @@ void PLAYER::AirCollision()
 			{
 				//Collide with ceilings
 				if (!status.reverseGravity)
-					CheckCollisionUp_2Point(lrbSolidLayer, x.pos, y.pos, nullptr, &distance, nullptr);
+					CheckCollisionUp_2Point(lrbSolidLayer, x.pos, y.pos - yRadius, nullptr, &distance, nullptr);
 				else
-					CheckCollisionDown_2Point(topSolidLayer, x.pos, y.pos, nullptr, &distance, nullptr);
+					CheckCollisionDown_2Point(topSolidLayer, x.pos, y.pos + yRadius, nullptr, &distance, nullptr);
 				
 				if (distance < 0)
 				{
@@ -1538,7 +1538,7 @@ void PLAYER::AirCollision()
 					else
 					{
 						//Collide with walls to the right?
-						int16_t distance = CheckCollisionRight_1Point(lrbSolidLayer, x.pos, y.pos, nullptr);
+						int16_t distance = CheckCollisionRight_1Point(lrbSolidLayer, x.pos + 10, y.pos, nullptr);
 						
 						if (distance < 0)
 						{
@@ -1554,11 +1554,11 @@ void PLAYER::AirCollision()
 					uint8_t floorAngle;
 					if (!status.reverseGravity)
 					{
-						CheckCollisionDown_2Point(topSolidLayer, x.pos, y.pos, nullptr, &distance, &floorAngle);
+						CheckCollisionDown_2Point(topSolidLayer, x.pos, y.pos + yRadius, nullptr, &distance, &floorAngle);
 					}
 					else
 					{
-						CheckCollisionUp_2Point(lrbSolidLayer, x.pos, y.pos, nullptr, &distance, &floorAngle);
+						CheckCollisionUp_2Point(lrbSolidLayer, x.pos, y.pos - yRadius, nullptr, &distance, &floorAngle);
 						floorAngle = -(floorAngle + 0x40) - 0x40;
 					}
 					
@@ -1589,7 +1589,7 @@ void PLAYER::AirCollision()
 		{
 			//Check for wall collisions
 			int16_t distance;
-			distance = CheckCollisionLeft_1Point(lrbSolidLayer, x.pos, y.pos, nullptr);
+			distance = CheckCollisionLeft_1Point(lrbSolidLayer, x.pos - 10, y.pos, nullptr);
 			if (distance < 0)
 			{
 				//Clip out of the wall and stop our velocity
@@ -1597,7 +1597,7 @@ void PLAYER::AirCollision()
 				xVel = 0;
 			}
 			
-			distance = CheckCollisionRight_1Point(lrbSolidLayer, x.pos, y.pos, nullptr);
+			distance = CheckCollisionRight_1Point(lrbSolidLayer, x.pos + 10, y.pos, nullptr);
 			if (distance < 0)
 			{
 				//Clip out of the wall and stop our velocity
@@ -1609,11 +1609,11 @@ void PLAYER::AirCollision()
 			uint8_t ceilingAngle;
 			if (!status.reverseGravity)
 			{
-				CheckCollisionUp_2Point(lrbSolidLayer, x.pos, y.pos, nullptr, &distance, &ceilingAngle);
+				CheckCollisionUp_2Point(lrbSolidLayer, x.pos, y.pos - yRadius, nullptr, &distance, &ceilingAngle);
 			}
 			else
 			{
-				CheckCollisionDown_2Point(topSolidLayer, x.pos, y.pos, nullptr, &distance, &ceilingAngle);
+				CheckCollisionDown_2Point(topSolidLayer, x.pos, y.pos + yRadius, nullptr, &distance, &ceilingAngle);
 				ceilingAngle = -(ceilingAngle + 0x40) - 0x40;
 			}
 			
@@ -1645,7 +1645,7 @@ void PLAYER::AirCollision()
 		case 0xC0: //Moving to the right
 		{
 			//Collide with walls
-			int16_t distance = CheckCollisionRight_1Point(lrbSolidLayer, x.pos, y.pos, nullptr);
+			int16_t distance = CheckCollisionRight_1Point(lrbSolidLayer, x.pos + 10, y.pos, nullptr);
 
 			if (distance < 0)
 			{
@@ -1660,9 +1660,9 @@ void PLAYER::AirCollision()
 			{
 				//Collide with ceilings
 				if (!status.reverseGravity)
-					CheckCollisionUp_2Point(lrbSolidLayer, x.pos, y.pos, nullptr, &distance, nullptr);
+					CheckCollisionUp_2Point(lrbSolidLayer, x.pos, y.pos - yRadius, nullptr, &distance, nullptr);
 				else
-					CheckCollisionDown_2Point(topSolidLayer, x.pos, y.pos, nullptr, &distance, nullptr);
+					CheckCollisionDown_2Point(topSolidLayer, x.pos, y.pos + yRadius, nullptr, &distance, nullptr);
 				
 				if (distance < 0)
 				{
@@ -1682,11 +1682,11 @@ void PLAYER::AirCollision()
 					uint8_t floorAngle;
 					if (!status.reverseGravity)
 					{
-						CheckCollisionDown_2Point(topSolidLayer, x.pos, y.pos, nullptr, &distance, &floorAngle);
+						CheckCollisionDown_2Point(topSolidLayer, x.pos, y.pos + yRadius, nullptr, &distance, &floorAngle);
 					}
 					else
 					{
-						CheckCollisionUp_2Point(lrbSolidLayer, x.pos, y.pos, nullptr, &distance, &floorAngle);
+						CheckCollisionUp_2Point(lrbSolidLayer, x.pos, y.pos - yRadius, nullptr, &distance, &floorAngle);
 						floorAngle = -(floorAngle + 0x40) - 0x40;
 					}
 					
@@ -2975,7 +2975,7 @@ void PLAYER::GroundMovement()
 				else
 				{
 					//If Sonic's middle bottom point is 12 pixels away from the floor, start balancing
-					if (CheckCollisionDown_1Point(topSolidLayer, x.pos, y.pos + yRadius, nullptr) >= 12)
+					if (CheckCollisionDown_1Point(topSolidLayer, x.pos, y.pos + yRadius, &floorAngle1) >= 12)
 					{
 						if (cdSPTimer != 0)
 						{
@@ -2991,7 +2991,7 @@ void PLAYER::GroundMovement()
 							{
 								if (!status.xFlip)
 								{
-									if (CheckCollisionDown_1Point(topSolidLayer, x.pos - 6, y.pos + yRadius, nullptr) >= 12)
+									if (CheckCollisionDown_1Point(topSolidLayer, x.pos - 6, y.pos + yRadius, &floorAngle1) >= 12)
 										anim = PLAYERANIMATION_BALANCE2;	//Far over the edge
 									else
 										anim = PLAYERANIMATION_BALANCE1;	//Balancing on the edge
@@ -2999,7 +2999,7 @@ void PLAYER::GroundMovement()
 								else
 								{
 									//Facing right on ledge to the left of us...
-									if (CheckCollisionDown_1Point(topSolidLayer, x.pos - 6, y.pos + yRadius, nullptr) >= 12)
+									if (CheckCollisionDown_1Point(topSolidLayer, x.pos - 6, y.pos + yRadius, &floorAngle1) >= 12)
 									{
 										anim = PLAYERANIMATION_BALANCE4;	//Turn around to the "far over the edge" balancing animation
 										status.xFlip = false;
@@ -3020,7 +3020,7 @@ void PLAYER::GroundMovement()
 							{
 								if (status.xFlip)
 								{
-									if (CheckCollisionDown_1Point(topSolidLayer, x.pos + 6, y.pos + yRadius, nullptr) >= 12)
+									if (CheckCollisionDown_1Point(topSolidLayer, x.pos + 6, y.pos + yRadius, &floorAngle1) >= 12)
 										anim = PLAYERANIMATION_BALANCE2;	//Far over the edge
 									else
 										anim = PLAYERANIMATION_BALANCE1;	//Balancing on the edge
@@ -3028,7 +3028,7 @@ void PLAYER::GroundMovement()
 								else
 								{
 									//Facing right on ledge to the left of us...
-									if (CheckCollisionDown_1Point(topSolidLayer, x.pos + 6, y.pos + yRadius, nullptr) >= 12)
+									if (CheckCollisionDown_1Point(topSolidLayer, x.pos + 6, y.pos + yRadius, &floorAngle1) >= 12)
 									{
 										anim = PLAYERANIMATION_BALANCE4;	//Turn around to the "far over the edge" balancing animation
 										status.xFlip = true;
@@ -5022,7 +5022,7 @@ void PLAYER::AttachToObject(OBJECT *object, size_t i)
 	}
 }
 
-void PLAYER::MoveOnPlatform(OBJECT *platform, int16_t width, int16_t height, int16_t lastXPos, const int8_t *slope, bool doubleSlope)
+void PLAYER::MoveWithObject(OBJECT *platform, int16_t width, int16_t height, int16_t lastXPos, const int8_t *slope, bool doubleSlope)
 {
 	//Offset height according to our slope
 	if (slope != nullptr)

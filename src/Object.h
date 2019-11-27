@@ -225,13 +225,13 @@ class OBJECT
 		void ClearSolidContact();
 		
 		//Player solid contact functions
-		void PlatformObject(int16_t width, int16_t height, int16_t lastXPos, bool setAirOnExit, const int8_t *slope);
-		bool LandOnPlatform(PLAYER *player, size_t i, int16_t width1, int16_t width2, int16_t height, int16_t lastXPos, const int8_t *slope);
-		void ExitPlatform(PLAYER *player, size_t i, bool setAirOnExit);
+		void SolidObjectTop(int16_t width, int16_t height, int16_t lastXPos, bool setAirOnExit, const int8_t *slope);
+		bool LandOnTopSolid(PLAYER *player, size_t i, int16_t width1, int16_t width2, int16_t height, int16_t lastXPos, const int8_t *slope);
+		void ReleasePlayer(PLAYER *player, size_t i, bool setAirOnExit);
 		
-		OBJECT_SOLIDTOUCH SolidObject(int16_t width, int16_t height_air, int16_t height_standing, int16_t lastXPos, bool setAirOnExit, const int8_t *slope, bool doubleSlope);
-		void SolidObjectCont(OBJECT_SOLIDTOUCH *solidTouch, PLAYER *player, size_t i, int16_t width, int16_t height, int16_t lastXPos, const int8_t *slope, bool doubleSlope);
-		void SolidObjectClearPush(PLAYER *player, size_t i);
+		OBJECT_SOLIDTOUCH SolidObjectFull(int16_t width, int16_t height_air, int16_t height_standing, int16_t lastXPos, bool setAirOnExit, const int8_t *slope, bool doubleSlope);
+		void SolidObjectFull_Cont(OBJECT_SOLIDTOUCH *solidTouch, PLAYER *player, size_t i, int16_t width, int16_t height, int16_t lastXPos, const int8_t *slope, bool doubleSlope);
+		void SolidObjectFull_ClearPush(PLAYER *player, size_t i);
 		
 		//Main update and draw functions
 		bool Update();

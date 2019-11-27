@@ -4,6 +4,7 @@
 #include "../Game.h"
 #include "../Log.h"
 
+//Animations
 static const uint8_t animationUpIdle[] =				{0x0F,0x00,0xFF};
 static const uint8_t animationUpBounce[] =				{0x00,0x01,0x00,0x00,0x02,0x02,0x02,0x02,0x02,0x02,0xFD,0x00};
 static const uint8_t animationHorizontalIdle[] =		{0x0F,0x03,0xFF};
@@ -24,6 +25,7 @@ static const uint8_t *animationList[] = {
 	animationDiagonalDownBounce,
 };
 
+//Slope arrays
 static const int8_t upDiagonalSlope[] = {
 	  0,   0,   0,   0,   0,   0,   0,   0,
 	  0,   0,   0,   0,   0,   0,   0,   0,
@@ -44,6 +46,7 @@ static const int8_t downDiagonalSlope[] = {
 	20, 20, 20, 20, 20, 20,
 };
 
+//Spring function
 void ObjSpring(OBJECT *object)
 {
 	#define MASK_TWIRL				0x01
@@ -125,7 +128,7 @@ void ObjSpring(OBJECT *object)
 		case ROUTINE_UP:
 		{
 			//Act as solid
-			object->SolidObject(27, 8, 16, object->x.pos, true, nullptr, false);
+			object->SolidObjectFull(27, 8, 16, object->x.pos, true, nullptr, false);
 			
 			for (size_t i = 0; i < gLevel->playerList.size(); i++)
 			{
@@ -198,7 +201,7 @@ void ObjSpring(OBJECT *object)
 		case ROUTINE_HORIZONTAL:
 		{
 			//Act as solid
-			OBJECT_SOLIDTOUCH touch = object->SolidObject(19, 14, 15, object->x.pos, true, nullptr, false);
+			OBJECT_SOLIDTOUCH touch = object->SolidObjectFull(19, 14, 15, object->x.pos, true, nullptr, false);
 			
 			for (size_t i = 0; i < gLevel->playerList.size(); i++)
 			{
@@ -280,7 +283,7 @@ void ObjSpring(OBJECT *object)
 		case ROUTINE_DOWN:
 		{
 			//Act as solid
-			OBJECT_SOLIDTOUCH touch = object->SolidObject(27, 8, 9, object->x.pos, true, nullptr, false);
+			OBJECT_SOLIDTOUCH touch = object->SolidObjectFull(27, 8, 9, object->x.pos, true, nullptr, false);
 			
 			for (size_t i = 0; i < gLevel->playerList.size(); i++)
 			{
@@ -348,7 +351,7 @@ void ObjSpring(OBJECT *object)
 		case ROUTINE_DIAGONALLY_UP:
 		{
 			//Act as solid
-			object->SolidObject(27, 16, 16, object->x.pos, true, upDiagonalSlope, false);
+			object->SolidObjectFull(27, 16, 16, object->x.pos, true, upDiagonalSlope, false);
 			
 			for (size_t i = 0; i < gLevel->playerList.size(); i++)
 			{
@@ -357,7 +360,7 @@ void ObjSpring(OBJECT *object)
 				
 				if (object->playerContact[i].standing)
 				{
-					//Make sure we're 4 pixels past the back side
+					//Make sure we're on the sloping / spring part
 					if (!object->status.xFlip)
 					{
 						if ((object->x.pos - 4) >= player->x.pos)
@@ -437,7 +440,7 @@ void ObjSpring(OBJECT *object)
 		case ROUTINE_DIAGONALLY_DOWN:
 		{
 			//Act as solid
-			OBJECT_SOLIDTOUCH touch = object->SolidObject(27, 16, 16, object->x.pos, true, downDiagonalSlope, false);
+			OBJECT_SOLIDTOUCH touch = object->SolidObjectFull(27, 16, 16, object->x.pos, true, downDiagonalSlope, false);
 			
 			for (size_t i = 0; i < gLevel->playerList.size(); i++)
 			{

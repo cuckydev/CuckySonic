@@ -369,7 +369,7 @@ void OBJECT::Smash(size_t num, const OBJECT_SMASHMAP *smashmap, OBJECTFUNCTION f
 }
 
 //Object collision functions
-void OBJECT::PlatformObject(int16_t width, int16_t height, int16_t lastXPos, bool setAirOnExit, const int8_t *slope)
+void OBJECT::SolidObjectTop(int16_t width, int16_t height, int16_t lastXPos, bool setAirOnExit, const int8_t *slope)
 {
 	for (size_t i = 0; i < gLevel->playerList.size(); i++)
 	{
@@ -383,19 +383,19 @@ void OBJECT::PlatformObject(int16_t width, int16_t height, int16_t lastXPos, boo
 			int16_t xDiff = player->x.pos - lastXPos + width;
 			
 			if (!player->status.inAir && xDiff >= 0 && xDiff < width * 2)
-				player->MoveOnPlatform(this, width, height, lastXPos, slope, false);
+				player->MoveWithObject(this, width, height, lastXPos, slope, false);
 			else
-				ExitPlatform(player, i, setAirOnExit);
+				ReleasePlayer(player, i, setAirOnExit);
 		}
 		else
 		{
 			//Check if we're going to land on the platform
-			LandOnPlatform(player, i, width, width * 2, height, lastXPos, slope);
+			LandOnTopSolid(player, i, width, width * 2, height, lastXPos, slope);
 		}
 	}
 }
 
-bool OBJECT::LandOnPlatform(PLAYER *player, size_t i, int16_t width1, int16_t width2, int16_t height, int16_t lastXPos, const int8_t *slope)
+bool OBJECT::LandOnTopSolid(PLAYER *player, size_t i, int16_t width1, int16_t width2, int16_t height, int16_t lastXPos, const int8_t *slope)
 {
 	//Check if we're in a state where we can enter onto the platform
 	int16_t xDiff = (player->x.pos - lastXPos) + width1;
@@ -443,7 +443,7 @@ bool OBJECT::LandOnPlatform(PLAYER *player, size_t i, int16_t width1, int16_t wi
 	}
 }
 
-void OBJECT::ExitPlatform(PLAYER *player, size_t i, bool setAirOnExit)
+void OBJECT::ReleasePlayer(PLAYER *player, size_t i, bool setAirOnExit)
 {
 	player->status.shouldNotFall = false;
 	playerContact[i].standing = false;
@@ -451,7 +451,7 @@ void OBJECT::ExitPlatform(PLAYER *player, size_t i, bool setAirOnExit)
 		player->status.inAir = true;
 }
 
-OBJECT_SOLIDTOUCH OBJECT::SolidObject(int16_t width, int16_t height_air, int16_t height_standing, int16_t lastXPos, bool setAirOnExit, const int8_t *slope, bool doubleSlope)
+OBJECT_SOLIDTOUCH OBJECT::SolidObjectFull(int16_t width, int16_t height_air, int16_t height_standing, int16_t lastXPos, bool setAirOnExit, const int8_t *slope, bool doubleSlope)
 {
 	//Check all players for solid contact
 	OBJECT_SOLIDTOUCH solidTouch;
@@ -469,18 +469,18 @@ OBJECT_SOLIDTOUCH OBJECT::SolidObject(int16_t width, int16_t height_air, int16_t
 			if (player->status.inAir || xDiff < 0 || xDiff >= width * 2)
 			{
 				//Exit top as platform, then check next player
-				ExitPlatform(player, i, setAirOnExit);
+				ReleasePlayer(player, i, setAirOnExit);
 				continue;
 			}
 			
 			//Move with the object
-			player->MoveOnPlatform(this, width, height_standing, lastXPos, slope, doubleSlope);
+			player->MoveWithObject(this, width, height_standing, lastXPos, slope, doubleSlope);
 			continue;
 		}
 		else
 		{
 			//Check for collisions, then check next player
-			SolidObjectCont(&solidTouch, player, i, width, height_air, lastXPos, slope, doubleSlope);
+			SolidObjectFull_Cont(&solidTouch, player, i, width, height_air, lastXPos, slope, doubleSlope);
 			continue;
 		}
 	}
@@ -488,7 +488,7 @@ OBJECT_SOLIDTOUCH OBJECT::SolidObject(int16_t width, int16_t height_air, int16_t
 	return solidTouch;
 }
 
-void OBJECT::SolidObjectCont(OBJECT_SOLIDTOUCH *solidTouch, PLAYER *player, size_t i, int16_t width, int16_t height, int16_t lastXPos, const int8_t *slope, bool doubleSlope)
+void OBJECT::SolidObjectFull_Cont(OBJECT_SOLIDTOUCH *solidTouch, PLAYER *player, size_t i, int16_t width, int16_t height, int16_t lastXPos, const int8_t *slope, bool doubleSlope)
 {
 	//Check if we're within horizontal range
 	int16_t xDiff = (player->x.pos - x.pos) + width; //d0
@@ -629,7 +629,7 @@ void OBJECT::SolidObjectCont(OBJECT_SOLIDTOUCH *solidTouch, PLAYER *player, size
 						}
 						
 						//Clear our pushing
-						SolidObjectClearPush(player, i);
+						SolidObjectFull_ClearPush(player, i);
 						return;
 					}
 				}
@@ -638,7 +638,7 @@ void OBJECT::SolidObjectCont(OBJECT_SOLIDTOUCH *solidTouch, PLAYER *player, size
 					//Don't perform wall collision if clipped under 4 pixels vertically
 					if (yClip <= 4)
 					{
-						SolidObjectClearPush(player, i);
+						SolidObjectFull_ClearPush(player, i);
 						return;
 					}
 				#endif
@@ -686,10 +686,10 @@ void OBJECT::SolidObjectCont(OBJECT_SOLIDTOUCH *solidTouch, PLAYER *player, size
 	}
 	
 	//Clear our pushing
-	SolidObjectClearPush(player, i);
+	SolidObjectFull_ClearPush(player, i);
 }
 
-void OBJECT::SolidObjectClearPush(PLAYER *player, size_t i)
+void OBJECT::SolidObjectFull_ClearPush(PLAYER *player, size_t i)
 {
 	//Check we should stop pushing
 	if (playerContact[i].pushing)

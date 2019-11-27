@@ -65,7 +65,7 @@ void ObjGHZSmashableWall(OBJECT *object)
 			
 			//Act as solid, and check if we're going into the wall
 			int16_t oldXVel = player->xVel;
-			OBJECT_SOLIDTOUCH touch = object->SolidObject(27, 32, 32, object->x.pos, false, nullptr, false);
+			OBJECT_SOLIDTOUCH touch = object->SolidObjectFull(27, 32, 32, object->x.pos, false, nullptr, false);
 			
 			if (touch.side[i])
 			{
