@@ -524,7 +524,7 @@ bool LEVEL::LoadObjects(LEVELTABLE *tableEntry)
 				objectLoad->loadRange = false;
 				objectLoad->specificBit = false;
 				
-				gLevel->objectLoadList.link_back(objectLoad);
+				objectLoadList.link_back(objectLoad);
 			}
 		}
 	}
@@ -567,7 +567,7 @@ bool LEVEL::LoadObjects(LEVELTABLE *tableEntry)
 			objectLoad->loadRange = false;
 			objectLoad->specificBit = false;
 			
-			gLevel->objectLoadList.link_back(objectLoad);
+			objectLoadList.link_back(objectLoad);
 			
 			//Offset next position
 			if (type & 0x8)
@@ -1074,7 +1074,10 @@ void LEVEL::ReleaseObjectLoad(OBJECT *object)
 	for (size_t i = 0; i < objectLoadList.size(); i++)
 	{
 		if (objectLoadList[i]->loaded == object)
+		{
+			delete objectLoadList[i];
 			objectLoadList.erase(i--);
+		}
 	}
 }
 
@@ -1084,7 +1087,7 @@ void LEVEL::UnrefObjectLoad(OBJECT *object)
 	for (size_t i = 0; i < objectLoadList.size(); i++)
 	{
 		if (objectLoadList[i]->loaded == object)
-			objectLoadList[i--]->loaded = nullptr;
+			objectLoadList[i]->loaded = nullptr;
 	}
 }
 
@@ -1117,10 +1120,7 @@ void LEVEL::CheckObjectLoad()
 }
 
 //Object layer function
-LEVEL_RENDERLAYER LEVEL::GetObjectLayer(bool highPriority, int priority)
-{
-	return (LEVEL_RENDERLAYER)(highPriority ? (LEVEL_RENDERLAYER_OBJECT_HIGH_0 + priority) : (LEVEL_RENDERLAYER_OBJECT_LOW_0 + priority));
-}
+LEVEL_RENDERLAYER LEVEL::GetObjectLayer(bool highPriority, int priority) { return (LEVEL_RENDERLAYER)(highPriority ? (LEVEL_RENDERLAYER_OBJECT_HIGH_0 + priority) : (LEVEL_RENDERLAYER_OBJECT_LOW_0 + priority)); }
 
 //Oscillatory Update
 static const bool oscillatoryInitialDirection[OSCILLATORY_VALUES] = {false, false, true, true, true, true, true, false, false, false, false, false, false};

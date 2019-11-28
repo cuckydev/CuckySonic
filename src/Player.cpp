@@ -2975,7 +2975,7 @@ void PLAYER::GroundMovement()
 				else
 				{
 					//If Sonic's middle bottom point is 12 pixels away from the floor, start balancing
-					if (CheckCollisionDown_1Point(topSolidLayer, x.pos, y.pos + yRadius, &floorAngle1) >= 12)
+					if ((floorAngle1 = 0) == 0 && CheckCollisionDown_1Point(topSolidLayer, x.pos, y.pos + yRadius, &floorAngle1) >= 12)
 					{
 						if (cdSPTimer != 0)
 						{
@@ -2991,7 +2991,7 @@ void PLAYER::GroundMovement()
 							{
 								if (!status.xFlip)
 								{
-									if (CheckCollisionDown_1Point(topSolidLayer, x.pos - 6, y.pos + yRadius, &floorAngle1) >= 12)
+									if ((floorAngle1 = 0) == 0 && CheckCollisionDown_1Point(topSolidLayer, x.pos - 6, y.pos + yRadius, &floorAngle1) >= 12)
 										anim = PLAYERANIMATION_BALANCE2;	//Far over the edge
 									else
 										anim = PLAYERANIMATION_BALANCE1;	//Balancing on the edge
@@ -2999,7 +2999,7 @@ void PLAYER::GroundMovement()
 								else
 								{
 									//Facing right on ledge to the left of us...
-									if (CheckCollisionDown_1Point(topSolidLayer, x.pos - 6, y.pos + yRadius, &floorAngle1) >= 12)
+									if ((floorAngle1 = 0) == 0 && CheckCollisionDown_1Point(topSolidLayer, x.pos - 6, y.pos + yRadius, &floorAngle1) >= 12)
 									{
 										anim = PLAYERANIMATION_BALANCE4;	//Turn around to the "far over the edge" balancing animation
 										status.xFlip = false;
@@ -3020,7 +3020,7 @@ void PLAYER::GroundMovement()
 							{
 								if (status.xFlip)
 								{
-									if (CheckCollisionDown_1Point(topSolidLayer, x.pos + 6, y.pos + yRadius, &floorAngle1) >= 12)
+									if ((floorAngle1 = 0) == 0 && CheckCollisionDown_1Point(topSolidLayer, x.pos + 6, y.pos + yRadius, &floorAngle1) >= 12)
 										anim = PLAYERANIMATION_BALANCE2;	//Far over the edge
 									else
 										anim = PLAYERANIMATION_BALANCE1;	//Balancing on the edge
@@ -3028,7 +3028,7 @@ void PLAYER::GroundMovement()
 								else
 								{
 									//Facing right on ledge to the left of us...
-									if (CheckCollisionDown_1Point(topSolidLayer, x.pos + 6, y.pos + yRadius, &floorAngle1) >= 12)
+									if ((floorAngle1 = 0) == 0 && CheckCollisionDown_1Point(topSolidLayer, x.pos + 6, y.pos + yRadius, &floorAngle1) >= 12)
 									{
 										anim = PLAYERANIMATION_BALANCE4;	//Turn around to the "far over the edge" balancing animation
 										status.xFlip = true;
@@ -3612,18 +3612,21 @@ static const uint8_t sonicPalette[16][4][3] = {
 	{{0xFF, 0xFF, 0x24}, {0xFF, 0xFF, 0x91}, {0xFF, 0xFF, 0xDA}, {0xFF, 0xFF, 0xFF}},
 };
 
-#define SET_PALETTE_FROM_ENTRY(entry)	ModifyPaletteColour(&texture->loadedPalette->colour[0x2], entry[0][0], entry[0][1], entry[0][2]);	\
-										ModifyPaletteColour(&texture->loadedPalette->colour[0x3], entry[1][0], entry[1][1], entry[1][2]);	\
-										ModifyPaletteColour(&texture->loadedPalette->colour[0x4], entry[2][0], entry[2][1], entry[2][2]);	\
-										ModifyPaletteColour(&texture->loadedPalette->colour[0x5], entry[3][0], entry[3][1], entry[3][2]);
+#define SET_PALETTE_FROM_ENTRY(pal, entry)	ModifyPaletteColour(&pal->colour[0x2], entry[0][0], entry[0][1], entry[0][2]);	\
+											ModifyPaletteColour(&pal->colour[0x3], entry[1][0], entry[1][1], entry[1][2]);	\
+											ModifyPaletteColour(&pal->colour[0x4], entry[2][0], entry[2][1], entry[2][2]);	\
+											ModifyPaletteColour(&pal->colour[0x5], entry[3][0], entry[3][1], entry[3][2]);
 
 void PLAYER::SuperPaletteCycle()
 {
+	TEXTURE *plGenTexture = gLevel->GetObjectTexture("data/Object/PlayerGeneric.bmp");
+	
 	switch (paletteState)
 	{
 		case PALETTESTATE_REGULAR:
 		{
-			SET_PALETTE_FROM_ENTRY(sonicPalette[0]);
+			SET_PALETTE_FROM_ENTRY(texture->loadedPalette, sonicPalette[0]);
+			SET_PALETTE_FROM_ENTRY(plGenTexture->loadedPalette, sonicPalette[0]);
 			break;
 		}
 		case PALETTESTATE_FADING_IN:
@@ -3640,7 +3643,9 @@ void PLAYER::SuperPaletteCycle()
 				paletteState = PALETTESTATE_SUPER;
 				objectControl = {};
 			}
-			SET_PALETTE_FROM_ENTRY(sonicPalette[prevFrame]);
+			
+			SET_PALETTE_FROM_ENTRY(texture->loadedPalette, sonicPalette[prevFrame]);
+			SET_PALETTE_FROM_ENTRY(plGenTexture->loadedPalette, sonicPalette[prevFrame]);
 			break;
 		}
 		case PALETTESTATE_SUPER:
@@ -3654,7 +3659,9 @@ void PLAYER::SuperPaletteCycle()
 			int16_t prevFrame = paletteFrame++;
 			if (paletteFrame >= 15)
 				paletteFrame = 6;
-			SET_PALETTE_FROM_ENTRY(sonicPalette[prevFrame]);
+			
+			SET_PALETTE_FROM_ENTRY(texture->loadedPalette, sonicPalette[prevFrame]);
+			SET_PALETTE_FROM_ENTRY(plGenTexture->loadedPalette, sonicPalette[prevFrame]);
 			break;
 		}
 		case PALETTESTATE_FADING_OUT:
@@ -3671,7 +3678,9 @@ void PLAYER::SuperPaletteCycle()
 				paletteState = PALETTESTATE_REGULAR;
 				paletteFrame = 0;
 			}
-			SET_PALETTE_FROM_ENTRY(sonicPalette[prevFrame]);
+			
+			SET_PALETTE_FROM_ENTRY(texture->loadedPalette, sonicPalette[prevFrame]);
+			SET_PALETTE_FROM_ENTRY(plGenTexture->loadedPalette, sonicPalette[prevFrame]);
 			break;
 		}
 	}
@@ -4580,12 +4589,14 @@ void PLAYER::Update()
 	//Restart if start + a
 	if (gController[controller].press.start && gController[controller].held.a)
 		gLevel->SetFade(false, false);
+	//Next stage if start + b
 	if (gController[controller].press.start && gController[controller].held.b)
 	{
 		gLevel->SetFade(false, false);
 		gGameLoadLevel++;
 		gGameLoadLevel %= LEVELID_MAX;
 	}
+	//Barrier cycle if start + c
 	if (gController[controller].press.start && gController[controller].held.c)
 	{
 		if (barrier == BARRIER_NULL)

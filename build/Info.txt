@@ -4,6 +4,12 @@ Arrow keys - D-Pad
 A, S, & D  - ABC
 Enter      - Start
 
+Gamepad Controls:
+
+D-pad / Analogue stick	- D-Pad
+A, B, X	- ABC
+Start	- Start
+
 Libraries used:
 SDL2 - zlib license
 stb_vorbis - public domain
@@ -11,3 +17,6 @@ miniaudio - public domain
 
 Other Credtis:
 Thanks to everyone behind the Sonic 1, 2, and 3K disassemblies for their hard work to make something like this possible!
+
+Information about CuckySonic:
+github repo - https://github.com/cuckydev/CuckySonic

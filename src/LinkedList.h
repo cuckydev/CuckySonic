@@ -81,7 +81,7 @@ template <typename T> class LINKEDLIST
 		}
 		
 		//Random access and size
-		inline LL_NODE<T> *nodeAt(size_t index)
+		inline LL_NODE<T> *node_at(size_t index)
 		{
 			//Find the node at the given index (from head)
 			size_t i = 0;
@@ -94,7 +94,7 @@ template <typename T> class LINKEDLIST
 		inline T at(size_t index)
 		{
 			//Find the given entry at the given index (from head)
-			return nodeAt(index)->node_entry;
+			return node_at(index)->node_entry;
 		}
 
 		inline size_t size() { return llSize; }
@@ -103,14 +103,14 @@ template <typename T> class LINKEDLIST
 		inline void erase(size_t index)
 		{
 			//Find the node at the given index (from head) and destroy it
-			erase_node(nodeAt(index));
+			erase_node(node_at(index));
 		}
 		
 		inline void erase(size_t from, size_t to)
 		{
 			//Erase entries from "from" to "to"
 			for (size_t i = from; i < to; i++)
-				erase_node(nodeAt(from));
+				erase_node(node_at(from));
 		}
 		
 		inline void erase_node(LL_NODE<T> *node)

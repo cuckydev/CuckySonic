@@ -108,6 +108,6 @@ void ObjRingSpawner(OBJECT *object)
 	}
 	
 	//Delete us
-	object->deleteFlag = true;
 	gLevel->ReleaseObjectLoad(object);
+	object->deleteFlag = true;
 }

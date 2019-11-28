@@ -12,14 +12,6 @@
 #include "Audio.h"
 #include "Player.h"
 
-#define COLLISION_DEBUG
-
-#ifdef COLLISION_DEBUG
-	PALCOLOUR box =  {0xFF0000, 255, 0, 0, 255, 0, 0};
-	PALCOLOUR top =  {0x00FF00, 0, 255, 0, 0, 255, 0};
-	PALCOLOUR clip = {0xFFFF00, 255, 255, 0, 255, 255, 0};
-#endif
-
 //Bugfixes
 //#define FIX_LAZY_CONTACT_CLEAR	//For some reason, the original code for clearing solid object contact is lazy, and will put the player into the air state if they were pushing (obviously incorrect), causes issues with stuff like spindashing into monitors
 
