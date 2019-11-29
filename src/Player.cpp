@@ -53,7 +53,7 @@
 //#define SONIC2_SUPER_AT_PEAK         //In Sonic 2, you'd turn super at the peak of a jump, no matter what, while in Sonic 3, this was moved to the jump ability code
 //#define SONIC12_NO_SPINATTACK        //Double spin attack
 //#define SONIC12_NO_BARRIER_ABILITIES //Elemental barrier abilities
-//#define SONICMANIA_DROPDASH          //Sonic Mania's dropdash
+#define SONICMANIA_DROPDASH          //Sonic Mania's dropdash
 //#define SONIC3_SPINATTACK_LAND       //In Sonic 3, if you land on the ground while performing the double spin attack, it'll cause you to be unable to use any jump abilities until you jump and land once again.
 //#define SONIC3_BUBBLE_SUPER          //In Sonic 3, pressing ABC in mid-air will make you bounce like you have the water barrier if you have it once you touch the ground, this was fixed in S3K
 

@@ -125,12 +125,13 @@ void CAMERA::Track(PLAYER *trackPlayer)
 #endif
 
 	//Handle screen shaking
+	int16_t xShake = 0, yShake = 0;
 	if (shake)
 	{
 		//Get our offsets
 		uint32_t random = RandomNumber();
-		xShift += (int32_t)((random >> 16) & 0xFFFF) * (1 + (shake / 6)) / 0x8000;
-		yShift +=         (int32_t)(random & 0xFFFF) * (1 + (shake / 6)) / 0x8000;
+		xShake = (int16_t)((random >> 16) & 0xFFFF) * (1 + (shake / 6)) / 0x8000;
+		yShake =         (int16_t)(random & 0xFFFF) * (1 + (shake / 6)) / 0x8000;
 		
 		//Decrement shake
 		shake--;
@@ -148,8 +149,9 @@ void CAMERA::Track(PLAYER *trackPlayer)
 	
 	trackX += xShift;
 	
-	//Scroll to our target X
+	//Scroll
 	int16_t hScrollOffset = trackX - xPos - xPan;
+	hScrollOffset += xShake;
 	
 	if ((hScrollOffset -= (gRenderSpec.width / 2 + CAMERA_HSCROLL_LEFT)) < 0) //Scroll to the left
 	{
@@ -160,7 +162,7 @@ void CAMERA::Track(PLAYER *trackPlayer)
 		//Scroll and keep within level boundaries
 		xPos += hScrollOffset;
 		if (xPos < gLevel->leftBoundary)
-			xPos = gLevel->leftBoundary;
+			xPos = gLevel->leftBoundary + mmax(xShake, 0);
 	}
 	else if ((hScrollOffset -= CAMERA_HSCROLL_SIZE) >= 0) //Scroll to the right
 	{
@@ -171,7 +173,7 @@ void CAMERA::Track(PLAYER *trackPlayer)
 		//Scroll and keep within level boundaries
 		xPos += hScrollOffset;
 		if ((xPos + gRenderSpec.width) > gLevel->rightBoundary)
-			xPos = gLevel->rightBoundary - gRenderSpec.width;
+			xPos = gLevel->rightBoundary - gRenderSpec.width + mmin(xShake, 0);
 	}
 	
 	//Scroll vertically to the player
@@ -204,26 +206,29 @@ void CAMERA::Track(PLAYER *trackPlayer)
 			scrollSpeed = (abs(trackPlayer->inertia) >= 0x800) ? 16 : 6;
 	}
 	
+	//Scroll
+	vScrollOffset += yShake;
+	
 	if (vScrollOffset < 0)
 	{
-		//Scroll upwards (cap to scrollSpeed)
+		//Cap scrolling
 		if (vScrollOffset <= -scrollSpeed)
 			vScrollOffset = -scrollSpeed;
-		yPos += vScrollOffset;
 		
-		//Keep within level boundaries
+		//Scroll and keep within level boundaries
+		yPos += vScrollOffset;
 		if (yPos < gLevel->topBoundary)
-			yPos = gLevel->topBoundary;
+			yPos = gLevel->topBoundary + mmax(yShake, 0);
 	}
 	else if (vScrollOffset > 0)
 	{
-		//Scroll downwards (cap to scrollSpeed)
+		//Cap scrolling
 		if (vScrollOffset > scrollSpeed)
 			vScrollOffset = scrollSpeed;
-		yPos += vScrollOffset;
 		
 		//Keep within level boundaries
+		yPos += vScrollOffset;
 		if (yPos + gRenderSpec.height > gLevel->bottomBoundary)
-			yPos = gLevel->bottomBoundary - gRenderSpec.height;
+			yPos = gLevel->bottomBoundary - gRenderSpec.height + mmin(yShake, 0);
 	}
 }
