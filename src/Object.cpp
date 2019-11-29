@@ -703,8 +703,8 @@ bool OBJECT::Update()
 	if (function != prevFunction)
 	{
 		//Free all scratch memory
-		delete[] scratchU8;	scratchU8 =  nullptr;
-		delete[] scratchS8;	scratchS8 =  nullptr;
+		delete[] scratchU8;		scratchU8 =  nullptr;
+		delete[] scratchS8;		scratchS8 =  nullptr;
 		delete[] scratchU16;	scratchU16 = nullptr;
 		delete[] scratchS16;	scratchS16 = nullptr;
 		delete[] scratchU32;	scratchU32 = nullptr;

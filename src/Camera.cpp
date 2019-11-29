@@ -123,10 +123,21 @@ void CAMERA::Track(PLAYER *trackPlayer)
 	xShift = (xShift * shift) / 0x100;
 	yShift = (yShift * shift) / 0x100;
 #endif
+
+	//Handle screen shaking
+	if (shake)
+	{
+		//Get our offsets
+		uint32_t random = RandomNumber();
+		xShift += (int32_t)((random >> 16) & 0xFFFF) * (1 + (shake / 6)) / 0x8000;
+		yShift +=         (int32_t)(random & 0xFFFF) * (1 + (shake / 6)) / 0x8000;
+		
+		//Decrement shake
+		shake--;
+	}
 	
-	//Scroll horizontally to the player
+	//Get our horizontal scroll position
 	int16_t trackX = trackPlayer->x.pos;
-	
 	if (trackPlayer->scrollDelay)
 	{
 		unsigned int lastScroll = trackPlayer->scrollDelay;
@@ -134,11 +145,10 @@ void CAMERA::Track(PLAYER *trackPlayer)
 			trackPlayer->scrollDelay = 0;
 		trackX = trackPlayer->record[(trackPlayer->recordPos - ((trackPlayer->scrollDelay / 0x100) + 1)) % PLAYER_RECORD_LENGTH].x;
 	}
-	else
-	{
-		trackX += xShift;
-	}
 	
+	trackX += xShift;
+	
+	//Scroll to our target X
 	int16_t hScrollOffset = trackX - xPos - xPan;
 	
 	if ((hScrollOffset -= (gRenderSpec.width / 2 + CAMERA_HSCROLL_LEFT)) < 0) //Scroll to the left

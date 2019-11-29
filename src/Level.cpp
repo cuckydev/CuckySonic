@@ -90,6 +90,7 @@ const char *preloadMappings[] = {
 	//Player objects
 	"data/Object/SpindashDust.map",
 	"data/Object/SkidDust.map",
+	"data/Object/DropdashDust.map",
 	"data/Object/InvincibilityStars.map",
 	"data/Object/SuperStars.map",
 	"data/Object/DoubleSpinAttack.map",

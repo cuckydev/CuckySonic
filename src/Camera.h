@@ -13,6 +13,8 @@ class CAMERA
 		int16_t lookPan = 0;
 		int16_t lookTimer = 0;
 		
+		uint16_t shake = 0;
+		
 	public:
 		CAMERA(PLAYER *trackPlayer);
 		~CAMERA();

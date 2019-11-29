@@ -8,8 +8,10 @@
 #include "../Audio.h"
 #include "../MathUtil.h"
 
-//#define BOUNCINGRING_BLINK		//When set, the rings will blink shortly before despawning
-//#define BOUNCINGRING_ONLY_FLOOR	//When set, like in the originals, bouncing rings will only check for floor collision
+//#define BOUNCINGRING_BLINK              //When set, the rings will blink shortly before despawning
+
+#define BOUNCINGRING_ONLY_FLOOR	        //When set, like in the originals, bouncing rings will only check for floor collision
+#define BOUNCINGRING_ORIGINAL_COLLISION //When set, the game will filter the collision so only a quarter of the rings will check for collision in a frame
 
 static const uint8_t animationCollect[] =	{0x05,0x04,0x05,0x06,0x07,0xFC};
 
@@ -139,59 +141,64 @@ void ObjBouncingRing(OBJECT *object)
 				object->yPosLong += object->yVel * 0x100;
 			object->yVel += 0x18;
 			
-			//Check for collision with the floor or ceiling
-			int16_t checkVel = object->yVel;
-			if (object->parentPlayer != nullptr && object->parentPlayer->status.reverseGravity)
-				checkVel = -checkVel;
-			
-			if (checkVel >= 0)
-			{
-				int16_t distance = GetCollisionV(object->x.pos, object->y.pos + object->yRadius, COLLISIONLAYER_NORMAL_TOP, false, nullptr);
-				
-				//If touching the floor, bounce off
-				if (distance < 0)
-				{
-					object->y.pos += distance;
-					object->yVel = object->yVel * 3 / -4;
-				}
-			}
-		#ifndef BOUNCINGRING_ONLY_FLOOR
-			else
-			{
-				int16_t distance = GetCollisionV(object->x.pos, object->y.pos - object->yRadius, COLLISIONLAYER_NORMAL_LRB, true, nullptr);
-				
-				//If touching a ceiling, bounce off
-				if (distance < 0)
-				{
-					object->y.pos -= distance;
-					object->yVel = -object->yVel;
-				}
-			}
-			
-			//Check for collision with walls
-			if (object->xVel > 0)
-			{
-				int16_t distance = GetCollisionH(object->x.pos + object->xRadius, object->y.pos, COLLISIONLAYER_NORMAL_LRB, false, nullptr);
-				
-				//If touching a wall, bounce off
-				if (distance < 0)
-				{
-					object->x.pos += distance;
-					object->xVel = object->xVel / -2;
-				}
-			}
-			else if (object->xVel < 0)
-			{
-				int16_t distance = GetCollisionH(object->x.pos - object->xRadius, object->y.pos, COLLISIONLAYER_NORMAL_LRB, true, nullptr);
-				
-				//If touching a wall, bounce off
-				if (distance < 0)
-				{
-					object->x.pos -= distance;
-					object->xVel = object->xVel / -2;
-				}
-			}
+		#ifdef BOUNCINGRING_ORIGINAL_COLLISION
+			if ((gLevel->frameCounter + gLevel->objectList.pos_of_val(object)) % 4 == 0)
 		#endif
+			{
+				//Check for collision with the floor or ceiling
+				int16_t checkVel = object->yVel;
+				if (object->parentPlayer != nullptr && object->parentPlayer->status.reverseGravity)
+					checkVel = -checkVel;
+				
+				if (checkVel >= 0)
+				{
+					int16_t distance = GetCollisionV(object->x.pos, object->y.pos + object->yRadius, COLLISIONLAYER_NORMAL_TOP, false, nullptr);
+					
+					//If touching the floor, bounce off
+					if (distance < 0)
+					{
+						object->y.pos += distance;
+						object->yVel = object->yVel * 3 / -4;
+					}
+				}
+			#ifndef BOUNCINGRING_ONLY_FLOOR
+				else
+				{
+					int16_t distance = GetCollisionV(object->x.pos, object->y.pos - object->yRadius, COLLISIONLAYER_NORMAL_LRB, true, nullptr);
+					
+					//If touching a ceiling, bounce off
+					if (distance < 0)
+					{
+						object->y.pos -= distance;
+						object->yVel = -object->yVel;
+					}
+				}
+				
+				//Check for collision with walls
+				if (object->xVel > 0)
+				{
+					int16_t distance = GetCollisionH(object->x.pos + object->xRadius, object->y.pos, COLLISIONLAYER_NORMAL_LRB, false, nullptr);
+					
+					//If touching a wall, bounce off
+					if (distance < 0)
+					{
+						object->x.pos += distance;
+						object->xVel = object->xVel / -2;
+					}
+				}
+				else if (object->xVel < 0)
+				{
+					int16_t distance = GetCollisionH(object->x.pos - object->xRadius, object->y.pos, COLLISIONLAYER_NORMAL_LRB, true, nullptr);
+					
+					//If touching a wall, bounce off
+					if (distance < 0)
+					{
+						object->x.pos -= distance;
+						object->xVel = object->xVel / -2;
+					}
+				}
+			#endif
+			}
 			
 			//Animate
 			if (object->scratchU8[SCRATCHU8_ANIM_COUNT] != 0)

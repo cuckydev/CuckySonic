@@ -101,6 +101,14 @@
 #endif
 
 //Animation data
+enum PLAYERANIMATION_COMMAND
+{
+	COMMAND_RESTART = 0xFF,
+	COMMAND_GO_BACK_FRAMES = 0xFE,
+	COMMAND_SET_ANIMATION = 0xFD,
+	COMMAND_MIN = 0xFC,
+};
+
 #define WALK_FRAMES			8
 #define RUN_FRAMES			4
 #define DASH_FRAMES			4
@@ -112,13 +120,13 @@
 
 #define MAPPINGFRAME_DUCK	77
 
-static const uint8_t animationWalk[] =			{0xFF,0x0F,0x10,0x11,0x12,0x13,0x14,0x0D,0x0E,0xFF}; //Walk and run must match in length (run is padded with 0xFF)
-static const uint8_t animationRun[] =			{0xFF,0x2D,0x2E,0x2F,0x30,0xFF,0xFF,0xFF,0xFF,0xFF};
-static const uint8_t animationDash[] =			{0xFF,0xD6,0xD7,0xD8,0xD9,0xFF,0xFF,0xFF,0xFF,0xFF};
-static const uint8_t animationRoll[] =			{0xFE,0x3D,0x41,0x3E,0x41,0x3F,0x41,0x40,0x41,0xFF}; //Roll and roll2 must match in length (roll2 is padded with 0xFF)
-static const uint8_t animationRoll2[] =			{0xFE,0x3D,0x41,0x3E,0x41,0x3F,0x41,0x40,0x41,0xFF};
-static const uint8_t animationDropdash[] =		{0x00,0xE6,0xE8,0xE7,0xE9,0xE6,0xEA,0xE7,0xEB,0xE6,0xEC,0xE7,0xED,0xE6,0xEE,0xE7,0xEF,0xFF};
-static const uint8_t animationPush[] =			{0xFD,0x48,0x49,0x4A,0x4B,0xFF,0xFF,0xFF,0xFF,0xFF}; //Push must also match the length of run and walk (padded with 0xFF)
+static const uint8_t animationWalk[] =			{0xFF,0x0F,0x10,0x11,0x12,0x13,0x14,0x0D,0x0E,COMMAND_RESTART}; //Walk and run must match in length (run is padded with COMMAND_RESTART)
+static const uint8_t animationRun[] =			{0xFF,0x2D,0x2E,0x2F,0x30,COMMAND_RESTART,COMMAND_RESTART,COMMAND_RESTART,COMMAND_RESTART,COMMAND_RESTART};
+static const uint8_t animationDash[] =			{0xFF,0xD6,0xD7,0xD8,0xD9,COMMAND_RESTART,COMMAND_RESTART,COMMAND_RESTART,COMMAND_RESTART,COMMAND_RESTART};
+static const uint8_t animationRoll[] =			{0xFE,0x3D,0x41,0x3E,0x41,0x3F,0x41,0x40,0x41,COMMAND_RESTART}; //Roll and roll2 must match in length (roll2 is padded with COMMAND_RESTART)
+static const uint8_t animationRoll2[] =			{0xFE,0x3D,0x41,0x3E,0x41,0x3F,0x41,0x40,0x41,COMMAND_RESTART};
+static const uint8_t animationDropdash[] =		{0x00,0xE6,0xE8,0xE7,0xE9,0xE6,0xEA,0xE7,0xEB,0xE6,0xEC,0xE7,0xED,0xE6,0xEE,0xE7,0xEF,COMMAND_RESTART};
+static const uint8_t animationPush[] =			{0xFD,0x48,0x49,0x4A,0x4B,COMMAND_RESTART,COMMAND_RESTART,COMMAND_RESTART,COMMAND_RESTART,COMMAND_RESTART}; //Push must also match the length of run and walk (padded with COMMAND_RESTART)
 static const uint8_t animationIdle[] =			{0x05,0x01,0x01,0x01,0x01,0x01,0x01,0x01,0x01,0x01,0x01,0x01,0x01,0x01,0x01,
 												 0x01,0x01,0x01,0x01,0x01,0x01,0x01,0x01,0x01,0x01,0x01,0x01,0x01,0x01,0x01,
 												 0x01,0x02,0x03,0x03,0x03,0x03,0x03,0x04,0x04,0x04,0x05,0x05,0x05,0x04,0x04,
@@ -131,46 +139,46 @@ static const uint8_t animationIdle[] =			{0x05,0x01,0x01,0x01,0x01,0x01,0x01,0x0
 												 0x06,0x06,0x06,0x06,0x04,0x04,0x04,0x05,0x05,0x05,0x04,0x04,0x04,0x05,0x05,
 												 0x05,0x04,0x04,0x04,0x05,0x05,0x05,0x04,0x04,0x04,0x05,0x05,0x05,0x06,0x06,
 												 0x06,0x06,0x06,0x06,0x06,0x06,0x06,0x06,0x07,0x08,0x08,0x08,0x09,0x09,0x09,
-												 0xFE,0x06};
-static const uint8_t animationBalance1[] =		{0x09,0xCC,0xCD,0xCE,0xCD,0xFF};
-static const uint8_t animationLookUp[] =		{0x05,0x0B,0x0C,0xFE,0x01};
-static const uint8_t animationDuck[] =			{0x05,0x4C,0x4D,0xFE,0x01};
-static const uint8_t animationSpindash[] =		{0x00,0x42,0x43,0x42,0x44,0x42,0x45,0x42,0x46,0x42,0x47,0xFF};
-static const uint8_t animationBlink[] =			{0x01,0x02,0xFD,PLAYERANIMATION_WALK};
-static const uint8_t animationGetUp[] =			{0x03,0x0A,0xFD,PLAYERANIMATION_WALK};
-static const uint8_t animationBalance2[] =		{0x03,0xC8,0xC9,0xCA,0xCB,0xFF};
-static const uint8_t animationSkid[] =			{0x05,0xD2,0xD3,0xD4,0xD5,0xFD,PLAYERANIMATION_WALK};
-static const uint8_t animationFloat1[] =		{0x07,0x54,0x59,0xFF};
-static const uint8_t animationFloat2[] =		{0x07,0x54,0x55,0x56,0x57,0x58,0xFF};
-static const uint8_t animationSpring[] =		{0x2F,0x5B,0xFD,PLAYERANIMATION_WALK};
-static const uint8_t animationHang1[] =			{0x01,0x50,0x51,0xFF};
-static const uint8_t animationDash2[] =			{0x0F,0x43,0x43,0x43,0xFE,0x01};
-static const uint8_t animationDash3[] =			{0x0F,0x43,0x44,0xFE,0x01};
-static const uint8_t animationHang2[] =			{0x01,0x50,0x51,0xFF};
-static const uint8_t animationBubble[] =		{0x0B,0x5A,0x5A,0x11,0x12,0xFD,PLAYERANIMATION_WALK};
-static const uint8_t animationBurnt[] =			{0x20,0x5E,0xFF};
-static const uint8_t animationDrown[] =			{0x20,0x5D,0xFF};
-static const uint8_t animationDeath[] =			{0x20,0x5C,0xFF};
-static const uint8_t animationHurt[] =			{0x40,0x4E,0xFF};
-static const uint8_t animationSlide[] =			{0x09,0x4E,0x4F,0xFF};
-static const uint8_t animationNull[] =			{0x77,0x00,0xFD,PLAYERANIMATION_WALK};
-static const uint8_t animationBalance3[] =		{0x13,0xD0,0xD1,0xFF};
-static const uint8_t animationBalance4[] =		{0x03,0xCF,0xC8,0xC9,0xCA,0xCB,0xFE,0x04};
-static const uint8_t animationLying[] =			{0x09,0x08,0x09,0xFF};
-static const uint8_t animationLieDown[] =		{0x03,0x07,0xFD,PLAYERANIMATION_WALK};
+												 COMMAND_GO_BACK_FRAMES,0x06};
+static const uint8_t animationBalance1[] =		{0x09,0xCC,0xCD,0xCE,0xCD,COMMAND_RESTART};
+static const uint8_t animationLookUp[] =		{0x05,0x0B,0x0C,COMMAND_GO_BACK_FRAMES,0x01};
+static const uint8_t animationDuck[] =			{0x05,0x4C,0x4D,COMMAND_GO_BACK_FRAMES,0x01};
+static const uint8_t animationSpindash[] =		{0x00,0x42,0x43,0x42,0x44,0x42,0x45,0x42,0x46,0x42,0x47,COMMAND_RESTART};
+static const uint8_t animationBlink[] =			{0x01,0x02,COMMAND_SET_ANIMATION,PLAYERANIMATION_WALK};
+static const uint8_t animationGetUp[] =			{0x03,0x0A,COMMAND_SET_ANIMATION,PLAYERANIMATION_WALK};
+static const uint8_t animationBalance2[] =		{0x03,0xC8,0xC9,0xCA,0xCB,COMMAND_RESTART};
+static const uint8_t animationSkid[] =			{0x05,0xD2,0xD3,0xD4,0xD5,COMMAND_SET_ANIMATION,PLAYERANIMATION_WALK};
+static const uint8_t animationFloat1[] =		{0x07,0x54,0x59,COMMAND_RESTART};
+static const uint8_t animationFloat2[] =		{0x07,0x54,0x55,0x56,0x57,0x58,COMMAND_RESTART};
+static const uint8_t animationSpring[] =		{0x2F,0x5B,COMMAND_SET_ANIMATION,PLAYERANIMATION_WALK};
+static const uint8_t animationHang1[] =			{0x01,0x50,0x51,COMMAND_RESTART};
+static const uint8_t animationDash2[] =			{0x0F,0x43,0x43,0x43,COMMAND_GO_BACK_FRAMES,0x01};
+static const uint8_t animationDash3[] =			{0x0F,0x43,0x44,COMMAND_GO_BACK_FRAMES,0x01};
+static const uint8_t animationHang2[] =			{0x01,0x50,0x51,COMMAND_RESTART};
+static const uint8_t animationBubble[] =		{0x0B,0x5A,0x5A,0x11,0x12,COMMAND_SET_ANIMATION,PLAYERANIMATION_WALK};
+static const uint8_t animationBurnt[] =			{0x20,0x5E,COMMAND_RESTART};
+static const uint8_t animationDrown[] =			{0x20,0x5D,COMMAND_RESTART};
+static const uint8_t animationDeath[] =			{0x20,0x5C,COMMAND_RESTART};
+static const uint8_t animationHurt[] =			{0x40,0x4E,COMMAND_RESTART};
+static const uint8_t animationSlide[] =			{0x09,0x4E,0x4F,COMMAND_RESTART};
+static const uint8_t animationNull[] =			{0x77,0x00,COMMAND_SET_ANIMATION,PLAYERANIMATION_WALK};
+static const uint8_t animationBalance3[] =		{0x13,0xD0,0xD1,COMMAND_RESTART};
+static const uint8_t animationBalance4[] =		{0x03,0xCF,0xC8,0xC9,0xCA,0xCB,COMMAND_GO_BACK_FRAMES,0x04};
+static const uint8_t animationLying[] =			{0x09,0x08,0x09,COMMAND_RESTART};
+static const uint8_t animationLieDown[] =		{0x03,0x07,COMMAND_SET_ANIMATION,PLAYERANIMATION_WALK};
 
 //Super specific animation
 #define SUPER_WALK_FRAMES	8
 #define SUPER_RUN_FRAMES	1
 #define SUPER_DASH_FRAMES	1
 
-static const uint8_t animationSuperWalk[] =			{0xFF,0x77,0x78,0x79,0x7A,0x7B,0x7C,0x75,0x76,0xFF}; //Walk and run must match in length (run is padded with 0xFF, here)
-static const uint8_t animationSuperRun[] =			{0xFF,0xB5,0xB9,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF};
-static const uint8_t animationSuperPush[] =			{0xFD,0xBD,0xBE,0xBF,0xC0,0xFF,0xFF,0xFF,0xFF,0xFF}; //Push must also match the length of run and walk (padded with 0xFF here)
-static const uint8_t animationSuperIdle[] =			{0x07,0x72,0x73,0x74,0x73,0xFF};
-static const uint8_t animationSuperBalance[] =		{0x09,0xC2,0xC3,0xC4,0xC3,0xC5,0xC6,0xC7,0xC6,0xFF};
-static const uint8_t animationSuperDuck[] =			{0x05,0xC1,0xFF};
-static const uint8_t animationSuperTransform[] =	{0x02,0x6D,0x6D,0x6E,0x6E,0x6F,0x70,0x71,0x70,0x71,0x70,0x71,0x70,0x71,0xFD,PLAYERANIMATION_WALK};
+static const uint8_t animationSuperWalk[] =			{0xFF,0x77,0x78,0x79,0x7A,0x7B,0x7C,0x75,0x76,COMMAND_RESTART}; //Walk and run must match in length (run is padded with COMMAND_RESTART, here)
+static const uint8_t animationSuperRun[] =			{0xFF,0xB5,0xB9,COMMAND_RESTART,COMMAND_RESTART,COMMAND_RESTART,COMMAND_RESTART,COMMAND_RESTART,COMMAND_RESTART,COMMAND_RESTART};
+static const uint8_t animationSuperPush[] =			{0xFD,0xBD,0xBE,0xBF,0xC0,COMMAND_RESTART,COMMAND_RESTART,COMMAND_RESTART,COMMAND_RESTART,COMMAND_RESTART}; //Push must also match the length of run and walk (padded with COMMAND_RESTART here)
+static const uint8_t animationSuperIdle[] =			{0x07,0x72,0x73,0x74,0x73,COMMAND_RESTART};
+static const uint8_t animationSuperBalance[] =		{0x09,0xC2,0xC3,0xC4,0xC3,0xC5,0xC6,0xC7,0xC6,COMMAND_RESTART};
+static const uint8_t animationSuperDuck[] =			{0x05,0xC1,COMMAND_RESTART};
+static const uint8_t animationSuperTransform[] =	{0x02,0x6D,0x6D,0x6E,0x6E,0x6F,0x70,0x71,0x70,0x71,0x70,0x71,0x70,0x71,COMMAND_SET_ANIMATION,PLAYERANIMATION_WALK};
 
 //Animation lists
 static const uint8_t* animationList[] = {
@@ -252,10 +260,12 @@ static const uint8_t* animationListSuper[] = {
 //Spindash dust
 static const uint8_t animationSpindashDustNull[] =	{0x1F,0x00,0xFF};
 static const uint8_t animationSpindashDust[] =		{0x01,0x0A,0x0B,0x0C,0x0D,0x0E,0x0F,0x10,0xFF};
+static const uint8_t animationDropdashDust[] =		{0x01,0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,0x0A,0xFD,0x00};
 
 static const uint8_t* animationListSpindashDust[] = {
 	animationSpindashDustNull,
 	animationSpindashDust,
+	animationDropdashDust,
 };
 
 void ObjSpindashDust(OBJECT *object)
@@ -267,32 +277,46 @@ void ObjSpindashDust(OBJECT *object)
 	{
 		case 0:
 			//Initialize render properties
-			object->texture = gLevel->GetObjectTexture("data/Object/PlayerGeneric.bmp");
-			object->mapping.mappings = gLevel->GetObjectMappings("data/Object/SpindashDust.map");
-			
 			object->priority = 1;
 			object->widthPixels = 24;
+			object->heightPixels = 32;
 			object->renderFlags.alignPlane = true;
 			
 			//Increment routine
 			object->routine = 1;
 //Fallthrough
 		case 1:
-			//If we're active
-			if (object->anim == 1)
+			//Load graphics and make sure we're still active
+			switch (object->anim)
 			{
-				//Is the player still spindashing?
-				if (object->parentPlayer->routine != PLAYERROUTINE_CONTROL || object->parentPlayer->spindashing == false)
-				{
-					object->anim = 0;
+				case 1: //Spindashing
+					//Load graphics
+					object->texture = gLevel->GetObjectTexture("data/Object/PlayerGeneric.bmp");
+					object->mapping.mappings = gLevel->GetObjectMappings("data/Object/SpindashDust.map");
+					
+					//Is the player still spindashing?
+					if (object->parentPlayer->routine != PLAYERROUTINE_CONTROL || object->parentPlayer->spindashing == false)
+					{
+						object->anim = 0;
+						break;
+					}
 					break;
-				}
-				
-				//Copy the player's position
+				case 2: //Dropdash dust
+					//Load graphics
+					object->texture = gLevel->GetObjectTexture("data/Object/PlayerGeneric.bmp");
+					object->mapping.mappings = gLevel->GetObjectMappings("data/Object/DropdashDust.map");
+					break;
+			}
+			
+			//Dropdash position lock
+			if (!object->routineSecondary)
+			{
+				//Copy the player's orientation and priority
 				object->status.xFlip = object->parentPlayer->status.xFlip;
 				object->status.yFlip = object->parentPlayer->status.reverseGravity;
 				object->highPriority = object->parentPlayer->highPriority;
 				
+				//Copy player's position
 				object->x.pos = object->parentPlayer->x.pos;
 				object->y.pos = object->parentPlayer->y.pos;
 				
@@ -304,6 +328,8 @@ void ObjSpindashDust(OBJECT *object)
 				else
 					object->y.pos -= heightDifference;
 			}
+			
+			object->routineSecondary = (object->anim == 2);
 			break;
 	}
 	
@@ -2145,6 +2171,19 @@ bool PLAYER::CDPeeloutSpindash()
 
 void PLAYER::CheckDropdashRelease()
 {
+	//Make sure we're not on an object we shouldn't dropdash on
+	OBJECT *landObject = status.shouldNotFall ? interact : nullptr;
+	
+	if (landObject != nullptr)
+	{
+		if ((landObject->function == &ObjSpring && landObject->routine == 1))
+		{
+			//Clear ability and return
+			abilityProperty = 0;
+			return;
+		}
+	}
+	
 	//If landed and charging a dropdash
 	if (status.inAir == false)
 	{
@@ -2229,6 +2268,13 @@ void PLAYER::CheckDropdashRelease()
 			//Lag screen behind us
 			ResetRecords(x.pos, y.pos);
 			scrollDelay = 0x2000 - (mabs(inertia) - 0x800) * 2;
+			
+			if (super)
+				gLevel->camera->shake = 30;
+			
+			//Make our dropdash dust visible
+			if (spindashDust != nullptr)
+				spindashDust->anim = 2;
 		}
 		
 		//Clear ability property
@@ -2423,6 +2469,14 @@ void PLAYER::JumpAbilities()
 				#endif
 			}
 		}
+		else
+		{
+			#ifdef SONICMANIA_DROPDASH
+				//Check if we should initiate a dropdash
+				if (characterType == CHARACTERTYPE_SONIC)
+					abilityProperty = 2;
+			#endif
+		}
 	}
 }
 
@@ -2465,7 +2519,9 @@ void PLAYER::JumpHeight()
 void PLAYER::AirMovement()
 {
 	//Move left and right
+#ifndef SONICCD_ROLLJUMP
 	if (!status.rollJumping)
+#endif
 	{
 		int16_t newVelocity = xVel;
 		int16_t jumpAcceleration = acceleration << 1;
@@ -2555,7 +2611,7 @@ void PLAYER::UpdateAngleInAir()
 		}
 	}
 	
-	//Handle our flipping
+	//Handle our flipping angle
 	uint8_t nextFlipAngle = flipAngle;
 	
 	if (nextFlipAngle != 0)
@@ -2590,7 +2646,7 @@ void PLAYER::UpdateAngleInAir()
 bool PLAYER::Jump()
 {
 	#if defined(SONICCD_PEELOUT) || defined(SONICCD_SPINDASH)
-		//Get if we should filter up/down input (peelout / spindash)
+		//Get if we should filter from up/down input (peelout / spindash)
 		bool upOrDownFilter = false;
 		
 		#ifdef SONICCD_PEELOUT
@@ -2603,8 +2659,7 @@ bool PLAYER::Jump()
 		#endif
 		
 		//Check if we can jump (CD spindash)
-		if (cdSPTimer != 0 ||
-			((upOrDownFilter) && !inertia))
+		if (cdSPTimer != 0 || ((upOrDownFilter) && !inertia))
 			return true;
 	#endif
 	
@@ -2648,13 +2703,11 @@ bool PLAYER::Jump()
 				//Shift us down to the ground
 				YSHIFT_ON_FLOOR(-(yRadius - defaultYRadius));
 			}
-		#ifndef SONICCD_ROLLJUMP
 			else
 			{
 				//Set our roll jump flag (original uses the regular non-roll collision size for some reason)
 				status.rollJumping = true;
 			}
-		#endif
 			return false;
 		}
 	}
@@ -3765,13 +3818,13 @@ void PLAYER::FrameCommand(const uint8_t* animation)
 {
 	switch (animation[1 + animFrame])
 	{
-		case 0xFF: //Restart animation
+		case COMMAND_RESTART: //Restart animation
 			animFrame = 0;
 			break;
-		case 0xFE: //Go back X amount of frames
+		case COMMAND_GO_BACK_FRAMES: //Go back X amount of frames
 			animFrame -= animation[2 + animFrame];
 			break;
-		case 0xFD: //Switch to X animation
+		case COMMAND_SET_ANIMATION: //Switch to X animation
 			anim = (PLAYERANIMATION)animation[2 + animFrame];
 			return;
 		default:
@@ -3786,7 +3839,7 @@ void PLAYER::FrameCommand(const uint8_t* animation)
 void PLAYER::AdvanceFrame(const uint8_t* animation)
 {
 	//Handle commands
-	if (animation[1 + animFrame] >= 0xFC)
+	if (animation[1 + animFrame] >= COMMAND_MIN)
 	{
 		FrameCommand(animation);
 		return;
@@ -3915,7 +3968,11 @@ void PLAYER::Animate()
 						
 						mappingFrame = animation[1 + animFrame] + angleIncrement;
 
-						#ifdef SONIC1_WALK_ANIMATION
+					#ifndef SONIC1_WALK_ANIMATION
+						//Wait for the next frame
+						if (--animFrameDuration < 0)
+					#endif
+						{
 							//Set our frame duration
 							speedFactor = -speedFactor + 0x800;
 							if (speedFactor >= 0x8000)
@@ -3924,20 +3981,7 @@ void PLAYER::Animate()
 							
 							//Increment frame
 							animFrame++;
-						#else
-							//Wait for the next frame
-							if (--animFrameDuration < 0)
-							{
-								//Set our frame duration
-								speedFactor = -speedFactor + 0x800;
-								if (speedFactor >= 0x8000)
-									speedFactor = 0;
-								animFrameDuration = speedFactor >> 8;
-								
-								//Increment frame
-								animFrame++;
-							}
-						#endif
+						}
 						return;
 					}
 					else
@@ -3974,7 +4018,11 @@ void PLAYER::Animate()
 						if (animation == aniList[PLAYERANIMATION_WALK] && gLevel->frameCounter & 0x3)
 							mappingFrame += WALK_FRAMES * 4;
 
-						#ifdef SONIC1_WALK_ANIMATION
+					#ifndef SONIC1_WALK_ANIMATION
+						//Wait for the next frame
+						if (--animFrameDuration < 0)
+					#endif
+						{
 							//Set our frame duration
 							speedFactor = -speedFactor + 0x800;
 							if (speedFactor >= 0x8000)
@@ -3983,20 +4031,7 @@ void PLAYER::Animate()
 							
 							//Increment frame
 							animFrame++;
-						#else
-							//Wait for the next frame
-							if (--animFrameDuration < 0)
-							{
-								//Set our frame duration
-								speedFactor = -speedFactor + 0x800;
-								if (speedFactor >= 0x8000)
-									speedFactor = 0;
-								animFrameDuration = speedFactor >> 8;
-								
-								//Increment frame
-								animFrame++;
-							}
-						#endif
+						}
 						return;
 					}
 				}
@@ -5020,7 +5055,7 @@ void PLAYER::AttachToObject(OBJECT *object, size_t i)
 		#ifndef SONICMANIA_DROPDASH
 			LandOnFloor_ExitBall();
 		#else
-			if (characterType != CHARACTERTYPE_SONIC || abilityProperty <= (DROPDASH_CHARGE + 1))
+			if (characterType != CHARACTERTYPE_SONIC || abilityProperty != (DROPDASH_CHARGE + 2))
 				LandOnFloor_ExitBall();
 			else
 			{

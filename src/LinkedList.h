@@ -67,16 +67,22 @@ template <typename T> class LINKEDLIST
 		inline size_t pos_of_node(LL_NODE<T> want)
 		{
 			size_t i = 0;
-			for (LL_NODE<T> *node = head; node != want; node = node->next)
+			LL_NODE<T> *node = head;
+			for (; node != nullptr && node != want; node = node->next)
 				i++;
+			if (node == nullptr)
+				return -1;
 			return i;
 		}
 		
 		inline size_t pos_of_val(T want)
 		{
 			size_t i = 0;
-			for (LL_NODE<T> *node = head; node->node_entry != want; node = node->next)
+			LL_NODE<T> *node = head;
+			for (; node != nullptr && node->node_entry != want; node = node->next)
 				i++;
+			if (node == nullptr)
+				return -1;
 			return i;
 		}
 		
@@ -115,6 +121,10 @@ template <typename T> class LINKEDLIST
 		
 		inline void erase_node(LL_NODE<T> *node)
 		{
+			//Don't delete if a null node
+			if (node == nullptr)
+				return;
+			
 			//Adjust linked list correctly and destroy node
 			if (node->prev != nullptr)
 				node->prev->next = node->next;
