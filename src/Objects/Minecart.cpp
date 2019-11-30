@@ -7,15 +7,13 @@
 
 void ObjMinecart(OBJECT *object)
 {
-	//Scratch
-	enum SCRATCH
+	//Define and allocate our scratch
+	struct SCRATCH
 	{
-		//U32
-		SCRATCHU32_ROLL =	0,
-		SCRATCHU32_MAX =	1,
+		uint32_t roll = 0;
 	};
 	
-	object->ScratchAllocU32(SCRATCHU32_ROLL);
+	SCRATCH *scratch = object->Scratch<SCRATCH>();
 	
 	switch (object->routine)
 	{
@@ -94,7 +92,7 @@ void ObjMinecart(OBJECT *object)
 					}
 					
 					//Set our mapping frame
-					object->mappingFrame = (object->scratchU32[SCRATCHU32_ROLL] / 0xA00) % 2;
+					object->mappingFrame = (scratch->roll / 0xA00) % 2;
 					if (abs(object->xVel) > 0x200 && gLevel->frameCounter & 0x1)
 						object->mappingFrame += 2;
 				}
@@ -118,7 +116,7 @@ void ObjMinecart(OBJECT *object)
 				}
 				
 				//Set our mapping frame
-				object->mappingFrame = (object->scratchU32[SCRATCHU32_ROLL] / 0xA00) % 2;
+				object->mappingFrame = (scratch->roll / 0xA00) % 2;
 			}
 			
 			//Check for collision with walls
@@ -251,7 +249,7 @@ void ObjMinecart(OBJECT *object)
 			}
 			
 			//Draw to screen and handle rolling
-			object->scratchU32[SCRATCHU32_ROLL] += object->xVel;
+			scratch->roll += object->xVel;
 			if (object->xVel > 0)
 				object->renderFlags.xFlip = false;
 			else if (object->xVel < 0)

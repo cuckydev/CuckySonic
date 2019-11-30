@@ -156,6 +156,11 @@ LEVELTABLE gLevelTable[LEVELID_MAX] = {
 							"data/Level/GHZ/ghz2", "data/Level/GHZ/ghz", "data/Level/sonic1", "data/Level/GHZ/ghz", "GHZ",
 							preloadTexture_GHZ, preloadMappings_GHZ, &GHZ_Background, &GHZ_PaletteCycle, objFuncSonic1,
 							0x0050, 0x00FC, 0x0000, 0x214B, 0x0000, 0x03E0},
+		/*LEVELID_GHZ3*/ {ZONEID_GHZ, "Green Hill Zone", "Act 3",
+							LEVELFORMAT_CHUNK128_SONIC2, OBJECTFORMAT_SONIC1, ARTFORMAT_BMP,
+							"data/Level/GHZ/ghz3", "data/Level/GHZ/ghz", "data/Level/sonic1", "data/Level/GHZ/ghz", "GHZ",
+							preloadTexture_GHZ, preloadMappings_GHZ, &GHZ_Background, &GHZ_PaletteCycle, objFuncSonic1,
+							0x0050, 0x03B0, 0x0000, 0x2A00, 0x0000, 0x03E0},
 	
 	//ZONEID_EHZ
 		/*LEVELID_EHZ1*/ {ZONEID_EHZ, "Emerald Hill Zone", "Act 1",
@@ -163,6 +168,11 @@ LEVELTABLE gLevelTable[LEVELID_MAX] = {
 							"data/Level/EHZ/ehz1", "data/Level/EHZ/ehz", "data/Level/sonic2", "data/Level/EHZ/ehz", "EHZ",
 							preloadTexture_EHZ, preloadMappings_EHZ, &EHZ_Background, &EHZ_PaletteCycle, objFuncSonic2,
 							0x0060, 0x028F, 0x0000, 0x2A40, 0x0000, 0x0400},
+		/*LEVELID_EHZ2*/ {ZONEID_EHZ, "Emerald Hill Zone", "Act 2",
+							LEVELFORMAT_CHUNK128_SONIC2, OBJECTFORMAT_SONIC2, ARTFORMAT_BMP,
+							"data/Level/EHZ/ehz2", "data/Level/EHZ/ehz", "data/Level/sonic2", "data/Level/EHZ/ehz", "EHZ",
+							preloadTexture_EHZ, preloadMappings_EHZ, &EHZ_Background, &EHZ_PaletteCycle, objFuncSonic2,
+							0x0060, 0x028F, 0x0000, 0x29E0, 0x0000, 0x0500},
 };
 
 //Loading functions
@@ -937,6 +947,7 @@ void LEVEL::DynamicEvents()
 	
 	//Level specific events
 	int16_t checkX = camera->xPos + (gRenderSpec.width - 320) / 2;
+	int16_t checkY = camera->yPos + (gRenderSpec.height - 224) / 2;
 	
 	switch (levelId)
 	{
@@ -955,6 +966,26 @@ void LEVEL::DynamicEvents()
 				bottomBoundaryTarget = 0x2E0;
 			else
 				bottomBoundaryTarget = 0x3E0;
+			break;
+		case LEVELID_GHZ3:
+			bottomBoundaryTarget = 0x3E0;
+			if (checkX < 0x380)
+				break;
+			bottomBoundaryTarget = 0x3F0;
+			if (checkX < 0x960)
+				break;
+			if (checkY >= 0x280)
+			{
+				bottomBoundaryTarget = 0x4E0;
+				if (checkX < 0x1380)
+				{
+					bottomBoundary = 0x5A0;
+					bottomBoundaryTarget = 0x5A0;
+				}
+				if (checkX < 0x1700)
+					break;
+			}
+			bottomBoundaryTarget = 0x3E0;
 			break;
 		default:
 			break;

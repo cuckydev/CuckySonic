@@ -37,20 +37,14 @@ void ObjBridgeSegment(OBJECT *object)
 
 void ObjBridge(OBJECT *object)
 {
-	//Scratch
-	enum SCRATCH
+	//Define and allocate our scratch
+	struct SCRATCH
 	{
-		//U8
-		SCRATCHU8_DEPRESS_POSITION =	0,
-		SCRATCHU8_DEPRESS_FORCE =		1,
-		SCRATCHU8_MAX =					2,
-		//U16
-		SCRATCHU16_DEPRESS_POSITION =	0,
-		SCRATCHU16_MAX =				1,
+		uint8_t depressPosition = 0;
+		uint8_t depressForce = 0;
 	};
 	
-	object->ScratchAllocU8(SCRATCHU8_MAX);
-	object->ScratchAllocU16(SCRATCHU16_MAX);
+	SCRATCH *scratch = object->Scratch<SCRATCH>();
 	
 	switch (object->routine)
 	{
@@ -101,8 +95,8 @@ void ObjBridge(OBJECT *object)
 			if (!touching)
 			{
 				//Decrease force if no-one is standing on us
-				if (object->scratchU8[SCRATCHU8_DEPRESS_FORCE] != 0x00)
-					object->scratchU8[SCRATCHU8_DEPRESS_FORCE] -= 0x04;
+				if (scratch->depressForce != 0x00)
+					scratch->depressForce -= 0x04;
 			}
 			else
 			{
@@ -120,21 +114,21 @@ void ObjBridge(OBJECT *object)
 						
 						if (i != 0)
 						{
-							if (standingLog < object->scratchU8[SCRATCHU8_DEPRESS_POSITION])
-								object->scratchU8[SCRATCHU8_DEPRESS_POSITION]--;
-							else if (standingLog > object->scratchU8[SCRATCHU8_DEPRESS_POSITION])
-								object->scratchU8[SCRATCHU8_DEPRESS_POSITION]++;
+							if (standingLog < scratch->depressPosition)
+								scratch->depressPosition--;
+							else if (standingLog > scratch->depressPosition)
+								scratch->depressPosition++;
 						}
 					#ifdef FIX_DEPRESS_DELAY
 						else
-							object->scratchU8[SCRATCHU8_DEPRESS_POSITION] = standingLog;
+							scratch->depressPosition = standingLog;
 					#endif
 					}
 				}
 				
 				//Increase force if someone is standing on us
-				if (object->scratchU8[SCRATCHU8_DEPRESS_FORCE] != 0x40)
-					object->scratchU8[SCRATCHU8_DEPRESS_FORCE] += 4;
+				if (scratch->depressForce != 0x40)
+					scratch->depressForce += 4;
 			}
 			
 			//Handle depression
@@ -142,13 +136,13 @@ void ObjBridge(OBJECT *object)
 			{
 				//Get the angle of this log (go up to 0x40 from the left, and go back down to 0x00 to the right)
 				uint8_t angle;
-				if (j < object->scratchU8[SCRATCHU8_DEPRESS_POSITION])
-					angle = (0x40 * (j + 1)) / (object->scratchU8[SCRATCHU8_DEPRESS_POSITION] + 1); //To the left of the depress position
+				if (j < scratch->depressPosition)
+					angle = (0x40 * (j + 1)) / (scratch->depressPosition + 1); //To the left of the depress position
 				else
-					angle = (0x40 * (object->subtype - j)) / (object->subtype - object->scratchU8[SCRATCHU8_DEPRESS_POSITION]); //To the right of the depress position
+					angle = (0x40 * (object->subtype - j)) / (object->subtype - scratch->depressPosition); //To the right of the depress position
 				
 				//Set our depression position according to the force of a player above us and the angle of the log as gotten above
-				object->children[j]->y.pos = object->y.pos + (GetSin(object->scratchU8[SCRATCHU8_DEPRESS_FORCE] * angle / 0x40) * depressForce[object->scratchU8[SCRATCHU8_DEPRESS_POSITION]] / 0x100);
+				object->children[j]->y.pos = object->y.pos + (GetSin(scratch->depressForce * angle / 0x40) * depressForce[scratch->depressPosition] / 0x100);
 			}
 			
 			//Act as a solid platform
@@ -173,7 +167,7 @@ void ObjBridge(OBJECT *object)
 						//Set the depression position if we're the lead player on the bridge
 						xDiff /= 16;
 						if (i == 0)
-							object->scratchU8[SCRATCHU8_DEPRESS_POSITION] = xDiff;
+							scratch->depressPosition = xDiff;
 						
 						//Set our y-position
 						player->y.pos = object->children[xDiff]->y.pos - (8 + player->yRadius);
@@ -189,7 +183,7 @@ void ObjBridge(OBJECT *object)
 					{
 						//If we're the lead, update depress position
 						if (i == 0)
-							object->scratchU8[SCRATCHU8_DEPRESS_POSITION] = standingLog;
+							scratch->depressPosition = standingLog;
 					}
 				}
 			}

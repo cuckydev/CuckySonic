@@ -28,15 +28,13 @@ static const uint8_t *missileAnimationList[] = {
 //Buzz Bomber Missile
 void ObjBuzzBomberMissile(OBJECT *object)
 {
-	//Scratch
-	enum SCRATCH
+	//Define and allocate our scratch
+	struct SCRATCH
 	{
-		//S16
-		SCRATCHS16_FIRE_DELAY =	0,
-		SCRATCHS16_MAX =		1,
+		int16_t fireDelay = 14;
 	};
 	
-	object->ScratchAllocS16(SCRATCHS16_MAX);
+	SCRATCH *scratch = object->Scratch<SCRATCH>();
 	
 	switch (object->routine)
 	{
@@ -55,8 +53,6 @@ void ObjBuzzBomberMissile(OBJECT *object)
 			
 			object->widthPixels = 8;
 			object->heightPixels = 32;
-			
-			object->scratchS16[SCRATCHS16_FIRE_DELAY] = 14;
 		}
 	//Fallthrough
 		case 1: //Charging fire
@@ -69,11 +65,11 @@ void ObjBuzzBomberMissile(OBJECT *object)
 			}
 			
 			//Wait until fire delay is over
-			if (--object->scratchS16[SCRATCHS16_FIRE_DELAY] >= 0)
+			if (--scratch->fireDelay >= 0)
 				break;
 			
 			//Draw and animate
-			object->Animate(missileAnimationList);
+			object->Animate_S1(missileAnimationList);
 			object->DrawInstance(object->renderFlags, object->texture, object->mapping, object->highPriority, object->priority, object->mappingFrame, object->x.pos, object->y.pos);
 			break;
 		}
@@ -95,7 +91,7 @@ void ObjBuzzBomberMissile(OBJECT *object)
 				object->Move();
 			else
 				object->MoveAndFall();
-			object->Animate(missileAnimationList);
+			object->Animate_S1(missileAnimationList);
 			object->DrawInstance(object->renderFlags, object->texture, object->mapping, object->highPriority, object->priority, object->mappingFrame, object->x.pos, object->y.pos);
 			
 			//Delete if below stage
@@ -109,22 +105,18 @@ void ObjBuzzBomberMissile(OBJECT *object)
 //Buzz Bomber object
 void ObjBuzzBomber(OBJECT *object)
 {
-	//Scratch
-	enum SCRATCH
+	//Define and allocate our scratch
+	struct SCRATCH
 	{
-		//U8
-		SCRATCHU8_STATUS =	0,
-		SCRATCHU8_MAX =		1,
-		//S16
-		SCRATCHS16_TIME_DELAY =	0,
-		SCRATCHS16_MAX =		1,
+		uint8_t state = 0;
+		int16_t timeDelay = 0;
 	};
 	
-	object->ScratchAllocU8(SCRATCHU8_MAX);
-	object->ScratchAllocS16(SCRATCHS16_MAX);
+	SCRATCH *scratch = object->Scratch<SCRATCH>();
 	
-	#define STATUS_FIRED		0x01
-	#define STATUS_NEARPLAYER	0x02
+	//Status bitmask
+	#define STATE_FIRED		0x01
+	#define STATE_NEARPLAYER	0x02
 	
 	switch (object->routine)
 	{
@@ -155,13 +147,13 @@ void ObjBuzzBomber(OBJECT *object)
 			{
 				case 0:
 				{
-					if (--object->scratchS16[SCRATCHS16_TIME_DELAY] < 0)
+					if (--scratch->timeDelay < 0)
 					{
-						if (!(object->scratchU8[SCRATCHU8_STATUS] & STATUS_NEARPLAYER))
+						if (!(scratch->state & STATE_NEARPLAYER))
 						{
 							//If not near a player, fly for a bit longer
 							object->routineSecondary = 1;
-							object->scratchS16[SCRATCHS16_TIME_DELAY] = 127;
+							scratch->timeDelay = 127;
 							object->anim = 1;
 							if (object->status.xFlip)
 								object->xVel = 0x400;
@@ -190,8 +182,8 @@ void ObjBuzzBomber(OBJECT *object)
 							gLevel->objectList.link_back(projectile);
 							
 							//Update our state
-							object->scratchU8[SCRATCHU8_STATUS] = STATUS_FIRED;
-							object->scratchS16[SCRATCHS16_TIME_DELAY] = 59;
+							scratch->state = STATE_FIRED;
+							scratch->timeDelay = 59;
 							object->anim = 2;
 						}
 					}
@@ -200,12 +192,12 @@ void ObjBuzzBomber(OBJECT *object)
 				case 1:
 				{
 					//Move for the given amount of time and turn around, or prematurely stop if near a player and fire a projectile
-					if (--object->scratchS16[SCRATCHS16_TIME_DELAY] >= 0)
+					if (--scratch->timeDelay >= 0)
 					{
 						//Move and check if we're near a player
 						object->Move();
 						
-						if (!object->scratchU8[SCRATCHU8_STATUS])
+						if (!scratch->state)
 						{
 							//Check all players and get the nearest absolute x-difference
 							int16_t nearestX = 0x7FFF;
@@ -219,8 +211,8 @@ void ObjBuzzBomber(OBJECT *object)
 							//Set that we're near a player if we're within 96 pixels of one
 							if (nearestX < 96 && object->renderFlags.isOnscreen)
 							{
-								object->scratchU8[SCRATCHU8_STATUS] = STATUS_NEARPLAYER;
-								object->scratchS16[SCRATCHS16_TIME_DELAY] = 29;
+								scratch->state = STATE_NEARPLAYER;
+								scratch->timeDelay = 29;
 							}
 							else
 							{
@@ -237,9 +229,9 @@ void ObjBuzzBomber(OBJECT *object)
 					else
 					{
 						//Change direction
-						object->scratchU8[SCRATCHU8_STATUS] = 0;
+						scratch->state = 0;
 						object->status.xFlip = !object->status.xFlip;
-						object->scratchS16[SCRATCHS16_TIME_DELAY] = 59;
+						scratch->timeDelay = 59;
 					}
 					
 					//Set to fire or turn around state
@@ -250,7 +242,7 @@ void ObjBuzzBomber(OBJECT *object)
 			}
 			
 			//Animate and draw
-			object->Animate(animationList);
+			object->Animate_S1(animationList);
 			object->DrawInstance(object->renderFlags, object->texture, object->mapping, object->highPriority, object->priority, object->mappingFrame, object->x.pos, object->y.pos);
 			object->UnloadOffscreen(object->x.pos);
 			break;

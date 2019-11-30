@@ -86,20 +86,16 @@ int ObjCrabmeat_SetAni(OBJECT *object)
 
 void ObjCrabmeat(OBJECT *object)
 {
-	//Scratch
-	enum SCRATCH
+	//Define and allocate our scratch
+	struct SCRATCH
 	{
-		//U8
-		SCRATCHU8_MODE =	0, //bit 0 = collision type (flips every frame), bit 1 = fire or walk
-		SCRATCHU8_MAX =		1,
-		//S16
-		SCRATCHS16_FIRE_TIME =	0,
-		SCRATCHS16_MAX =		1,
+		uint8_t mode = 0;
+		int16_t fireTime = 0;
 	};
 	
-	object->ScratchAllocU8(SCRATCHU8_MAX);
-	object->ScratchAllocS16(SCRATCHS16_MAX);
+	SCRATCH *scratch = object->Scratch<SCRATCH>();
 	
+	//Mode bitmask
 	#define MODE_COLLISION	0x1
 	#define MODE_FIRE		0x2
 	
@@ -153,14 +149,14 @@ void ObjCrabmeat(OBJECT *object)
 				case 0:
 				{
 					//Wait to fire projectiles
-					if (--object->scratchS16[SCRATCHS16_FIRE_TIME] < 0)
+					if (--scratch->fireTime < 0)
 					{
 						//Decide if we should fire or just turn around
-						if (object->renderFlags.isOnscreen == false || ((object->scratchU8[SCRATCHU8_MODE] ^= MODE_FIRE) & MODE_FIRE))
+						if (object->renderFlags.isOnscreen == false || ((scratch->mode ^= MODE_FIRE) & MODE_FIRE))
 						{
 							//Turn around
 							object->routineSecondary = 1;
-							object->scratchS16[SCRATCHS16_FIRE_TIME] = 127;
+							scratch->fireTime = 127;
 							object->xVel = 0x80;
 							object->anim = ObjCrabmeat_SetAni(object) + 3;
 							if (object->status.xFlip ^= 1)
@@ -169,7 +165,7 @@ void ObjCrabmeat(OBJECT *object)
 						else
 						{
 							//Fire projectiles
-							object->scratchS16[SCRATCHS16_FIRE_TIME] = 59;
+							scratch->fireTime = 59;
 							object->anim = 6;
 							
 							OBJECT *projLeft = new OBJECT(&ObjCrabmeatProjectile);
@@ -190,12 +186,12 @@ void ObjCrabmeat(OBJECT *object)
 				case 1:
 				{
 					//Walk about
-					if (--object->scratchS16[SCRATCHS16_FIRE_TIME] >= 0)
+					if (--scratch->fireTime >= 0)
 					{
 						//Move and check for the floor
 						object->Move();
 						
-						if (((object->scratchU8[SCRATCHU8_MODE] ^= MODE_COLLISION) & MODE_COLLISION))
+						if (((scratch->mode ^= MODE_COLLISION) & MODE_COLLISION))
 						{
 							//Check for floor to the sides of us, stop and fire if there is none
 							int16_t distance = object->CheckFloorEdge(COLLISIONLAYER_NORMAL_TOP, object->x.pos + (object->status.xFlip ? -16 : 16), object->y.pos, nullptr);
@@ -214,7 +210,7 @@ void ObjCrabmeat(OBJECT *object)
 					
 					//Set to fire
 					object->routineSecondary = 0;
-					object->scratchS16[SCRATCHS16_FIRE_TIME] = 59;
+					scratch->fireTime = 59;
 					object->xVel = 0;
 					object->anim = ObjCrabmeat_SetAni(object);
 					break;

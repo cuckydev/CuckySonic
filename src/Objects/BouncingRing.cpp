@@ -10,8 +10,8 @@
 
 //#define BOUNCINGRING_BLINK              //When set, the rings will blink shortly before despawning
 
-#define BOUNCINGRING_ONLY_FLOOR	        //When set, like in the originals, bouncing rings will only check for floor collision
-#define BOUNCINGRING_ORIGINAL_COLLISION //When set, the game will filter the collision so only a quarter of the rings will check for collision in a frame
+//#define BOUNCINGRING_ONLY_FLOOR	        //When set, like in the originals, bouncing rings will only check for floor collision
+//#define BOUNCINGRING_ORIGINAL_COLLISION //When set, the game will filter the collision so only a quarter of the rings will check for collision in a frame
 
 static const uint8_t animationCollect[] =	{0x05,0x04,0x05,0x06,0x07,0xFC};
 
@@ -90,19 +90,14 @@ void ObjBouncingRing_Spawner(OBJECT *object)
 
 void ObjBouncingRing(OBJECT *object)
 {
-	//Scratch
-	enum SCRATCH
+	//Define and allocate our scratch
+	struct SCRATCH
 	{
-		//U8
-		SCRATCHU8_ANIM_COUNT = 0,
-		SCRATCHU8_MAX = 1,
-		//U16
-		SCRATCHU16_ANIM_ACCUM = 0,
-		SCRATCHU16_MAX = 1,
+		uint8_t animCount = 255;
+		uint16_t animAccum = 0;
 	};
 	
-	object->ScratchAllocU8(SCRATCHU8_MAX);
-	object->ScratchAllocU16(SCRATCHU16_MAX);
+	SCRATCH *scratch = object->Scratch<SCRATCH>();
 	
 	switch (object->routine)
 	{
@@ -124,9 +119,6 @@ void ObjBouncingRing(OBJECT *object)
 			object->collisionType = COLLISIONTYPE_OTHER;
 			object->touchWidth = 6;
 			object->touchHeight = 6;
-			
-			object->scratchU8[SCRATCHU8_ANIM_COUNT] = 0xFF;
-			object->scratchU16[SCRATCHU16_ANIM_ACCUM] = 0x00;
 			
 			object->routine++;
 		}
@@ -201,19 +193,19 @@ void ObjBouncingRing(OBJECT *object)
 			}
 			
 			//Animate
-			if (object->scratchU8[SCRATCHU8_ANIM_COUNT] != 0)
+			if (scratch->animCount != 0)
 			{
-				object->scratchU16[SCRATCHU16_ANIM_ACCUM] += object->scratchU8[SCRATCHU8_ANIM_COUNT]--;
-				object->mappingFrame = (object->scratchU16[SCRATCHU16_ANIM_ACCUM] >> 9) & 0x3;
+				scratch->animAccum += scratch->animCount--;
+				object->mappingFrame = (scratch->animAccum >> 9) & 0x3;
 			}
 			
 			//Check for deletion
-			if (object->scratchU8[SCRATCHU8_ANIM_COUNT] == 0)
+			if (scratch->animCount == 0)
 				object->deleteFlag = true;
 			else
 			
 		#ifdef BOUNCINGRING_BLINK
-			if (object->scratchU8[SCRATCHU8_ANIM_COUNT] > 60 || gLevel->frameCounter & (object->scratchU8[SCRATCHU8_ANIM_COUNT] > 30 ? 0x4 : 0x2))
+			if (scratch->animCount > 60 || gLevel->frameCounter & (scratch->animCount > 30 ? 0x4 : 0x2))
 		#endif
 				object->DrawInstance(object->renderFlags, object->texture, object->mapping, object->highPriority, object->priority, object->mappingFrame, object->x.pos, object->y.pos);
 			break;

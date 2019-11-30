@@ -16,15 +16,13 @@ static const uint8_t *animationList[] = {
 
 void ObjChopper(OBJECT *object)
 {
-	//Scratch
-	enum SCRATCH
+	//Define and allocate our scratch
+	struct SCRATCH
 	{
-		//S16
-		SCRATCHS16_ORIG_Y = 0,
-		SCRATCHS16_MAX = 1,
+		int16_t origY = 0;
 	};
 	
-	object->ScratchAllocS16(SCRATCHS16_MAX);
+	SCRATCH *scratch = object->Scratch<SCRATCH>();
 	
 	switch (object->routine)
 	{
@@ -50,23 +48,23 @@ void ObjChopper(OBJECT *object)
 			object->widthPixels = 16;
 			object->heightPixels = 32;
 			object->yVel = -0x700;
-			object->scratchS16[SCRATCHS16_ORIG_Y] = object->y.pos;
+			scratch->origY = object->y.pos;
 		}
 	//Fallthrough
 		case 1:
 		{
 			//Animate
-			object->Animate(animationList);
+			object->Animate_S1(animationList);
 			
 			//Move and fall
 			object->Move();
 			object->yVel += 0x18;
 			
 			//Jump back up once back at the original Y position
-			int16_t origY = object->scratchS16[SCRATCHS16_ORIG_Y];
+			int16_t origY = scratch->origY;
 			if (object->y.pos >= origY)
 			{
-				object->y.pos = object->scratchS16[SCRATCHS16_ORIG_Y];
+				object->y.pos = scratch->origY;
 				object->yVel = -0x700;
 			}
 			

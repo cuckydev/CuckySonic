@@ -4,25 +4,23 @@
 #include "../MathUtil.h"
 #include "../Log.h"
 
-enum SCRATCH
+//Scratch structure
+struct SCRATCH
 {
-	//U8
-	SCRATCHU8_WEIGHT =		0,
-	SCRATCHU8_MAX =			1,
-	//U16
-	SCRATCHU16_FALL_TIME =	0,
-	SCRATCHU16_MAX =		1,
-	//S32
-	SCRATCHS32_ORIG_X =		0,
-	SCRATCHS32_ORIG_Y =		1,
-	SCRATCHS32_Y =			2,
-	SCRATCHS32_MAX =		3,
+	uint8_t weight = 0;
+	uint16_t fallTime = 0;
+	int32_t origX = 0;
+	int32_t origY = 0;
+	int32_t y = 0;
 };
 
 void ObjGHZPlatform_Move(OBJECT *object)
 {
-	uint8_t type = object->subtype & 0xF;
+	//Get (but hopefully not allocate) our scratch
+	SCRATCH *scratch = object->Scratch<SCRATCH>();
 	
+	//Move platform based on our subtype
+	uint8_t type = object->subtype & 0xF;
 	switch (type)
 	{
 		case 0x0:
@@ -37,7 +35,7 @@ void ObjGHZPlatform_Move(OBJECT *object)
 			else
 				angle -= 0x40;
 			
-			object->x.pos = (object->scratchS32[SCRATCHS32_ORIG_X] >> 16) + angle;
+			object->x.pos = (scratch->origX >> 16) + angle;
 			object->angle = (gLevel->oscillate[6][0] >> 8);
 			break;
 		}
@@ -56,28 +54,28 @@ void ObjGHZPlatform_Move(OBJECT *object)
 			else
 				angle = object->angle - 0x40;
 			
-			object->scratchS32[SCRATCHS32_Y] = (((object->scratchS32[SCRATCHS32_ORIG_Y] >> 16) + angle) << 16) | (object->scratchS32[SCRATCHS32_Y] & 0x0000FFFF);
+			scratch->y = (((scratch->origY >> 16) + angle) << 16) | (scratch->y & 0x0000FFFF);
 			object->angle = (gLevel->oscillate[6][0] >> 8);
 			break;
 		}
 		case 0x3: //Falling (stationary)
 		{
-			if (!object->scratchU16[SCRATCHU16_FALL_TIME])
+			if (!scratch->fallTime)
 			{
 				//Wait for the player to stand on us
 				for (size_t i = 0; i < gLevel->playerList.size(); i++)
 				{
 					PLAYER *player = gLevel->playerList[i];
 					if (player->status.shouldNotFall && player->interact == (void*)object)
-						object->scratchU16[SCRATCHU16_FALL_TIME] = 30; //Wait for 0.5 seconds
+						scratch->fallTime = 30; //Wait for 0.5 seconds
 				}
 			}
 			else
 			{
 				//Wait for the timer to end
-				if (--object->scratchU16[SCRATCHU16_FALL_TIME] == 0)
+				if (--scratch->fallTime == 0)
 				{
-					object->scratchU16[SCRATCHU16_FALL_TIME] = 32;
+					scratch->fallTime = 32;
 					object->subtype++;
 				}
 			}
@@ -86,7 +84,7 @@ void ObjGHZPlatform_Move(OBJECT *object)
 		case 0x4: //Falling
 		{
 			//Wait for our 30 second timer to run out
-			if (object->scratchU16[SCRATCHU16_FALL_TIME] != 0 && --object->scratchU16[SCRATCHU16_FALL_TIME] == 0)
+			if (scratch->fallTime != 0 && --scratch->fallTime == 0)
 			{
 				//Make players standing on us fall off
 				for (size_t i = 0; i < gLevel->playerList.size(); i++)
@@ -109,33 +107,31 @@ void ObjGHZPlatform_Move(OBJECT *object)
 			}
 			
 			//Fall
-			object->scratchS32[SCRATCHS32_Y] += object->yVel * 0x100;
+			scratch->y += object->yVel * 0x100;
 			object->yVel += 0x38;
 			
 			//Delete if reached bottom boundary
-			if ((object->scratchS32[SCRATCHS32_Y] >> 16) >= gLevel->bottomBoundaryTarget)
+			if ((scratch->y >> 16) >= gLevel->bottomBoundaryTarget)
 				object->deleteFlag = true;
 			break;
 		}
 		case 0xA: //Big platform
 		{
 			//Move up and down
-			object->scratchS32[SCRATCHS32_Y] = (((object->scratchS32[SCRATCHS32_ORIG_Y] >> 16) + (object->angle - 0x40) / 2) << 16) | (object->scratchS32[SCRATCHS32_Y] & 0x0000FFFF);
+			scratch->y = (((scratch->origY >> 16) + (object->angle - 0x40) / 2) << 16) | (scratch->y & 0x0000FFFF);
 			object->angle = (gLevel->oscillate[6][0] >> 8);
 			break;
 		}
 	}
 	
 	//Set our y position according to our position and the weight of a player above us
-	object->y.pos = (object->scratchS32[SCRATCHS32_Y] >> 16) + ((GetSin(object->scratchU8[SCRATCHU8_WEIGHT]) * 0x400) >> 16);
+	object->y.pos = (scratch->y >> 16) + ((GetSin(scratch->weight) * 0x400) >> 16);
 }
 
 void ObjGHZPlatform(OBJECT *object)
 {
 	//Allocate scratch memory
-	object->ScratchAllocU8(SCRATCHU8_MAX);
-	object->ScratchAllocU16(SCRATCHU16_MAX);
-	object->ScratchAllocS32(SCRATCHS32_MAX);
+	SCRATCH *scratch = object->Scratch<SCRATCH>();
 	
 	switch (object->routine)
 	{
@@ -153,16 +149,11 @@ void ObjGHZPlatform(OBJECT *object)
 			object->heightPixels = 32;
 			object->priority = 4;
 			
-			//Set our origin position and other stuff
-			object->scratchS32[SCRATCHS32_ORIG_X] = object->x.pos << 16;
-			object->scratchS32[SCRATCHS32_ORIG_Y] = object->y.pos << 16;
-			object->scratchS32[SCRATCHS32_Y] = object->y.pos << 16;
+			//Set our position and moved angle
+			scratch->origX = object->x.pos << 16;
+			scratch->origY = object->y.pos << 16;
+			scratch->y = object->y.pos << 16;
 			object->angle = 0x80;
-			
-			//Reset other values
-			object->scratchU8[SCRATCHU8_WEIGHT] = 0;
-			object->scratchU16[SCRATCHU16_FALL_TIME] = 0;
-			object->yVel = 0;
 			
 			//Set our frame for the big platform
 			if (object->subtype == 10)
@@ -179,13 +170,13 @@ void ObjGHZPlatform(OBJECT *object)
 			//Decrease / increase our weight
 			if (touching)
 			{
-				if (object->scratchU8[SCRATCHU8_WEIGHT] != 0x40)
-					object->scratchU8[SCRATCHU8_WEIGHT] += 4;
+				if (scratch->weight != 0x40)
+					scratch->weight += 4;
 			}
 			else
 			{
-				if (object->scratchU8[SCRATCHU8_WEIGHT])
-					object->scratchU8[SCRATCHU8_WEIGHT] -= 4;
+				if (scratch->weight)
+					scratch->weight -= 4;
 			}
 			
 			//Handle all other routines
@@ -196,7 +187,7 @@ void ObjGHZPlatform(OBJECT *object)
 			
 			//Draw
 			object->DrawInstance(object->renderFlags, object->texture, object->mapping, object->highPriority, object->priority, object->mappingFrame, object->x.pos, object->y.pos);
-			object->UnloadOffscreen(object->scratchS32[SCRATCHS32_ORIG_X] >> 16);
+			object->UnloadOffscreen(scratch->origX >> 16);
 			break;
 		}
 		case 2:
@@ -204,7 +195,7 @@ void ObjGHZPlatform(OBJECT *object)
 			//Handle routines and draw
 			ObjGHZPlatform_Move(object);
 			object->DrawInstance(object->renderFlags, object->texture, object->mapping, object->highPriority, object->priority, object->mappingFrame, object->x.pos, object->y.pos);
-			object->UnloadOffscreen(object->scratchS32[SCRATCHS32_ORIG_X] >> 16);
+			object->UnloadOffscreen(scratch->origX >> 16);
 			break;
 		}
 	}

@@ -1,5 +1,6 @@
 #pragma once
 #include <stdint.h>
+#include <stdlib.h>
 
 #include "LinkedList.h"
 #include "Render.h"
@@ -178,12 +179,7 @@ class OBJECT
 		LINKEDLIST<OBJECT*> children;
 		
 		//Scratch memory
-		 uint8_t  *scratchU8 = nullptr;
-		  int8_t  *scratchS8 = nullptr;
-		uint16_t *scratchU16 = nullptr;
-		 int16_t *scratchS16 = nullptr;
-		uint32_t *scratchU32 = nullptr;
-		 int32_t *scratchS32 = nullptr;
+		void *scratch = nullptr; //No specific type - whatever an object specifies
 		
 		//Our object-specific function
 		OBJECTFUNCTION function = nullptr;
@@ -197,13 +193,17 @@ class OBJECT
 		OBJECT(OBJECTFUNCTION object);
 		~OBJECT();
 		
-		//Scratch allocation functions
-		void  ScratchAllocU8(size_t max);
-		void  ScratchAllocS8(size_t max);
-		void ScratchAllocU16(size_t max);
-		void ScratchAllocS16(size_t max);
-		void ScratchAllocU32(size_t max);
-		void ScratchAllocS32(size_t max);
+		//Scratch allocation function
+		template <typename T> inline T *Scratch()
+		{
+			//Allocate scratch if null, then return it or the already allocated scratch
+			if (scratch == nullptr)
+			{
+				scratch = malloc(sizeof(T)); //Allocate memory (have to use malloc because destructor doesn't know scratch type)
+				*((T*)scratch) = {}; //Explicitly initialize because we used malloc
+			}
+			return (T*)scratch;
+		}
 		
 		//Generic object functions
 		void Move();

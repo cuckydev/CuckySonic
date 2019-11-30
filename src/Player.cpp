@@ -53,7 +53,7 @@
 //#define SONIC2_SUPER_AT_PEAK         //In Sonic 2, you'd turn super at the peak of a jump, no matter what, while in Sonic 3, this was moved to the jump ability code
 //#define SONIC12_NO_SPINATTACK        //Double spin attack
 //#define SONIC12_NO_BARRIER_ABILITIES //Elemental barrier abilities
-#define SONICMANIA_DROPDASH          //Sonic Mania's dropdash
+//#define SONICMANIA_DROPDASH          //Sonic Mania's dropdash
 //#define SONIC3_SPINATTACK_LAND       //In Sonic 3, if you land on the ground while performing the double spin attack, it'll cause you to be unable to use any jump abilities until you jump and land once again.
 //#define SONIC3_BUBBLE_SUPER          //In Sonic 3, pressing ABC in mid-air will make you bounce like you have the water barrier if you have it once you touch the ground, this was fixed in S3K
 
@@ -471,16 +471,14 @@ void ObjBarrier(OBJECT *object)
 		ROUTINE_INVINCIBILITYSTAR =	(typeof(OBJECT::routine))-2,
 	};
 	
-	//Scratch
-	enum SCRATCH
+	//Define and allocate our scratch
+	struct SCRATCH
 	{
-		//U8
-		SCRATCHU8_MOVING =		0,
-		SCRATCHU8_NO_COPY_POS =	1,
-		SCRATCHU8_MAX =			2,
+		bool moving = false;
+		bool noCopyPos = false;
 	};
 	
-	object->ScratchAllocU8(SCRATCHU8_MAX);
+	SCRATCH *scratch = object->Scratch<SCRATCH>();
 	
 	//Check if we have a parent player
 	if (object->parentPlayer == nullptr)
@@ -495,8 +493,8 @@ void ObjBarrier(OBJECT *object)
 			object->routine = ROUTINE_SUPERSTAR;
 			object->mappingFrame = 0;
 			object->animFrameDuration = 0;
-			object->scratchU8[SCRATCHU8_MOVING] = 0;
-			object->scratchU8[SCRATCHU8_NO_COPY_POS] = 0;
+			scratch->moving = false;
+			scratch->noCopyPos = false;
 		}
 		
 		//Load mappings and textures
@@ -510,7 +508,7 @@ void ObjBarrier(OBJECT *object)
 		object->renderFlags.alignPlane = true;
 		object->highPriority = object->parentPlayer->highPriority;
 		
-		if (object->scratchU8[SCRATCHU8_MOVING])
+		if (scratch->moving)
 		{
 			//Run animation
 			if (--object->animFrameDuration < 0)
@@ -522,13 +520,13 @@ void ObjBarrier(OBJECT *object)
 				{
 					//Loop to first frame and update our state
 					object->mappingFrame = 0;
-					object->scratchU8[SCRATCHU8_MOVING] = 0;
-					object->scratchU8[SCRATCHU8_NO_COPY_POS] = 1;
+					scratch->moving = false;
+					scratch->noCopyPos = true;
 				}
 			}
 			
 			//Copy position (if SCRATCHU8_NO_COPY_POS is clear), and draw to screen
-			if (!object->scratchU8[SCRATCHU8_NO_COPY_POS])
+			if (!scratch->noCopyPos)
 			{
 				object->x.pos = object->parentPlayer->x.pos;
 				object->y.pos = object->parentPlayer->y.pos;
@@ -542,16 +540,16 @@ void ObjBarrier(OBJECT *object)
 			if (object->parentPlayer->objectControl.disableOurMovement || object->parentPlayer->objectControl.disableObjectInteract || mabs(object->parentPlayer->inertia) < 0x800)
 			{
 				//Stay inactive
-				object->scratchU8[SCRATCHU8_MOVING] = 0;
-				object->scratchU8[SCRATCHU8_NO_COPY_POS] = 0;
+				scratch->moving = false;
+				scratch->noCopyPos = false;
 			}
 			else
 			{
 				//Become active, and draw to screen at player position
 				object->mappingFrame = 0;
-				object->scratchU8[SCRATCHU8_MOVING] = 1;
+				scratch->moving = true;
 				#ifdef FIX_WEIRD_SUPER_STAR_TRACKING
-					object->scratchU8[SCRATCHU8_NO_COPY_POS] = 1;
+					scratch->noCopyPos = true;
 				#endif
 				object->x.pos = object->parentPlayer->x.pos;
 				object->y.pos = object->parentPlayer->y.pos;
@@ -753,20 +751,15 @@ void ObjInvincibilityStars_GetPosition(const uint16_t *posArray, uint16_t posInd
 
 void ObjInvincibilityStars(OBJECT *object)
 {
-	//Scratch
-	enum SCRATCH
+	//Define and allocate our scratch
+	struct SCRATCH
 	{
-		//U8
-		SCRATCHU8_ANGLE =			0,
-		SCRATCHU8_STAR2_FRAMEOFF =	1,
-		SCRATCHU8_MAX =				2,
-		//U16
-		SCRATCHU16_FRAME =			0,
-		SCRATCHU16_MAX =			1,
+		uint8_t angle = 0;
+		uint8_t secondStarFrameOff = 0;
+		uint16_t frame = 0;
 	};
 	
-	object->ScratchAllocU8(SCRATCHU8_MAX);
-	object->ScratchAllocU16(SCRATCHU16_MAX);
+	SCRATCH *scratch = object->Scratch<SCRATCH>();
 	
 	//Get our parent player
 	if (object->parentPlayer == nullptr || object->routineSecondary == 0)
@@ -786,8 +779,8 @@ void ObjInvincibilityStars(OBJECT *object)
 		object->renderFlags.alignPlane = true;
 		
 		//Set other property things
-		object->scratchU8[SCRATCHU8_ANGLE] = ((invincibilityStarArray[object->subtype].animation >> 8) & 0xFF);
-		object->scratchU8[SCRATCHU8_STAR2_FRAMEOFF] = (invincibilityStarArray[object->subtype].animation & 0xFF);
+		scratch->angle = ((invincibilityStarArray[object->subtype].animation >> 8) & 0xFF);
+		scratch->secondStarFrameOff = (invincibilityStarArray[object->subtype].animation & 0xFF);
 		object->routine = (object->subtype ? 2 : 1);
 	}
 	
@@ -806,27 +799,27 @@ void ObjInvincibilityStars(OBJECT *object)
 			
 			//Get our primary animation frame
 			uint16_t frame;
-			while ((frame = invincibilityStarFrameArray0[object->scratchU16[SCRATCHU16_FRAME]]) >= 0x80)
-				object->scratchU16[SCRATCHU16_FRAME] = 0;
+			while ((frame = invincibilityStarFrameArray0[scratch->frame]) >= 0x80)
+				scratch->frame = 0;
 			
 			//Animate and draw stars
-			object->scratchU16[SCRATCHU16_FRAME]++;
+			scratch->frame++;
 			
 			//Draw star 1
 			int16_t star1XPos, star1YPos;
-			ObjInvincibilityStars_GetPosition(invincibilityStarPosArray, object->scratchU8[SCRATCHU8_ANGLE], xPos, yPos, &star1XPos, &star1YPos);
+			ObjInvincibilityStars_GetPosition(invincibilityStarPosArray, scratch->angle, xPos, yPos, &star1XPos, &star1YPos);
 			object->DrawInstance(object->renderFlags, object->texture, object->mapping, object->highPriority, object->priority, frame, star1XPos, star1YPos);
 			
 			//Draw star 2
 			int16_t star2XPos, star2YPos;
-			ObjInvincibilityStars_GetPosition(invincibilityStarPosArray, object->scratchU8[SCRATCHU8_ANGLE] + 0x12, xPos, yPos, &star2XPos, &star2YPos);
+			ObjInvincibilityStars_GetPosition(invincibilityStarPosArray, scratch->angle + 0x12, xPos, yPos, &star2XPos, &star2YPos);
 			object->DrawInstance(object->renderFlags, object->texture, object->mapping, object->highPriority, object->priority, frame, star2XPos, star2YPos);
 			
 			//Spin around the player
 			if (object->parentPlayer->status.xFlip)
-				object->scratchU8[SCRATCHU8_ANGLE] += 0x12;
+				scratch->angle += 0x12;
 			else
-				object->scratchU8[SCRATCHU8_ANGLE] -= 0x12;
+				scratch->angle -= 0x12;
 			break;
 		}
 		case 2:
@@ -844,29 +837,29 @@ void ObjInvincibilityStars(OBJECT *object)
 			const uint8_t *frameArray = invincibilityStarArray[object->subtype].frameArray;
 			
 			uint16_t frame1;
-			while ((frame1 = frameArray[object->scratchU16[SCRATCHU16_FRAME]]) >= 0x80)
-				object->scratchU16[SCRATCHU16_FRAME] = 0;
+			while ((frame1 = frameArray[scratch->frame]) >= 0x80)
+				scratch->frame = 0;
 			
-			uint16_t frame2 = frameArray[object->scratchU16[SCRATCHU16_FRAME] + object->scratchU8[SCRATCHU8_STAR2_FRAMEOFF]];
+			uint16_t frame2 = frameArray[scratch->frame + scratch->secondStarFrameOff];
 			
 			//Increment animation frame
-			object->scratchU16[SCRATCHU16_FRAME]++;
+			scratch->frame++;
 			
 			//Draw star 1
 			int16_t star1XPos, star1YPos;
-			ObjInvincibilityStars_GetPosition(invincibilityStarPosArray, object->scratchU8[SCRATCHU8_ANGLE], xPos, yPos, &star1XPos, &star1YPos);
+			ObjInvincibilityStars_GetPosition(invincibilityStarPosArray, scratch->angle, xPos, yPos, &star1XPos, &star1YPos);
 			object->DrawInstance(object->renderFlags, object->texture, object->mapping, object->highPriority, object->priority, frame2, star1XPos, star1YPos);
 			
 			//Draw star 2
 			int16_t star2XPos, star2YPos;
-			ObjInvincibilityStars_GetPosition(invincibilityStarPosArray, object->scratchU8[SCRATCHU8_ANGLE] + 0x12, xPos, yPos, &star2XPos, &star2YPos);
+			ObjInvincibilityStars_GetPosition(invincibilityStarPosArray, scratch->angle + 0x12, xPos, yPos, &star2XPos, &star2YPos);
 			object->DrawInstance(object->renderFlags, object->texture, object->mapping, object->highPriority, object->priority, frame1, star2XPos, star2YPos);
 			
 			//Spin around the player
 			if (object->parentPlayer->status.xFlip)
-				object->scratchU8[SCRATCHU8_ANGLE] += 0x02;
+				scratch->angle += 0x02;
 			else
-				object->scratchU8[SCRATCHU8_ANGLE] -= 0x02;
+				scratch->angle -= 0x02;
 			break;
 		}
 	}

@@ -29,20 +29,15 @@ static const int8_t goalpostSparklePos[8][2] = {
 
 void ObjGoalpost(OBJECT *object)
 {
-	//Scratch
-	enum SCRATCH
+	//Define and allocate our scratch
+	struct SCRATCH
 	{
-		//U8
-		SCRATCHU8_SPARKLE =			0,
-		SCRATCHU8_MAX =				1,
-		//S16
-		SCRATCHS16_SPIN_TIME =		0,
-		SCRATCHS16_SPARKLE_TIME =	1,
-		SCRATCHS16_MAX =			2,
+		uint8_t sparkle = 0;
+		int16_t spinTime = 0;
+		int16_t sparkleTime = 0;
 	};
 	
-	object->ScratchAllocU8(SCRATCHU8_MAX);
-	object->ScratchAllocS16(SCRATCHS16_MAX);
+	SCRATCH *scratch = object->Scratch<SCRATCH>();
 	
 	switch (object->routine)
 	{
@@ -87,9 +82,9 @@ void ObjGoalpost(OBJECT *object)
 		case 2: //Touched and spinning
 		{
 			//Handle our spin timer
-			if (--object->scratchS16[SCRATCHS16_SPIN_TIME] < 0)
+			if (--scratch->spinTime < 0)
 			{
-				object->scratchS16[SCRATCHS16_SPIN_TIME] = 60;
+				scratch->spinTime = 60;
 				
 				//Increment spin cycle, and if reached end...
 				if (++object->anim >= 3)
@@ -97,23 +92,19 @@ void ObjGoalpost(OBJECT *object)
 			}
 			
 			//Handle our sparkling
-			if (--object->scratchS16[SCRATCHS16_SPARKLE_TIME] < 0)
+			if (--scratch->sparkleTime < 0)
 			{
-				object->scratchS16[SCRATCHS16_SPARKLE_TIME] = 11;
+				scratch->sparkleTime = 11;
 				
 				//Increment our sparkle index
-				object->scratchU8[SCRATCHU8_SPARKLE]++;
-				object->scratchU8[SCRATCHU8_SPARKLE] %= 8;
+				scratch->sparkle++;
+				scratch->sparkle %= 8;
 				
 				//Create a sparkle object
 				OBJECT *sparkle = new OBJECT(&ObjRing);
-				sparkle->routine = 3;
-				sparkle->x.pos = object->x.pos + goalpostSparklePos[object->scratchU8[SCRATCHU8_SPARKLE]][0];
-				sparkle->y.pos = object->y.pos + goalpostSparklePos[object->scratchU8[SCRATCHU8_SPARKLE]][1];
-				sparkle->texture = gLevel->GetObjectTexture("data/Object/Generic.bmp");
-				sparkle->mapping.mappings = gLevel->GetObjectMappings("data/Object/Ring.map");
-				sparkle->renderFlags.alignPlane = true;
-				sparkle->widthPixels = 8;
+				sparkle->anim = 1;
+				sparkle->x.pos = object->x.pos + goalpostSparklePos[scratch->sparkle][0];
+				sparkle->y.pos = object->y.pos + goalpostSparklePos[scratch->sparkle][1];
 				gLevel->objectList.link_back(sparkle);
 			}
 			break;

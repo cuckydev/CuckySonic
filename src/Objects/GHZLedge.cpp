@@ -13,16 +13,14 @@ const int8_t ledgeSlope[] = {
 
 void ObjGHZLedge(OBJECT *object)
 {
-	//Scratch
-	enum SCRATCH
+	//Define and allocate our scratch
+	struct SCRATCH
 	{
-		//U8
-		SCRATCHU8_FLAG =	0,
-		SCRATCHU8_DELAY =	1,
-		SCRATCHU8_MAX =		2,
+		uint8_t flag = 0;
+		uint8_t delay = 0;
 	};
 	
-	object->ScratchAllocU8(SCRATCHU8_MAX);
+	SCRATCH *scratch = object->Scratch<SCRATCH>();
 	
 	switch (object->routine)
 	{
@@ -44,7 +42,7 @@ void ObjGHZLedge(OBJECT *object)
 	//Fallthrough
 		case 1:
 		{
-			if (object->scratchU8[SCRATCHU8_FLAG] == 0 || (object->scratchU8[SCRATCHU8_DELAY] != 0 && object->scratchU8[SCRATCHU8_DELAY]-- != 0))
+			if (scratch->flag == 0 || (scratch->delay != 0 && scratch->delay-- != 0))
 			{
 				//Draw and act as solid
 				object->SolidObjectTop(48, 32, object->x.pos, false, ledgeSlope);

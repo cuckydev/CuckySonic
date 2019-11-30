@@ -16,16 +16,14 @@ static const uint8_t *animationList[] = {
 
 void ObjMotobug(OBJECT *object)
 {
-	//Scratch
-	enum SCRATCH
+	//Define and allocate our scratch
+	struct SCRATCH
 	{
-		//S8
-		SCRATCHS8_TIME =		0,
-		SCRATCHS8_SMOKE_DELAY =	1,
-		SCRATCHS8_MAX =			2,
+		int8_t time = 0;
+		int8_t smokeDelay = 0;
 	};
 	
-	object->ScratchAllocS8(SCRATCHS8_MAX);
+	SCRATCH *scratch = object->Scratch<SCRATCH>();
 	
 	if (object->routine == 0)
 	{
@@ -78,7 +76,7 @@ void ObjMotobug(OBJECT *object)
 			{
 				case 0:
 				{
-					if (--object->scratchS8[SCRATCHS8_TIME] < 0)
+					if (--scratch->time < 0)
 					{
 						//Set state and turn around
 						object->routineSecondary = 1;
@@ -102,7 +100,7 @@ void ObjMotobug(OBJECT *object)
 					{
 						//Set state and wait
 						object->routineSecondary = 0;
-						object->scratchS8[SCRATCHS8_TIME] = 59;
+						scratch->time = 59;
 						object->xVel = 0;
 						object->anim = 0;
 						break;
@@ -112,10 +110,10 @@ void ObjMotobug(OBJECT *object)
 					object->y.pos += distance;
 					
 					//Create smoke every 16 frames
-					if (--object->scratchS8[SCRATCHS8_SMOKE_DELAY] < 0)
+					if (--scratch->smokeDelay < 0)
 					{
 						//Restart timer and create object
-						object->scratchS8[SCRATCHS8_SMOKE_DELAY] = 15;
+						scratch->smokeDelay = 15;
 						
 						OBJECT *newSmoke = new OBJECT(&ObjMotobug);
 						newSmoke->x.pos = object->x.pos;

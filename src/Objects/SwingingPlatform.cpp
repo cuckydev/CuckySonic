@@ -4,19 +4,21 @@
 #include "../MathUtil.h"
 #include "../Log.h"
 
-enum SCRATCH
+//Scratch structure
+struct SCRATCH
 {
-	//S16
-	SCRATCHS16_ORIG_X =	0,
-	SCRATCHS16_ORIG_Y =	1,
-	SCRATCHS16_MAX =	2,
+	int16_t origX = 0;
+	int16_t origY = 0;
 };
 
 void ObjSwingingPlatform_Move_Individual(OBJECT *parent, OBJECT *child, int16_t sin, int16_t cos)
 {
+	//Get (but hopefully not allocate) our parent's scratch
+	SCRATCH *scratch = parent->Scratch<SCRATCH>();
+	
 	//Get our next position
-	int16_t origX = parent->scratchS16[SCRATCHS16_ORIG_X];
-	int16_t origY = parent->scratchS16[SCRATCHS16_ORIG_Y];
+	int16_t origX = scratch->origX;
+	int16_t origY = scratch->origY;
 	
 	int16_t pixelLength = child->subtype * 16;
 	if (child == parent)
@@ -43,7 +45,7 @@ void ObjSwingingPlatform_Move(OBJECT *object)
 void ObjSwingingPlatform(OBJECT *object)
 {
 	//Allocate scratch memory
-	object->ScratchAllocS16(SCRATCHS16_MAX);
+	SCRATCH *scratch = object->Scratch<SCRATCH>();
 	
 	switch (object->routine)
 	{
@@ -66,8 +68,8 @@ void ObjSwingingPlatform(OBJECT *object)
 			object->yRadius = 8;
 			
 			//Remember our origin position
-			object->scratchS16[SCRATCHS16_ORIG_X] = object->x.pos;
-			object->scratchS16[SCRATCHS16_ORIG_Y] = object->y.pos;
+			scratch->origX = object->x.pos;
+			scratch->origY = object->y.pos;
 			
 			//Create the chain
 			uint8_t chains = object->subtype & 0xF;
@@ -85,12 +87,10 @@ void ObjSwingingPlatform(OBJECT *object)
 				newSegment->mappingFrame = 1;
 				newSegment->priority = 4;
 				
-				//Set position and routine
-				newSegment->ScratchAllocS16(SCRATCHS16_MAX);
+				//Set routine, offset position, and frame
 				newSegment->subtype = yOff;
 				newSegment->routine = 2;
 				
-				//Use anchor frame if anchor point
 				if (yOff++ == 0)
 				{
 					newSegment->mappingFrame = 2;
@@ -112,7 +112,7 @@ void ObjSwingingPlatform(OBJECT *object)
 			ObjSwingingPlatform_Move(object);
 			object->SolidObjectTop(object->widthPixels, object->yRadius + 1, lastX, false, nullptr);
 			object->DrawInstance(object->renderFlags, object->texture, object->mapping, object->highPriority, object->priority, object->mappingFrame, object->x.pos, object->y.pos);
-			object->UnloadOffscreen(object->scratchS16[SCRATCHS16_ORIG_X]);
+			object->UnloadOffscreen(scratch->origX);
 			break;
 		}
 		case 2:

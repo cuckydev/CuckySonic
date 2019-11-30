@@ -52,7 +52,7 @@ void ObjNewtronMissile(OBJECT *object)
 			object->hurtType.reflect = true;
 			
 			//Draw and animate
-			object->Animate(missileAnimationList);
+			object->Animate_S1(missileAnimationList);
 			object->DrawInstance(object->renderFlags, object->texture, object->mapping, object->highPriority, object->priority, object->mappingFrame, object->x.pos, object->y.pos);
 			break;
 		}
@@ -70,7 +70,7 @@ void ObjNewtronMissile(OBJECT *object)
 				object->Move();
 			else
 				object->MoveAndFall();
-			object->Animate(missileAnimationList);
+			object->Animate_S1(missileAnimationList);
 			object->DrawInstance(object->renderFlags, object->texture, object->mapping, object->highPriority, object->priority, object->mappingFrame, object->x.pos, object->y.pos);
 			break;
 		}
@@ -99,7 +99,7 @@ void ObjNewtron(OBJECT *object)
 			object->priority = 4;
 			
 			//Initialize visual size and collision size
-			object->widthPixels = 14;
+			object->widthPixels = 20;
 			object->heightPixels = 32;
 			object->yRadius = 16;
 		}
@@ -252,7 +252,7 @@ void ObjNewtron(OBJECT *object)
 			}
 			
 			//Animate and draw
-			object->Animate(animationList);
+			object->Animate_S1(animationList);
 			object->DrawInstance(object->renderFlags, object->texture, object->mapping, object->highPriority, object->priority, object->mappingFrame, object->x.pos, object->y.pos);
 			object->UnloadOffscreen(object->x.pos);
 			break;

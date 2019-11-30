@@ -54,15 +54,10 @@ void ObjSpring(OBJECT *object)
 	#define MASK_LAYER				0x0C
 	#define MASK_CANCEL_TRAJECTORY	0x80
 	
-	//Scratch
-	enum SCRATCH
-	{
-		//S16
-		SCRATCHS16_FORCE =	0,
-		SCRATCHS16_MAX =	1,
-	};
-	
-	object->ScratchAllocS16(SCRATCHS16_MAX);
+	//Get our force
+	int16_t force = -0x1000; //Red spring's force
+	if (object->subtype & MASK_IS_YELLOW)
+		force = -0x0A00; //Yellow spring's force
 	
 	//Routines
 	enum ROUTINE
@@ -117,12 +112,6 @@ void ObjSpring(OBJECT *object)
 					object->status.yFlip = true;
 					break;
 			}
-			
-			//Get our spring force
-			if (object->subtype & MASK_IS_YELLOW)
-				object->scratchS16[SCRATCHS16_FORCE] = -0x0A00; //Yellow spring's force
-			else
-				object->scratchS16[SCRATCHS16_FORCE] = -0x1000; //Red spring's force
 			break;
 		}
 		case ROUTINE_UP:
@@ -146,7 +135,7 @@ void ObjSpring(OBJECT *object)
 						player->y.pos -= 8;
 					else
 						player->y.pos += 8;
-					player->yVel = object->scratchS16[SCRATCHS16_FORCE];
+					player->yVel = force;
 					player->anim = PLAYERANIMATION_SPRING;
 					
 					//Make us airborne
@@ -223,13 +212,13 @@ void ObjSpring(OBJECT *object)
 					if (object->status.xFlip)
 					{
 						player->x.pos += 8;
-						player->xVel = object->scratchS16[SCRATCHS16_FORCE];
+						player->xVel = force;
 						player->status.xFlip = true;
 					}
 					else
 					{
 						player->x.pos -= 8;
-						player->xVel = -object->scratchS16[SCRATCHS16_FORCE];
+						player->xVel = -force;
 						player->status.xFlip = false;
 					}
 					
@@ -303,7 +292,7 @@ void ObjSpring(OBJECT *object)
 					object->prevAnim = 0;
 					
 					//Launch player
-					player->yVel = -object->scratchS16[SCRATCHS16_FORCE];
+					player->yVel = -force;
 					if (player->yVel != 0x1000)
 						player->yVel = 0xD00; //WTF?
 					
@@ -377,20 +366,20 @@ void ObjSpring(OBJECT *object)
 					object->prevAnim = 0;
 					
 					//Launch player
-					player->yVel = object->scratchS16[SCRATCHS16_FORCE];
+					player->yVel = force;
 					player->y.pos += 6;
 					
 					if (object->status.xFlip)
 					{
 						player->status.xFlip = true;
 						player->x.pos += 6;
-						player->xVel = object->scratchS16[SCRATCHS16_FORCE];
+						player->xVel = force;
 					}
 					else
 					{
 						player->status.xFlip = false;
 						player->x.pos -= 6;
-						player->xVel = -object->scratchS16[SCRATCHS16_FORCE];
+						player->xVel = -force;
 					}
 					
 					//Make us airborne
@@ -454,20 +443,20 @@ void ObjSpring(OBJECT *object)
 					object->prevAnim = 0;
 					
 					//Launch player
-					player->yVel = -object->scratchS16[SCRATCHS16_FORCE];
+					player->yVel = -force;
 					player->y.pos -= 6;
 					
 					if (object->status.xFlip)
 					{
 						player->status.xFlip = true;
 						player->x.pos += 6;
-						player->xVel = object->scratchS16[SCRATCHS16_FORCE];
+						player->xVel = force;
 					}
 					else
 					{
 						player->status.xFlip = false;
 						player->x.pos -= 6;
-						player->xVel = -object->scratchS16[SCRATCHS16_FORCE];
+						player->xVel = -force;
 					}
 					
 					//Make us airborne

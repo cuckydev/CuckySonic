@@ -12,29 +12,36 @@ static const uint8_t *animationList[] = {
 
 void ObjRing(OBJECT *object)
 {
-	switch (object->routine)
+	if (object->routine == 0)
 	{
-		case 0: //Initialization
+		//Load graphics
+		object->texture = gLevel->GetObjectTexture("data/Object/Generic.bmp");
+		object->mapping.mappings = gLevel->GetObjectMappings("data/Object/Ring.map");
+		
+		//Initialize other properties
+		object->renderFlags.alignPlane = true;
+		object->widthPixels = 8;
+		object->heightPixels = 8;
+		object->priority = 2;
+		
+		if (object->anim == 0)
 		{
-			//Advance routine
-			object->routine++;
-			
-			//Load graphics
-			object->texture = gLevel->GetObjectTexture("data/Object/Generic.bmp");
-			object->mapping.mappings = gLevel->GetObjectMappings("data/Object/Ring.map");
-			
-			//Initialize other properties
-			object->renderFlags.alignPlane = true;
-			object->widthPixels = 8;
-			object->heightPixels = 8;
-			object->priority = 2;
-			
 			//Collision box
 			object->collisionType = COLLISIONTYPE_OTHER;
 			object->touchWidth = 6;
 			object->touchHeight = 6;
+			object->routine++;
 		}
-	//Fallthrough
+		else
+		{
+			//Set to sparkle routine
+			object->anim = 0;
+			object->routine = 3;
+		}
+	}
+	
+	switch (object->routine)
+	{
 		case 1: //Waiting for contact, just animate
 			object->mappingFrame = (gLevel->frameCounter >> 3) & 0x3;
 			object->DrawInstance(object->renderFlags, object->texture, object->mapping, object->highPriority, object->priority, object->mappingFrame, object->x.pos, object->y.pos);
