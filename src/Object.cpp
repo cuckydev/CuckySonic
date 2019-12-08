@@ -24,6 +24,17 @@ OBJECT::OBJECT(OBJECTFUNCTION objectFunction) : function(objectFunction) { retur
 
 OBJECT::~OBJECT()
 {
+	//Remove player references to us (prevent terrible crashes, we're no longer on Genesis hardware)
+	for (size_t i = 0; i < gLevel->playerList.size(); i++)
+	{
+		PLAYER *player = gLevel->playerList[i];
+		if (player->interact == this)
+			player->interact = nullptr;
+	}
+	
+	//Remove object load references to us
+	gLevel->UnrefObjectLoad(this);
+	
 	//Free allocated scratch memory
 	free(scratch);
 	
@@ -71,25 +82,25 @@ void OBJECT::Animate(const uint8_t **animationList)
 	{
 		switch (animation[1 + animFrame])
 		{
-			case 0xFF:	//Restart animation
+			case ANICOMMAND_RESTART:	//Restart animation
 				animFrame = 0;
 				break;
-			case 0xFE:	//Go back X amount of frames
+			case ANICOMMAND_GO_BACK_FRAMES:	//Go back X amount of frames
 				animFrame -= animation[2 + animFrame];
 				break;
-			case 0xFD:	//Switch to X animation
+			case ANICOMMAND_SET_ANIMATION:	//Switch to X animation
 				anim = animation[2 + animFrame];
 				return;
-			case 0xFC:	//Advance routine
+			case ANICOMMAND_ADVANCE_ROUTINE:	//Advance routine
 				routine++;
 				animFrameDuration = 0;
 				animFrame++;
 				return;
-			case 0xFB:	//Reset animation and clear secondary routine
+			case ANICOMMAND_CLEAR_ROUTINESECONDARY:	//Reset animation and clear secondary routine
 				animFrame = 0;
 				routineSecondary = 0;
 				return;
-			case 0xFA:	//Increment secondary routine
+			case ANICOMMAND_ADVANCE_ROUTINESECONDARY:	//Increment secondary routine
 				routineSecondary++;
 				return;
 		}
@@ -127,23 +138,23 @@ void OBJECT::Animate_S1(const uint8_t **animationList)
 	{
 		switch (animation[1 + animFrame])
 		{
-			case 0xFF:	//Restart animation
+			case ANICOMMAND_RESTART:	//Restart animation
 				animFrame = 0;
 				break;
-			case 0xFE:	//Go back X amount of frames
+			case ANICOMMAND_GO_BACK_FRAMES:	//Go back X amount of frames
 				animFrame -= animation[2 + animFrame];
 				break;
-			case 0xFD:	//Switch to X animation
+			case ANICOMMAND_SET_ANIMATION:	//Switch to X animation
 				anim = animation[2 + animFrame];
 				return;
-			case 0xFC:	//Advance routine
+			case ANICOMMAND_ADVANCE_ROUTINE:	//Advance routine
 				routine++;
 				return;
-			case 0xFB:	//Reset animation and clear secondary routine
+			case ANICOMMAND_CLEAR_ROUTINESECONDARY:	//Reset animation and clear secondary routine
 				animFrame = 0;
 				routineSecondary = 0;
 				return;
-			case 0xFA:	//Increment secondary routine
+			case ANICOMMAND_ADVANCE_ROUTINESECONDARY:	//Increment secondary routine
 				routineSecondary++;
 				return;
 		}
@@ -296,14 +307,6 @@ void OBJECT::Smash(size_t num, const OBJECT_SMASHMAP *smashmap, OBJECTFUNCTION f
 		mapOrig = mapping.origin;
 	}
 	
-	//Get our origin for top-left point
-	int origX = mapOrig.x;
-	int origY = mapOrig.y;
-	if (renderFlags.xFlip)
-		origX = mapRect.w - origX;
-	if (renderFlags.yFlip)
-		origY = mapRect.h - origY;
-	
 	//Create smash fragments based on copies of us and the smash map
 	for (size_t i = 0; i < num; i++)
 	{
@@ -319,12 +322,12 @@ void OBJECT::Smash(size_t num, const OBJECT_SMASHMAP *smashmap, OBJECTFUNCTION f
 		newFragment->heightPixels = heightPixels;
 		
 		//Get our position difference
-		int offX = (smashmap->rect.x + smashmap->rect.w / 2) - mapRect.w / 2;
-		int offY = (smashmap->rect.y + smashmap->rect.h / 2) - mapRect.h / 2;
+		int offX = (smashmap->rect.x + smashmap->rect.w / 2) - mapOrig.x;
+		int offY = (smashmap->rect.y + smashmap->rect.h / 2) - mapOrig.y;
 		if (renderFlags.xFlip)
-			offX = mapRect.w - offX;
+			offX = -offX;
 		if (renderFlags.yFlip)
-			offY = mapRect.h - offY;
+			offY = -offY;
 		
 		//Set our fragment position and velocity
 		newFragment->x.pos = x.pos + offX;
@@ -338,11 +341,62 @@ void OBJECT::Smash(size_t num, const OBJECT_SMASHMAP *smashmap, OBJECTFUNCTION f
 		smashmap++;
 	}
 	
-	//Delete us and play smash sound
-	deleteFlag = true;
-	if (status.releaseDestroyed)
-		gLevel->ReleaseObjectLoad(this); //The original doesn't explicitly do this, but it does forget to clear the loaded bit for the object load
+	//Play smash sound
 	PlaySound(SOUNDID_WALL_SMASH);
+}
+
+void OBJECT::Fragment(size_t num, const OBJECT_FRAGMENTMAP *fragmap, OBJECTFUNCTION fragmentFunction)
+{
+	//Get our rect to use
+	RECT mapRect;
+	POINT mapOrig;
+	
+	if (!renderFlags.staticMapping)
+	{
+		mapRect = mapping.mappings->rect[mappingFrame];
+		mapOrig = mapping.mappings->origin[mappingFrame];
+	}
+	else
+	{
+		mapRect = mapping.rect;
+		mapOrig = mapping.origin;
+	}
+	
+	//Create smash fragments based on copies of us and the smash map
+	for (size_t i = 0; i < num; i++)
+	{
+		//Create a fragment
+		OBJECT *newFragment = new OBJECT(fragmentFunction);
+		newFragment->texture = texture;
+		newFragment->mapping.rect = {mapRect.x + fragmap->rect.x, mapRect.y + fragmap->rect.y, fragmap->rect.w, fragmap->rect.h};
+		newFragment->mapping.origin = {fragmap->rect.w / 2, fragmap->rect.h / 2};
+		newFragment->renderFlags = renderFlags;
+		newFragment->renderFlags.staticMapping = true;
+		newFragment->priority = priority;
+		newFragment->widthPixels = widthPixels;
+		newFragment->heightPixels = heightPixels;
+		
+		//Get our position difference
+		int offX = (fragmap->rect.x + fragmap->rect.w / 2) - mapOrig.x;
+		int offY = (fragmap->rect.y + fragmap->rect.h / 2) - mapOrig.y;
+		if (renderFlags.xFlip)
+			offX = -offX;
+		if (renderFlags.yFlip)
+			offY = -offY;
+		
+		//Set our fragment position and velocity
+		newFragment->x.pos = x.pos + offX;
+		newFragment->y.pos = y.pos + offY;
+		newFragment->subtype = fragmap->delay;
+		
+		//Do an initial update, and link to level
+		fragmentFunction(newFragment);
+		gLevel->objectList.link_back(newFragment);
+		fragmap++;
+	}
+	
+	//Play crumble sound
+	PlaySound(SOUNDID_COLLAPSE);
 }
 
 //Object collision functions
@@ -717,21 +771,8 @@ bool OBJECT::Update()
 		return true;
 	}
 	
-	//Delete if flag is set
-	if (deleteFlag)
-	{
-		//Remove player references to us (prevent terrible crashes, we're no longer on Genesis hardware)
-		for (size_t i = 0; i < gLevel->playerList.size(); i++)
-		{
-			PLAYER *player = gLevel->playerList[i];
-			if (player->interact == this)
-				player->interact = nullptr;
-		}
-		
-		//Remove object load references to us
-		gLevel->UnrefObjectLoad(this);
-	}
-	else
+	//Update children if not going to be deleted
+	if (!deleteFlag)
 	{
 		//Update children's code
 		for (size_t i = 0; i < children.size(); i++)

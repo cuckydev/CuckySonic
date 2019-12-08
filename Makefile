@@ -81,10 +81,11 @@ SOURCES = \
 	Objects/GHZWaterfallSound \
 	Objects/GHZPlatform \
 	Objects/GHZLedge \
+	Objects/GHZSwingingPlatform \
+	Objects/GHZSpikes \
 	Objects/GHZEdgeWall \
 	Objects/GHZSmashableWall \
 	Objects/PurpleRock \
-	Objects/SwingingPlatform \
 	Objects/Minecart \
 	Audio_stb_vorbis \
 	Audio_miniaudio

@@ -4,10 +4,10 @@
 #include "../Log.h"
 #include "../Objects.h"
 
-static const uint8_t animationEggman[] =	{0x0F,0x00,0xFF};
-static const uint8_t animationSpin1[] =		{0x01,0x00,0x01,0x02,0x03,0xFF};
-static const uint8_t animationSpin2[] =		{0x01,0x04,0x01,0x02,0x03,0xFF};
-static const uint8_t animationSonic[] =		{0x0F,0x04,0xFF};
+static const uint8_t animationEggman[] =	{0x0F,0x00,ANICOMMAND_RESTART};
+static const uint8_t animationSpin1[] =		{0x01,0x00,0x01,0x02,0x03,ANICOMMAND_RESTART};
+static const uint8_t animationSpin2[] =		{0x01,0x04,0x01,0x02,0x03,ANICOMMAND_RESTART};
+static const uint8_t animationSonic[] =		{0x0F,0x04,ANICOMMAND_RESTART};
 
 static const uint8_t *animationList[] = {
 	animationEggman,

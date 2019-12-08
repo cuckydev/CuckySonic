@@ -8,6 +8,7 @@ static const OBJECT_SMASHMAP smashmapRight[8] = {
 	{{ 0, 16, 16, 16},  0x600, -0x100},
 	{{ 0, 32, 16, 16},  0x600,  0x100},
 	{{ 0, 48, 16, 16},  0x400,  0x500},
+	
 	{{16,  0, 16, 16},  0x600, -0x600},
 	{{16, 16, 16, 16},  0x800, -0x200},
 	{{16, 32, 16, 16},  0x800,  0x200},
@@ -15,14 +16,15 @@ static const OBJECT_SMASHMAP smashmapRight[8] = {
 };
 
 static const OBJECT_SMASHMAP smashmapLeft[8] = {
-	{{ 0,  0, 16, 16}, -0x400, -0x500},
-	{{ 0, 16, 16, 16}, -0x600, -0x100},
-	{{ 0, 32, 16, 16}, -0x600,  0x100},
-	{{ 0, 48, 16, 16}, -0x400,  0x500},
-	{{16,  0, 16, 16}, -0x600, -0x600},
-	{{16, 16, 16, 16}, -0x800, -0x200},
-	{{16, 32, 16, 16}, -0x800,  0x200},
-	{{16, 48, 16, 16}, -0x600,  0x600},
+	{{ 0,  0, 16, 16}, -0x600, -0x600},
+	{{ 0, 16, 16, 16}, -0x800, -0x200},
+	{{ 0, 32, 16, 16}, -0x800,  0x200},
+	{{ 0, 48, 16, 16}, -0x600,  0x600},
+	
+	{{16,  0, 16, 16}, -0x400, -0x500},
+	{{16, 16, 16, 16}, -0x600, -0x100},
+	{{16, 32, 16, 16}, -0x600,  0x100},
+	{{16, 48, 16, 16}, -0x400,  0x500},
 };
 
 //Fragment
@@ -95,6 +97,10 @@ void ObjGHZSmashableWall(OBJECT *object)
 					
 					object->playerContact[i].pushing = false;
 					object->Smash(8, smashmap, &ObjGHZWallFragment);
+					
+					//Delete us
+					object->deleteFlag = true;
+					gLevel->ReleaseObjectLoad(object);
 				}
 			}
 			break;

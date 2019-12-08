@@ -12,6 +12,8 @@
 #include "Objects.h"
 
 //Constants
+#define NO_FLOOR_ANGLE	3	//Floor angle values' "no floor" flag (must be an odd number)
+
 #define PEELOUT_CHARGE	30
 #define SPINDASH_CHARGE	45
 #define DROPDASH_CHARGE	20
@@ -103,10 +105,10 @@
 //Animation data
 enum PLAYERANIMATION_COMMAND
 {
-	COMMAND_RESTART = 0xFF,
-	COMMAND_GO_BACK_FRAMES = 0xFE,
-	COMMAND_SET_ANIMATION = 0xFD,
-	COMMAND_MIN = 0xFC,
+	PLYCOMMAND_RESTART = 0xFF,
+	PLYCOMMAND_GO_BACK_FRAMES = 0xFE,
+	PLYCOMMAND_SET_ANIMATION = 0xFD,
+	PLYCOMMAND_MIN = 0xFC,
 };
 
 #define WALK_FRAMES			8
@@ -120,13 +122,13 @@ enum PLAYERANIMATION_COMMAND
 
 #define MAPPINGFRAME_DUCK	77
 
-static const uint8_t animationWalk[] =			{0xFF,0x0F,0x10,0x11,0x12,0x13,0x14,0x0D,0x0E,COMMAND_RESTART}; //Walk and run must match in length (run is padded with COMMAND_RESTART)
-static const uint8_t animationRun[] =			{0xFF,0x2D,0x2E,0x2F,0x30,COMMAND_RESTART,COMMAND_RESTART,COMMAND_RESTART,COMMAND_RESTART,COMMAND_RESTART};
-static const uint8_t animationDash[] =			{0xFF,0xD6,0xD7,0xD8,0xD9,COMMAND_RESTART,COMMAND_RESTART,COMMAND_RESTART,COMMAND_RESTART,COMMAND_RESTART};
-static const uint8_t animationRoll[] =			{0xFE,0x3D,0x41,0x3E,0x41,0x3F,0x41,0x40,0x41,COMMAND_RESTART}; //Roll and roll2 must match in length (roll2 is padded with COMMAND_RESTART)
-static const uint8_t animationRoll2[] =			{0xFE,0x3D,0x41,0x3E,0x41,0x3F,0x41,0x40,0x41,COMMAND_RESTART};
-static const uint8_t animationDropdash[] =		{0x00,0xE6,0xE8,0xE7,0xE9,0xE6,0xEA,0xE7,0xEB,0xE6,0xEC,0xE7,0xED,0xE6,0xEE,0xE7,0xEF,COMMAND_RESTART};
-static const uint8_t animationPush[] =			{0xFD,0x48,0x49,0x4A,0x4B,COMMAND_RESTART,COMMAND_RESTART,COMMAND_RESTART,COMMAND_RESTART,COMMAND_RESTART}; //Push must also match the length of run and walk (padded with COMMAND_RESTART)
+static const uint8_t animationWalk[] =			{0xFF,0x0F,0x10,0x11,0x12,0x13,0x14,0x0D,0x0E,PLYCOMMAND_RESTART}; //Walk and run must match in length (run is padded with PLYCOMMAND_RESTART)
+static const uint8_t animationRun[] =			{0xFF,0x2D,0x2E,0x2F,0x30,PLYCOMMAND_RESTART,PLYCOMMAND_RESTART,PLYCOMMAND_RESTART,PLYCOMMAND_RESTART,PLYCOMMAND_RESTART};
+static const uint8_t animationDash[] =			{0xFF,0xD6,0xD7,0xD8,0xD9,PLYCOMMAND_RESTART,PLYCOMMAND_RESTART,PLYCOMMAND_RESTART,PLYCOMMAND_RESTART,PLYCOMMAND_RESTART};
+static const uint8_t animationRoll[] =			{0xFE,0x3D,0x41,0x3E,0x41,0x3F,0x41,0x40,0x41,PLYCOMMAND_RESTART}; //Roll and roll2 must match in length (roll2 is padded with PLYCOMMAND_RESTART)
+static const uint8_t animationRoll2[] =			{0xFE,0x3D,0x41,0x3E,0x41,0x3F,0x41,0x40,0x41,PLYCOMMAND_RESTART};
+static const uint8_t animationDropdash[] =		{0x00,0xE6,0xE8,0xE7,0xE9,0xE6,0xEA,0xE7,0xEB,0xE6,0xEC,0xE7,0xED,0xE6,0xEE,0xE7,0xEF,PLYCOMMAND_RESTART};
+static const uint8_t animationPush[] =			{0xFD,0x48,0x49,0x4A,0x4B,PLYCOMMAND_RESTART,PLYCOMMAND_RESTART,PLYCOMMAND_RESTART,PLYCOMMAND_RESTART,PLYCOMMAND_RESTART}; //Push must also match the length of run and walk (padded with PLYCOMMAND_RESTART)
 static const uint8_t animationIdle[] =			{0x05,0x01,0x01,0x01,0x01,0x01,0x01,0x01,0x01,0x01,0x01,0x01,0x01,0x01,0x01,
 												 0x01,0x01,0x01,0x01,0x01,0x01,0x01,0x01,0x01,0x01,0x01,0x01,0x01,0x01,0x01,
 												 0x01,0x02,0x03,0x03,0x03,0x03,0x03,0x04,0x04,0x04,0x05,0x05,0x05,0x04,0x04,
@@ -139,46 +141,46 @@ static const uint8_t animationIdle[] =			{0x05,0x01,0x01,0x01,0x01,0x01,0x01,0x0
 												 0x06,0x06,0x06,0x06,0x04,0x04,0x04,0x05,0x05,0x05,0x04,0x04,0x04,0x05,0x05,
 												 0x05,0x04,0x04,0x04,0x05,0x05,0x05,0x04,0x04,0x04,0x05,0x05,0x05,0x06,0x06,
 												 0x06,0x06,0x06,0x06,0x06,0x06,0x06,0x06,0x07,0x08,0x08,0x08,0x09,0x09,0x09,
-												 COMMAND_GO_BACK_FRAMES,0x06};
-static const uint8_t animationBalance1[] =		{0x09,0xCC,0xCD,0xCE,0xCD,COMMAND_RESTART};
-static const uint8_t animationLookUp[] =		{0x05,0x0B,0x0C,COMMAND_GO_BACK_FRAMES,0x01};
-static const uint8_t animationDuck[] =			{0x05,0x4C,0x4D,COMMAND_GO_BACK_FRAMES,0x01};
-static const uint8_t animationSpindash[] =		{0x00,0x42,0x43,0x42,0x44,0x42,0x45,0x42,0x46,0x42,0x47,COMMAND_RESTART};
-static const uint8_t animationBlink[] =			{0x01,0x02,COMMAND_SET_ANIMATION,PLAYERANIMATION_WALK};
-static const uint8_t animationGetUp[] =			{0x03,0x0A,COMMAND_SET_ANIMATION,PLAYERANIMATION_WALK};
-static const uint8_t animationBalance2[] =		{0x03,0xC8,0xC9,0xCA,0xCB,COMMAND_RESTART};
-static const uint8_t animationSkid[] =			{0x05,0xD2,0xD3,0xD4,0xD5,COMMAND_SET_ANIMATION,PLAYERANIMATION_WALK};
-static const uint8_t animationFloat1[] =		{0x07,0x54,0x59,COMMAND_RESTART};
-static const uint8_t animationFloat2[] =		{0x07,0x54,0x55,0x56,0x57,0x58,COMMAND_RESTART};
-static const uint8_t animationSpring[] =		{0x2F,0x5B,COMMAND_SET_ANIMATION,PLAYERANIMATION_WALK};
-static const uint8_t animationHang1[] =			{0x01,0x50,0x51,COMMAND_RESTART};
-static const uint8_t animationDash2[] =			{0x0F,0x43,0x43,0x43,COMMAND_GO_BACK_FRAMES,0x01};
-static const uint8_t animationDash3[] =			{0x0F,0x43,0x44,COMMAND_GO_BACK_FRAMES,0x01};
-static const uint8_t animationHang2[] =			{0x01,0x50,0x51,COMMAND_RESTART};
-static const uint8_t animationBubble[] =		{0x0B,0x5A,0x5A,0x11,0x12,COMMAND_SET_ANIMATION,PLAYERANIMATION_WALK};
-static const uint8_t animationBurnt[] =			{0x20,0x5E,COMMAND_RESTART};
-static const uint8_t animationDrown[] =			{0x20,0x5D,COMMAND_RESTART};
-static const uint8_t animationDeath[] =			{0x20,0x5C,COMMAND_RESTART};
-static const uint8_t animationHurt[] =			{0x40,0x4E,COMMAND_RESTART};
-static const uint8_t animationSlide[] =			{0x09,0x4E,0x4F,COMMAND_RESTART};
-static const uint8_t animationNull[] =			{0x77,0x00,COMMAND_SET_ANIMATION,PLAYERANIMATION_WALK};
-static const uint8_t animationBalance3[] =		{0x13,0xD0,0xD1,COMMAND_RESTART};
-static const uint8_t animationBalance4[] =		{0x03,0xCF,0xC8,0xC9,0xCA,0xCB,COMMAND_GO_BACK_FRAMES,0x04};
-static const uint8_t animationLying[] =			{0x09,0x08,0x09,COMMAND_RESTART};
-static const uint8_t animationLieDown[] =		{0x03,0x07,COMMAND_SET_ANIMATION,PLAYERANIMATION_WALK};
+												 PLYCOMMAND_GO_BACK_FRAMES,0x06};
+static const uint8_t animationBalance1[] =		{0x09,0xCC,0xCD,0xCE,0xCD,PLYCOMMAND_RESTART};
+static const uint8_t animationLookUp[] =		{0x05,0x0B,0x0C,PLYCOMMAND_GO_BACK_FRAMES,0x01};
+static const uint8_t animationDuck[] =			{0x05,0x4C,0x4D,PLYCOMMAND_GO_BACK_FRAMES,0x01};
+static const uint8_t animationSpindash[] =		{0x00,0x42,0x43,0x42,0x44,0x42,0x45,0x42,0x46,0x42,0x47,PLYCOMMAND_RESTART};
+static const uint8_t animationBlink[] =			{0x01,0x02,PLYCOMMAND_SET_ANIMATION,PLAYERANIMATION_WALK};
+static const uint8_t animationGetUp[] =			{0x03,0x0A,PLYCOMMAND_SET_ANIMATION,PLAYERANIMATION_WALK};
+static const uint8_t animationBalance2[] =		{0x03,0xC8,0xC9,0xCA,0xCB,PLYCOMMAND_RESTART};
+static const uint8_t animationSkid[] =			{0x05,0xD2,0xD3,0xD4,0xD5,PLYCOMMAND_SET_ANIMATION,PLAYERANIMATION_WALK};
+static const uint8_t animationFloat1[] =		{0x07,0x54,0x59,PLYCOMMAND_RESTART};
+static const uint8_t animationFloat2[] =		{0x07,0x54,0x55,0x56,0x57,0x58,PLYCOMMAND_RESTART};
+static const uint8_t animationSpring[] =		{0x2F,0x5B,PLYCOMMAND_SET_ANIMATION,PLAYERANIMATION_WALK};
+static const uint8_t animationHang1[] =			{0x01,0x50,0x51,PLYCOMMAND_RESTART};
+static const uint8_t animationDash2[] =			{0x0F,0x43,0x43,0x43,PLYCOMMAND_GO_BACK_FRAMES,0x01};
+static const uint8_t animationDash3[] =			{0x0F,0x43,0x44,PLYCOMMAND_GO_BACK_FRAMES,0x01};
+static const uint8_t animationHang2[] =			{0x01,0x50,0x51,PLYCOMMAND_RESTART};
+static const uint8_t animationBubble[] =		{0x0B,0x5A,0x5A,0x11,0x12,PLYCOMMAND_SET_ANIMATION,PLAYERANIMATION_WALK};
+static const uint8_t animationBurnt[] =			{0x20,0x5E,PLYCOMMAND_RESTART};
+static const uint8_t animationDrown[] =			{0x20,0x5D,PLYCOMMAND_RESTART};
+static const uint8_t animationDeath[] =			{0x20,0x5C,PLYCOMMAND_RESTART};
+static const uint8_t animationHurt[] =			{0x40,0x4E,PLYCOMMAND_RESTART};
+static const uint8_t animationSlide[] =			{0x09,0x4E,0x4F,PLYCOMMAND_RESTART};
+static const uint8_t animationNull[] =			{0x77,0x00,PLYCOMMAND_SET_ANIMATION,PLAYERANIMATION_WALK};
+static const uint8_t animationBalance3[] =		{0x13,0xD0,0xD1,PLYCOMMAND_RESTART};
+static const uint8_t animationBalance4[] =		{0x03,0xCF,0xC8,0xC9,0xCA,0xCB,PLYCOMMAND_GO_BACK_FRAMES,0x04};
+static const uint8_t animationLying[] =			{0x09,0x08,0x09,PLYCOMMAND_RESTART};
+static const uint8_t animationLieDown[] =		{0x03,0x07,PLYCOMMAND_SET_ANIMATION,PLAYERANIMATION_WALK};
 
 //Super specific animation
 #define SUPER_WALK_FRAMES	8
 #define SUPER_RUN_FRAMES	1
 #define SUPER_DASH_FRAMES	1
 
-static const uint8_t animationSuperWalk[] =			{0xFF,0x77,0x78,0x79,0x7A,0x7B,0x7C,0x75,0x76,COMMAND_RESTART}; //Walk and run must match in length (run is padded with COMMAND_RESTART, here)
-static const uint8_t animationSuperRun[] =			{0xFF,0xB5,0xB9,COMMAND_RESTART,COMMAND_RESTART,COMMAND_RESTART,COMMAND_RESTART,COMMAND_RESTART,COMMAND_RESTART,COMMAND_RESTART};
-static const uint8_t animationSuperPush[] =			{0xFD,0xBD,0xBE,0xBF,0xC0,COMMAND_RESTART,COMMAND_RESTART,COMMAND_RESTART,COMMAND_RESTART,COMMAND_RESTART}; //Push must also match the length of run and walk (padded with COMMAND_RESTART here)
-static const uint8_t animationSuperIdle[] =			{0x07,0x72,0x73,0x74,0x73,COMMAND_RESTART};
-static const uint8_t animationSuperBalance[] =		{0x09,0xC2,0xC3,0xC4,0xC3,0xC5,0xC6,0xC7,0xC6,COMMAND_RESTART};
-static const uint8_t animationSuperDuck[] =			{0x05,0xC1,COMMAND_RESTART};
-static const uint8_t animationSuperTransform[] =	{0x02,0x6D,0x6D,0x6E,0x6E,0x6F,0x70,0x71,0x70,0x71,0x70,0x71,0x70,0x71,COMMAND_SET_ANIMATION,PLAYERANIMATION_WALK};
+static const uint8_t animationSuperWalk[] =			{0xFF,0x77,0x78,0x79,0x7A,0x7B,0x7C,0x75,0x76,PLYCOMMAND_RESTART}; //Walk and run must match in length (run is padded with PLYCOMMAND_RESTART, here)
+static const uint8_t animationSuperRun[] =			{0xFF,0xB5,0xB9,PLYCOMMAND_RESTART,PLYCOMMAND_RESTART,PLYCOMMAND_RESTART,PLYCOMMAND_RESTART,PLYCOMMAND_RESTART,PLYCOMMAND_RESTART,PLYCOMMAND_RESTART};
+static const uint8_t animationSuperPush[] =			{0xFD,0xBD,0xBE,0xBF,0xC0,PLYCOMMAND_RESTART,PLYCOMMAND_RESTART,PLYCOMMAND_RESTART,PLYCOMMAND_RESTART,PLYCOMMAND_RESTART}; //Push must also match the length of run and walk (padded with PLYCOMMAND_RESTART here)
+static const uint8_t animationSuperIdle[] =			{0x07,0x72,0x73,0x74,0x73,PLYCOMMAND_RESTART};
+static const uint8_t animationSuperBalance[] =		{0x09,0xC2,0xC3,0xC4,0xC3,0xC5,0xC6,0xC7,0xC6,PLYCOMMAND_RESTART};
+static const uint8_t animationSuperDuck[] =			{0x05,0xC1,PLYCOMMAND_RESTART};
+static const uint8_t animationSuperTransform[] =	{0x02,0x6D,0x6D,0x6E,0x6E,0x6F,0x70,0x71,0x70,0x71,0x70,0x71,0x70,0x71,PLYCOMMAND_SET_ANIMATION,PLAYERANIMATION_WALK};
 
 //Animation lists
 static const uint8_t* animationList[] = {
@@ -414,8 +416,8 @@ void ObjSkidDust(OBJECT *object)
 }
 
 //Barrier animation (Double Spin Attack)
-static const uint8_t animationSpinAttackNull[] =	{0x1F,0x06,0xFF};
-static const uint8_t animationSpinAttackUse[] =	{0x00,0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x06,0x06,0x06,0x06,0x06,0x06,0x07,0xFD,0x00};
+static const uint8_t animationSpinAttackNull[] =		{0x1F,0x06,ANICOMMAND_RESTART};
+static const uint8_t animationSpinAttackUse[] =			{0x00,0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x06,0x06,0x06,0x06,0x06,0x06,0x07,ANICOMMAND_SET_ANIMATION,0x00};
 
 static const uint8_t* animationListSpinAttack[] = {
 	animationSpinAttackNull,
@@ -423,15 +425,15 @@ static const uint8_t* animationListSpinAttack[] = {
 };
 
 //Barrier animation (Blue Barrier)
-static const uint8_t animationBlueBarrier[] =			{0x00,0x05,0x00,0x05,0x01,0x05,0x02,0x05,0x03,0x05,0x04,0xFF};
+static const uint8_t animationBlueBarrier[] =			{0x00,0x05,0x00,0x05,0x01,0x05,0x02,0x05,0x03,0x05,0x04,ANICOMMAND_RESTART};
 
 static const uint8_t* animationListBlueBarrier[] = {
 	animationBlueBarrier,
 };
 
 //Barrier animation (Flame Barrier)
-static const uint8_t animationFlameBarrierIdle[] =		{0x01,0x00,0x0F,0x01,0x10,0x02,0x11,0x03,0x12,0x04,0x13,0x05,0x14,0x06,0x15,0x07,0x16,0x08,0x17,0xFF};
-static const uint8_t animationFlameBarrierUse[] =			{0x01,0x09,0x0A,0x0B,0x0C,0x0D,0x0E,0x09,0x0A,0x0B,0x0C,0x0D,0x0E,0xFD,0x00,0x00};
+static const uint8_t animationFlameBarrierIdle[] =		{0x01,0x00,0x0F,0x01,0x10,0x02,0x11,0x03,0x12,0x04,0x13,0x05,0x14,0x06,0x15,0x07,0x16,0x08,0x17,ANICOMMAND_RESTART};
+static const uint8_t animationFlameBarrierUse[] =		{0x01,0x09,0x0A,0x0B,0x0C,0x0D,0x0E,0x09,0x0A,0x0B,0x0C,0x0D,0x0E,ANICOMMAND_SET_ANIMATION,0x00};
 
 static const uint8_t* animationListFlameBarrier[] = {
 	animationFlameBarrierIdle,
@@ -439,9 +441,9 @@ static const uint8_t* animationListFlameBarrier[] = {
 };
 
 //Barrier animation (Lightning Barrier)
-static const uint8_t animationLightningBarrierIdle[] =	{0x01,0x00,0x00,0x01,0x01,0x02,0x02,0x03,0x03,0x04,0x04,0x05,0x05,0x06,0x06,0x07,0x07,0x08,0x08,0x09,0x0A,0x0B,0x16,0x16,0x15,0x15,0x14,0x14,0x13,0x13,0x12,0x12,0x11,0x11,0x10,0x10,0x0F,0x0F,0x0E,0x0E,0x09,0x0A,0x0B,0xFF};
-static const uint8_t animationLightningBarrierUse[] =		{0x00,0x0C,0x0D,0x17,0x0C,0x0D,0x17,0x0C,0x0D,0x17,0x0C,0x0D,0x17,0x0C,0x0D,0x17,0x0C,0x0D,0x17,0x0C,0x0D,0xFC,0xFF};
-static const uint8_t animationLightningBarrierSpark[] =	{0x03,0x00,0x01,0x02,0xFC,0xFF,0x00};
+static const uint8_t animationLightningBarrierIdle[] =	{0x01,0x00,0x00,0x01,0x01,0x02,0x02,0x03,0x03,0x04,0x04,0x05,0x05,0x06,0x06,0x07,0x07,0x08,0x08,0x09,0x0A,0x0B,0x16,0x16,0x15,0x15,0x14,0x14,0x13,0x13,0x12,0x12,0x11,0x11,0x10,0x10,0x0F,0x0F,0x0E,0x0E,0x09,0x0A,0x0B,ANICOMMAND_RESTART};
+static const uint8_t animationLightningBarrierUse[] =	{0x00,0x0C,0x0D,0x17,0x0C,0x0D,0x17,0x0C,0x0D,0x17,0x0C,0x0D,0x17,0x0C,0x0D,0x17,0x0C,0x0D,0x17,0x0C,0x0D,0xFC,ANICOMMAND_RESTART};
+static const uint8_t animationLightningBarrierSpark[] =	{0x03,0x00,0x01,0x02,ANICOMMAND_ADVANCE_ROUTINE};
 
 static const uint8_t* animationListLightningBarrier[] = {
 	animationLightningBarrierIdle,
@@ -450,9 +452,9 @@ static const uint8_t* animationListLightningBarrier[] = {
 };
 
 //Barrier animation (Aqua Barrier)
-static const uint8_t animationAquaBarrierIdle[] =	{0x01,0x00,0x09,0x00,0x09,0x00,0x09,0x01,0x0A,0x01,0x0A,0x01,0x0A,0x02,0x09,0x02,0x09,0x02,0x09,0x03,0x0A,0x03,0x0A,0x03,0x0A,0x04,0x09,0x04,0x09,0x04,0x09,0x05,0x0A,0x05,0x0A,0x05,0x0A,0x06,0x09,0x06,0x09,0x06,0x09,0x07,0x0A,0x07,0x0A,0x07,0x0A,0x08,0x09,0x08,0x09,0x08,0x09,0xFF};
-static const uint8_t animationAquaBarrierUse[] =	{0x05,0x09,0x0B,0x0B,0x0B,0xFD,0x00};
-static const uint8_t animationAquaBarrierSquish[] =	{0x05,0x0C,0x0C,0x0B,0xFD,0x00,0x00};
+static const uint8_t animationAquaBarrierIdle[] =		{0x01,0x00,0x09,0x00,0x09,0x00,0x09,0x01,0x0A,0x01,0x0A,0x01,0x0A,0x02,0x09,0x02,0x09,0x02,0x09,0x03,0x0A,0x03,0x0A,0x03,0x0A,0x04,0x09,0x04,0x09,0x04,0x09,0x05,0x0A,0x05,0x0A,0x05,0x0A,0x06,0x09,0x06,0x09,0x06,0x09,0x07,0x0A,0x07,0x0A,0x07,0x0A,0x08,0x09,0x08,0x09,0x08,0x09,ANICOMMAND_RESTART};
+static const uint8_t animationAquaBarrierUse[] =		{0x05,0x09,0x0B,0x0B,0x0B,ANICOMMAND_SET_ANIMATION,0x00};
+static const uint8_t animationAquaBarrierSquish[] =		{0x05,0x0C,0x0C,0x0B,ANICOMMAND_SET_ANIMATION,0x00};
 
 static const uint8_t* animationListAquaBarrier[] = {
 	animationAquaBarrierIdle,
@@ -1210,9 +1212,9 @@ void PLAYER::GroundFloorCollision()
 	}
 	else
 	{
-		//Set primary and secondary angle to 3
-		floorAngle1 = 3;
-		floorAngle2 = 3;
+		//Set flags that we're not on a floor
+		floorAngle1 = NO_FLOOR_ANGLE;
+		floorAngle2 = NO_FLOOR_ANGLE;
 		
 		//Get the angle to use for determining our ground orientation (floor, wall, or ceiling)
 		uint8_t offAngle = angle;
@@ -2016,9 +2018,9 @@ bool PLAYER::CDPeeloutSpindash()
 					//Charge peelout
 					anim = PLAYERANIMATION_WALK;
 					
+					//Get our charge rate and speed (top speed x2, x1.5 if using speed shoes)
 					int16_t peeloutAccel = 0x64;
 					int16_t peeloutCap = top << 1;
-					
 					if (item.hasSpeedShoes)
 						peeloutCap -= (top >> 1);
 					
@@ -2169,7 +2171,7 @@ void PLAYER::CheckDropdashRelease()
 	
 	if (landObject != nullptr)
 	{
-		if ((landObject->function == &ObjSpring && landObject->routine == 1))
+		if ((landObject->function == ObjSpring && landObject->routine == 1))
 		{
 			//Clear ability and return
 			abilityProperty = 0;
@@ -3031,12 +3033,13 @@ void PLAYER::GroundMovement()
 							StopChannel(SOUNDCHANNEL_FM4);
 						}
 						
-						if (lastFloorAngle1 == 3) //If there's no floor to the left of us
+						if (lastFloorAngle1 == NO_FLOOR_ANGLE) //If there's no floor to the left of us
 						{
 							if (!super)
 							{
-								if (!status.xFlip)
+								if (status.xFlip == false)
 								{
+									//Facing left on ledge to the left of us...
 									if ((floorAngle1 = 0) == 0 && CheckCollisionDown_1Point(topSolidLayer, x.pos - 6, y.pos + yRadius, &floorAngle1) >= 12)
 										anim = PLAYERANIMATION_BALANCE2;	//Far over the edge
 									else
@@ -3060,12 +3063,13 @@ void PLAYER::GroundMovement()
 								status.xFlip = false;
 							}
 						}
-						else if (lastFloorAngle2 == 3) //If there's no floor to the right of us
+						else if (lastFloorAngle2 == NO_FLOOR_ANGLE) //If there's no floor to the right of us
 						{
 							if (!super)
 							{
-								if (status.xFlip)
+								if (status.xFlip == true)
 								{
+									//Facing right on ledge to the right of us...
 									if ((floorAngle1 = 0) == 0 && CheckCollisionDown_1Point(topSolidLayer, x.pos + 6, y.pos + yRadius, &floorAngle1) >= 12)
 										anim = PLAYERANIMATION_BALANCE2;	//Far over the edge
 									else
@@ -3092,9 +3096,9 @@ void PLAYER::GroundMovement()
 					}
 				}
 				
-				if (anim == PLAYERANIMATION_IDLE || cdSPTimer != 0)
-				{
-					#if (defined(SONICCD_PEELOUT) || defined(SONICCD_SPINDASH))
+				#if (defined(SONICCD_PEELOUT) || defined(SONICCD_SPINDASH))
+					if (anim == PLAYERANIMATION_IDLE || cdSPTimer != 0)
+					{
 						//Handle charge delay
 						if (cdChargeDelay & 0x0F)
 							cdChargeDelay = (cdChargeDelay + 0x01) & 0xCF;
@@ -3102,20 +3106,23 @@ void PLAYER::GroundMovement()
 						//Update peelout / spindash and looking up / down
 						if (CDPeeloutSpindash())
 							return;
-					#else
+					}
+					else
+					{
+						//Reset charge delay
+						if (!(cdChargeDelay & 0x0F))
+							cdChargeDelay = 0;
+					}
+				#else
+					if (anim == PLAYERANIMATION_IDLE)
+					{
 						//Look up and down
 						if (controlHeld.up)
 							anim = PLAYERANIMATION_LOOKUP;
 						else if (controlHeld.down)
-							anim = PLAYERANIMATION_DUCK; //This is done in Roll too
-					#endif
-				}
-				else
-				{
-					//Reset charge delay
-					if (!(cdChargeDelay & 0x0F))
-						cdChargeDelay = 0;
-				}
+							anim = PLAYERANIMATION_DUCK;
+					}
+				#endif
 			}
 		}
 		
@@ -3259,7 +3266,7 @@ void PLAYER::RollMovement()
 			//Check if we're doing a CD spindash
 			if (cdSPTimer != 0)
 			{
-				//Handle CD spindash
+				//Get our charge rate and speed (top speed x2, x1.5 if using speed shoes)
 				int16_t spindashAccel = 0x4B;
 				int16_t spindashCap = top << 1;
 				
@@ -3308,9 +3315,9 @@ void PLAYER::RollMovement()
 						cdSPTimer = 0;
 						
 						if (status.xFlip)
-							RollLeft();
+							RollMoveLeft();
 						else
-							RollRight();
+							RollMoveRight();
 					}
 				}
 				else
@@ -3450,7 +3457,7 @@ void PLAYER::HurtCheckGround()
 		//Set routine
 		routine = PLAYERROUTINE_CONTROL;
 		
-		//Restart invulnerability timer (why)
+		//Restart invulnerability timer
 		invulnerabilityTime = 120;
 		spindashing = false;
 	}
@@ -3495,8 +3502,8 @@ bool PLAYER::Hurt(OBJECT *hit)
 {
 	//If a spike object, use the spike hurt sound
 	SOUNDID soundId = SOUNDID_HURT;
-	
-	//TODO: above
+	if (hit->function == ObjGHZSpikes)
+		soundId = SOUNDID_SPIKE_HURT;
 	
 	//Get which ring count to use
 	unsigned int *rings = &gRings; //TODO: multiplayer stuff
@@ -3515,7 +3522,7 @@ bool PLAYER::Hurt(OBJECT *hit)
 		//Check if we should die
 		if (*rings == 0)
 		{
-			//Die, using the sound id we've gotten
+			//Ww have no more rings so die using the sound id we've gotten earlier
 			return Kill(soundId);
 		}
 		else
@@ -3811,13 +3818,13 @@ void PLAYER::FrameCommand(const uint8_t* animation)
 {
 	switch (animation[1 + animFrame])
 	{
-		case COMMAND_RESTART: //Restart animation
+		case PLYCOMMAND_RESTART: //Restart animation
 			animFrame = 0;
 			break;
-		case COMMAND_GO_BACK_FRAMES: //Go back X amount of frames
+		case PLYCOMMAND_GO_BACK_FRAMES: //Go back X amount of frames
 			animFrame -= animation[2 + animFrame];
 			break;
-		case COMMAND_SET_ANIMATION: //Switch to X animation
+		case PLYCOMMAND_SET_ANIMATION: //Switch to X animation
 			anim = (PLAYERANIMATION)animation[2 + animFrame];
 			return;
 		default:
@@ -3832,7 +3839,7 @@ void PLAYER::FrameCommand(const uint8_t* animation)
 void PLAYER::AdvanceFrame(const uint8_t* animation)
 {
 	//Handle commands
-	if (animation[1 + animFrame] >= COMMAND_MIN)
+	if (animation[1 + animFrame] >= PLYCOMMAND_MIN)
 	{
 		FrameCommand(animation);
 		return;

@@ -45,6 +45,16 @@ enum COLLISIONTYPE
 	COLLISIONTYPE_MONITOR,
 };
 
+enum ANIMATION_COMMAND
+{
+	ANICOMMAND_RESTART = 0xFF,
+	ANICOMMAND_GO_BACK_FRAMES = 0xFE,
+	ANICOMMAND_SET_ANIMATION = 0xFD,
+	ANICOMMAND_ADVANCE_ROUTINE = 0xFC,
+	ANICOMMAND_CLEAR_ROUTINESECONDARY = 0xFB,
+	ANICOMMAND_ADVANCE_ROUTINESECONDARY = 0xFA,
+};
+
 //Object structures
 struct OBJECT_RENDERFLAGS
 {
@@ -75,6 +85,12 @@ struct OBJECT_SMASHMAP
 {
 	RECT rect;
 	int16_t xVel, yVel;
+};
+
+struct OBJECT_FRAGMENTMAP
+{
+	RECT rect;
+	uint8_t delay;
 };
 
 struct OBJECT_MAPPING
@@ -219,6 +235,7 @@ class OBJECT
 		void UnloadOffscreen(int16_t xPos);
 		
 		void Smash(size_t num, const OBJECT_SMASHMAP *smashmap, OBJECTFUNCTION fragmentFunction);
+		void Fragment(size_t num, const OBJECT_FRAGMENTMAP *fragmap, OBJECTFUNCTION fragmentFunction);
 		
 		//Object interaction functions
 		bool Hurt(PLAYER *player);

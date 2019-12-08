@@ -4,9 +4,9 @@
 #include "../Game.h"
 #include "../Log.h"
 
-static const uint8_t animationSlow[] =	{0x07,0x00,0x01,0xFF};
-static const uint8_t animationFast[] =	{0x03,0x00,0x01,0xFF};
-static const uint8_t animationStill[] =	{0x07,0x00,0xFF};
+static const uint8_t animationSlow[] =	{0x07,0x00,0x01,ANICOMMAND_RESTART};
+static const uint8_t animationFast[] =	{0x03,0x00,0x01,ANICOMMAND_RESTART};
+static const uint8_t animationStill[] =	{0x07,0x00,ANICOMMAND_RESTART};
 
 static const uint8_t *animationList[] = {
 	animationSlow,

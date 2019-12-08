@@ -16,11 +16,11 @@
 OBJECTFUNCTION objFuncSonic1[] = {
 	nullptr, nullptr, nullptr, &ObjPathSwitcher, nullptr, nullptr, nullptr, nullptr,
 	nullptr, nullptr, nullptr, nullptr, nullptr, &ObjGoalpost, nullptr, nullptr,
-	nullptr, &ObjBridge, nullptr, nullptr, nullptr, &ObjSwingingPlatform, nullptr, nullptr,
+	nullptr, &ObjBridge, nullptr, nullptr, nullptr, &ObjGHZSwingingPlatform, nullptr, nullptr,
 	&ObjGHZPlatform, nullptr, &ObjGHZLedge, nullptr, &ObjSonic1Scenery, nullptr, nullptr, &ObjCrabmeat,
 	nullptr, nullptr, &ObjBuzzBomber, nullptr, nullptr, &ObjRingSpawner, &ObjMonitor, nullptr,
 	nullptr, nullptr, nullptr, &ObjChopper, nullptr, nullptr, nullptr, nullptr,
-	nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
+	nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, &ObjGHZSpikes, nullptr,
 	nullptr, nullptr, nullptr, &ObjPurpleRock, &ObjGHZSmashableWall, nullptr, nullptr, nullptr,
 	&ObjMotobug, &ObjSpring, &ObjNewtron, nullptr, &ObjGHZEdgeWall, nullptr, nullptr, nullptr,
 	nullptr, &ObjGHZWaterfallSound, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
@@ -119,6 +119,7 @@ const char *preloadMappings_GHZ[] = {
 	"data/Object/GHZSwingingPlatform.map",
 	"data/Object/GHZPurpleRock.map",
 	"data/Object/GHZSmashableWall.map",
+	"data/Object/GHZSpikes.map",
 	//Badniks
 	"data/Object/BuzzBomber.map",
 	"data/Object/Motobug.map",

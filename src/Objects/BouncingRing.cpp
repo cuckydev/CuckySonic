@@ -13,7 +13,7 @@
 //#define BOUNCINGRING_ONLY_FLOOR	        //When set, like in the originals, bouncing rings will only check for floor collision
 //#define BOUNCINGRING_ORIGINAL_COLLISION //When set, the game will filter the collision so only a quarter of the rings will check for collision in a frame
 
-static const uint8_t animationCollect[] =	{0x05,0x04,0x05,0x06,0x07,0xFC};
+static const uint8_t animationCollect[] =	{0x05,0x04,0x05,0x06,0x07,ANICOMMAND_ADVANCE_ROUTINE};
 
 static const uint8_t *animationList[] = {
 	animationCollect,

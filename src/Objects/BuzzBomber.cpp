@@ -6,9 +6,9 @@
 #include "../MathUtil.h"
 
 //Buzz Bomber animations
-static const uint8_t animationFly1[] =		{0x01,0x00,0x01,0xFF};
-static const uint8_t animationFly2[] =		{0x01,0x02,0x03,0xFF};
-static const uint8_t animationFiring[] =	{0x01,0x04,0x05,0xFF};
+static const uint8_t animationFly1[] =		{0x01,0x00,0x01,ANICOMMAND_RESTART};
+static const uint8_t animationFly2[] =		{0x01,0x02,0x03,ANICOMMAND_RESTART};
+static const uint8_t animationFiring[] =	{0x01,0x04,0x05,ANICOMMAND_RESTART};
 
 static const uint8_t *animationList[] = {
 	animationFly1,
@@ -17,8 +17,8 @@ static const uint8_t *animationList[] = {
 };
 
 //Missile animations
-static const uint8_t animationCharge[] =	{0x07,0x00,0x01,0xFC};
-static const uint8_t animationFire[] =		{0x01,0x02,0x03,0xFF};
+static const uint8_t animationCharge[] =	{0x07,0x00,0x01,ANICOMMAND_ADVANCE_ROUTINE};
+static const uint8_t animationFire[] =		{0x01,0x02,0x03,ANICOMMAND_RESTART};
 
 static const uint8_t *missileAnimationList[] = {
 	animationCharge,

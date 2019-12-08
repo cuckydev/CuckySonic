@@ -4,14 +4,14 @@
 #include "../Game.h"
 #include "../Log.h"
 
-static const uint8_t animationStand[] =			{0x0F,0x00,0xFF};
-static const uint8_t animationStandSlope[] =	{0x0F,0x02,0xFF};
-static const uint8_t animationStandSlopeRev[] =	{0x0F,0x22,0xFF};
-static const uint8_t animationWalk[] =			{0x0F,0x01,0x21,0x00,0xFF};
-static const uint8_t animationWalkSlope[] =		{0x0F,0x21,0x03,0x02,0xFF};
-static const uint8_t animationWalkSlopeRev[] =	{0x0F,0x01,0x23,0x22,0xFF};
-static const uint8_t animationFiring[] =		{0x0F,0x04,0xFF};
-static const uint8_t animationProjectile[] =	{0x01,0x05,0x06,0xFF};
+static const uint8_t animationStand[] =			{0x0F,0x00,ANICOMMAND_RESTART};
+static const uint8_t animationStandSlope[] =	{0x0F,0x02,ANICOMMAND_RESTART};
+static const uint8_t animationStandSlopeRev[] =	{0x0F,0x22,ANICOMMAND_RESTART};
+static const uint8_t animationWalk[] =			{0x0F,0x01,0x21,0x00,ANICOMMAND_RESTART};
+static const uint8_t animationWalkSlope[] =		{0x0F,0x21,0x03,0x02,ANICOMMAND_RESTART};
+static const uint8_t animationWalkSlopeRev[] =	{0x0F,0x01,0x23,0x22,ANICOMMAND_RESTART};
+static const uint8_t animationFiring[] =		{0x0F,0x04,ANICOMMAND_RESTART};
+static const uint8_t animationProjectile[] =	{0x01,0x05,0x06,ANICOMMAND_RESTART};
 
 static const uint8_t *animationList[] = {
 	animationStand,

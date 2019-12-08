@@ -24,9 +24,10 @@ void ObjNewtron(OBJECT *object);
 void ObjGHZWaterfallSound(OBJECT *object);
 void ObjGHZPlatform(OBJECT *object);
 void ObjGHZLedge(OBJECT *object);
+void ObjGHZSwingingPlatform(OBJECT *object);
+void ObjGHZSpikes(OBJECT *object);
 void ObjGHZEdgeWall(OBJECT *object);
 void ObjGHZSmashableWall(OBJECT *object);
 void ObjPurpleRock(OBJECT *object);
-void ObjSwingingPlatform(OBJECT *object);
 
 void ObjMinecart(OBJECT *object);

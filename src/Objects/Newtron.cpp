@@ -4,11 +4,11 @@
 #include "../MathUtil.h"
 
 //Buzz Bomber animations
-static const uint8_t animationBlank[] =		{0x0F,0x0A,0xFF};
-static const uint8_t animationDrop[] =		{0x13,0x00,0x01,0x03,0x04,0x05,0xFE,0x01};
-static const uint8_t animationFly_Pal0[] =	{0x02,0x06,0x07,0xFF};
-static const uint8_t animationFly_Pal1[] =	{0x02,0x08,0x09,0xFF};
-static const uint8_t animationFires[] =		{0x13,0x00,0x01,0x01,0x02,0x01,0x01,0x00,0xFC};
+static const uint8_t animationBlank[] =		{0x0F,0x0A,ANICOMMAND_RESTART};
+static const uint8_t animationDrop[] =		{0x13,0x00,0x01,0x03,0x04,0x05,ANICOMMAND_GO_BACK_FRAMES,0x01};
+static const uint8_t animationFly_Pal0[] =	{0x02,0x06,0x07,ANICOMMAND_RESTART};
+static const uint8_t animationFly_Pal1[] =	{0x02,0x08,0x09,ANICOMMAND_RESTART};
+static const uint8_t animationFires[] =		{0x13,0x00,0x01,0x01,0x02,0x01,0x01,0x00,ANICOMMAND_ADVANCE_ROUTINE};
 
 static const uint8_t *animationList[] = {
 	animationBlank,
@@ -19,7 +19,7 @@ static const uint8_t *animationList[] = {
 };
 
 //Missile animations
-static const uint8_t animationFire[] =		{0x01,0x02,0x03,0xFF};
+static const uint8_t animationFire[] =		{0x01,0x02,0x03,ANICOMMAND_RESTART};
 static const uint8_t *missileAnimationList[] = {
 	animationFire,
 };

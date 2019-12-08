@@ -5,7 +5,7 @@
 #include "../Audio.h"
 #include "../Objects.h"
 
-static const uint8_t animationCollect[] =	{0x05,0x04,0x05,0x06,0x07,0xFC};
+static const uint8_t animationCollect[] =	{0x05,0x04,0x05,0x06,0x07,ANICOMMAND_ADVANCE_ROUTINE};
 
 static const uint8_t *animationList[] = {
 	animationCollect,
