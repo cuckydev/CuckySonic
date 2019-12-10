@@ -1,57 +1,62 @@
 #include "Render.h"
 
-bool FadeInFromBlack(PALCOLOUR *palColour)
+//Constants
+#define FADE_INCREMENT 0x22	//How much to increment colour values during a fade
+
+//[[Single colour operations]]
+//Fading in/out black
+bool FadeInFromBlack(COLOUR *colour)
 {
 	//Fade in blue
-	if (palColour->b < palColour->ogb)
+	if (colour->b < colour->mb)
 	{
-		int16_t nextB = palColour->b + 0x22;
+		int16_t nextB = colour->b + FADE_INCREMENT;
 		
-		if (nextB >= palColour->ogb)
+		if (nextB >= colour->mb)
 		{
-			palColour->b = palColour->ogb;
-			RegenPaletteColour(palColour);
+			colour->b = colour->mb;
+			colour->Regen(colour->r, colour->g, colour->b);
 		}
 		else
 		{
-			palColour->b = nextB;
-			RegenPaletteColour(palColour);
+			colour->b = nextB;
+			colour->Regen(colour->r, colour->g, colour->b);
 			return false;
 		}
 	}
 	
 	//Fade in green
-	if (palColour->g < palColour->ogg)
+	if (colour->g < colour->mg)
 	{
-		int16_t nextG = palColour->g + 0x22;
+		int16_t nextG = colour->g + FADE_INCREMENT;
 		
-		if (nextG >= palColour->ogg)
+		if (nextG >= colour->mg)
 		{
-			palColour->g = palColour->ogg;
-			RegenPaletteColour(palColour);
+			colour->g = colour->mg;
+			colour->Regen(colour->r, colour->g, colour->b);
 		}
 		else
 		{
-			palColour->g = nextG;
-			RegenPaletteColour(palColour);
+			colour->g = nextG;
+			colour->Regen(colour->r, colour->g, colour->b);
 			return false;
 		}
 	}
 	
 	//Fade in red
-	if (palColour->r < palColour->ogr)
+	if (colour->r < colour->mr)
 	{
-		int16_t nextR = palColour->r + 0x22;
+		int16_t nextR = colour->r + FADE_INCREMENT;
 		
-		if (nextR >= palColour->ogr)
+		if (nextR >= colour->mr)
 		{
-			palColour->r = palColour->ogr;
-			RegenPaletteColour(palColour);
+			colour->r = colour->mr;
+			colour->Regen(colour->r, colour->g, colour->b);
 		}
 		else
 		{
-			palColour->r = nextR;
-			RegenPaletteColour(palColour);
+			colour->r = nextR;
+			colour->Regen(colour->r, colour->g, colour->b);
 			return false;
 		}
 	}
@@ -59,58 +64,58 @@ bool FadeInFromBlack(PALCOLOUR *palColour)
 	return true;
 }
 
-bool FadeOutToBlack(PALCOLOUR *palColour)
+bool FadeOutToBlack(COLOUR *colour)
 {
 	//Fade out red
-	if (palColour->r > 0)
+	if (colour->r > 0)
 	{
-		int16_t nextR = palColour->r - 0x22;
+		int16_t nextR = colour->r - FADE_INCREMENT;
 		
 		if (nextR <= 0)
 		{
-			palColour->r = 0;
-			RegenPaletteColour(palColour);
+			colour->r = 0;
+			colour->Regen(colour->r, colour->g, colour->b);
 		}
 		else
 		{
-			palColour->r = nextR;
-			RegenPaletteColour(palColour);
+			colour->r = nextR;
+			colour->Regen(colour->r, colour->g, colour->b);
 			return false;
 		}
 	}
 	
 	//Fade out green
-	if (palColour->g > 0)
+	if (colour->g > 0)
 	{
-		int16_t nextG = palColour->g - 0x22;
+		int16_t nextG = colour->g - FADE_INCREMENT;
 		
 		if (nextG <= 0)
 		{
-			palColour->g = 0;
-			RegenPaletteColour(palColour);
+			colour->g = 0;
+			colour->Regen(colour->r, colour->g, colour->b);
 		}
 		else
 		{
-			palColour->g = nextG;
-			RegenPaletteColour(palColour);
+			colour->g = nextG;
+			colour->Regen(colour->r, colour->g, colour->b);
 			return false;
 		}
 	}
 	
 	//Fade out blue
-	if (palColour->b > 0)
+	if (colour->b > 0)
 	{
-		int16_t nextB = palColour->b - 0x22;
+		int16_t nextB = colour->b - FADE_INCREMENT;
 		
 		if (nextB <= 0)
 		{
-			palColour->b = 0;
-			RegenPaletteColour(palColour);
+			colour->b = 0;
+			colour->Regen(colour->r, colour->g, colour->b);
 		}
 		else
 		{
-			palColour->b = nextB;
-			RegenPaletteColour(palColour);
+			colour->b = nextB;
+			colour->Regen(colour->r, colour->g, colour->b);
 			return false;
 		}
 	}
@@ -118,58 +123,59 @@ bool FadeOutToBlack(PALCOLOUR *palColour)
 	return true;
 }
 
-bool FadeInFromWhite(PALCOLOUR *palColour)
+//Fading in/out white
+bool FadeInFromWhite(COLOUR *colour)
 {
 	//Fade in blue
-	if (palColour->b > palColour->ogb)
+	if (colour->b > colour->mb)
 	{
-		int16_t nextB = palColour->b - 0x22;
+		int16_t nextB = colour->b - FADE_INCREMENT;
 		
-		if (nextB <= palColour->ogb)
+		if (nextB <= colour->mb)
 		{
-			palColour->b = palColour->ogb;
-			RegenPaletteColour(palColour);
+			colour->b = colour->mb;
+			colour->Regen(colour->r, colour->g, colour->b);
 		}
 		else
 		{
-			palColour->b = nextB;
-			RegenPaletteColour(palColour);
+			colour->b = nextB;
+			colour->Regen(colour->r, colour->g, colour->b);
 			return false;
 		}
 	}
 	
 	//Fade in green
-	if (palColour->g > palColour->ogg)
+	if (colour->g > colour->mg)
 	{
-		int16_t nextG = palColour->g - 0x22;
+		int16_t nextG = colour->g - FADE_INCREMENT;
 		
-		if (nextG <= palColour->ogg)
+		if (nextG <= colour->mg)
 		{
-			palColour->g = palColour->ogg;
-			RegenPaletteColour(palColour);
+			colour->g = colour->mg;
+			colour->Regen(colour->r, colour->g, colour->b);
 		}
 		else
 		{
-			palColour->g = nextG;
-			RegenPaletteColour(palColour);
+			colour->g = nextG;
+			colour->Regen(colour->r, colour->g, colour->b);
 			return false;
 		}
 	}
 	
 	//Fade in red
-	if (palColour->r > palColour->ogr)
+	if (colour->r > colour->mr)
 	{
-		int16_t nextR = palColour->r - 0x22;
+		int16_t nextR = colour->r - FADE_INCREMENT;
 		
-		if (nextR <= palColour->ogr)
+		if (nextR <= colour->mr)
 		{
-			palColour->r = palColour->ogr;
-			RegenPaletteColour(palColour);
+			colour->r = colour->mr;
+			colour->Regen(colour->r, colour->g, colour->b);
 		}
 		else
 		{
-			palColour->r = nextR;
-			RegenPaletteColour(palColour);
+			colour->r = nextR;
+			colour->Regen(colour->r, colour->g, colour->b);
 			return false;
 		}
 	}
@@ -177,58 +183,58 @@ bool FadeInFromWhite(PALCOLOUR *palColour)
 	return true;
 }
 
-bool FadeOutToWhite(PALCOLOUR *palColour)
+bool FadeOutToWhite(COLOUR *colour)
 {
 	//Fade out red
-	if (palColour->r < 0xFF)
+	if (colour->r < 0xFF)
 	{
-		int16_t nextR = palColour->r + 0x22;
+		int16_t nextR = colour->r + FADE_INCREMENT;
 		
 		if (nextR >= 0xFF)
 		{
-			palColour->r = 0xFF;
-			RegenPaletteColour(palColour);
+			colour->r = 0xFF;
+			colour->Regen(colour->r, colour->g, colour->b);
 		}
 		else
 		{
-			palColour->r = nextR;
-			RegenPaletteColour(palColour);
+			colour->r = nextR;
+			colour->Regen(colour->r, colour->g, colour->b);
 			return false;
 		}
 	}
 	
 	//Fade out green
-	if (palColour->g < 0xFF)
+	if (colour->g < 0xFF)
 	{
-		int16_t nextG = palColour->g + 0x22;
+		int16_t nextG = colour->g + FADE_INCREMENT;
 		
 		if (nextG >= 0xFF)
 		{
-			palColour->g = 0xFF;
-			RegenPaletteColour(palColour);
+			colour->g = 0xFF;
+			colour->Regen(colour->r, colour->g, colour->b);
 		}
 		else
 		{
-			palColour->g = nextG;
-			RegenPaletteColour(palColour);
+			colour->g = nextG;
+			colour->Regen(colour->r, colour->g, colour->b);
 			return false;
 		}
 	}
 	
 	//Fade out blue
-	if (palColour->b < 0xFF)
+	if (colour->b < 0xFF)
 	{
-		int16_t nextB = palColour->b + 0x22;
+		int16_t nextB = colour->b + FADE_INCREMENT;
 		
 		if (nextB >= 0xFF)
 		{
-			palColour->b = 0xFF;
-			RegenPaletteColour(palColour);
+			colour->b = 0xFF;
+			colour->Regen(colour->r, colour->g, colour->b);
 		}
 		else
 		{
-			palColour->b = nextB;
-			RegenPaletteColour(palColour);
+			colour->b = nextB;
+			colour->Regen(colour->r, colour->g, colour->b);
 			return false;
 		}
 	}
@@ -236,10 +242,12 @@ bool FadeOutToWhite(PALCOLOUR *palColour)
 	return true;
 }
 
+//[[Full palette operations]]
+//Fading in/out black
 bool PaletteFadeInFromBlack(PALETTE *palette)
 {
 	bool finished = true;
-	for (int i = 0; i < 0x100; i++)
+	for (size_t i = 0; i < palette->colours; i++)
 		finished = FadeInFromBlack(&palette->colour[i]) ? finished : false;
 	return finished;
 }
@@ -247,15 +255,16 @@ bool PaletteFadeInFromBlack(PALETTE *palette)
 bool PaletteFadeOutToBlack(PALETTE *palette)
 {
 	bool finished = true;
-	for (int i = 0; i < 0x100; i++)
+	for (size_t i = 0; i < palette->colours; i++)
 		finished = FadeOutToBlack(&palette->colour[i]) ? finished : false;
 	return finished;
 }
 
+//Fading in/out white
 bool PaletteFadeInFromWhite(PALETTE *palette)
 {
 	bool finished = true;
-	for (int i = 0; i < 0x100; i++)
+	for (size_t i = 0; i < palette->colours; i++)
 		finished = FadeInFromWhite(&palette->colour[i]) ? finished : false;
 	return finished;
 }
@@ -263,19 +272,20 @@ bool PaletteFadeInFromWhite(PALETTE *palette)
 bool PaletteFadeOutToWhite(PALETTE *palette)
 {
 	bool finished = true;
-	for (int i = 0; i < 0x100; i++)
+	for (size_t i = 0; i < palette->colours; i++)
 		finished = FadeOutToWhite(&palette->colour[i]) ? finished : false;
 	return finished;
 }
 
+//Fill palette black / white
 void FillPaletteBlack(PALETTE *palette)
 {
-	for (int i = 0; i < 0x100; i++)
-		ModifyPaletteColour(&palette->colour[i], 0x00, 0x00, 0x00);
+	for (size_t i = 0; i < palette->colours; i++)
+		palette->colour[i].SetColour(true, false, true, 0x00, 0x00, 0x00);
 }
 
 void FillPaletteWhite(PALETTE *palette)
 {
-	for (int i = 0; i < 0x100; i++)
-		ModifyPaletteColour(&palette->colour[i], 0xFF, 0xFF, 0xFF);
+	for (size_t i = 0; i < palette->colours; i++)
+		palette->colour[i].SetColour(true, false, true, 0xFF, 0xFF, 0xFF);
 }

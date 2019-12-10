@@ -40,8 +40,6 @@ void AddToScore(unsigned int score)
 			gNextScoreReward += SCORE_REWARD;
 			AddToLives(1);
 		}
-		
-		gLevel->PlayJingleMusic(gLevel->extraLifeMusic);
 	}
 }
 
@@ -68,8 +66,6 @@ void AddToRings(unsigned int rings)
 			AddToLives(1);
 			gNextRingReward += RINGS_REWARD;
 		}
-		
-		gLevel->PlayJingleMusic(gLevel->extraLifeMusic);
 	}
 	else
 	{

@@ -90,14 +90,14 @@ void TitleBackground(BACKGROUND *background, bool doScroll, int cameraX, int cam
 	{
 		paletteTimer = 0;
 		
-		PALCOLOUR c9 = background->texture->loadedPalette->colour[0x9];
-		PALCOLOUR cA = background->texture->loadedPalette->colour[0xA];
-		PALCOLOUR cB = background->texture->loadedPalette->colour[0xB];
-		PALCOLOUR cC = background->texture->loadedPalette->colour[0xC];
-		background->texture->loadedPalette->colour[0x9] = cC;
-		background->texture->loadedPalette->colour[0xA] = c9;
-		background->texture->loadedPalette->colour[0xB] = cA;
-		background->texture->loadedPalette->colour[0xC] = cB;
+		COLOUR c9 = background->texture->loadedPalette->colour[0x9];
+		COLOUR cA = background->texture->loadedPalette->colour[0xA];
+		COLOUR cB = background->texture->loadedPalette->colour[0xB];
+		COLOUR cC = background->texture->loadedPalette->colour[0xC];
+		background->texture->loadedPalette->colour[0x9] = COLOUR(cC);
+		background->texture->loadedPalette->colour[0xA] = COLOUR(c9);
+		background->texture->loadedPalette->colour[0xB] = COLOUR(cA);
+		background->texture->loadedPalette->colour[0xC] = COLOUR(cB);
 	}
 	//Get our scroll values
 	int scrollBG1 = cameraX / 24;
@@ -181,17 +181,6 @@ bool GM_Title(bool *error)
 	FillPaletteBlack(titleTexture->loadedPalette);
 	FillPaletteBlack(background->texture->loadedPalette);
 	
-	//Lock audio device so we can load new music
-	AUDIO_LOCK;
-	
-	//Load title and menu music
-	MUSIC *titleMusic = new MUSIC("Title", 0, 1.0f);
-	MUSIC *menuMusic = new MUSIC("Menu", 0, 1.0f);
-	titleMusic->playing = true;
-	
-	//Unlock audio device
-	AUDIO_UNLOCK;
-	
 	//Our loop
 	bool exit = false;
 	
@@ -215,12 +204,6 @@ bool GM_Title(bool *error)
 			bool res1 = PaletteFadeOutToBlack(titleTexture->loadedPalette);
 			bool res2 = PaletteFadeOutToBlack(background->texture->loadedPalette);
 			breakThisState = res1 && res2;
-			
-			//Fade out music
-			if (titleMusic->playing)
-				titleMusic->volume = mmax(titleMusic->volume - (1.0f / 32.0f), 0.0f);
-			if (menuMusic->playing)
-				menuMusic->volume = mmax(menuMusic->volume - (1.0f / 32.0f), 0.0f);
 		}
 		
 		//Move title screen at beginning
@@ -314,35 +297,11 @@ bool GM_Title(bool *error)
 		
 		//Increment frame
 		frame++;
-		
-		//Switch to menu music once the title music is done
-		if (titleMusic->playing == false && menuMusic->playing == false)
-		{
-			//Lock the audio device so we can safely change which song is playing and volume
-			AUDIO_LOCK;
-			
-			//Play menu music
-			menuMusic->playing = true;
-			menuMusic->volume = titleMusic->volume;
-			
-			//Unlock audio device
-			AUDIO_UNLOCK;
-		}
 	}
 	
 	//Unload our textures
 	delete titleTexture;
 	delete background;
-	
-	//Lock audio device so we can safely unload all loaded music
-	AUDIO_LOCK;
-	
-	//Unload loaded music
-	delete titleMusic;
-	delete menuMusic;
-	
-	//Unlock audio device
-	AUDIO_UNLOCK;
 	
 	//Continue to game
 	gGameLoadLevel = 0;

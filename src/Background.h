@@ -11,16 +11,16 @@ class BACKGROUND
 {
 	public:
 		//Failure
-		const char *fail;
+		const char *fail = nullptr;
 		
 		//Texture and scroll values
-		TEXTURE *texture;
+		TEXTURE *texture = nullptr;
 		
 		//Function to use
-		BACKGROUNDFUNCTION function;
+		BACKGROUNDFUNCTION function = nullptr;
 	
 	public:
-		BACKGROUND(const char *name, BACKGROUNDFUNCTION setFunction);
+		BACKGROUND(std::string name, BACKGROUNDFUNCTION setFunction);
 		~BACKGROUND();
 		
 		void DrawStrip(RECT *src, int layer, int y, int fromX, int toX);

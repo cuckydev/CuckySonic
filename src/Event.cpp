@@ -1,0 +1,4 @@
+bool HandleEvents()
+{
+	return false;
+}

@@ -1,15 +1,19 @@
 #pragma once
 #include "Render.h"
 
-#define FADE_TIME 22
+//[[Single colour operations]]
+//Fading in/out black
+bool FadeInFromBlack(COLOUR *colour);
+bool FadeOutToBlack(COLOUR *colour);
+//Fading in/out white
+bool FadeInFromWhite(COLOUR *colour);
+bool FadeOutToWhite(COLOUR *colour);
 
-bool FadeInFromBlack(PALCOLOUR *palColour);
-bool FadeOutToBlack(PALCOLOUR *palColour);
-bool FadeInFromWhite(PALCOLOUR *palColour);
-bool FadeOutToWhite(PALCOLOUR *palColour);
-
+//[[Full palette operations]]
+//Fading in/out black
 bool PaletteFadeInFromBlack(PALETTE *palette);
 bool PaletteFadeOutToBlack(PALETTE *palette);
+//Fading in/out white
 bool PaletteFadeInFromWhite(PALETTE *palette);
 bool PaletteFadeOutToWhite(PALETTE *palette);
 

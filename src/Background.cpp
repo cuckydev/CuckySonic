@@ -3,11 +3,8 @@
 #include "Game.h"
 #include "Error.h"
 
-BACKGROUND::BACKGROUND(const char *name, BACKGROUNDFUNCTION backFunction)
+BACKGROUND::BACKGROUND(std::string name, BACKGROUNDFUNCTION backFunction)
 {
-	//Clear memory
-	memset(this, 0, sizeof(BACKGROUND));
-	
 	//Load the given texture
 	texture = new TEXTURE(name);
 	if (texture->fail)

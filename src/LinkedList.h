@@ -28,6 +28,7 @@ template <typename T> class LINKEDLIST
 			LL_NODE<T> *newNode = new LL_NODE<T>;
 			newNode->node_entry = push;
 			newNode->next = head;
+			newNode->prev = nullptr;
 			
 			//If the tail is null, we must be also at the end of the list, set tail to our new node
 			if (tail == nullptr)

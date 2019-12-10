@@ -1,38 +1,16 @@
+#include "Log.h"
 #include "Filesystem.h"
 #include "Render.h"
 #include "Audio.h"
 #include "Input.h"
-#include "Game.h"
 #include "Error.h"
-#include "Log.h"
-
-//Backend usage
-#ifdef BACKEND_SDL2
-	#include "SDL.h"
-	
-	#define BACKEND_INIT	SDL_Init(SDL_INIT_EVERYTHING) < 0
-	#define BACKEND_ERROR	SDL_GetError()
-	#define BACKEND_QUIT	SDL_Quit()
-#endif
-
-#include "MathUtil.h"
+#include "Game.h"
 
 int main(int argc, char *argv[])
 {
 	(void)argc; (void)argv;
 	
-	//Initialize our backend
-	LOG(("Initializing backend... "));
-	
-	if (BACKEND_INIT)
-	{
-		Error(BACKEND_ERROR);
-		return -1; //Nothing to clean up, we can just return our failure
-	}
-	
-	LOG(("Success!\n"));
-	
-	//Initialize game sub-systems
+	//Initialize game sub-systems, then enter game loop
 	bool error = false;
 	if ((error = (InitializePath() || InitializeRender() || InitializeAudio() || InitializeInput())) == false)
 		error = EnterGameLoop();
@@ -43,15 +21,8 @@ int main(int argc, char *argv[])
 	QuitRender();
 	QuitPath();
 	
-	//Quit backend
-	LOG(("Ending backend... "));
-	BACKEND_QUIT;
-	LOG(("Success!\n"));
-	
-	//Failed exit
+	//Exit program
 	if (error)
 		return -1;
-	
-	//Successful exit
 	return 0;
 }

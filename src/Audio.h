@@ -1,20 +1,6 @@
 #pragma once
 #include <stdint.h>
 
-#ifdef BACKEND_SDL2
-	#include "SDL_audio.h"
-	
-	//Audio lock / unlock access
-	extern SDL_AudioDeviceID gAudioDevice;
-	#define AUDIO_LOCK		SDL_LockAudioDevice(gAudioDevice)
-	#define AUDIO_UNLOCK	SDL_UnlockAudioDevice(gAudioDevice)
-#endif
-
-//Constant defines
-#define AUDIO_FREQUENCY 48000
-#define AUDIO_SAMPLES	0x200
-#define AUDIO_CHANNELS	2
-
 //Sound ids
 enum SOUNDID
 {
@@ -90,99 +76,20 @@ enum SOUNDCHANNEL
 	SOUNDCHANNEL_FM5	= 1 << 9,
 	SOUNDCHANNEL_DAC	= 1 << 10,
 };
+#define SOUNDCHANNEL_TYPE	uint16_t
 
 struct SOUNDDEFINITION
 {
-	uint16_t channel;
+	SOUNDCHANNEL_TYPE channel;
 	const char *path;
 	SOUNDID parent;
-};
-
-//Sound class
-class SOUND
-{
-	public:
-		//Failure
-		const char *fail;
-		
-		//Our actual buffer data
-		float *buffer;
-		size_t size;
-		
-		//Current playback state
-		bool playing;
-		
-		size_t sample;
-		
-		float volume;
-		float volumeL;
-		float volumeR;
-		
-		//Linked list and parent
-		SOUND *next;
-		SOUND *parent;
-		
-	public:
-		SOUND(const char *path);
-		SOUND(SOUND *ourParent);
-		~SOUND();
-		
-		void Mix(float *stream, int frames);
-};
-
-//Music class (using stb_vorbis and miniaudio)
-#define STB_VORBIS_HEADER_ONLY
-#include "Audio_stb_vorbis.cpp"
-#include "Audio_miniaudio.h"
-
-ma_uint32 MusicReadSamples(ma_pcm_converter *dsp, void *buffer, ma_uint32 requestFrames, void *musicPointer);
-
-class MUSIC
-{
-	public:
-		//Failure
-		const char *fail;
-		
-		//stb_vorbis decoder (music file) and other things about the music
-		stb_vorbis *file;
-		
-		double frequency;
-		unsigned int channels;
-		int64_t loopStart;
-		
-		//miniaudio resampler
-		ma_pcm_converter resampler;
-		float *mixBuffer;
-		
-		//Music data
-		const char *source;
-		
-		//Current playback state
-		bool playing;
-		float volume;
-		
-		//Linked list
-		MUSIC *next;
-	
-	public:
-		MUSIC(const char *name, int initialPosition, float initialVolume);
-		~MUSIC();
-		
-		void PlayAtPosition(int setPosition);
-		
-		void Loop();
-		ma_uint32 ReadSamplesToBuffer(float *buffer, int samples);
-		void ReadAndMix(float *stream, int frames);
 };
 
 //Sound functions
 void PlaySound(SOUNDID id);
 void StopSound(SOUNDID id);
-void StopChannel(uint16_t channel);
+void StopChannel(SOUNDCHANNEL_TYPE channel);
 
 //Audio subsystem functions
-extern bool gAudioYield;
-
-void YieldAudio(bool yield);
 bool InitializeAudio();
 void QuitAudio();

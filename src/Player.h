@@ -319,7 +319,7 @@ class PLAYER
 		bool controlLock = false;
 		
 	public:
-		PLAYER(const char *specPath, PLAYER *myFollow, size_t myController);
+		PLAYER(std::string specPath, PLAYER *myFollow, size_t myController);
 		~PLAYER();
 		
 		void SetSpeedFromDefinition(SPEEDDEFINITION definition);

@@ -9,7 +9,8 @@
 #include "Input.h"
 #include "Audio.h"
 
-#define SPLASH_TIME 120
+#define SPLASH_TIME	120
+#define FADE_TIME	22
 
 bool GM_Splash(bool *error)
 {

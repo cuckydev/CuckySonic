@@ -68,15 +68,15 @@ OBJECTFUNCTION objFuncSonic2[] = {
 };
 
 //Preload lists - Generic
-const char *preloadTexture[] = {
+std::string preloadTexture[] = {
 	//Stage objects
 	"data/Object/Generic.bmp",
 	//Player objects / effects
 	"data/Object/PlayerGeneric.bmp",
-	nullptr,
+	"",
 };
 
-const char *preloadMappings[] = {
+std::string preloadMappings[] = {
 	//Stage objects
 	"data/Object/Ring.map",
 	"data/Object/Monitor.map",
@@ -98,19 +98,19 @@ const char *preloadMappings[] = {
 	"data/Object/FlameBarrier.map",
 	"data/Object/LightningBarrier.map",
 	"data/Object/AquaBarrier.map",
-	nullptr,
+	"",
 };
 
 //Preload lists - Green Hill Zone
-const char *preloadTexture_GHZ[] = {
+std::string preloadTexture_GHZ[] = {
 	//Stage objects
 	"data/Object/GHZGeneric.bmp",
 	//Badniks
 	"data/Object/Sonic1Badnik.bmp",
-	nullptr,
+	"",
 };
 
-const char *preloadMappings_GHZ[] = {
+std::string preloadMappings_GHZ[] = {
 	//Stage objects
 	"data/Object/GHZBridge.map",
 	"data/Object/GHZEdgeWall.map",
@@ -128,20 +128,20 @@ const char *preloadMappings_GHZ[] = {
 	"data/Object/NewtronBlue.map",
 	"data/Object/NewtronGreen.map",
 	"data/Object/Missile.map",
-	nullptr,
+	"",
 };
 
 //Preload lists - Emerald Hill Zone
-const char *preloadTexture_EHZ[] = {
+std::string preloadTexture_EHZ[] = {
 	//Stage objects
 	"data/Object/EHZGeneric.bmp",
-	nullptr,
+	"",
 };
 
-const char *preloadMappings_EHZ[] = {
+std::string preloadMappings_EHZ[] = {
 	//Stage objects
 	"data/Object/EHZBridge.map",
-	nullptr,
+	"",
 };
 
 //Our level table
@@ -188,24 +188,22 @@ bool LEVEL::LoadMappings(LEVELTABLE *tableEntry)
 		case LEVELFORMAT_CHUNK128:
 		{
 			//Open our chunk mapping file
-			char *mappingPath = AllocPath(gBasePath, tableEntry->chunkTileReferencePath, ".chk");
-			BACKEND_FILE *mappingFile = OpenFile(mappingPath, "rb");
-			delete[] mappingPath;
-			
-			if (mappingFile == nullptr)
+			FS_FILE *mappingFile = new FS_FILE(gBasePath + tableEntry->chunkTileReferencePath, "rb");
+			if (mappingFile->fail)
 			{
-				Error(fail = GetFileError());
+				Error(fail = mappingFile->fail);
+				delete mappingFile;
 				return true;
 			}
 			
 			//Allocate the chunk mappings in memory
-			chunks = (GetFileSize(mappingFile) / 2 / (8 * 8));
-			chunkMapping = (CHUNKMAPPING*)malloc(sizeof(CHUNKMAPPING) * chunks);
+			chunks = (mappingFile->GetSize() / 2 / (8 * 8));
+			chunkMapping = new CHUNKMAPPING[chunks];
 			
 			if (chunkMapping == nullptr)
 			{
 				Error(fail = "Failed to allocate chunk mappings in memory");
-				CloseFile(mappingFile);
+				delete mappingFile;
 				return true;
 			}
 			
@@ -214,7 +212,7 @@ bool LEVEL::LoadMappings(LEVELTABLE *tableEntry)
 			{
 				for (int v = 0; v < (8 * 8); v++)
 				{
-					uint16_t tmap = ReadFile_BE16(mappingFile);
+					uint16_t tmap = mappingFile->ReadBE16();
 					chunkMapping[i].tile[v].altLRB	= (tmap & 0x8000) != 0;
 					chunkMapping[i].tile[v].altTop	= (tmap & 0x4000) != 0;
 					chunkMapping[i].tile[v].norLRB	= (tmap & 0x2000) != 0;
@@ -226,7 +224,7 @@ bool LEVEL::LoadMappings(LEVELTABLE *tableEntry)
 				}
 			}
 			
-			CloseFile(mappingFile);
+			delete mappingFile;
 			break;
 		}
 		
@@ -244,13 +242,11 @@ bool LEVEL::LoadLayout(LEVELTABLE *tableEntry)
 	LOG(("Loading layout... "));
 	
 	//Open our layout file
-	char *layoutPath = AllocPath(gBasePath, tableEntry->levelReferencePath, ".lay");
-	BACKEND_FILE *layoutFile = OpenFile(layoutPath, "rb");
-	delete[] layoutPath;
-	
-	if (layoutFile == nullptr)
+	FS_FILE *layoutFile = new FS_FILE(gBasePath + tableEntry->levelReferencePath, "rb");
+	if (layoutFile->fail)
 	{
-		Error(fail = GetFileError());
+		Error(fail = layoutFile->fail);
+		delete layoutFile;
 		return true;
 	}
 	
@@ -262,8 +258,8 @@ bool LEVEL::LoadLayout(LEVELTABLE *tableEntry)
 			//Get our level dimensions (upscaled to tiles)
 			if (tableEntry->format == LEVELFORMAT_CHUNK128)
 			{
-				layout.width = ReadFile_BE16(layoutFile) * 8;
-				layout.height = ReadFile_BE16(layoutFile) * 8;
+				layout.width = layoutFile->ReadBE16() * 8;
+				layout.height = layoutFile->ReadBE16() * 8;
 			}
 			else
 			{
@@ -272,12 +268,11 @@ bool LEVEL::LoadLayout(LEVELTABLE *tableEntry)
 			}
 			
 			//Allocate our layout
-			layout.foreground = (TILE*)malloc(sizeof(TILE) * layout.width * layout.height);
-			
+			layout.foreground = new TILE[layout.width * layout.height];
 			if (layout.foreground == nullptr)
 			{
 				Error(fail = "Failed to allocate layout in memory");
-				CloseFile(layoutFile);
+				delete layoutFile;
 				return true;
 			}
 			
@@ -288,7 +283,7 @@ bool LEVEL::LoadLayout(LEVELTABLE *tableEntry)
 				for (size_t cx = 0; cx < layout.width; cx += 8)
 				{
 					//Read our chunk index
-					uint8_t chunk = ReadFile_Byte(layoutFile);
+					uint8_t chunk = layoutFile->ReadU8();
 					
 					//Get our tiles
 					for (int tv = 0; tv < 8 * 8; tv++)
@@ -296,30 +291,29 @@ bool LEVEL::LoadLayout(LEVELTABLE *tableEntry)
 				}
 				
 				//Skip background line (not used)
-				SeekFile(layoutFile, layout.width / 8, FILESEEK_CUR);
+				layoutFile->Seek(layout.width / 8, SEEK_CUR);
 			}
 			
-			CloseFile(layoutFile);
+			delete layoutFile;
 			break;
 		case LEVELFORMAT_TILE:
 			//Get our level dimensions
-			layout.width = ReadFile_BE32(layoutFile);
-			layout.height = ReadFile_BE32(layoutFile);
+			layout.width = layoutFile->ReadBE32();
+			layout.height = layoutFile->ReadBE32();
 			
 			//Allocate our layout
-			layout.foreground = (TILE*)malloc(sizeof(TILE) * layout.width * layout.height);
-			
+			layout.foreground = new TILE[layout.width * layout.height];
 			if (layout.foreground == nullptr)
 			{
 				Error(fail = "Failed to allocate layout in memory");
-				CloseFile(layoutFile);
+				delete layoutFile;
 				return true;
 			}
 			
 			//Read our layout file
 			for (size_t tv = 0; tv < layout.width * layout.height; tv++)
 			{
-				uint16_t tmap = ReadFile_BE16(layoutFile);
+				uint16_t tmap = layoutFile->ReadBE16();
 				layout.foreground[tv].altLRB	= (tmap & 0x8000) != 0;
 				layout.foreground[tv].altTop	= (tmap & 0x4000) != 0;
 				layout.foreground[tv].norLRB	= (tmap & 0x2000) != 0;
@@ -329,11 +323,11 @@ bool LEVEL::LoadLayout(LEVELTABLE *tableEntry)
 				layout.foreground[tv].tile		= (tmap & 0x3FF);
 			}
 			
-			CloseFile(layoutFile);
+			delete layoutFile;
 			break;
 		default:
 			Error(fail = "Unimplemented level format");
-			CloseFile(layoutFile);
+			delete layoutFile;
 			return true;
 	}
 	
@@ -357,90 +351,79 @@ bool LEVEL::LoadCollisionTiles(LEVELTABLE *tableEntry)
 	LOG(("Loading collision tiles... "));
 	
 	//Open our tile collision map files
-	char *normalMapPath = AllocPath(gBasePath, tableEntry->chunkTileReferencePath, ".nor");
-	char *alternateMapPath = AllocPath(gBasePath, tableEntry->chunkTileReferencePath, ".alt");
-	BACKEND_FILE *norMapFile = OpenFile(normalMapPath, "rb");
-	BACKEND_FILE *altMapFile = OpenFile(alternateMapPath, "rb");
-	delete[] alternateMapPath;
-	delete[] normalMapPath;
+	FS_FILE *norMapFile = new FS_FILE(gBasePath + tableEntry->chunkTileReferencePath + ".nor", "rb");
+	FS_FILE *altMapFile = new FS_FILE(gBasePath + tableEntry->chunkTileReferencePath + ".alt", "rb");
 	
-	if (norMapFile == nullptr || altMapFile == nullptr)
+	if (norMapFile->fail || altMapFile->fail)
 	{
-		Error(fail = GetFileError());
 		if (norMapFile)
-			CloseFile(norMapFile);
+			Error(fail = norMapFile->fail);
 		if (altMapFile)
-			CloseFile(altMapFile);
+			Error(fail = altMapFile->fail);
+		delete norMapFile;
+		delete altMapFile;
 		return true;
 	}
 	
 	//Read our tile collision map data
-	tiles = GetFileSize(norMapFile);
-	tileMapping = (TILEMAPPING*)malloc(sizeof(TILEMAPPING) * tiles);
+	tiles = norMapFile->GetSize();
+	tileMapping = new TILEMAPPING[tiles];
 	
-	if (GetFileSize(norMapFile) != GetFileSize(altMapFile))
+	if (altMapFile->GetSize() != tiles)
 	{
 		Error(fail = "Normal map and alternate map files don't match in size");
-		if (norMapFile)
-			CloseFile(norMapFile);
-		if (altMapFile)
-			CloseFile(altMapFile);
+		delete norMapFile;
+		delete altMapFile;
 		return true;
 	}
 	
 	for (size_t i = 0; i < tiles; i++)
 	{
-		tileMapping[i].normalColTile = ReadFile_Byte(norMapFile);
-		tileMapping[i].alternateColTile = ReadFile_Byte(altMapFile);
+		tileMapping[i].normalColTile = norMapFile->ReadU8();
+		tileMapping[i].alternateColTile = altMapFile->ReadU8();
 	}
 	
-	CloseFile(norMapFile);
-	CloseFile(altMapFile);
+	delete norMapFile;
+	delete altMapFile;
 	
 	//Open our collision tile files
-	char *collisionNormalPath = AllocPath(gBasePath, tableEntry->collisionReferencePath, ".can");
-	char *collisionRotatedPath = AllocPath(gBasePath, tableEntry->collisionReferencePath, ".car");
-	char *collisionAnglePath = AllocPath(gBasePath, tableEntry->collisionReferencePath, ".ang");
-	BACKEND_FILE *colNormalFile = OpenFile(collisionNormalPath, "rb");
-	BACKEND_FILE *colRotatedFile = OpenFile(collisionRotatedPath, "rb");
-	BACKEND_FILE *colAngleFile = OpenFile(collisionAnglePath, "rb");
-	delete[] collisionAnglePath;
-	delete[] collisionRotatedPath;
-	delete[] collisionNormalPath;
+	FS_FILE *colNormalFile = new FS_FILE(gBasePath + tableEntry->collisionReferencePath + ".can", "rb");
+	FS_FILE *colRotatedFile = new FS_FILE(gBasePath + tableEntry->collisionReferencePath + ".car", "rb");
+	FS_FILE *colAngleFile = new FS_FILE(gBasePath + tableEntry->collisionReferencePath + ".ang", "rb");
 	
-	if (colNormalFile == nullptr || colRotatedFile == nullptr || colAngleFile == nullptr)
+	if (colNormalFile->fail || colRotatedFile->fail || colAngleFile->fail)
 	{
-		Error(fail = GetFileError());
-		if (colNormalFile != nullptr)
-			CloseFile(colNormalFile);
-		if (colRotatedFile != nullptr)
-			CloseFile(colRotatedFile);
-		if (colAngleFile != nullptr)
-			CloseFile(colAngleFile);
+		if (colNormalFile->fail)
+			Error(fail = colNormalFile->fail);
+		if (colRotatedFile->fail)
+			Error(fail = colRotatedFile->fail);
+		if (colAngleFile->fail)
+			Error(fail = colAngleFile->fail);
+		delete colNormalFile;
+		delete colRotatedFile;
+		delete colAngleFile;
 		return true;
 	}
 	
 	//Allocate our collision tile data in memory
-	if ((GetFileSize(colNormalFile) != GetFileSize(colRotatedFile)) || (GetFileSize(colAngleFile) != (GetFileSize(colNormalFile) / 0x10)))
+	if ((colNormalFile->GetSize() != colRotatedFile->GetSize()) || (colAngleFile->GetSize() != (colNormalFile->GetSize() / 0x10)))
 	{
-		Error(fail = "Collision tile data file sizes don't match each-other\n(Are the files compressed?)");
-		
-		free(layout.foreground);
-		CloseFile(colNormalFile);
-		CloseFile(colRotatedFile);
-		CloseFile(colAngleFile);
+		Error(fail = "Collision tile data file sizes don't match each-other (Are the files compressed?)");
+		delete colNormalFile;
+		delete colRotatedFile;
+		delete colAngleFile;
 		return true;
 	}
 	
-	collisionTiles = GetFileSize(colNormalFile) / 0x10;
-	collisionTile = (COLLISIONTILE*)malloc(sizeof(COLLISIONTILE) * collisionTiles);
+	collisionTiles = colNormalFile->GetSize() / 0x10;
+	collisionTile = new COLLISIONTILE[collisionTiles];
 	
 	if (collisionTile == nullptr)
 	{
 		Error(fail = "Failed to allocate collision tile data in memory");
-		CloseFile(colNormalFile);
-		CloseFile(colRotatedFile);
-		CloseFile(colAngleFile);
+		delete colNormalFile;
+		delete colRotatedFile;
+		delete colAngleFile;
 		return true;
 	}
 	
@@ -449,16 +432,16 @@ bool LEVEL::LoadCollisionTiles(LEVELTABLE *tableEntry)
 	{
 		for (int v = 0; v < 0x10; v++)
 		{
-			collisionTile[i].normal[v] = ReadFile_Byte(colNormalFile);
-			collisionTile[i].rotated[v] = ReadFile_Byte(colRotatedFile);
+			collisionTile[i].normal[v] = colNormalFile->ReadU8();
+			collisionTile[i].rotated[v] = colRotatedFile->ReadU8();
 		}
 		
-		collisionTile[i].angle = ReadFile_Byte(colAngleFile);
+		collisionTile[i].angle = colAngleFile->ReadU8();
 	}
 	
-	CloseFile(colNormalFile);
-	CloseFile(colRotatedFile);
-	CloseFile(colAngleFile);
+	delete colNormalFile;
+	delete colRotatedFile;
+	delete colAngleFile;
 	LOG(("Success!\n"));
 	return false;
 }
@@ -468,13 +451,11 @@ bool LEVEL::LoadObjects(LEVELTABLE *tableEntry)
 	LOG(("Loading objects... "));
 	
 	//Open our object file
-	char *objectPath = AllocPath(gBasePath, tableEntry->levelReferencePath, ".obj");
-	BACKEND_FILE *objectFile = OpenFile(objectPath, "rb");
-	delete[] objectPath;
-	
-	if (objectFile == nullptr)
+	FS_FILE *objectFile = new FS_FILE(gBasePath + tableEntry->levelReferencePath + ".obj", "rb");
+	if (objectFile->fail)
 	{
-		Error(fail = GetFileError());
+		Error(fail = objectFile->fail);
+		delete objectFile;
 		return true;
 	}
 	
@@ -484,17 +465,17 @@ bool LEVEL::LoadObjects(LEVELTABLE *tableEntry)
 		case OBJECTFORMAT_SONIC1:
 		case OBJECTFORMAT_SONIC2:
 		{
-			int objects = GetFileSize(objectFile) / 6;
+			int objects = objectFile->GetSize() / 6;
 			
 			for (int i = 0; i < objects; i++)
 			{
 				//Read data from the file
-				int16_t xPos = ReadFile_BE16(objectFile);
-				int16_t word2 = ReadFile_BE16(objectFile);
+				int16_t xPos = objectFile->ReadBE16();
+				int16_t word2 = objectFile->ReadBE16();
 				int16_t yPos = word2 & 0x0FFF;
 				
-				uint8_t id = ReadFile_Byte(objectFile);
-				uint8_t subtype = ReadFile_Byte(objectFile);
+				uint8_t id = objectFile->ReadU8();
+				uint8_t subtype = objectFile->ReadU8();
 				
 				//Read flags from word2
 				bool releaseDestroyed;
@@ -541,8 +522,9 @@ bool LEVEL::LoadObjects(LEVELTABLE *tableEntry)
 		}
 	}
 	
-	CloseFile(objectFile);
+	delete objectFile;
 	
+	/*
 	//Open external ring file
 	char *ringPath = AllocPath(gBasePath, tableEntry->levelReferencePath, ".ring");
 	BACKEND_FILE *ringFile = OpenFile(ringPath, "rb");
@@ -590,6 +572,7 @@ bool LEVEL::LoadObjects(LEVELTABLE *tableEntry)
 	}
 	
 	CloseFile(ringFile);
+	*/
 	LOG(("Success!\n"));
 	return false;
 }
@@ -604,10 +587,7 @@ bool LEVEL::LoadArt(LEVELTABLE *tableEntry)
 		case ARTFORMAT_BMP:
 		{
 			//Load our foreground tilemap
-			char *artPath = AllocPath(tableEntry->artReferencePath, ".tileset.bmp", nullptr);
-			tileTexture = new TEXTURE(artPath);
-			delete[] artPath;
-			
+			tileTexture = new TEXTURE(tableEntry->artReferencePath + ".tileset.bmp");
 			if (tileTexture->fail)
 			{
 				Error(fail = tileTexture->fail);
@@ -623,10 +603,7 @@ bool LEVEL::LoadArt(LEVELTABLE *tableEntry)
 	}
 	
 	//Load background art
-	char *backPath = AllocPath(tableEntry->artReferencePath, ".background.bmp", nullptr);
-	background = new BACKGROUND(backPath, tableEntry->backFunction);
-	delete[] backPath;
-	
+	background = new BACKGROUND(tableEntry->artReferencePath + ".background.bmp", tableEntry->backFunction);
 	if (background->fail)
 	{
 		Error(fail = background->fail);
@@ -644,10 +621,10 @@ bool LEVEL::LoadArt(LEVELTABLE *tableEntry)
 void LEVEL::UnloadAll()
 {
 	//Free memory
-	free(layout.foreground);
-	free(chunkMapping);
-	free(tileMapping);
-	free(collisionTile);
+	delete[] layout.foreground;
+	delete[] chunkMapping;
+	delete[] tileMapping;
+	delete[] collisionTile;
 	
 	//Unload textures
 	if (tileTexture != nullptr)
@@ -671,31 +648,6 @@ void LEVEL::UnloadAll()
 	//Unload object textures and mappings
 	CLEAR_INSTANCE_LINKEDLIST(objTextureCache);
 	CLEAR_INSTANCE_LINKEDLIST(objMappingsCache);
-	
-	//Lock audio device so we can safely unload all loaded music
-	AUDIO_LOCK;
-	
-	//Unload music
-	if (stageMusic != nullptr)
-		delete stageMusic;
-	if (bossMusic != nullptr)
-		delete bossMusic;
-	
-	if (speedShoesMusic != nullptr)
-		delete speedShoesMusic;
-	if (invincibilityMusic != nullptr)
-		delete invincibilityMusic;
-	if (superMusic != nullptr)
-		delete superMusic;
-	if (goalMusic != nullptr)
-		delete goalMusic;
-	if (gameoverMusic != nullptr)
-		delete gameoverMusic;
-	if (extraLifeMusic != nullptr)
-		delete extraLifeMusic;
-	
-	//Unlock audio device
-	AUDIO_UNLOCK;
 }
 
 //Level class
@@ -719,7 +671,7 @@ LEVEL::LEVEL(int id, const char *players[])
 	}
 	
 	//Preload generic assets
-	for (int i = 0; preloadTexture[i] != nullptr; i++)
+	for (int i = 0; preloadTexture[i] != ""; i++)
 	{
 		TEXTURE *tex = GetObjectTexture(preloadTexture[i]);
 		if (tex->fail != nullptr)
@@ -730,7 +682,7 @@ LEVEL::LEVEL(int id, const char *players[])
 		}
 	}
 			
-	for (int i = 0; preloadMappings[i] != nullptr; i++)
+	for (int i = 0; preloadMappings[i] != ""; i++)
 	{
 		MAPPINGS *map = GetObjectMappings(preloadMappings[i]);
 		if (map->fail != nullptr)
@@ -742,7 +694,7 @@ LEVEL::LEVEL(int id, const char *players[])
 	}
 	
 	//Preload stage's assets
-	for (int i = 0; tableEntry->preloadTexture[i] != nullptr; i++)
+	for (int i = 0; tableEntry->preloadTexture[i] != ""; i++)
 	{
 		TEXTURE *tex = GetObjectTexture(tableEntry->preloadTexture[i]);
 		if (tex->fail != nullptr)
@@ -753,7 +705,7 @@ LEVEL::LEVEL(int id, const char *players[])
 		}
 	}
 			
-	for (int i = 0; tableEntry->preloadMappings[i] != nullptr; i++)
+	for (int i = 0; tableEntry->preloadMappings[i] != ""; i++)
 	{
 		MAPPINGS *map = GetObjectMappings(tableEntry->preloadMappings[i]);
 		if (map->fail != nullptr)
@@ -807,31 +759,6 @@ LEVEL::LEVEL(int id, const char *players[])
 	
 	//Initialize oscillatory values
 	OscillatoryInit();
-	
-	//Lock audio device so we can load new music
-	AUDIO_LOCK;
-	
-	stageMusic = new MUSIC(tableEntry->music, 0, 1.0f);
-	
-	speedShoesMusic = new MUSIC("SpeedShoes", 0, 1.0f);
-	invincibilityMusic = new MUSIC("Invincibility", 0, 1.0f);
-	superMusic = new MUSIC("Super", 0, 1.0f);
-	goalMusic = new MUSIC("Goal", 0, 1.0f);
-	gameoverMusic = new MUSIC("GameOver", 0, 1.0f);
-	extraLifeMusic = new MUSIC("ExtraLife", 0, 1.0f);
-	
-	AUDIO_UNLOCK;
-	
-	//Check if any music failed to load...
-	if (stageMusic->fail || speedShoesMusic->fail || invincibilityMusic->fail || superMusic->fail || goalMusic->fail || gameoverMusic->fail || extraLifeMusic->fail)
-	{
-		fail = "Failed to load music";
-		UnloadAll();
-		return;
-	}
-	
-	//Play stage music
-	ChangePrimaryMusic(stageMusic);
 	
 	//Initialize scores
 	InitializeScores();
@@ -888,20 +815,6 @@ bool LEVEL::UpdateFade()
 		finished = function(background->texture->loadedPalette) ? finished : false;
 	for (size_t i = 0; i < objTextureCache.size(); i++)
 		finished = function(objTextureCache[i]->loadedPalette) ? finished : false;
-	
-	//Fade music out
-	if (currentMusic != nullptr && !isFadingIn)
-	{
-		//Lock audio device so we can safely modify the music's volume
-		AUDIO_LOCK;
-		
-		//Fade music out
-		currentMusic->volume = mmax(currentMusic->volume - (1.0f / 32.0f), 0.0f);
-		
-		//Unlock audio device
-		AUDIO_UNLOCK;
-	}
-	
 	return finished;
 }
 
@@ -1048,11 +961,11 @@ void LEVEL::DynamicEvents()
 }
 
 //Texture cache and mappings cache
-TEXTURE *LEVEL::GetObjectTexture(const char *path)
+TEXTURE *LEVEL::GetObjectTexture(std::string path)
 {
 	for (size_t i = 0; i < objTextureCache.size(); i++)
 	{
-		if (objTextureCache[i]->source != nullptr && !strcmp(objTextureCache[i]->source, path))
+		if (objTextureCache[i]->source == path)
 			return objTextureCache[i];
 	}
 	
@@ -1061,11 +974,11 @@ TEXTURE *LEVEL::GetObjectTexture(const char *path)
 	return newTexture;
 }
 
-MAPPINGS *LEVEL::GetObjectMappings(const char *path)
+MAPPINGS *LEVEL::GetObjectMappings(std::string path)
 {
 	for (size_t i = 0; i < objMappingsCache.size(); i++)
 	{
-		if (objMappingsCache[i]->source != nullptr && !strcmp(objMappingsCache[i]->source, path))
+		if (objMappingsCache[i]->source == path)
 			return objMappingsCache[i];
 	}
 	
@@ -1241,133 +1154,6 @@ void LEVEL::OscillatoryUpdate()
 	}
 }
 
-//Music functions
-void LEVEL::SetPlayingMusic(MUSIC *music, bool resumeLastPosition, bool fade)
-{
-	//Stop last song
-	if (currentMusic != nullptr)
-		currentMusic->playing = false;
-	
-	//Play this song
-	if (music != nullptr)
-	{
-		if (!resumeLastPosition)
-			music->PlayAtPosition(0);
-		else
-			music->playing = true;
-		music->volume = fade ? 0.0f : (currentMusic == nullptr ? music->volume : currentMusic->volume);
-	}
-	
-	currentMusic = music;
-}
-
-void LEVEL::ChangePrimaryMusic(MUSIC *music)
-{
-	//Lock the audio device so we can safely change which song is playing and volume
-	AUDIO_LOCK;
-	
-	//Check if we should play or not
-	bool doRestore = !(currentMusic == primaryMusic || currentMusic == secondaryMusic);
-	if (currentMusic == nullptr || currentMusic == primaryMusic)
-		SetPlayingMusic(music, doRestore, false); //If was already playing primary music, start playing this music
-	primaryMusic = music; //Set primary music to be this music
-	
-	//Unlock audio device
-	AUDIO_UNLOCK;
-}
-
-void LEVEL::ChangeSecondaryMusic(MUSIC *music)
-{
-	//Lock the audio device so we can safely change which song is playing and volume
-	AUDIO_LOCK;
-	
-	//Check if we should play or not
-	bool doRestore = !(currentMusic == primaryMusic || currentMusic == secondaryMusic);
-	if (currentMusic == nullptr || currentMusic == primaryMusic || currentMusic == secondaryMusic)
-		SetPlayingMusic(music, doRestore, false); //If was already playing primary or secondary music (secondary music overrides primary music), start playing this music
-	secondaryMusic = music; //Set secondary music to be this music
-	
-	//Unlock audio device
-	AUDIO_UNLOCK;
-}
-
-void LEVEL::PlayJingleMusic(MUSIC *music)
-{
-	//Lock the audio device so we can safely change which song is playing and volume
-	AUDIO_LOCK;
-	
-	//Play this song and update our music state
-	SetPlayingMusic(music, false, false);
-	
-	//Unlock audio device
-	AUDIO_UNLOCK;
-}
-
-void LEVEL::StopSecondaryMusic()
-{
-	//Lock the audio device so we can safely change which song is playing and volume
-	AUDIO_LOCK;
-	
-	//Check if we should play the primary song or not
-	if (currentMusic == secondaryMusic)
-		SetPlayingMusic(primaryMusic, true, false);
-	secondaryMusic = nullptr;
-	
-	//Unlock audio device
-	AUDIO_UNLOCK;
-}
-
-void LEVEL::StopJingleMusic()
-{
-	//Lock the audio device so we can safely change which song is playing and volume
-	AUDIO_LOCK;
-	
-	//Check what song we should resume (if playing a jingle)
-	if (currentMusic != primaryMusic && primaryMusic != secondaryMusic)
-	{
-		if (secondaryMusic != nullptr)
-			SetPlayingMusic(secondaryMusic, true, false);
-		else
-			SetPlayingMusic(primaryMusic, true, false);
-	}
-	
-	//Unlock audio device
-	AUDIO_UNLOCK;
-}
-
-void LEVEL::UpdateMusic()
-{
-	//Do not attempt to update music if there is no song playing
-	if (currentMusic == nullptr)
-	{
-		LOG(("There's no music playing!\n"));
-		return;
-	}
-	
-	//Lock the audio device so we can safely change which song is playing and volume
-	AUDIO_LOCK;
-	
-	//If the song is temporary and has ended, resume
-	if (currentMusic->playing == false)
-	{
-		//Play the previous song
-		if (currentMusic != primaryMusic && currentMusic != secondaryMusic)
-		{
-			if (secondaryMusic != nullptr)
-				SetPlayingMusic(secondaryMusic, true, true);	//Jingle to secondaryMusic
-			else if (primaryMusic != nullptr)
-				SetPlayingMusic(primaryMusic, true, true);		//Jingle to primaryMusic
-		}
-	}
-	
-	//Fade in the currently playing music
-	if (currentMusic != nullptr)
-		currentMusic->volume = mmin(currentMusic->volume + (1.0f / 180.0f), 1.0f);
-	
-	//Unlock the audio device
-	AUDIO_UNLOCK;
-}
-
 //Level update and draw
 bool LEVEL::UpdateStage()
 {
@@ -1423,9 +1209,6 @@ bool LEVEL::UpdateStage()
 
 bool LEVEL::Update()
 {
-	//Update the music
-	UpdateMusic();
-	
 	//Update title card
 	titleCard->UpdateAndDraw();
 	if (titleCard->activeLock)

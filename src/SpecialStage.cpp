@@ -7,15 +7,13 @@
 #include "Error.h"
 #include "Audio.h"
 
-SPECIALSTAGE::SPECIALSTAGE(const char *name)
+SPECIALSTAGE::SPECIALSTAGE(std::string name)
 {
-	//Clear memory
-	memset(this, 0, sizeof(SPECIALSTAGE));
-	LOG(("Loading special stage %s...\n", name));
+	LOG(("Loading special stage %s...\n", name.c_str()));
 	
 	//Load the stage texture
 	stageTexture = new TEXTURE("data/SpecialStage/Stage.bmp");
-	if (stageTexture->fail != nullptr)
+	if (stageTexture->fail)
 	{
 		Error(fail = stageTexture->fail);
 		return;
@@ -23,91 +21,59 @@ SPECIALSTAGE::SPECIALSTAGE(const char *name)
 	
 	//Load the texture for the spheres and rings
 	sphereTexture = new TEXTURE("data/SpecialStage/Spheres.bmp");
-	if (sphereTexture->fail != nullptr)
+	if (sphereTexture->fail)
 	{
 		Error(fail = sphereTexture->fail);
 		return;
 	}
 	
 	//Load the background texture (stage-specific)
-	char *backgroundPath = AllocPath(name, ".background.bmp", nullptr);
-	backgroundTexture = new TEXTURE(backgroundPath);
-	delete[] backgroundPath;
-	
-	if (backgroundTexture->fail != nullptr)
+	backgroundTexture = new TEXTURE(name + ".background.bmp");
+	if (backgroundTexture->fail)
 	{
 		Error(fail = backgroundTexture->fail);
 		return;
 	}
 	
 	//Open the layout file
-	char *layoutPath = AllocPath(gBasePath, name, ".ssl");
-	BACKEND_FILE *fp = OpenFile(layoutPath, "rb");
-	delete[] layoutPath;
-	
-	if (fp == nullptr)
+	FS_FILE *fp = new FS_FILE(gBasePath + name + ".ssl", "rb");
+	if (fp->fail)
 	{
-		Error(fail = GetFileError());
+		Error(fail = fp->fail);
+		delete fp;
 		return;
 	}
 	
 	//Read layout header
-	width = ReadFile_BE16(fp);
-	height = ReadFile_BE16(fp);
+	width = fp->ReadBE16();
+	height = fp->ReadBE16();
 	
 	layout = new uint8_t[width * height];
 	if (layout == nullptr)
 	{
 		Error(fail = "Failed to allocate the internal stage layout");
+		delete fp;
 		return;
 	}
 	
 	//Read and update the stage's palette
-	uint8_t r1 = ReadFile_Byte(fp); uint8_t g1 = ReadFile_Byte(fp); uint8_t b1 = ReadFile_Byte(fp);
-	uint8_t r2 = ReadFile_Byte(fp); uint8_t g2 = ReadFile_Byte(fp); uint8_t b2 = ReadFile_Byte(fp);
-	SetPaletteColour(&tile1, r1, g1, b1);
-	SetPaletteColour(&tile2, r2, g2, b2);
+	uint8_t r1 = fp->ReadU8(); uint8_t g1 = fp->ReadU8(); uint8_t b1 = fp->ReadU8();
+	uint8_t r2 = fp->ReadU8(); uint8_t g2 = fp->ReadU8(); uint8_t b2 = fp->ReadU8();
+	tile1.SetColour(true, true, true, r1, g1, b1);
+	tile2.SetColour(true, true, true, r2, g2, b2);
 	PalCycle();
 	
 	//Read the layout data
-	ReadFile(fp, layout, width * height, 1);			//Actual sphere map on the stage
-	playerState.direction = (ReadFile_BE16(fp)) >> 8;	//Original game sucks, read as a word into the byte's address (68000 is big-endian, so it only uses the high byte)
-	playerState.xPosLong =   ReadFile_BE16(fp)  << 8;	//The original game stores the positions in the native 8.8 format, extend to 16.16
-	playerState.yPosLong =   ReadFile_BE16(fp)  << 8;
-	ringsLeft = ReadFile_BE16(fp);
-	CloseFile(fp);
-	
-	//Open the perspective map file
-	char *perspectivePath = AllocPath(gBasePath, "data/SpecialStage/Perspective.bin", nullptr);
-	BACKEND_FILE *perspectiveFile = OpenFile(perspectivePath, "rb");
-	delete[] perspectivePath;
-	
-	if (perspectiveFile == nullptr)
-	{
-		Error(fail = GetFileError());
-		return;
-	}
-	
-	//Read perspective data
-	perspectiveMap = new uint8_t[GetFileSize(perspectiveFile)];
-	if (perspectiveMap == nullptr)
-	{
-		Error(fail = "Failed to allocate memory for the perspective map");
-		return;
-	}
-	
-	ReadFile(perspectiveFile, perspectiveMap, GetFileSize(perspectiveFile), 1);
-	CloseFile(perspectiveFile);
+	fp->Read(layout, width * height, 1);			//Actual sphere map on the stage
+	playerState.direction = (fp->ReadBE16()) >> 8;	//Original game sucks, read as a word into the byte's address (68000 is big-endian, so it only uses the high byte)
+	playerState.xPosLong =   fp->ReadBE16()  << 8;	//The original game stores the positions in the native 8.8 format, extend to 16.16
+	playerState.yPosLong =   fp->ReadBE16()  << 8;
+	ringsLeft = fp->ReadBE16();
+	delete fp;
 	
 	//Initialize state
 	rate = 0x1000;
 	rateTimer = 30 * 60;
-	
-	//Load and play music
-	AUDIO_LOCK;
-	music = new MUSIC("SpecialStage", 0, 1.0f);
-	music->playing = true;
-	AUDIO_UNLOCK;
 	
 	LOG(("Success!\n"));
 }
@@ -119,12 +85,6 @@ SPECIALSTAGE::~SPECIALSTAGE()
 	delete sphereTexture;
 	delete backgroundTexture;
 	delete[] layout;
-	delete[] perspectiveMap;
-	
-	//Unload music
-	AUDIO_LOCK;
-	delete music;
-	AUDIO_UNLOCK;
 }
 
 //Stage update code

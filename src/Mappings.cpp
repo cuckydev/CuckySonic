@@ -6,52 +6,45 @@
 #include "Error.h"
 #include "Log.h"
 
-MAPPINGS::MAPPINGS(const char *path)
+MAPPINGS::MAPPINGS(std::string path)
 {
-	LOG(("Loading mappings from %s... ", path));
-	
-	memset(this, 0, sizeof(MAPPINGS));
+	LOG(("Loading mappings from %s... ", path.c_str()));
 	
 	//Open the file given
-	source = DupePath(path);
-	
-	char *filepath = AllocPath(gBasePath, path, nullptr);
-	BACKEND_FILE *fp = OpenFile(filepath, "rb");
-	delete[] filepath;
-	
-	if (fp == nullptr)
+	FS_FILE *fp = new FS_FILE(gBasePath + (source = path), "rb");
+	if (fp->fail)
 	{
-		Error(fail = GetFileError());
+		Error(fail = fp->fail);
+		delete fp;
 		return;
 	}
 	
 	//Allocate our frames
-	size = GetFileSize(fp) / (6 * 2);
+	size = fp->GetSize() / (6 * 2);
 	rect = new RECT[size];
 	origin = new POINT[size];
 	
 	if (rect == nullptr || origin == nullptr)
 	{
-		CloseFile(fp);
+		Error(fail = "Failed to allocate rect and origin arrays");
 		delete[] rect;
 		delete[] origin;
-		Error(fail = "Failed to allocate rect and origin arrays");
+		delete fp;
 		return;
 	}
 	
 	//Read from the file
-	for (int i = 0; i < size; i++)
+	for (size_t i = 0; i < size; i++)
 	{
-		rect[i].x = ReadFile_BE16(fp);
-		rect[i].y = ReadFile_BE16(fp);
-		rect[i].w = ReadFile_BE16(fp);
-		rect[i].h = ReadFile_BE16(fp);
-		origin[i].x = (int16_t)ReadFile_BE16(fp);
-		origin[i].y = (int16_t)ReadFile_BE16(fp);
+		rect[i].x = fp->ReadBE16();
+		rect[i].y = fp->ReadBE16();
+		rect[i].w = fp->ReadBE16();
+		rect[i].h = fp->ReadBE16();
+		origin[i].x = (int16_t)fp->ReadBE16();
+		origin[i].y = (int16_t)fp->ReadBE16();
 	}
 	
-	CloseFile(fp);
-	
+	delete fp;
 	LOG(("Success!\n"));
 }
 
@@ -60,5 +53,4 @@ MAPPINGS::~MAPPINGS()
 	//Free allocated data
 	delete[] rect;
 	delete[] origin;
-	delete[] source;
 }

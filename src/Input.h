@@ -1,21 +1,11 @@
 #pragma once
 #include <stdint.h>
 
-#define CONTROLLERS 4
-#define CONTROLLER_DEADZONE 0x200
+//Constants
+#define CONTROLLERS	4
 
-#ifdef BACKEND_SDL2
-	#include "SDL_gamecontroller.h"
-	#include "SDL_events.h"
-
-	struct BUTTONBIND
-	{
-		SDL_Scancode key;
-		SDL_GameControllerButton button;
-	};
-	
-	#define BACKEND_CONTROLLER SDL_GameController
-#endif
+//TEMP
+#define BUTTONBIND int
 
 struct CONTROLMASK
 {
@@ -52,11 +42,6 @@ struct CONTROLLER
 	
 	//Button binds
 	BUTTONBINDS binds;
-	
-	//Our game controller
-	BACKEND_CONTROLLER *controller;
-	int16_t axisX = 0;
-	int16_t axisY = 0;
 };
 
 extern CONTROLLER gController[CONTROLLERS];

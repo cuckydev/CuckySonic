@@ -4,12 +4,12 @@
 
 #include "SDL_timer.h"
 
-#include "../LinkedList.h"
-#include "../Audio.h"
-#include "../Filesystem.h"
-#include "../MathUtil.h"
-#include "../Log.h"
-#include "../Error.h"
+#include "../../LinkedList.h"
+#include "../../Audio.h"
+#include "../../Filesystem.h"
+#include "../../MathUtil.h"
+#include "../../Log.h"
+#include "../../Error.h"
 
 //The current audio device
 SDL_AudioDeviceID gAudioDevice;

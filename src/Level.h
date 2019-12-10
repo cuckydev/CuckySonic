@@ -4,8 +4,6 @@
 
 #include "LinkedList.h"
 #include "Render.h"
-#include "Audio.h"
-#include "GameConstants.h"
 #include "CommonMacros.h"
 #include "LevelSpecific.h"
 #include "Player.h"
@@ -79,15 +77,15 @@ struct LEVELTABLE
 	ARTFORMAT artFormat;
 	
 	//Paths
-	const char *levelReferencePath;		//For typically level specific stuff such as the layout and object path
-	const char *chunkTileReferencePath;	//For the chunk and tile definitions
-	const char *collisionReferencePath;	//For the collision data itself (height maps and angle maps)
-	const char *artReferencePath;		//For the level's art
-	const char *music;
+	std::string levelReferencePath;		//For typically level specific stuff such as the layout and object path
+	std::string chunkTileReferencePath;	//For the chunk and tile definitions
+	std::string collisionReferencePath;	//For the collision data itself (height maps and angle maps)
+	std::string artReferencePath;		//For the level's art
+	std::string music;
 	
 	//Level specific functions and lists
-	const char **preloadTexture;
-	const char **preloadMappings;
+	std::string *preloadTexture;
+	std::string *preloadMappings;
 	BACKGROUNDFUNCTION backFunction;
 	PALETTECYCLEFUNCTION paletteFunction;
 	OBJECTFUNCTION *objectFunctionList;
@@ -172,23 +170,6 @@ class LEVEL
 		LEVELID levelId;
 		ZONEID zone;
 		
-		//Loaded music
-		MUSIC *stageMusic = nullptr;
-		MUSIC *bossMusic = nullptr;
-		
-		MUSIC *speedShoesMusic = nullptr;
-		MUSIC *invincibilityMusic = nullptr;
-		MUSIC *superMusic = nullptr;
-		MUSIC *extraLifeMusic = nullptr;
-		MUSIC *goalMusic = nullptr;
-		MUSIC *gameoverMusic = nullptr;
-		
-		//Current music state
-		MUSIC *primaryMusic = nullptr;	//stageMusic or bossMusic											(played below secondaryMusic)
-		MUSIC *secondaryMusic = nullptr;	//speedShoesMusic, invincibilityMusic, goalMusic, or gameoverMusic	(played below jingles)
-		
-		MUSIC *currentMusic = nullptr;	//Any of the loaded songs
-		
 		//Oscillatory stuff
 		bool oscillateDirection[OSCILLATORY_VALUES];
 		uint16_t oscillate[OSCILLATORY_VALUES][2];
@@ -266,8 +247,8 @@ class LEVEL
 		void DynamicEvents();
 		
 		//Object texture and mapping cache functions
-		TEXTURE *GetObjectTexture(const char *path);
-		MAPPINGS *GetObjectMappings(const char *path);
+		TEXTURE *GetObjectTexture(std::string path);
+		MAPPINGS *GetObjectMappings(std::string path);
 		
 		//Object load functions
 		OBJECT_LOAD *GetObjectLoad(OBJECT *object);
@@ -286,17 +267,6 @@ class LEVEL
 		//Oscillatory table functions
 		void OscillatoryInit();
 		void OscillatoryUpdate();
-		
-		//Music functions
-		void SetPlayingMusic(MUSIC *music, bool resumeLastPosition, bool fade);
-		void ChangePrimaryMusic(MUSIC *music);
-		void ChangeSecondaryMusic(MUSIC *music);
-		void PlayJingleMusic(MUSIC *music);
-		
-		void StopSecondaryMusic();
-		void StopJingleMusic();
-		
-		void UpdateMusic();
 		
 		//Update and draw functions
 		bool UpdateStage();

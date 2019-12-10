@@ -57,14 +57,16 @@
 //#define SONIC12_NO_BARRIER_ABILITIES //Elemental barrier abilities
 //#define SONICMANIA_DROPDASH          //Sonic Mania's dropdash
 //#define SONIC3_SPINATTACK_LAND       //In Sonic 3, if you land on the ground while performing the double spin attack, it'll cause you to be unable to use any jump abilities until you jump and land once again.
-//#define SONIC3_BUBBLE_SUPER          //In Sonic 3, pressing ABC in mid-air will make you bounce like you have the water barrier if you have it once you touch the ground, this was fixed in S3K
+//#define SONIC3_AQUABOUNCE_SUPER      //In Sonic 3, pressing ABC in mid-air will make you bounce like you have the aqua barrier if you have it once you touch the ground, this was fixed in S3K
+//#define SONICMANIA_AQUABOUNCE        //In Sonic Mania, initiating the aqua bounce will only halve your horizontal velocity instead of setting it to 0
 
 //#define SONIC1_DEATH_BOUNDARY        //In Sonic 2, the death boundary code was fixed so that it doesn't use the camera's boundary but the level boundary, so that you don't die while the camera boundary is scrolling
 //#define SONIC12_DEATH_RESPAWN        //In Sonic 3, it was changed so that death respawns you once you go off-screen, not when you leave the level boundaries, since this was a very buggy check
 //#define SONIC2REV01_SUPER_SOFTLOCK   //In Sonic 2 revisions 0 and 1, you can transform into Super Sonic at the end of a level, where it'll then softlock due to interrupting the transition
 
-//Other control options
-//#define CONTROL_JA_DONT_CLEAR_ROLLJUMP    //When you use a jump ability in the original, it clears the roll-jump flag
+//Misc. options
+//#define CONTROL_JA_DONT_CLEAR_ROLLJUMP //When you use a jump ability in the original, it clears the roll-jump flag
+//#define ICBINS1_AQUABOUNCE             //The improved aqua bouncing from INCBIS1
 
 //Common macros
 #ifdef FIX_ROLL_YSHIFT
@@ -868,25 +870,19 @@ void ObjInvincibilityStars(OBJECT *object)
 }
 
 //Player class
-#define READ_SPEEDDEFINITION(definition)	definition.top = ReadFile_BE16(playerSpec); definition.acceleration = ReadFile_BE16(playerSpec); definition.deceleration = ReadFile_BE16(playerSpec); definition.rollDeceleration = ReadFile_BE16(playerSpec); definition.jumpForce = ReadFile_BE16(playerSpec); definition.jumpRelease = ReadFile_BE16(playerSpec);
+#define READ_SPEEDDEFINITION(definition)	definition.top = playerSpec->ReadBE16(); definition.acceleration = playerSpec->ReadBE16(); definition.deceleration = playerSpec->ReadBE16(); definition.rollDeceleration = playerSpec->ReadBE16(); definition.jumpForce = playerSpec->ReadBE16(); definition.jumpRelease = playerSpec->ReadBE16();
 
-PLAYER::PLAYER(const char *specPath, PLAYER *myFollow, size_t myController) : controller(myController), follow(myFollow)
+PLAYER::PLAYER(std::string specPath, PLAYER *myFollow, size_t myController) : controller(myController), follow(myFollow)
 {
 	//Load art and mappings
-	char *texPath = AllocPath(specPath, ".bmp", nullptr);
-	texture = gLevel->GetObjectTexture(texPath);
-	delete[] texPath;
-	
-	if (texture->fail != nullptr)
+	texture = gLevel->GetObjectTexture(specPath + ".bmp");
+	if (texture->fail)
 	{
 		fail = texture->fail;
 		return;
 	}
 	
-	char *mapPath = AllocPath(specPath, ".map", nullptr);
-	mappings = gLevel->GetObjectMappings(mapPath);
-	delete[] mapPath;
-	
+	mappings = gLevel->GetObjectMappings(specPath + ".map");
 	if (mappings->fail != nullptr)
 	{
 		fail = mappings->fail;
@@ -894,25 +890,23 @@ PLAYER::PLAYER(const char *specPath, PLAYER *myFollow, size_t myController) : co
 	}
 	
 	//Read properties from the specifications
-	char *plrSpecPath = AllocPath(gBasePath, specPath, ".psp");
-	BACKEND_FILE *playerSpec = OpenFile(plrSpecPath, "rb");
-	delete[] plrSpecPath;
-	
-	if (playerSpec == nullptr)
+	FS_FILE *playerSpec = new FS_FILE(specPath + ".psp", "rb");
+	if (playerSpec->fail)
 	{
-		Error(fail = GetFileError());
+		Error(fail = playerSpec->fail);
+		delete playerSpec;
 		return;
 	}
 	
-	xRadius = ReadFile_Byte(playerSpec);
-	yRadius = ReadFile_Byte(playerSpec);
+	xRadius = playerSpec->ReadU8();
+	yRadius = playerSpec->ReadU8();
 	
 	defaultXRadius = xRadius;
 	defaultYRadius = yRadius;
-	rollXRadius = ReadFile_Byte(playerSpec);
-	rollYRadius = ReadFile_Byte(playerSpec);
+	rollXRadius = playerSpec->ReadU8();
+	rollYRadius = playerSpec->ReadU8();
 	
-	characterType = (CHARACTERTYPE)ReadFile_BE16(playerSpec);
+	characterType = (CHARACTERTYPE)playerSpec->ReadBE16();
 	
 	READ_SPEEDDEFINITION(normalSD);
 	READ_SPEEDDEFINITION(speedShoesSD);
@@ -923,7 +917,7 @@ PLAYER::PLAYER(const char *specPath, PLAYER *myFollow, size_t myController) : co
 	READ_SPEEDDEFINITION(underwaterSuperSD);
 	READ_SPEEDDEFINITION(underwaterSuperSpeedShoesSD);
 	
-	CloseFile(playerSpec);
+	delete playerSpec;
 	
 	//Initialize speed
 	if (!super)
@@ -1242,6 +1236,7 @@ void PLAYER::GroundFloorCollision()
 				
 				if (nearestDifference < 0)
 				{
+					//Only clip up if clipping 14 or below pixels, this allows us to walk through top solid platforms when going up a wall, for example
 					if (nearestDifference >= -14)
 						y.pos += nearestDifference;
 				}
@@ -1276,6 +1271,7 @@ void PLAYER::GroundFloorCollision()
 				
 				if (nearestDifference < 0)
 				{
+					//Only clip up if clipping 14 or below pixels, this allows us to walk through top solid platforms when going up a wall, for example
 					if (nearestDifference >= -14)
 						x.pos -= nearestDifference;
 				}
@@ -1310,6 +1306,7 @@ void PLAYER::GroundFloorCollision()
 				
 				if (nearestDifference < 0)
 				{
+					//Only clip up if clipping 14 or below pixels, this allows us to walk through top solid platforms when going up a wall, for example
 					if (nearestDifference >= -14)
 						y.pos -= nearestDifference;
 				}
@@ -1344,6 +1341,7 @@ void PLAYER::GroundFloorCollision()
 				
 				if (nearestDifference < 0)
 				{
+					//Only clip up if clipping 14 or below pixels, this allows us to walk through top solid platforms when going up a wall, for example
 					if (nearestDifference >= -14)
 						x.pos += nearestDifference;
 				}
@@ -1804,39 +1802,52 @@ void PLAYER::LandOnFloor_SetState()
 		if (jumpAbility != 0)
 		{
 			//Handle jump abilities on landing
-		#ifndef SONIC3_BUBBLE_SUPER
+		#ifndef SONIC3_AQUABOUNCE_SUPER
 			if (characterType == CHARACTERTYPE_SONIC && super == false)
 		#endif
 			{
 				//Water barrier bounce
 				if (barrier == BARRIER_AQUA)
 				{
-					//Get the force of our bounce
-					int16_t bounceForce = 0x780;
-					if (status.underwater)
-						bounceForce = 0x400;
-					
-					//Bounce us up from the ground
-					xVel += (GetCos(angle - 0x40) * bounceForce) >> 8;
-					yVel += (GetSin(angle - 0x40) * bounceForce) >> 8;
-					
-					//Put us back into the air state
-					status.inAir = true;
-					status.pushing = false;
-					status.jumping = true;
-					anim = PLAYERANIMATION_ROLL;
-					status.inBall = true;
-					
-					//Return to the ball hitbox
-					xRadius = rollXRadius;
-					yRadius = rollYRadius;
-					
-					YSHIFT_ON_FLOOR(-(defaultYRadius - yRadius));
-					
-					//Play the sound and play the squish animation for the bubble
-					if (barrierObject != nullptr)
-						barrierObject->anim = 2;
-					PlaySound(SOUNDID_USE_AQUA_BARRIER);
+				#ifdef ICBINS1_AQUABOUNCE
+					if (!((angle + 0x20) & 0xC0))
+				#endif
+					{
+						//Get the force of our bounce
+						int16_t bounceForce = 0x780;
+						if (status.underwater)
+							bounceForce = 0x400;
+						
+						//Bounce us up from the ground
+						xVel += (GetCos(angle - 0x40) * bounceForce) >> 8;
+						yVel += (GetSin(angle - 0x40) * bounceForce) >> 8;
+						
+						//Put us back into the air state
+						status.inAir = true;
+						status.pushing = false;
+						status.jumping = true;
+						anim = PLAYERANIMATION_ROLL;
+						status.inBall = true;
+						
+						//Return to the ball hitbox
+						xRadius = rollXRadius;
+						yRadius = rollYRadius;
+						
+						YSHIFT_ON_FLOOR(-(defaultYRadius - yRadius));
+						
+						//Play the sound and play the squish animation for the bubble
+						if (barrierObject != nullptr)
+							barrierObject->anim = 2;
+						PlaySound(SOUNDID_USE_AQUA_BARRIER);
+					}
+				#ifdef ICBINS1_AQUABOUNCE
+					else
+					{
+						//Clear animation so it doesn't look stupid
+						if (barrierObject != nullptr)
+							barrierObject->anim = 0;
+					}
+				#endif
 				}
 			}
 			
@@ -2427,7 +2438,11 @@ void PLAYER::JumpAbilities()
 						jumpAbility = 1;
 						
 						//Shoot down to the ground
-						xVel = 0;
+						#if (defined(SONICMANIA_AQUABOUNCE) || defined(ICBINS1_AQUABOUNCE))
+							xVel /= 2;
+						#else
+							xVel = 0;
+						#endif
 						inertia = 0;
 						yVel = 0x800;
 						PlaySound(SOUNDID_USE_AQUA_BARRIER);
@@ -3665,10 +3680,10 @@ static const uint8_t sonicPalette[16][4][3] = {
 	{{0xFF, 0xFF, 0x24}, {0xFF, 0xFF, 0x91}, {0xFF, 0xFF, 0xDA}, {0xFF, 0xFF, 0xFF}},
 };
 
-#define SET_PALETTE_FROM_ENTRY(pal, entry)	ModifyPaletteColour(&pal->colour[0x2], entry[0][0], entry[0][1], entry[0][2]);	\
-											ModifyPaletteColour(&pal->colour[0x3], entry[1][0], entry[1][1], entry[1][2]);	\
-											ModifyPaletteColour(&pal->colour[0x4], entry[2][0], entry[2][1], entry[2][2]);	\
-											ModifyPaletteColour(&pal->colour[0x5], entry[3][0], entry[3][1], entry[3][2]);
+#define SET_PALETTE_FROM_ENTRY(pal, entry)	pal->colour[0x2].SetColour(true, false, true, entry[0][0], entry[0][1], entry[0][2]);	\
+											pal->colour[0x2].SetColour(true, false, true, entry[1][0], entry[1][1], entry[1][2]);	\
+											pal->colour[0x2].SetColour(true, false, true, entry[2][0], entry[2][1], entry[2][2]);	\
+											pal->colour[0x2].SetColour(true, false, true, entry[3][0], entry[3][1], entry[3][2]);
 
 void PLAYER::SuperPaletteCycle()
 {
@@ -3771,8 +3786,6 @@ bool PLAYER::SuperTransform()
 			SetSpeedFromDefinition(status.underwater ? underwaterSuperSpeedShoesSD : superSpeedShoesSD);
 		
 		//Play super theme (if lead) and transformation sound
-		if (follow == nullptr)
-			gLevel->ChangeSecondaryMusic(gLevel->superMusic);
 		PlaySound(SOUNDID_SUPER_TRANSFORM);
 		return true;
 	}
@@ -4027,7 +4040,7 @@ void PLAYER::Animate()
 							speedFactor = -speedFactor + 0x800;
 							if (speedFactor >= 0x8000)
 								speedFactor = 0;
-							animFrameDuration = speedFactor >> 8;
+							animFrameDuration = speedFactor / 0x100;
 							
 							//Increment frame
 							animFrame++;
@@ -4320,55 +4333,59 @@ void PLAYER::ControlRoutine()
 			}
 		}
 		
-		if (Spindash() && Jump())
+		//Spindash and jump (these can prematurely end our routine below)
+		if (!Spindash())
+			return;
+		if (!Jump())
+			return;
+		
+		//Handle slope gravity and our movement
+		RegularSlopeGravity();
+		GroundMovement();
+		Roll();
+		
+		//Keep us in level bounds
+		LevelBoundaries();
+		
+		//Move according to our velocity
+		xPosLong += xVel << 8;
+		if (status.reverseGravity)
+			yPosLong -= yVel << 8;
+		else
+			yPosLong += yVel << 8;
+		
+		//Handle collision and falling off of slopes
+		GroundFloorCollision();
+		WallDetach();
+	}
+	else if (status.inBall == true && status.inAir == false)
+	{
+		//Jump (if not in pinball mode)
+		if (!(status.pinballMode || spindashing) && !Jump())
+			return;
+		
+		//Handle slope gravity and our movement
+		RollingSlopeGravity();
+		RollMovement();
+		
+		//Keep us in level bounds
+		LevelBoundaries();
+		
+	#ifdef SONICCD_SPINDASH
+		if (cdSPTimer == 0)
+	#endif
 		{
-			//Handle slope gravity and our movement
-			RegularSlopeGravity();
-			GroundMovement();
-			Roll();
-			
-			//Keep us in level bounds
-			LevelBoundaries();
-			
 			//Move according to our velocity
 			xPosLong += xVel << 8;
 			if (status.reverseGravity)
 				yPosLong -= yVel << 8;
 			else
 				yPosLong += yVel << 8;
-			
-			//Handle collision and falling off of slopes
-			GroundFloorCollision();
-			WallDetach();
 		}
-	}
-	else if (status.inBall == true && status.inAir == false)
-	{
-		if ((status.pinballMode || spindashing) || Jump())
-		{
-			//Handle slope gravity and our movement
-			RollingSlopeGravity();
-			RollMovement();
-			
-			//Keep us in level bounds
-			LevelBoundaries();
-			
-		#ifdef SONICCD_SPINDASH
-			if (cdSPTimer == 0)
-		#endif
-			{
-				//Move according to our velocity
-				xPosLong += xVel << 8;
-				if (status.reverseGravity)
-					yPosLong -= yVel << 8;
-				else
-					yPosLong += yVel << 8;
-			}
-			
-			//Handle collision and falling off of slopes
-			GroundFloorCollision();
-			WallDetach();
-		}
+		
+		//Handle collision and falling off of slopes
+		GroundFloorCollision();
+		WallDetach();
 	}
 	//In mid-air
 	else if (status.inAir == true)
@@ -4658,15 +4675,6 @@ void PLAYER::Draw_UpdateStatus()
 	//Handle invincibility (every 8 frames)
 	if (item.isInvincible && invincibilityTime != 0 && (gLevel->frameCounter & 0x7) == 0 && --invincibilityTime == 0)
 	{
-		//Resume music
-		if (follow == nullptr && (gLevel->secondaryMusic == gLevel->invincibilityMusic || gLevel->secondaryMusic == gLevel->superMusic))
-		{
-			if (super)
-				gLevel->ChangeSecondaryMusic(gLevel->superMusic);
-			else
-				gLevel->StopSecondaryMusic();
-		}
-		
 		//Lose invincibility
 		item.isInvincible = false;
 		for (int i = 0; i < INVINCIBILITYSTARS; i++)
@@ -4676,15 +4684,6 @@ void PLAYER::Draw_UpdateStatus()
 	//Handle speed shoes (every 8 frames)
 	if (item.hasSpeedShoes && speedShoesTime != 0 && (gLevel->frameCounter & 0x7) == 0 && --speedShoesTime == 0)
 	{
-		//Resume music
-		if (follow == nullptr && gLevel->secondaryMusic == gLevel->speedShoesMusic)
-		{
-			if (super)
-				gLevel->ChangeSecondaryMusic(gLevel->superMusic);
-			else
-				gLevel->StopSecondaryMusic();
-		}
-		
 		//Lose speed shoes
 		item.hasSpeedShoes = false;
 		
@@ -5131,10 +5130,6 @@ void PLAYER::GiveSpeedShoes()
 		SetSpeedFromDefinition(status.underwater ? underwaterSpeedShoesSD : speedShoesSD);
 	else
 		SetSpeedFromDefinition(status.underwater ? underwaterSuperSpeedShoesSD : superSpeedShoesSD);
-	
-	//Play speed shoes music (only if lead)
-	if (follow == nullptr)
-		gLevel->ChangeSecondaryMusic(gLevel->speedShoesMusic);
 }
 
 void PLAYER::GiveInvincibility()
@@ -5146,10 +5141,6 @@ void PLAYER::GiveInvincibility()
 		invincibilityTime = 150;
 		for (int i = 0; i < INVINCIBILITYSTARS; i++)
 			invincibilityStarObject[i]->routineSecondary = 1;
-		
-		//Play invincibility music (only if lead)
-		if (follow == nullptr)
-			gLevel->ChangeSecondaryMusic(gLevel->invincibilityMusic);
 	}
 }
 

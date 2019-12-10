@@ -160,7 +160,6 @@ void ObjMonitorContents(OBJECT *object)
 					case MONITOR_ITEM_EXTRA_LIFE:
 						//Give us one extra life and play the jingle
 						AddToLives(1);
-						gLevel->PlayJingleMusic(gLevel->extraLifeMusic);
 						break;
 					case MONITOR_ITEM_STATIC:
 					case MONITOR_ITEM_EGGMAN:

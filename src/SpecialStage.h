@@ -16,24 +16,19 @@ class SPECIALSTAGE
 {
 	public:
 		//Failure
-		const char *fail;
+		const char *fail = nullptr;
 		
 		//Tile colours
-		PALCOLOUR tile1, tile2;
+		COLOUR tile1, tile2;
 		
 		//Loaded data
-		TEXTURE *stageTexture;
-		TEXTURE *sphereTexture;
-		TEXTURE *backgroundTexture;
-		
-		uint8_t *perspectiveMap;
-		
-		//Music
-		MUSIC *music;
+		TEXTURE *stageTexture = nullptr;
+		TEXTURE *sphereTexture = nullptr;
+		TEXTURE *backgroundTexture = nullptr;
 		
 		//Stage layout
-		uint16_t width, height;
-		uint8_t *layout;
+		size_t width = 0, height = 0;
+		uint8_t *layout = nullptr;
 		
 		//Player's state
 		struct
@@ -47,7 +42,7 @@ class SPECIALSTAGE
 			
 			//Movement direction and speed
 			uint8_t direction;	//Player's facing direction
-			int8_t turn;		//Player's turning speed (-4 = left, 4 = right, 0 = no turning)
+			int8_t turn;		//Player's turning speed (negative = left, positive = right, 0 = no turning)
 			int16_t speed;		//Player's current speed (negative = moving backwards) (8.8)
 			bool isForward;		//SCHG: Set if you're moving forward (maybe a bumper thing?)
 			
@@ -59,19 +54,19 @@ class SPECIALSTAGE
 		} playerState;
 		
 		//Stage state
-		uint16_t ringsLeft;
+		unsigned int ringsLeft = 0;
 		
-		uint16_t animFrame;
-		uint16_t paletteFrame;
+		unsigned int animFrame = 0;
+		unsigned int paletteFrame = 0;
 		
-		uint16_t rate;
-		uint16_t rateTimer;
+		unsigned int rate = 0;
+		unsigned int rateTimer = 0;
 		
-		int backX;
-		int backY;
+		int backX = 0;
+		int backY = 0;
 		
 	public:
-		SPECIALSTAGE(const char *name);
+		SPECIALSTAGE(std::string name);
 		~SPECIALSTAGE();
 		
 		void Update();

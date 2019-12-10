@@ -1,22 +1,22 @@
 #pragma once
-#include <deque>
+#include <string>
 #include "Render.h"
 
 class MAPPINGS
 {
 	public:
 		//Failure
-		const char *fail;
+		const char *fail = nullptr;
 		
 		//Source path
-		const char *source;
+		std::string source;
 		
 		//Mappings
-		int size;
-		RECT *rect;
-		POINT *origin;
+		size_t size = 0;
+		RECT *rect = nullptr;
+		POINT *origin = nullptr;
 		
 	public:
-		MAPPINGS(const char *path);
+		MAPPINGS(std::string path);
 		~MAPPINGS();
 };

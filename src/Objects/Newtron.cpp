@@ -261,6 +261,7 @@ void ObjNewtron(OBJECT *object)
 		{
 			//Green - deleted after firing missile
 			object->deleteFlag = true;
+			gLevel->ReleaseObjectLoad(object);
 			break;
 		}
 	}
