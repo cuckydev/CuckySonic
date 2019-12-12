@@ -1,7 +1,8 @@
 #pragma once
 #include "Endianness.h"
 
-#ifdef CPU_BIGENDIAN
+#if ENDIAN == BIG
+	//Big endian - [pos>sub] = long
 	#define POSDEF(axis)	\
 		union	\
 		{	\
@@ -13,6 +14,7 @@
 			int32_t	axis##PosLong = 0;	\
 		};
 #else
+	//Little endian - [sub<pos] = long
 	#define POSDEF(axis)	\
 		union	\
 		{	\

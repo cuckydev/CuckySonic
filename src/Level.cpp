@@ -188,22 +188,20 @@ bool LEVEL::LoadMappings(LEVELTABLE *tableEntry)
 		case LEVELFORMAT_CHUNK128:
 		{
 			//Open our chunk mapping file
-			FS_FILE *mappingFile = new FS_FILE(gBasePath + tableEntry->chunkTileReferencePath, "rb");
-			if (mappingFile->fail)
+			FS_FILE mappingFile(gBasePath + tableEntry->chunkTileReferencePath, "rb");
+			if (mappingFile.fail)
 			{
-				Error(fail = mappingFile->fail);
-				delete mappingFile;
+				Error(fail = mappingFile.fail);
 				return true;
 			}
 			
 			//Allocate the chunk mappings in memory
-			chunks = (mappingFile->GetSize() / 2 / (8 * 8));
+			chunks = (mappingFile.GetSize() / 2 / (8 * 8));
 			chunkMapping = new CHUNKMAPPING[chunks];
 			
 			if (chunkMapping == nullptr)
 			{
 				Error(fail = "Failed to allocate chunk mappings in memory");
-				delete mappingFile;
 				return true;
 			}
 			
@@ -212,7 +210,7 @@ bool LEVEL::LoadMappings(LEVELTABLE *tableEntry)
 			{
 				for (int v = 0; v < (8 * 8); v++)
 				{
-					uint16_t tmap = mappingFile->ReadBE16();
+					uint16_t tmap = mappingFile.ReadBE16();
 					chunkMapping[i].tile[v].altLRB	= (tmap & 0x8000) != 0;
 					chunkMapping[i].tile[v].altTop	= (tmap & 0x4000) != 0;
 					chunkMapping[i].tile[v].norLRB	= (tmap & 0x2000) != 0;
@@ -223,8 +221,6 @@ bool LEVEL::LoadMappings(LEVELTABLE *tableEntry)
 					chunkMapping[i].tile[v].srcChunk = i;
 				}
 			}
-			
-			delete mappingFile;
 			break;
 		}
 		
@@ -242,11 +238,10 @@ bool LEVEL::LoadLayout(LEVELTABLE *tableEntry)
 	LOG(("Loading layout... "));
 	
 	//Open our layout file
-	FS_FILE *layoutFile = new FS_FILE(gBasePath + tableEntry->levelReferencePath, "rb");
-	if (layoutFile->fail)
+	FS_FILE layoutFile(gBasePath + tableEntry->levelReferencePath, "rb");
+	if (layoutFile.fail)
 	{
-		Error(fail = layoutFile->fail);
-		delete layoutFile;
+		Error(fail = layoutFile.fail);
 		return true;
 	}
 	
@@ -258,8 +253,8 @@ bool LEVEL::LoadLayout(LEVELTABLE *tableEntry)
 			//Get our level dimensions (upscaled to tiles)
 			if (tableEntry->format == LEVELFORMAT_CHUNK128)
 			{
-				layout.width = layoutFile->ReadBE16() * 8;
-				layout.height = layoutFile->ReadBE16() * 8;
+				layout.width = layoutFile.ReadBE16() * 8;
+				layout.height = layoutFile.ReadBE16() * 8;
 			}
 			else
 			{
@@ -272,7 +267,6 @@ bool LEVEL::LoadLayout(LEVELTABLE *tableEntry)
 			if (layout.foreground == nullptr)
 			{
 				Error(fail = "Failed to allocate layout in memory");
-				delete layoutFile;
 				return true;
 			}
 			
@@ -283,7 +277,7 @@ bool LEVEL::LoadLayout(LEVELTABLE *tableEntry)
 				for (size_t cx = 0; cx < layout.width; cx += 8)
 				{
 					//Read our chunk index
-					uint8_t chunk = layoutFile->ReadU8();
+					uint8_t chunk = layoutFile.ReadU8();
 					
 					//Get our tiles
 					for (int tv = 0; tv < 8 * 8; tv++)
@@ -291,29 +285,26 @@ bool LEVEL::LoadLayout(LEVELTABLE *tableEntry)
 				}
 				
 				//Skip background line (not used)
-				layoutFile->Seek(layout.width / 8, SEEK_CUR);
+				layoutFile.Seek(layout.width / 8, SEEK_CUR);
 			}
-			
-			delete layoutFile;
 			break;
 		case LEVELFORMAT_TILE:
 			//Get our level dimensions
-			layout.width = layoutFile->ReadBE32();
-			layout.height = layoutFile->ReadBE32();
+			layout.width = layoutFile.ReadBE32();
+			layout.height = layoutFile.ReadBE32();
 			
 			//Allocate our layout
 			layout.foreground = new TILE[layout.width * layout.height];
 			if (layout.foreground == nullptr)
 			{
 				Error(fail = "Failed to allocate layout in memory");
-				delete layoutFile;
 				return true;
 			}
 			
 			//Read our layout file
 			for (size_t tv = 0; tv < layout.width * layout.height; tv++)
 			{
-				uint16_t tmap = layoutFile->ReadBE16();
+				uint16_t tmap = layoutFile.ReadBE16();
 				layout.foreground[tv].altLRB	= (tmap & 0x8000) != 0;
 				layout.foreground[tv].altTop	= (tmap & 0x4000) != 0;
 				layout.foreground[tv].norLRB	= (tmap & 0x2000) != 0;
@@ -322,12 +313,9 @@ bool LEVEL::LoadLayout(LEVELTABLE *tableEntry)
 				layout.foreground[tv].xFlip		= (tmap & 0x0400) != 0;
 				layout.foreground[tv].tile		= (tmap & 0x3FF);
 			}
-			
-			delete layoutFile;
 			break;
 		default:
 			Error(fail = "Unimplemented level format");
-			delete layoutFile;
 			return true;
 	}
 	
@@ -351,79 +339,63 @@ bool LEVEL::LoadCollisionTiles(LEVELTABLE *tableEntry)
 	LOG(("Loading collision tiles... "));
 	
 	//Open our tile collision map files
-	FS_FILE *norMapFile = new FS_FILE(gBasePath + tableEntry->chunkTileReferencePath + ".nor", "rb");
-	FS_FILE *altMapFile = new FS_FILE(gBasePath + tableEntry->chunkTileReferencePath + ".alt", "rb");
+	FS_FILE norMapFile(gBasePath + tableEntry->chunkTileReferencePath + ".nor", "rb");
+	FS_FILE altMapFile(gBasePath + tableEntry->chunkTileReferencePath + ".alt", "rb");
 	
-	if (norMapFile->fail || altMapFile->fail)
+	if (norMapFile.fail || altMapFile.fail)
 	{
-		if (norMapFile)
-			Error(fail = norMapFile->fail);
-		if (altMapFile)
-			Error(fail = altMapFile->fail);
-		delete norMapFile;
-		delete altMapFile;
+		if (norMapFile.fail)
+			Error(fail = norMapFile.fail);
+		if (altMapFile.fail)
+			Error(fail = altMapFile.fail);
 		return true;
 	}
 	
 	//Read our tile collision map data
-	tiles = norMapFile->GetSize();
+	tiles = norMapFile.GetSize();
 	tileMapping = new TILEMAPPING[tiles];
 	
-	if (altMapFile->GetSize() != tiles)
+	if (altMapFile.GetSize() != tiles)
 	{
 		Error(fail = "Normal map and alternate map files don't match in size");
-		delete norMapFile;
-		delete altMapFile;
 		return true;
 	}
 	
 	for (size_t i = 0; i < tiles; i++)
 	{
-		tileMapping[i].normalColTile = norMapFile->ReadU8();
-		tileMapping[i].alternateColTile = altMapFile->ReadU8();
+		tileMapping[i].normalColTile = norMapFile.ReadU8();
+		tileMapping[i].alternateColTile = altMapFile.ReadU8();
 	}
 	
-	delete norMapFile;
-	delete altMapFile;
-	
 	//Open our collision tile files
-	FS_FILE *colNormalFile = new FS_FILE(gBasePath + tableEntry->collisionReferencePath + ".can", "rb");
-	FS_FILE *colRotatedFile = new FS_FILE(gBasePath + tableEntry->collisionReferencePath + ".car", "rb");
-	FS_FILE *colAngleFile = new FS_FILE(gBasePath + tableEntry->collisionReferencePath + ".ang", "rb");
+	FS_FILE colNormalFile(gBasePath + tableEntry->collisionReferencePath + ".can", "rb");
+	FS_FILE colRotatedFile(gBasePath + tableEntry->collisionReferencePath + ".car", "rb");
+	FS_FILE colAngleFile(gBasePath + tableEntry->collisionReferencePath + ".ang", "rb");
 	
-	if (colNormalFile->fail || colRotatedFile->fail || colAngleFile->fail)
+	if (colNormalFile.fail || colRotatedFile.fail || colAngleFile.fail)
 	{
-		if (colNormalFile->fail)
-			Error(fail = colNormalFile->fail);
-		if (colRotatedFile->fail)
-			Error(fail = colRotatedFile->fail);
-		if (colAngleFile->fail)
-			Error(fail = colAngleFile->fail);
-		delete colNormalFile;
-		delete colRotatedFile;
-		delete colAngleFile;
+		if (colNormalFile.fail)
+			Error(fail = colNormalFile.fail);
+		if (colRotatedFile.fail)
+			Error(fail = colRotatedFile.fail);
+		if (colAngleFile.fail)
+			Error(fail = colAngleFile.fail);
 		return true;
 	}
 	
 	//Allocate our collision tile data in memory
-	if ((colNormalFile->GetSize() != colRotatedFile->GetSize()) || (colAngleFile->GetSize() != (colNormalFile->GetSize() / 0x10)))
+	if ((colNormalFile.GetSize() != colRotatedFile.GetSize()) || (colAngleFile.GetSize() != (colNormalFile.GetSize() / 0x10)))
 	{
 		Error(fail = "Collision tile data file sizes don't match each-other (Are the files compressed?)");
-		delete colNormalFile;
-		delete colRotatedFile;
-		delete colAngleFile;
 		return true;
 	}
 	
-	collisionTiles = colNormalFile->GetSize() / 0x10;
+	collisionTiles = colNormalFile.GetSize() / 0x10;
 	collisionTile = new COLLISIONTILE[collisionTiles];
 	
 	if (collisionTile == nullptr)
 	{
 		Error(fail = "Failed to allocate collision tile data in memory");
-		delete colNormalFile;
-		delete colRotatedFile;
-		delete colAngleFile;
 		return true;
 	}
 	
@@ -432,16 +404,12 @@ bool LEVEL::LoadCollisionTiles(LEVELTABLE *tableEntry)
 	{
 		for (int v = 0; v < 0x10; v++)
 		{
-			collisionTile[i].normal[v] = colNormalFile->ReadU8();
-			collisionTile[i].rotated[v] = colRotatedFile->ReadU8();
+			collisionTile[i].normal[v] = colNormalFile.ReadU8();
+			collisionTile[i].rotated[v] = colRotatedFile.ReadU8();
 		}
-		
-		collisionTile[i].angle = colAngleFile->ReadU8();
+		collisionTile[i].angle = colAngleFile.ReadU8();
 	}
 	
-	delete colNormalFile;
-	delete colRotatedFile;
-	delete colAngleFile;
 	LOG(("Success!\n"));
 	return false;
 }
@@ -451,11 +419,10 @@ bool LEVEL::LoadObjects(LEVELTABLE *tableEntry)
 	LOG(("Loading objects... "));
 	
 	//Open our object file
-	FS_FILE *objectFile = new FS_FILE(gBasePath + tableEntry->levelReferencePath + ".obj", "rb");
-	if (objectFile->fail)
+	FS_FILE objectFile(gBasePath + tableEntry->levelReferencePath + ".obj", "rb");
+	if (objectFile.fail)
 	{
-		Error(fail = objectFile->fail);
-		delete objectFile;
+		Error(fail = objectFile.fail);
 		return true;
 	}
 	
@@ -465,17 +432,17 @@ bool LEVEL::LoadObjects(LEVELTABLE *tableEntry)
 		case OBJECTFORMAT_SONIC1:
 		case OBJECTFORMAT_SONIC2:
 		{
-			int objects = objectFile->GetSize() / 6;
+			int objects = objectFile.GetSize() / 6;
 			
 			for (int i = 0; i < objects; i++)
 			{
 				//Read data from the file
-				int16_t xPos = objectFile->ReadBE16();
-				int16_t word2 = objectFile->ReadBE16();
+				int16_t xPos = objectFile.ReadBE16();
+				int16_t word2 = objectFile.ReadBE16();
 				int16_t yPos = word2 & 0x0FFF;
 				
-				uint8_t id = objectFile->ReadU8();
-				uint8_t subtype = objectFile->ReadU8();
+				uint8_t id = objectFile.ReadU8();
+				uint8_t subtype = objectFile.ReadU8();
 				
 				//Read flags from word2
 				bool releaseDestroyed;
@@ -521,8 +488,6 @@ bool LEVEL::LoadObjects(LEVELTABLE *tableEntry)
 			}
 		}
 	}
-	
-	delete objectFile;
 	
 	/*
 	//Open external ring file

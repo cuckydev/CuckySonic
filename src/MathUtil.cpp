@@ -117,10 +117,12 @@ uint32_t RandomNumber()
 		{
 			struct
 			{
-				#ifdef CPU_BIGENDIAN
+				#if ENDIAN == BIG
+					//Big endian - high word first, low word second
 					uint16_t high;
 					uint16_t low;
 				#else
+					//Little endian - low word first, high word second
 					uint16_t low;
 					uint16_t high;
 				#endif

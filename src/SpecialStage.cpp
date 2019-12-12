@@ -36,40 +36,37 @@ SPECIALSTAGE::SPECIALSTAGE(std::string name)
 	}
 	
 	//Open the layout file
-	FS_FILE *fp = new FS_FILE(gBasePath + name + ".ssl", "rb");
-	if (fp->fail)
+	FS_FILE fp(gBasePath + name + ".ssl", "rb");
+	if (fp.fail)
 	{
-		Error(fail = fp->fail);
-		delete fp;
+		Error(fail = fp.fail);
 		return;
 	}
 	
 	//Read layout header
-	width = fp->ReadBE16();
-	height = fp->ReadBE16();
+	width = fp.ReadBE16();
+	height = fp.ReadBE16();
 	
 	layout = new uint8_t[width * height];
 	if (layout == nullptr)
 	{
 		Error(fail = "Failed to allocate the internal stage layout");
-		delete fp;
 		return;
 	}
 	
 	//Read and update the stage's palette
-	uint8_t r1 = fp->ReadU8(); uint8_t g1 = fp->ReadU8(); uint8_t b1 = fp->ReadU8();
-	uint8_t r2 = fp->ReadU8(); uint8_t g2 = fp->ReadU8(); uint8_t b2 = fp->ReadU8();
+	uint8_t r1 = fp.ReadU8(); uint8_t g1 = fp.ReadU8(); uint8_t b1 = fp.ReadU8();
+	uint8_t r2 = fp.ReadU8(); uint8_t g2 = fp.ReadU8(); uint8_t b2 = fp.ReadU8();
 	tile1.SetColour(true, true, true, r1, g1, b1);
 	tile2.SetColour(true, true, true, r2, g2, b2);
 	PalCycle();
 	
 	//Read the layout data
-	fp->Read(layout, width * height, 1);			//Actual sphere map on the stage
-	playerState.direction = (fp->ReadBE16()) >> 8;	//Original game sucks, read as a word into the byte's address (68000 is big-endian, so it only uses the high byte)
-	playerState.xPosLong =   fp->ReadBE16()  << 8;	//The original game stores the positions in the native 8.8 format, extend to 16.16
-	playerState.yPosLong =   fp->ReadBE16()  << 8;
-	ringsLeft = fp->ReadBE16();
-	delete fp;
+	fp.Read(layout, width * height, 1);			//Actual sphere map on the stage
+	playerState.direction = (fp.ReadBE16()) >> 8;	//Original game sucks, read as a word into the byte's address (68000 is big-endian, so it only uses the high byte)
+	playerState.xPosLong =   fp.ReadBE16()  << 8;	//The original game stores the positions in the native 8.8 format, extend to 16.16
+	playerState.yPosLong =   fp.ReadBE16()  << 8;
+	ringsLeft = fp.ReadBE16();
 	
 	//Initialize state
 	rate = 0x1000;

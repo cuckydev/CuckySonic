@@ -5,7 +5,7 @@
 #include "../Log.h"
 
 //Scratch structure
-struct SCRATCH
+struct SCRATCH_GHZPlatform
 {
 	uint8_t weight = 0;
 	uint16_t fallTime = 0;
@@ -17,7 +17,7 @@ struct SCRATCH
 void ObjGHZPlatform_Move(OBJECT *object)
 {
 	//Get (but hopefully not allocate) our scratch
-	SCRATCH *scratch = object->Scratch<SCRATCH>();
+	SCRATCH_GHZPlatform *scratch = object->Scratch<SCRATCH_GHZPlatform>();
 	
 	//Move platform based on our subtype
 	uint8_t type = object->subtype & 0xF;
@@ -131,7 +131,7 @@ void ObjGHZPlatform_Move(OBJECT *object)
 void ObjGHZPlatform(OBJECT *object)
 {
 	//Allocate scratch memory
-	SCRATCH *scratch = object->Scratch<SCRATCH>();
+	SCRATCH_GHZPlatform *scratch = object->Scratch<SCRATCH_GHZPlatform>();
 	
 	switch (object->routine)
 	{

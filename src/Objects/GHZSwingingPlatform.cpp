@@ -5,7 +5,7 @@
 #include "../Log.h"
 
 //Scratch structure
-struct SCRATCH
+struct SCRATCH_GHZSwingingPlatform
 {
 	int16_t origX = 0;
 	int16_t origY = 0;
@@ -14,7 +14,7 @@ struct SCRATCH
 void ObjGHZSwingingPlatform_Move_Individual(OBJECT *parent, OBJECT *child, int16_t sin, int16_t cos)
 {
 	//Get (but hopefully not allocate) our parent's scratch
-	SCRATCH *scratch = parent->Scratch<SCRATCH>();
+	SCRATCH_GHZSwingingPlatform *scratch = parent->Scratch<SCRATCH_GHZSwingingPlatform>();
 	
 	//Get our next position
 	int16_t origX = scratch->origX;
@@ -45,7 +45,7 @@ void ObjGHZSwingingPlatform_Move(OBJECT *object)
 void ObjGHZSwingingPlatform(OBJECT *object)
 {
 	//Allocate scratch memory
-	SCRATCH *scratch = object->Scratch<SCRATCH>();
+	SCRATCH_GHZSwingingPlatform *scratch = object->Scratch<SCRATCH_GHZSwingingPlatform>();
 	
 	switch (object->routine)
 	{

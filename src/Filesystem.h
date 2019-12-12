@@ -20,7 +20,18 @@ class FS_FILE
 		FILE *fp = nullptr;
 	public:
 		//Constructor - Open file
-		FS_FILE(const char *name, const char *mode)
+		FS_FILE(const char *name, const char *mode) { OpenFile(name, mode); }
+		FS_FILE(std::string name, const char *mode) { OpenFile(name.c_str(), mode); }
+		
+		//Destructor - Close file
+		~FS_FILE()
+		{
+			//Close our opened file
+			fclose(fp);
+		}
+		
+		//File open function
+		inline void OpenFile(const char *name, const char *mode)
 		{
 			//Open the given file
 			#ifdef WINDOWS
@@ -48,48 +59,61 @@ class FS_FILE
 				fail = "Failed to open file";
 		}
 		
-		FS_FILE(std::string name, const char *mode) { FS_FILE(name.c_str(), mode); }
-		
-		//Destructor - Close file
-		~FS_FILE()
-		{
-			//Close our opened standard file
-			fclose(fp);
-		}
-		
 		//Read functions
 		//Any size
 		inline size_t Read(void *ptr, size_t size, size_t maxnum)	{ return fread(ptr, size, maxnum, fp); }
 		
 		//One byte
-		inline uint8_t	ReadU8()	{ return fgetc(fp); }
+		inline uint8_t	ReadU8()
+		{
+			uint8_t byte;
+			Read(&byte, 1, 1);
+			return byte;
+		}
 		
 		//Multi-byte big endian
-		inline uint16_t	ReadBE16()	{ return (((uint16_t)fgetc(fp) << 8) | ((uint16_t)fgetc(fp))); }
-		inline uint32_t	ReadBE32()	{ return (((uint32_t)fgetc(fp) << 24) | ((uint32_t)fgetc(fp) << 16) | ((uint32_t)fgetc(fp) << 8) | ((uint32_t)fgetc(fp))); }
-		inline uint64_t	ReadBE64()	{ return (((uint64_t)fgetc(fp) << 56) | ((uint64_t)fgetc(fp) << 48) | ((uint64_t)fgetc(fp) << 40) | ((uint64_t)fgetc(fp) << 32) | ((uint64_t)fgetc(fp) << 24) | ((uint64_t)fgetc(fp) << 16) | ((uint64_t)fgetc(fp) << 8) | ((uint64_t)fgetc(fp))); }
+		inline uint16_t	ReadBE16()
+		{
+			uint8_t bytes[2];
+			Read(bytes, 1, 2);
+			return ((uint16_t)bytes[0] << 8) | bytes[1];
+		}
+		
+		inline uint32_t	ReadBE32()
+		{
+			uint8_t bytes[4];
+			Read(bytes, 1, 4);
+			return ((uint32_t)bytes[0] << 24) | ((uint32_t)bytes[1] << 16) | ((uint16_t)bytes[2] << 8) | bytes[3];
+		}
+		
+		inline uint64_t	ReadBE64()
+		{
+			uint8_t bytes[8];
+			Read(bytes, 1, 8);
+			return ((uint64_t)bytes[0] << 56) | ((uint64_t)bytes[1] << 48) | ((uint64_t)bytes[2] << 40) | ((uint64_t)bytes[3] << 32) | ((uint32_t)bytes[0] << 24) | ((uint32_t)bytes[1] << 16) | ((uint16_t)bytes[2] << 8) | bytes[3];
+		}
 		
 		//Multi-byte little endian
-		inline uint16_t	ReadLE16()	{ return (((uint16_t)fgetc(fp)) | ((uint16_t)fgetc(fp) << 8)); }
-		inline uint32_t	ReadLE32()	{ return (((uint32_t)fgetc(fp)) | ((uint32_t)fgetc(fp) << 8) | ((uint32_t)fgetc(fp) << 16) | ((uint32_t)fgetc(fp) << 24)); }
-		inline uint64_t	ReadLE64()	{ return (((uint64_t)fgetc(fp)) | ((uint64_t)fgetc(fp) << 8) | ((uint64_t)fgetc(fp) << 16) | ((uint64_t)fgetc(fp) << 24) | ((uint64_t)fgetc(fp) << 32) | ((uint64_t)fgetc(fp) << 40) | ((uint64_t)fgetc(fp) << 48) | ((uint64_t)fgetc(fp) << 56)); }
+		inline uint16_t	ReadLE16()
+		{
+			uint8_t bytes[2];
+			Read(bytes, 1, 2);
+			return ((uint16_t)bytes[1] << 8) | bytes[0];
+		}
 		
-		//Write function
-		//Any size
-		inline size_t Write(const void *ptr, size_t size, size_t maxnum)	{ return fwrite(ptr, size, maxnum, fp); }
+		inline uint32_t	ReadLE32()
+		{
+			uint8_t bytes[4];
+			Read(bytes, 1, 4);
+			return ((uint32_t)bytes[3] << 24) | ((uint32_t)bytes[2] << 16) | ((uint16_t)bytes[1] << 8) | bytes[0];
+		}
 		
-		//One byte
-		inline size_t	WriteU8(const uint8_t val)	{ return fputc(val, fp); }
-		
-		//Multi-byte big endian
-		inline uint16_t	WriteBE16(const uint16_t val)	{ return (fputc((val >> 8) & 0xFF, fp) + fputc(val & 0xFF, fp)); }
-		inline uint32_t	WriteBE32(const uint32_t val)	{ return (fputc((val >> 24) & 0xFF, fp) + fputc((val >> 16) & 0xFF, fp) + fputc((val >> 8) & 0xFF, fp) + fputc(val & 0xFF, fp)); }
-		inline uint64_t	WriteBE64(const uint64_t val)	{ return (fputc((val >> 56) & 0xFF, fp) + fputc((val >> 48) & 0xFF, fp) + fputc((val >> 40) & 0xFF, fp) + fputc((val >> 32) & 0xFF, fp) + fputc((val >> 24) & 0xFF, fp) + fputc((val >> 16) & 0xFF, fp) + fputc((val >> 8) & 0xFF, fp) + fputc(val & 0xFF, fp)); }
-		
-		//Multi-byte little endian
-		inline uint16_t WriteLE16(const uint16_t val)	{ return (fputc(val & 0xFF, fp) + fputc((val >> 8) & 0xFF, fp)); }
-		inline uint32_t	WriteLE32(const uint32_t val)	{ return (fputc(val & 0xFF, fp) + fputc((val >> 8) & 0xFF, fp) + fputc((val >> 16) & 0xFF, fp) + fputc((val >> 24) & 0xFF, fp)); }
-		inline uint64_t	WriteLE64(const uint64_t val)	{ return (fputc(val & 0xFF, fp) + fputc((val >> 8) & 0xFF, fp) + fputc((val >> 16) & 0xFF, fp) + fputc((val >> 24) & 0xFF, fp) + fputc((val >> 32) & 0xFF, fp) + fputc((val >> 40) & 0xFF, fp) + fputc((val >> 48) & 0xFF, fp) + fputc((val >> 56) & 0xFF, fp)); }
+		inline uint64_t	ReadLE64()
+		{
+			uint8_t bytes[8];
+			Read(bytes, 1, 8);
+			return ((uint64_t)bytes[7] << 56) | ((uint64_t)bytes[6] << 48) | ((uint64_t)bytes[5] << 40) | ((uint64_t)bytes[4] << 32) | ((uint32_t)bytes[3] << 24) | ((uint32_t)bytes[2] << 16) | ((uint16_t)bytes[1] << 8) | bytes[0];
+		}
 		
 		//Seek and tell functions
 		inline int Seek(long int offset, int origin)	{ return fseek(fp, offset, origin); }

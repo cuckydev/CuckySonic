@@ -870,7 +870,7 @@ void ObjInvincibilityStars(OBJECT *object)
 }
 
 //Player class
-#define READ_SPEEDDEFINITION(definition)	definition.top = playerSpec->ReadBE16(); definition.acceleration = playerSpec->ReadBE16(); definition.deceleration = playerSpec->ReadBE16(); definition.rollDeceleration = playerSpec->ReadBE16(); definition.jumpForce = playerSpec->ReadBE16(); definition.jumpRelease = playerSpec->ReadBE16();
+#define READ_SPEEDDEFINITION(definition)	definition.top = playerSpec.ReadBE16(); definition.acceleration = playerSpec.ReadBE16(); definition.deceleration = playerSpec.ReadBE16(); definition.rollDeceleration = playerSpec.ReadBE16(); definition.jumpForce = playerSpec.ReadBE16(); definition.jumpRelease = playerSpec.ReadBE16();
 
 PLAYER::PLAYER(std::string specPath, PLAYER *myFollow, size_t myController) : controller(myController), follow(myFollow)
 {
@@ -890,23 +890,22 @@ PLAYER::PLAYER(std::string specPath, PLAYER *myFollow, size_t myController) : co
 	}
 	
 	//Read properties from the specifications
-	FS_FILE *playerSpec = new FS_FILE(specPath + ".psp", "rb");
-	if (playerSpec->fail)
+	FS_FILE playerSpec(specPath + ".psp", "rb");
+	if (playerSpec.fail)
 	{
-		Error(fail = playerSpec->fail);
-		delete playerSpec;
+		Error(fail = playerSpec.fail);
 		return;
 	}
 	
-	xRadius = playerSpec->ReadU8();
-	yRadius = playerSpec->ReadU8();
+	xRadius = playerSpec.ReadU8();
+	yRadius = playerSpec.ReadU8();
 	
 	defaultXRadius = xRadius;
 	defaultYRadius = yRadius;
-	rollXRadius = playerSpec->ReadU8();
-	rollYRadius = playerSpec->ReadU8();
+	rollXRadius = playerSpec.ReadU8();
+	rollYRadius = playerSpec.ReadU8();
 	
-	characterType = (CHARACTERTYPE)playerSpec->ReadBE16();
+	characterType = (CHARACTERTYPE)playerSpec.ReadBE16();
 	
 	READ_SPEEDDEFINITION(normalSD);
 	READ_SPEEDDEFINITION(speedShoesSD);
@@ -916,8 +915,6 @@ PLAYER::PLAYER(std::string specPath, PLAYER *myFollow, size_t myController) : co
 	READ_SPEEDDEFINITION(underwaterSpeedShoesSD);
 	READ_SPEEDDEFINITION(underwaterSuperSD);
 	READ_SPEEDDEFINITION(underwaterSuperSpeedShoesSD);
-	
-	delete playerSpec;
 	
 	//Initialize speed
 	if (!super)

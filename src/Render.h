@@ -7,16 +7,45 @@
 struct RECT { int x, y, w, h; };
 struct POINT { int x, y; };
 	
-//Palette and colours
+//Pixel colour format
 class PIXELFORMAT
 {
-	private:
+	public:
 		uint8_t bitsPerPixel, bytesPerPixel;	//Sizes of a pixel
 		uint32_t rMask, gMask, bMask, aMask;	//Mask of the colour in the pixel
 		uint8_t rLoss, gLoss, bLoss, aLoss;		//Bitshift to mask size
 		uint8_t rShift, gShift, bShift, aShift;	//Bitshift into mask position
+		
+	public:
+		//Map / get colour
+		inline uint32_t MapRGBA(uint8_t r, uint8_t g, uint8_t b, uint8_t a)
+		{
+			return (r >> rLoss) << rShift
+				 | (g >> gLoss) << gShift
+				 | (b >> bLoss) << bShift
+				 | (a >> aLoss) << aShift;
+		}
+		
+		inline void GetRGBA(uint32_t rgb, uint8_t *r, uint8_t *g, uint8_t *b, uint8_t *a)
+		{
+			if (r != nullptr)
+				*r = (rgb >> rShift) << rLoss;
+			if (g != nullptr)
+				*g = (rgb >> gShift) << gLoss;
+			if (b != nullptr)
+				*b = (rgb >> bShift) << bLoss;
+			if (a != nullptr)
+				*a = (rgb >> aShift) << aLoss;
+		}
+		
+		//No alpha channel (0xFF, opaque)
+		inline uint32_t MapRGB(uint8_t r, uint8_t g, uint8_t b) { return MapRGBA(r, g, b, 0xFF); }
+		inline void GetRGB(uint32_t rgb, uint8_t *r, uint8_t *g, uint8_t *b) { GetRGBA(rgb, r, g, b, nullptr); }
 };
 
+extern PIXELFORMAT gPixelFormat;
+
+//Palette and colours
 class COLOUR
 {
 	public:
@@ -26,7 +55,7 @@ class COLOUR
 		
 	public:
 		//Constructors
-		COLOUR() { return; } //Undefined constructor (to have colour set later)
+		COLOUR() { return; } //Blank, for manual construction
 		
 		COLOUR(const COLOUR &copyColour) //Copies the given colour
 		{
@@ -42,9 +71,6 @@ class COLOUR
 			SetColour(true, true, true, setR, setG, setB);
 		}
 		
-		//Destructor (blank)
-		~COLOUR() { return; };
-		
 		//Colour modification
 		inline void SetColour(const bool setMod, const bool setOrig, const bool doRegen, const uint8_t setR, const uint8_t setG, const uint8_t setB)	//Completely changes the colour
 		{
@@ -57,7 +83,7 @@ class COLOUR
 		inline void Regen(const uint8_t setR, const uint8_t setG, const uint8_t setB)
 		{
 			//Get our colour using the native format
-			colour = (setR << 16) | (setG << 8) | setB;
+			colour = gPixelFormat.MapRGB(setR, setG, setB);
 		}
 };
 
@@ -73,7 +99,6 @@ class PALETTE
 		PALETTE(const size_t setColours) //Allocated undefined array of setColours length
 		{
 			//Allocate array
-			colours = setColours;
 			colour = new COLOUR[colours = setColours]{};
 		}
 		
@@ -94,7 +119,6 @@ class PALETTE
 				delete[] colour;
 			
 			//Copy given array
-			colours = setColours;
 			colour = new COLOUR[colours = setColours]{};
 			for (size_t i = 0; i < colours; i++)
 				colour[i] = COLOUR(setColour[i]);
@@ -179,7 +203,6 @@ class SOFTWAREBUFFER
 		
 	public:
 		SOFTWAREBUFFER(int bufWidth, int bufHeight);
-		~SOFTWAREBUFFER();
 		
 		void DrawPoint(const int layer, const POINT *point, const COLOUR *colour);
 		void DrawQuad(const int layer, const RECT *quad, const COLOUR *colour);
@@ -188,7 +211,7 @@ class SOFTWAREBUFFER
 		bool RenderToScreen(const COLOUR *backgroundColour);
 		
 		//Blit function
-		template <typename T> inline void BlitQueue(const COLOUR *backgroundColour, const T *buffer, const int pitch)
+		template <typename T> inline void BlitQueue(const COLOUR *backgroundColour, T *buffer, const int pitch)
 		{
 			//Clear to the given background colour
 			if (backgroundColour != nullptr)
@@ -202,69 +225,69 @@ class SOFTWAREBUFFER
 			for (int i = RENDERLAYERS - 1; i >= 0; i--)
 			{
 				//Iterate through each entry
-				for (size_t i = 0; i < queue[i].size(); i++)
+				for (size_t v = 0; v < queue[i].size(); v++)
 				{
-					RENDERQUEUE *entry = &queue[i];
+					RENDERQUEUE entry = queue[i][v];
 					
-					switch (entry->type)
+					switch (entry.type)
 					{
 						case RENDERQUEUE_TEXTURE:
 						{
-							uint8_t *srcBuffer = entry->texture.texture->texture;
-							T *dstBuffer = buffer + (entry->dest.x + entry->dest.y * pitch);
+							uint8_t *srcBuffer = entry.texture.texture->texture;
+							T *dstBuffer = buffer + (entry.dest.x + entry.dest.y * pitch);
 							
 							//Get how to render the texture according to our x and y flipping
-							const int finc = -(entry->texture.xFlip << 1) + 1;
+							const int finc = -(entry.texture.xFlip << 1) + 1;
 							int fpitch;
 							
 							//Vertical flip
-							if (entry->texture.yFlip)
+							if (entry.texture.yFlip)
 							{
 								//Start at bottom and move upwards
-								srcBuffer += entry->texture.srcX + entry->texture.texture->width * (entry->texture.srcY + (entry->dest.h - 1));
-								fpitch = -(entry->texture.texture->width + entry->dest.w);
+								srcBuffer += entry.texture.srcX + entry.texture.texture->width * (entry.texture.srcY + (entry.dest.h - 1));
+								fpitch = -(entry.texture.texture->width + entry.dest.w);
 							}
 							else
 							{
 								//Move downwards
-								srcBuffer += (entry->texture.srcX + entry->texture.srcY * entry->texture.texture->width);
-								fpitch = entry->texture.texture->width - entry->dest.w;
+								srcBuffer += (entry.texture.srcX + entry.texture.srcY * entry.texture.texture->width);
+								fpitch = entry.texture.texture->width - entry.dest.w;
 							}
 							
 							//Horizontal flip
-							if (entry->texture.xFlip)
+							if (entry.texture.xFlip)
 							{
 								//Start at right side
-								srcBuffer += entry->dest.w - 1;
-								fpitch += entry->dest.w * 2;
+								srcBuffer += entry.dest.w - 1;
+								fpitch += entry.dest.w * 2;
 							}
 							
 							//Iterate through each pixel
-							while (entry->dest.h-- > 0)
+							while (entry.dest.h-- > 0)
 							{
-								for (int x = 0; x < entry->dest.w; x++)
+								for (int x = 0; x < entry.dest.w; x++)
 								{
 									if (*srcBuffer)
-										*dstBuffer = entry->texture.palette->colour[*srcBuffer].colour;
+										*dstBuffer = entry.texture.palette->colour[*srcBuffer].colour;
 									srcBuffer += finc;
 									dstBuffer++;
 								}
 								
 								srcBuffer += fpitch;
-								dstBuffer += pitch - entry->dest.w;
+								dstBuffer += pitch - entry.dest.w;
 							}
 							break;
 						}
 						case RENDERQUEUE_SOLID:
 						{
 							//Iterate through each pixel
-							T *dstBuffer = buffer + (entry->dest.x + entry->dest.y * pitch);
+							T *dstBuffer = buffer + (entry.dest.x + entry.dest.y * pitch);
 							
-							while (entry->dest.h-- > 0)
+							while (entry.dest.h-- > 0)
 							{
-								for (int x = 0; x < entry->dest.w; x++)
-									*dstBuffer++ = entry->solid.colour->colour;
-								dstBuffer += pitch - entry->dest.w;
+								for (int x = 0; x < entry.dest.w; x++)
+									*dstBuffer++ = entry.solid.colour->colour;
+								dstBuffer += pitch - entry.dest.w;
 							}
 							break;
 						}
@@ -279,10 +302,15 @@ class SOFTWAREBUFFER
 
 };
 
-//Current render specifications
+//Render specifications / configuration
 struct RENDERSPEC
 {
+	//Render width, height, and scale
 	int width, height, scale;
+	
+	//Framerate and vsync
+	double framerate;
+	bool forceVsync, forceVsyncValue;
 };
 
 //Globals

@@ -88,8 +88,6 @@ SOURCES = \
 	Objects/PurpleRock \
 	Objects/Minecart \
 	Audio \
-	Audio_stb_vorbis \
-	Audio_miniaudio \
 	Error \
 	Filesystem \
 	Render \
@@ -98,13 +96,11 @@ SOURCES = \
 
 #Backend source files
 ifeq ($(BACKEND), SDL2)
-#	SOURCES += \
-#		Backend/SDL2/Error \
-#		Backend/SDL2/Filesystem \
-#		Backend/SDL2/Render \
-#		Backend/SDL2/Event \
-#		Backend/SDL2/Input \
-#		Backend/SDL2/Audio
+	SOURCES += \
+		Backend/SDL2/Core \
+		Backend/SDL2/Filesystem \
+		Backend/SDL2/Render \
+		Backend/SDL2/Event
 endif
 
 #What to compile

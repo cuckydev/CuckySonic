@@ -5,8 +5,8 @@
 template <typename T> struct LL_NODE
 {
 	T node_entry;
-	LL_NODE<T> *next;
-	LL_NODE<T> *prev;
+	LL_NODE<T> *next = nullptr;
+	LL_NODE<T> *prev = nullptr;
 };
 
 template <typename T> class LINKEDLIST
