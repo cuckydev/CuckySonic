@@ -312,25 +312,28 @@ bool SOFTWAREBUFFER::RenderToScreen(const COLOUR *backgroundColour)
 	if (Backend_GetOutputBuffer(&outBuffer, &outPitch))
 		return true;
 	
-	//Render to our buffer
-	switch (gPixelFormat.bytesPerPixel)
+	if (outBuffer != nullptr)
 	{
-		case 1:
-			BlitQueue<uint8_t>(backgroundColour,  (uint8_t*)outBuffer, outPitch / 1);
-			break;
-		case 2:
-			BlitQueue<uint16_t>(backgroundColour, (uint16_t*)outBuffer, outPitch / 2);
-			break;
-	#ifdef uint24_t //If the compiler supports 24-bit integers, then I mean, I guess
-		case 3:
-			BlitQueue<uint24_t>(backgroundColour, (uint24_t*)outBuffer, outPitch / 3);
-			break;
-	#endif
-		case 4:
-			BlitQueue<uint32_t>(backgroundColour, (uint32_t*)outBuffer, outPitch / 4);
-			break;
-		default:
-			return Error("Unsupported BPP");
+		//Render to our buffer
+		switch (gPixelFormat.bytesPerPixel)
+		{
+			case 1:
+				BlitQueue<uint8_t>(backgroundColour,  (uint8_t*)outBuffer, outPitch / 1);
+				break;
+			case 2:
+				BlitQueue<uint16_t>(backgroundColour, (uint16_t*)outBuffer, outPitch / 2);
+				break;
+		#ifdef uint24_t //If the compiler supports 24-bit integers, then I mean, I guess
+			case 3:
+				BlitQueue<uint24_t>(backgroundColour, (uint24_t*)outBuffer, outPitch / 3);
+				break;
+		#endif
+			case 4:
+				BlitQueue<uint32_t>(backgroundColour, (uint32_t*)outBuffer, outPitch / 4);
+				break;
+			default:
+				return Error("Unsupported BPP");
+		}
 	}
 	
 	//Clear all layers

@@ -102,6 +102,13 @@ ifeq ($(BACKEND), SDL2)
 		Backend/SDL2/Render \
 		Backend/SDL2/Event
 endif
+ifeq ($(BACKEND), VOID)
+	SOURCES += \
+		Backend/Void/Core \
+		Backend/Void/Filesystem \
+		Backend/Void/Render \
+		Backend/Void/Event
+endif
 
 #What to compile
 OBJECTS = $(addprefix obj/$(FILENAME)/, $(addsuffix .o, $(SOURCES)))
