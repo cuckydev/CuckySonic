@@ -10,6 +10,7 @@ endif
 
 FILENAME ?= $(FILENAME_DEF)
 
+#Windows specific (NOTE: to turn off Windows compilation for cross compiling, simply use WINDOWS=0)
 ifeq ($(OS), Windows_NT)
 	WINDOWS ?= 1
 endif
@@ -34,6 +35,25 @@ ifeq ($(BACKEND), SDL2)
 		LIBS += `pkg-config --libs sdl2 --static`
 	else
 		LIBS += `pkg-config --libs sdl2`
+	endif
+endif
+
+#Nintendo Switch compilation
+ifeq ($(SWITCH), 1)
+	ifeq ($(strip $(DEVKITPRO)),)
+		$(error "Please set DEVKITPRO in your environment. export DEVKITPRO=<path to>/devkitpro")
+	endif
+
+	include $(DEVKITPRO)/libnx/switch_rules
+	LIBNX:=$(DEVKITPRO)/libnx
+	INCLUDE=-I$(LIBNX)/include -I$(PORTLIBS)/include/SDL2 -I$(PORTLIBS)/include
+
+	CXXFLAGS += -march=armv8-a+crc+crypto -mtune=cortex-a57 -mtp=soft -fPIE -DSWITCH $(INCLUDE)
+	LIBS += -specs=$(DEVKITPRO)/libnx/switch.specs -L$(LIBNX)/lib -lnx -lm
+	PKGCONFIG = $(DEVKITPRO)/portlibs/switch/bin/aarch64-none-elf-pkg-config
+
+	ifdef ENABLE_NXLINK
+		CXXFLAGS += -DENABLE_NXLINK
 	endif
 endif
 
@@ -120,7 +140,17 @@ ifeq ($(WINDOWS), 1)
 endif
 
 #Compilation code
+ifeq ($(SWITCH), 1)
+#Switch compilation
+all: build/$(FILENAME).nro
+
+build/$(FILENAME).nro: build/$(FILENAME)
+	@elf2nro $< $@ $(NROFLAGS)
+	@echo built ... $(notdir $@)
+else
+#Regular compilation
 all: build/$(FILENAME)
+endif
 
 build/$(FILENAME): $(OBJECTS)
 	@mkdir -p $(@D)
