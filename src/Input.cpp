@@ -76,13 +76,13 @@ CONTROLMASK CONTROLLER::GetAxisState(int16_t chkAxisX, int16_t chkAxisY)
 	if (angle >= -DIRRAD && angle <= DIRRAD)
 		state.right = true;
 	//Down
-	if (angle >= 0x4000 - DIRRAD && angle <= 0x4000 + DIRRAD)
+	if (angle >= M_PI_2 - DIRRAD && angle <= M_PI_2 + DIRRAD)
 		state.down = true;
 	//Left
-	if (angle >= 0x8000 - DIRRAD || angle <= -0x8000 + DIRRAD)
+	if (angle >= M_PI - DIRRAD || angle <= -M_PI + DIRRAD)
 		state.left = true;
 	//Up
-	if (angle >= -0x4000 - DIRRAD && angle <= -0x4000 + DIRRAD)
+	if (angle >= -M_PI_2 - DIRRAD && angle <= -M_PI_2 + DIRRAD)
 		state.up = true;
 	
 	return state;
