@@ -97,7 +97,7 @@ bool LoadAllSoundEffects()
 //Sub-system functions
 bool InitializeAudio()
 {
-	LOG(("Initializing audio...\n"));
+	LOG(("Initializing audio... "));
 	LOG(("Success!\n"));
 	return false;
 }

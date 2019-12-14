@@ -29,7 +29,7 @@ void ObjBouncingRing_Spawner(OBJECT *object)
 	//Spawn the given amount of rings
 	union
 	{
-		#ifdef CPU_BIGENDIAN
+		#ifdef ENDIAN_BIG
 			struct
 			{
 				uint8_t speed;

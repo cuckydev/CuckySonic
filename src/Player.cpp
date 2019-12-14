@@ -3677,10 +3677,10 @@ static const uint8_t sonicPalette[16][4][3] = {
 	{{0xFF, 0xFF, 0x24}, {0xFF, 0xFF, 0x91}, {0xFF, 0xFF, 0xDA}, {0xFF, 0xFF, 0xFF}},
 };
 
-#define SET_PALETTE_FROM_ENTRY(pal, entry)	pal->colour[0x2].SetColour(true, false, true, entry[0][0], entry[0][1], entry[0][2]);	\
-											pal->colour[0x2].SetColour(true, false, true, entry[1][0], entry[1][1], entry[1][2]);	\
-											pal->colour[0x2].SetColour(true, false, true, entry[2][0], entry[2][1], entry[2][2]);	\
-											pal->colour[0x2].SetColour(true, false, true, entry[3][0], entry[3][1], entry[3][2]);
+#define SET_PALETTE_FROM_ENTRY(pal, entry)	pal->colour[2].SetColour(true, false, true, entry[0][0], entry[0][1], entry[0][2]);	\
+											pal->colour[3].SetColour(true, false, true, entry[1][0], entry[1][1], entry[1][2]);	\
+											pal->colour[4].SetColour(true, false, true, entry[2][0], entry[2][1], entry[2][2]);	\
+											pal->colour[5].SetColour(true, false, true, entry[3][0], entry[3][1], entry[3][2]);
 
 void PLAYER::SuperPaletteCycle()
 {

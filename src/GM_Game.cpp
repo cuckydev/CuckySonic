@@ -25,26 +25,26 @@ static const char **characterSetList[] = {
 	knucklesOnly,
 };
 
-bool GM_Game(bool *error)
+bool GM_Game(bool *bError)
 {
 	//Load level with characters given
 	gLevel = new LEVEL(gGameLoadLevel, characterSetList[gGameLoadCharacter]);
 	if (gLevel->fail != nullptr)
-		return (*error = true);
+		return (*bError = true);
 	
 	//Fade level from black
 	gLevel->SetFade(true, false);
 	
 	//Our loop
-	bool exit = false;
+	bool bExit = false;
 	
-	while ((!exit) && (!(*error)))
+	while (!(bExit || *bError))
 	{
 		//Handle events
-		exit = HandleEvents();
+		bExit = HandleEvents();
 		
 		//Update level
-		if ((*error = gLevel->Update()) == true)
+		if ((*bError = gLevel->Update()) == true)
 			break;
 		
 		//Handle level fading
@@ -71,7 +71,7 @@ bool GM_Game(bool *error)
 		gLevel->Draw();
 		
 		//Render our software buffer to the screen
-		if ((*error = gSoftwareBuffer->RenderToScreen(&gLevel->background->texture->loadedPalette->colour[0])) == true)
+		if ((*bError = gSoftwareBuffer->RenderToScreen(&gLevel->background->texture->loadedPalette->colour[0])) == true)
 			break;
 		
 		//Go to next state if set to break this state
@@ -81,5 +81,5 @@ bool GM_Game(bool *error)
 	
 	//Unload level and exit
 	delete gLevel;
-	return exit;
+	return bExit;
 }

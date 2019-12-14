@@ -4,6 +4,8 @@
 #include "../MathUtil.h"
 #include "../Log.h"
 
+//#define FIX_PLAYER_RELEASE //In the original (and shockingly, even the Sonic 2 port of the object), the ledge sets you to fall if you're standing on *any* object, not just the actual ledge
+
 const int8_t ledgeSlope[] = {
 	 0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  1,  1,  1,  1,  2,  2,  2,  2,
 	 3,  3,  3,  3,  4,  4,  4,  4,  5,  5,  5,  5,  6,  6,  6,  6,  7,  7,  7,  7,  8,  8,  8,  8,
@@ -126,9 +128,12 @@ void ObjGHZLedge(OBJECT *object)
 					for (size_t i = 0; i < gLevel->playerList.size(); i++)
 					{
 						PLAYER *player = gLevel->playerList[i];
-						if (player->status.shouldNotFall) //WHAT THE FUCK ARE YOU DOING
+					#ifndef FIX_PLAYER_RELEASE
+						if (player->status.shouldNotFall)
+					#else
+						if (object->playerContact[i].standing)
+					#endif
 						{
-							//WHAT THE FUUUCK
 							player->status.shouldNotFall = false;
 							player->status.pushing = false;
 							player->prevAnim = (PLAYERANIMATION)1;

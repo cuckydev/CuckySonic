@@ -28,7 +28,7 @@ TEXTURE::TEXTURE(std::string path)
 	LOG(("Loading texture from %s... ", path.c_str()));
 	
 	//Open our given file file
-	FS_FILE fp(gBasePath + path, "rb");
+	FS_FILE fp(gBasePath + (source = path), "rb");
 	if (fp.fail)
 	{
 		Error(fail = fp.fail);

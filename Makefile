@@ -100,14 +100,14 @@ ifeq ($(BACKEND), SDL2)
 		Backend/SDL2/Core \
 		Backend/SDL2/Filesystem \
 		Backend/SDL2/Render \
-		Backend/SDL2/Event
+		Backend/SDL2/EventInput
 endif
 ifeq ($(BACKEND), VOID)
 	SOURCES += \
 		Backend/Void/Core \
 		Backend/Void/Filesystem \
 		Backend/Void/Render \
-		Backend/Void/Event
+		Backend/Void/EventInput
 endif
 
 #What to compile

@@ -188,8 +188,8 @@ bool LEVEL::LoadMappings(LEVELTABLE *tableEntry)
 		case LEVELFORMAT_CHUNK128:
 		{
 			//Open our chunk mapping file
-			FS_FILE mappingFile(gBasePath + tableEntry->chunkTileReferencePath, "rb");
-			if (mappingFile.fail)
+			FS_FILE mappingFile(gBasePath + tableEntry->chunkTileReferencePath + ".chk", "rb");
+			if (mappingFile.fail != nullptr)
 			{
 				Error(fail = mappingFile.fail);
 				return true;
@@ -238,8 +238,8 @@ bool LEVEL::LoadLayout(LEVELTABLE *tableEntry)
 	LOG(("Loading layout... "));
 	
 	//Open our layout file
-	FS_FILE layoutFile(gBasePath + tableEntry->levelReferencePath, "rb");
-	if (layoutFile.fail)
+	FS_FILE layoutFile(gBasePath + tableEntry->levelReferencePath + ".lay", "rb");
+	if (layoutFile.fail != nullptr)
 	{
 		Error(fail = layoutFile.fail);
 		return true;
@@ -342,11 +342,11 @@ bool LEVEL::LoadCollisionTiles(LEVELTABLE *tableEntry)
 	FS_FILE norMapFile(gBasePath + tableEntry->chunkTileReferencePath + ".nor", "rb");
 	FS_FILE altMapFile(gBasePath + tableEntry->chunkTileReferencePath + ".alt", "rb");
 	
-	if (norMapFile.fail || altMapFile.fail)
+	if (norMapFile.fail != nullptr || altMapFile.fail != nullptr)
 	{
-		if (norMapFile.fail)
+		if (norMapFile.fail != nullptr)
 			Error(fail = norMapFile.fail);
-		if (altMapFile.fail)
+		if (altMapFile.fail != nullptr)
 			Error(fail = altMapFile.fail);
 		return true;
 	}
@@ -372,13 +372,13 @@ bool LEVEL::LoadCollisionTiles(LEVELTABLE *tableEntry)
 	FS_FILE colRotatedFile(gBasePath + tableEntry->collisionReferencePath + ".car", "rb");
 	FS_FILE colAngleFile(gBasePath + tableEntry->collisionReferencePath + ".ang", "rb");
 	
-	if (colNormalFile.fail || colRotatedFile.fail || colAngleFile.fail)
+	if (colNormalFile.fail != nullptr || colRotatedFile.fail != nullptr || colAngleFile.fail != nullptr)
 	{
-		if (colNormalFile.fail)
+		if (colNormalFile.fail != nullptr)
 			Error(fail = colNormalFile.fail);
-		if (colRotatedFile.fail)
+		if (colRotatedFile.fail != nullptr)
 			Error(fail = colRotatedFile.fail);
-		if (colAngleFile.fail)
+		if (colAngleFile.fail != nullptr)
 			Error(fail = colAngleFile.fail);
 		return true;
 	}
@@ -420,7 +420,7 @@ bool LEVEL::LoadObjects(LEVELTABLE *tableEntry)
 	
 	//Open our object file
 	FS_FILE objectFile(gBasePath + tableEntry->levelReferencePath + ".obj", "rb");
-	if (objectFile.fail)
+	if (objectFile.fail != nullptr)
 	{
 		Error(fail = objectFile.fail);
 		return true;
@@ -553,7 +553,7 @@ bool LEVEL::LoadArt(LEVELTABLE *tableEntry)
 		{
 			//Load our foreground tilemap
 			tileTexture = new TEXTURE(tableEntry->artReferencePath + ".tileset.bmp");
-			if (tileTexture->fail)
+			if (tileTexture->fail != nullptr)
 			{
 				Error(fail = tileTexture->fail);
 				return true;
@@ -569,7 +569,7 @@ bool LEVEL::LoadArt(LEVELTABLE *tableEntry)
 	
 	//Load background art
 	background = new BACKGROUND(tableEntry->artReferencePath + ".background.bmp", tableEntry->backFunction);
-	if (background->fail)
+	if (background->fail != nullptr)
 	{
 		Error(fail = background->fail);
 		return true;
@@ -688,7 +688,7 @@ LEVEL::LEVEL(int id, const char *players[])
 	{
 		//Create our player
 		PLAYER *newPlayer = new PLAYER(*players, follow, i);
-		if (newPlayer->fail)
+		if (newPlayer->fail != nullptr)
 		{
 			fail = newPlayer->fail;
 			UnloadAll();

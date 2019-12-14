@@ -137,14 +137,16 @@ void TitleBackground(BACKGROUND *background, bool doScroll, int cameraX, int cam
 }
 
 //Gamemode code
-bool GM_Title(bool *error)
+bool GM_Title(bool *bError)
 {
 	//Load our title sheet and background
-	TEXTURE *titleTexture = new TEXTURE("data/Title.bmp");
-	if (titleTexture->fail != nullptr)
-		return (*error = !Error(titleTexture->fail));
+	TEXTURE titleTexture("data/Title.bmp");
+	if (titleTexture.fail != nullptr)
+		return (*bError = !Error(titleTexture.fail));
 	
-	BACKGROUND *background = new BACKGROUND("data/TitleBackground.bmp", &TitleBackground);
+	BACKGROUND background("data/TitleBackground.bmp", &TitleBackground);
+	if (background.fail != nullptr)
+		return (*bError = !Error(background.fail));
 	
 	//Emblem and banner positions
 	const int emblemX = (gRenderSpec.width - titleEmblem.w) / 2;
@@ -178,16 +180,16 @@ bool GM_Title(bool *error)
 	bool selected = false;
 	
 	//Make our palette black for fade-in
-	FillPaletteBlack(titleTexture->loadedPalette);
-	FillPaletteBlack(background->texture->loadedPalette);
+	FillPaletteBlack(titleTexture.loadedPalette);
+	FillPaletteBlack(background.texture->loadedPalette);
 	
 	//Our loop
-	bool exit = false;
+	bool bExit = false;
 	
-	while ((!exit) && (!(*error)))
+	while (!(bExit || *bError))
 	{
 		//Handle events
-		exit = HandleEvents();
+		bExit = HandleEvents();
 		
 		//Fade in/out
 		bool breakThisState = false;
@@ -195,14 +197,14 @@ bool GM_Title(bool *error)
 		if (!selected)
 		{
 			//Fade asset sheet and background palette in
-			PaletteFadeInFromBlack(titleTexture->loadedPalette);
-			PaletteFadeInFromBlack(background->texture->loadedPalette);
+			PaletteFadeInFromBlack(titleTexture.loadedPalette);
+			PaletteFadeInFromBlack(background.texture->loadedPalette);
 		}
 		else
 		{
 			//Fade asset sheet and background palette out
-			bool res1 = PaletteFadeOutToBlack(titleTexture->loadedPalette);
-			bool res2 = PaletteFadeOutToBlack(background->texture->loadedPalette);
+			bool res1 = PaletteFadeOutToBlack(titleTexture.loadedPalette);
+			bool res2 = PaletteFadeOutToBlack(background.texture->loadedPalette);
 			breakThisState = res1 && res2;
 		}
 		
@@ -219,11 +221,11 @@ bool GM_Title(bool *error)
 		}
 		
 		//Render background
-		background->Draw(true, backgroundScroll, 0);
+		background.Draw(true, backgroundScroll, 0);
 		
 		//Render title screen banner and emblem
-		gSoftwareBuffer->DrawTexture(titleTexture, titleTexture->loadedPalette, &titleEmblem, TITLELAYER_EMBLEM, emblemX, emblemY + titleYShift / 0x100, false, false);
-		gSoftwareBuffer->DrawTexture(titleTexture, titleTexture->loadedPalette, &titleBanner, TITLELAYER_BANNER, bannerX, bannerY + titleYShift / 0x100, false, false);
+		gSoftwareBuffer->DrawTexture(&titleTexture, titleTexture.loadedPalette, &titleEmblem, TITLELAYER_EMBLEM, emblemX, emblemY + titleYShift / 0x100, false, false);
+		gSoftwareBuffer->DrawTexture(&titleTexture, titleTexture.loadedPalette, &titleBanner, TITLELAYER_BANNER, bannerX, bannerY + titleYShift / 0x100, false, false);
 		
 		if (sonicTime-- <= 0)
 		{
@@ -262,7 +264,7 @@ bool GM_Title(bool *error)
 			{
 				if (bottomY > clipY)
 					bodyRect.h -= (bottomY - clipY);
-				gSoftwareBuffer->DrawTexture(titleTexture, titleTexture->loadedPalette, &bodyRect, TITLELAYER_SONIC, midX - 40, topY + titleYShift / 0x100, false, false);
+				gSoftwareBuffer->DrawTexture(&titleTexture, titleTexture.loadedPalette, &bodyRect, TITLELAYER_SONIC, midX - 40, topY + titleYShift / 0x100, false, false);
 			}
 			
 			//If animation is complete
@@ -270,7 +272,7 @@ bool GM_Title(bool *error)
 			{
 				//Draw Sonic's hand
 				int frame = sonicHandAnim[sonicHandFrame];
-				gSoftwareBuffer->DrawTexture(titleTexture, titleTexture->loadedPalette, &titleSonicHand[frame].framerect, TITLELAYER_SONIC_HAND, midX + 20 - titleSonicHand[frame].jointPos.x, topY + 72 - titleSonicHand[frame].jointPos.y + titleYShift / 0x100, false, false);
+				gSoftwareBuffer->DrawTexture(&titleTexture, titleTexture.loadedPalette, &titleSonicHand[frame].framerect, TITLELAYER_SONIC_HAND, midX + 20 - titleSonicHand[frame].jointPos.x, topY + 72 - titleSonicHand[frame].jointPos.y + titleYShift / 0x100, false, false);
 				
 				//Update frame
 				if (sonicHandFrame + 1 < 14)
@@ -280,7 +282,7 @@ bool GM_Title(bool *error)
 				}
 				
 				//Scroll background
-				(backgroundScroll += backgroundScrollSpeed) %= background->texture->width * 96;
+				(backgroundScroll += backgroundScrollSpeed) %= background.texture->width * 96;
 			}
 		}
 		
@@ -289,7 +291,7 @@ bool GM_Title(bool *error)
 			selected = true;
 		
 		//Render our software buffer to the screen
-		if ((*error = gSoftwareBuffer->RenderToScreen(nullptr)) == true)
+		if ((*bError = gSoftwareBuffer->RenderToScreen(nullptr)) == true)
 			break;
 		
 		if (breakThisState)
@@ -299,13 +301,9 @@ bool GM_Title(bool *error)
 		frame++;
 	}
 	
-	//Unload our textures
-	delete titleTexture;
-	delete background;
-	
 	//Continue to game
 	gGameLoadLevel = 0;
 	gGameLoadCharacter = 0;
 	gGameMode = GAMEMODE_GAME;
-	return exit;
+	return bExit;
 }

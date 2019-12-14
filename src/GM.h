@@ -1,5 +1,5 @@
 #pragma once
-bool GM_Splash(bool *noError);
-bool GM_Title(bool *noError);
-bool GM_Game(bool *noError);
-bool GM_SpecialStage(bool *noError);
+bool GM_Splash(bool *bError);
+bool GM_Title(bool *bError);
+bool GM_Game(bool *bError);
+bool GM_SpecialStage(bool *bError);
