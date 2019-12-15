@@ -1,4 +1,3 @@
-#include "../Level.h"
 #include "../Game.h"
 
 //#define REV01_SPIKEBUG	//Until Sonic 2 / Sonic 1 REV02, you could take damage from spikes even during invulnerability

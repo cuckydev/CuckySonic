@@ -1,5 +1,6 @@
 #pragma once
 #include <string>
+#include <stddef.h>
 #include <stdint.h>
 
 #include "LinkedList.h"

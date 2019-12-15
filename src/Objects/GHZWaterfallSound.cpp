@@ -1,8 +1,5 @@
-#include "../Object.h"
-#include "../Audio.h"
 #include "../Game.h"
-#include "../Level.h"
-#include "../Render.h"
+#include "../Audio.h"
 
 void ObjGHZWaterfallSound(OBJECT *object)
 {

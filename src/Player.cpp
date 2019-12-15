@@ -883,7 +883,7 @@ PLAYER::PLAYER(std::string specPath, PLAYER *myFollow, size_t myController) : co
 	}
 	
 	//Read properties from the specifications
-	FS_FILE playerSpec(specPath + ".psp", "rb");
+	FS_FILE playerSpec(gBasePath + specPath + ".psp", "rb");
 	if (playerSpec.fail)
 	{
 		Error(fail = playerSpec.fail);

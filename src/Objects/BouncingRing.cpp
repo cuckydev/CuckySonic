@@ -1,8 +1,4 @@
-#include "../Level.h"
-#include "../LevelCollision.h"
 #include "../Game.h"
-#include "../Log.h"
-#include "../Objects.h"
 #include "../Audio.h"
 #include "../MathUtil.h"
 
@@ -16,75 +12,6 @@ static const uint8_t animationCollect[] =	{0x05,0x04,0x05,0x06,0x07,ANICOMMAND_A
 static const uint8_t *animationList[] = {
 	animationCollect,
 };
-
-void ObjBouncingRing_Spawner(OBJECT *object)
-{
-	//Cap our rings
-	unsigned int *rings = &gRings;
-	if (*rings >= 32)
-		*rings = 32;
-	
-	//Spawn the given amount of rings
-	union
-	{
-		#ifdef ENDIAN_BIG
-			struct
-			{
-				uint8_t speed;
-				uint8_t angle;
-			} asInd;
-		#else
-			struct
-			{
-				uint8_t angle;
-				uint8_t speed;
-			} asInd;
-		#endif
-		
-		int16_t angleSpeed = 0x288;
-	};
-	
-	int16_t xVel = 0, yVel = 0;
-	for (unsigned int i = 0; i < *rings; i++)
-	{
-		//Create the ring object
-		OBJECT *ring = new OBJECT(&ObjBouncingRing);
-		ring->parentPlayer = object->parentPlayer;
-		ring->x.pos = object->x.pos;
-		ring->y.pos = object->y.pos;
-		gLevel->objectList.link_back(ring);
-		
-		//Get the ring's velocity
-		if (angleSpeed >= 0)
-		{
-			//Set our velocity
-			xVel = GetSin(asInd.angle) * (1 << asInd.speed);
-			yVel = GetCos(asInd.angle) * (1 << asInd.speed);
-			
-			//Get the next angle and speed
-			asInd.angle += 0x10;
-			
-			if (asInd.angle < 0x10)
-			{
-				angleSpeed -= 0x80;
-				if (angleSpeed < 0)
-					angleSpeed = 0x288;
-			}
-		}
-		
-		//Set the ring's velocity
-		ring->xVel = xVel;
-		ring->yVel = yVel;
-		
-		xVel = -xVel;
-		angleSpeed = -angleSpeed;
-	}
-	
-	//Clear our rings and delete us
-	PlaySound(SOUNDID_RING_LOSS);
-	*rings = 0;
-	object->deleteFlag = true;
-}
 
 void ObjBouncingRing(OBJECT *object)
 {
@@ -233,4 +160,73 @@ void ObjBouncingRing(OBJECT *object)
 			break;
 		}
 	}
+}
+
+void ObjBouncingRing_Spawner(OBJECT *object)
+{
+	//Cap our rings
+	unsigned int *rings = &gRings;
+	if (*rings >= 32)
+		*rings = 32;
+	
+	//Spawn the given amount of rings
+	union
+	{
+		#ifdef ENDIAN_BIG
+			struct
+			{
+				uint8_t speed;
+				uint8_t angle;
+			} asInd;
+		#else
+			struct
+			{
+				uint8_t angle;
+				uint8_t speed;
+			} asInd;
+		#endif
+		
+		int16_t angleSpeed = 0x288;
+	};
+	
+	int16_t xVel = 0, yVel = 0;
+	for (unsigned int i = 0; i < *rings; i++)
+	{
+		//Create the ring object
+		OBJECT *ring = new OBJECT(&ObjBouncingRing);
+		ring->parentPlayer = object->parentPlayer;
+		ring->x.pos = object->x.pos;
+		ring->y.pos = object->y.pos;
+		gLevel->objectList.link_back(ring);
+		
+		//Get the ring's velocity
+		if (angleSpeed >= 0)
+		{
+			//Set our velocity
+			xVel = GetSin(asInd.angle) * (1 << asInd.speed);
+			yVel = GetCos(asInd.angle) * (1 << asInd.speed);
+			
+			//Get the next angle and speed
+			asInd.angle += 0x10;
+			
+			if (asInd.angle < 0x10)
+			{
+				angleSpeed -= 0x80;
+				if (angleSpeed < 0)
+					angleSpeed = 0x288;
+			}
+		}
+		
+		//Set the ring's velocity
+		ring->xVel = xVel;
+		ring->yVel = yVel;
+		
+		xVel = -xVel;
+		angleSpeed = -angleSpeed;
+	}
+	
+	//Clear our rings and delete us
+	PlaySound(SOUNDID_RING_LOSS);
+	*rings = 0;
+	object->deleteFlag = true;
 }

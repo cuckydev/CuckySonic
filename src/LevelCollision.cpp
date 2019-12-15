@@ -1,4 +1,3 @@
-#include <stdint.h>
 #include "LevelCollision.h"
 #include "Level.h"
 #include "Game.h"

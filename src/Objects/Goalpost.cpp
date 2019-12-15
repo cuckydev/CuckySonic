@@ -1,7 +1,4 @@
-#include <stdint.h>
-#include "../Level.h"
 #include "../Game.h"
-#include "../Log.h"
 #include "../Objects.h"
 
 static const uint8_t animationEggman[] =	{0x0F,0x00,ANICOMMAND_RESTART};

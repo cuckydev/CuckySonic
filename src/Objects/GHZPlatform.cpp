@@ -1,8 +1,5 @@
-#include <stdint.h>
-#include "../Level.h"
 #include "../Game.h"
 #include "../MathUtil.h"
-#include "../Log.h"
 
 //Scratch structure
 struct SCRATCH_GHZPlatform

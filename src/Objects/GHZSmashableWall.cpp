@@ -1,6 +1,4 @@
-#include "../Level.h"
 #include "../Game.h"
-#include "../Objects.h"
 #include "../MathUtil.h"
 
 static const OBJECT_SMASHMAP smashmapRight[8] = {

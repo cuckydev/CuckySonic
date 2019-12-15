@@ -1,8 +1,4 @@
-#include <stdint.h>
-#include "../Level.h"
-#include "../LevelCollision.h"
 #include "../Game.h"
-#include "../Log.h"
 
 int ObjGHZEdgeWall_Solid2(PLAYER *player, OBJECT *object, int16_t width, int16_t height, int16_t *retXDiff, int16_t *retYDiff)
 {

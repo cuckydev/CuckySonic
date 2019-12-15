@@ -1,7 +1,4 @@
-#include <stdint.h>
-#include "../Level.h"
 #include "../Game.h"
-#include "../Log.h"
 
 const uint16_t switchRadius[] = {0x20, 0x40, 0x80, 0x100};
 

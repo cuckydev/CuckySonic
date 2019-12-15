@@ -1,8 +1,4 @@
-#include <stdint.h>
-#include "../Level.h"
-#include "../LevelCollision.h"
 #include "../Game.h"
-#include "../Log.h"
 
 static const uint8_t animationStand[] =			{0x0F,0x00,ANICOMMAND_RESTART};
 static const uint8_t animationStandSlope[] =	{0x0F,0x02,ANICOMMAND_RESTART};

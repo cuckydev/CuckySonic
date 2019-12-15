@@ -1,5 +1,5 @@
 #pragma once
-#include <stdint.h>
+#include <stddef.h>
 #include <stdio.h>
 
 template <typename T> struct LL_NODE

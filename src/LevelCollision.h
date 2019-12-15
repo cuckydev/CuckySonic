@@ -1,4 +1,6 @@
 #pragma once
+#include <stdint.h>
+
 enum COLLISIONLAYER
 {
 	COLLISIONLAYER_NORMAL_TOP,

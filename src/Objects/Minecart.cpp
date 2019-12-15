@@ -1,9 +1,5 @@
-#include <stdint.h>
-#include "../Level.h"
-#include "../LevelCollision.h"
 #include "../Game.h"
 #include "../MathUtil.h"
-#include "../Log.h"
 
 void ObjMinecart(OBJECT *object)
 {

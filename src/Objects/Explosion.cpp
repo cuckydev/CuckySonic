@@ -1,7 +1,4 @@
-#include <stdint.h>
-#include "../Level.h"
 #include "../Game.h"
-#include "../Log.h"
 #include "../Audio.h"
 
 //Animals

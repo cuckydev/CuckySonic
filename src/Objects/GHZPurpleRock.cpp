@@ -1,8 +1,4 @@
-#include <stdint.h>
-#include "../Level.h"
-#include "../LevelCollision.h"
 #include "../Game.h"
-#include "../Log.h"
 
 void ObjGHZPurpleRock(OBJECT *object)
 {

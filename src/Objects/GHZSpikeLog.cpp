@@ -1,5 +1,3 @@
-#include <stdint.h>
-#include "../Level.h"
 #include "../Game.h"
 
 void ObjGHZSpikeLog_Segment(OBJECT *object)

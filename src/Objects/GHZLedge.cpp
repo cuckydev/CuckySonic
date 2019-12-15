@@ -1,8 +1,5 @@
-#include <stdint.h>
-#include "../Level.h"
 #include "../Game.h"
 #include "../MathUtil.h"
-#include "../Log.h"
 
 //#define FIX_PLAYER_RELEASE //In the original (and shockingly, even the Sonic 2 port of the object), the ledge sets you to fall if you're standing on *any* object, not just the actual ledge
 

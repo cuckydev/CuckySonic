@@ -1,6 +1,3 @@
-#include <stdint.h>
-#include "../Level.h"
-#include "../LevelCollision.h"
 #include "../Game.h"
 #include "../Objects.h"
 #include "../MathUtil.h"
