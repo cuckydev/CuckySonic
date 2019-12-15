@@ -53,10 +53,12 @@ void ObjBridge(OBJECT *object)
 			//Increment routine
 			object->routine++;
 			
-			//Get our type properties
-			int16_t bridgeLeft = object->x.pos - (object->subtype * 8);
+			//Initialize render properties
+			object->widthPixels = 128;
+			object->heightPixels = 32;
 			
 			//Create our log segments
+			int16_t bridgeLeft = object->x.pos - (object->subtype * 8);
 			for (unsigned int i = 0; i < object->subtype; i++)
 			{
 				OBJECT *newSegment = new OBJECT(&ObjBridgeSegment);

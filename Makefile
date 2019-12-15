@@ -10,6 +10,13 @@ endif
 
 FILENAME ?= $(FILENAME_DEF)
 
+#Big endian option
+ifeq ($(BIGENDIAN), 1)
+	CXXFLAGS += -DENDIAN_BIG
+else
+	CXXFLAGS += -DENDIAN_LIL
+endif
+
 #Windows specific (NOTE: to turn off Windows compilation for cross compiling, simply use WINDOWS=0)
 ifeq ($(OS), Windows_NT)
 	WINDOWS ?= 1

@@ -1,6 +1,4 @@
 #pragma once
-#include "Endianness.h"
-
 #ifdef ENDIAN_BIG
 	//Big endian - [pos>sub] = long
 	#define POSDEF(axis)	\

@@ -1,5 +1,4 @@
 #include "MathUtil.h"
-#include "Endianness.h"
 
 const int16_t sineTable[] =
 {

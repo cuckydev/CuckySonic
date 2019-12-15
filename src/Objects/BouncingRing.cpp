@@ -1,5 +1,3 @@
-#include <stdint.h>
-#include "../Endianness.h"
 #include "../Level.h"
 #include "../LevelCollision.h"
 #include "../Game.h"
