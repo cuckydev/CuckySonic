@@ -228,7 +228,10 @@ class OBJECT
 		void Animate(const uint8_t **animationList);
 		void Animate_S1(const uint8_t **animationList);
 		
-		int16_t CheckFloorEdge(COLLISIONLAYER layer, int16_t xPos, int16_t yPos, uint8_t *outAngle);
+		int16_t CheckCollisionDown_1Point(COLLISIONLAYER layer, int16_t xPos, int16_t yPos, uint8_t *outAngle);
+		int16_t CheckCollisionUp_1Point(COLLISIONLAYER layer, int16_t xPos, int16_t yPos, uint8_t *outAngle);
+		int16_t CheckCollisionLeft_1Point(COLLISIONLAYER layer, int16_t xPos, int16_t yPos, uint8_t *outAngle);
+		int16_t CheckCollisionRight_1Point(COLLISIONLAYER layer, int16_t xPos, int16_t yPos, uint8_t *outAngle);
 		
 		void DrawInstance(OBJECT_RENDERFLAGS iRenderFlags, TEXTURE *iTexture, OBJECT_MAPPING iMapping, bool iHighPriority, uint8_t iPriority, uint16_t iMappingFrame, int16_t iXPos, int16_t iYPos);
 		
@@ -242,6 +245,9 @@ class OBJECT
 		void ClearSolidContact();
 		
 		//Player solid contact functions
+		void AttachPlayer(PLAYER *player, size_t i);
+		void MovePlayer(PLAYER *player, int16_t width, int16_t height, int16_t lastXPos, const int8_t *slope, bool doubleSlope);
+		
 		void SolidObjectTop(int16_t width, int16_t height, int16_t lastXPos, bool setAirOnExit, const int8_t *slope);
 		bool LandOnTopSolid(PLAYER *player, size_t i, int16_t width1, int16_t width2, int16_t height, int16_t lastXPos, const int8_t *slope);
 		void ReleasePlayer(PLAYER *player, size_t i, bool setAirOnExit);
@@ -249,6 +255,8 @@ class OBJECT
 		OBJECT_SOLIDTOUCH SolidObjectFull(int16_t width, int16_t height_air, int16_t height_standing, int16_t lastXPos, bool setAirOnExit, const int8_t *slope, bool doubleSlope);
 		void SolidObjectFull_Cont(OBJECT_SOLIDTOUCH *solidTouch, PLAYER *player, size_t i, int16_t width, int16_t height, int16_t lastXPos, const int8_t *slope, bool doubleSlope);
 		void SolidObjectFull_ClearPush(PLAYER *player, size_t i);
+		
+		void CollideStandingPlayersWithLevel();
 		
 		//Main update and draw functions
 		bool Update();

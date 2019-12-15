@@ -103,9 +103,10 @@ SOURCES = \
 	Objects/GHZLedge \
 	Objects/GHZSwingingPlatform \
 	Objects/GHZSpikes \
+	Objects/GHZSpikeLog \
 	Objects/GHZEdgeWall \
 	Objects/GHZSmashableWall \
-	Objects/PurpleRock \
+	Objects/GHZPurpleRock \
 	Objects/Minecart \
 	Audio \
 	Error \

@@ -131,7 +131,7 @@ void ObjCrabmeat(OBJECT *object)
 			
 			//Check for the floor
 			uint8_t nextAngle;
-			int16_t distance = object->CheckFloorEdge(COLLISIONLAYER_NORMAL_TOP, object->x.pos, object->y.pos, &nextAngle);
+			int16_t distance = object->CheckCollisionDown_1Point(COLLISIONLAYER_NORMAL_TOP, object->x.pos, object->y.pos + object->yRadius, &nextAngle);
 			if (distance >= 0)
 				break;
 			
@@ -194,14 +194,14 @@ void ObjCrabmeat(OBJECT *object)
 						if (((scratch->mode ^= MODE_COLLISION) & MODE_COLLISION))
 						{
 							//Check for floor to the sides of us, stop and fire if there is none
-							int16_t distance = object->CheckFloorEdge(COLLISIONLAYER_NORMAL_TOP, object->x.pos + (object->status.xFlip ? -16 : 16), object->y.pos, nullptr);
+							int16_t distance = object->CheckCollisionDown_1Point(COLLISIONLAYER_NORMAL_TOP, object->x.pos + (object->status.xFlip ? -16 : 16), object->y.pos + object->yRadius, nullptr);
 							if (distance >= -8 && distance < 12)
 								break;
 						}
 						else
 						{
 							//Collide with any floors below us
-							int16_t distance = object->CheckFloorEdge(COLLISIONLAYER_NORMAL_TOP, object->x.pos, object->y.pos, &object->angle);
+							int16_t distance = object->CheckCollisionDown_1Point(COLLISIONLAYER_NORMAL_TOP, object->x.pos, object->y.pos + object->yRadius, &object->angle);
 							object->y.pos += distance;
 							object->anim = ObjCrabmeat_SetAni(object) + 3;
 							break;

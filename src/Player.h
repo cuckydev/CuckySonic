@@ -15,6 +15,12 @@ class OBJECT;
 #define PLAYER_RECORD_LENGTH	0x40
 #define INVINCIBILITYSTARS		4
 
+#define NO_FLOOR_ANGLE	3	//Floor angle values' "no floor" flag (must be an odd number)
+
+#define PEELOUT_CHARGE	30
+#define SPINDASH_CHARGE	45
+#define DROPDASH_CHARGE	20
+
 //Routines
 enum PLAYER_ROUTINE
 {
@@ -330,7 +336,6 @@ class PLAYER
 		void CheckCollisionLeft_2Point(COLLISIONLAYER layer, int16_t xPos, int16_t yPos, int16_t *distance, int16_t *distance2, uint8_t *outAngle);
 		void CheckCollisionRight_2Point(COLLISIONLAYER layer, int16_t xPos, int16_t yPos, int16_t *distance, int16_t *distance2, uint8_t *outAngle);
 		
-		uint8_t AngleSide(uint8_t angleSide);
 		int16_t CheckCollisionDown_1Point(COLLISIONLAYER layer, int16_t xPos, int16_t yPos, uint8_t *outAngle);
 		int16_t CheckCollisionUp_1Point(COLLISIONLAYER layer, int16_t xPos, int16_t yPos, uint8_t *outAngle);
 		int16_t CheckCollisionLeft_1Point(COLLISIONLAYER layer, int16_t xPos, int16_t yPos, uint8_t *outAngle);
@@ -413,9 +418,6 @@ class PLAYER
 		
 		bool ObjectTouch(OBJECT *object, int16_t playerLeft, int16_t playerTop, int16_t playerWidth, int16_t playerHeight);
 		void CheckObjectTouch();
-		
-		void AttachToObject(OBJECT *object, size_t i);
-		void MoveWithObject(OBJECT *platform, int16_t width, int16_t height, int16_t lastXPos, const int8_t *slope, bool doubleSlope);
 		
 		void GiveSpeedShoes();
 		void GiveInvincibility();

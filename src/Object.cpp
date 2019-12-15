@@ -168,11 +168,35 @@ void OBJECT::Animate_S1(const uint8_t **animationList)
 	animFrame++;
 }
 
-int16_t OBJECT::CheckFloorEdge(COLLISIONLAYER layer, int16_t xPos, int16_t yPos, uint8_t *outAngle)
+int16_t OBJECT::CheckCollisionDown_1Point(COLLISIONLAYER layer, int16_t xPos, int16_t yPos, uint8_t *outAngle)
 {
-	int16_t distance = GetCollisionV(xPos, yPos + yRadius, layer, false, outAngle);
+	int16_t distance = GetCollisionV(xPos, yPos, layer, false, outAngle);
 	if (outAngle != nullptr)
-		*outAngle = ((*outAngle) & 1) ? 0 : (*outAngle);
+		*outAngle = ((*outAngle) & 1) ? 0x00 : (*outAngle);
+	return distance;
+}
+
+int16_t OBJECT::CheckCollisionUp_1Point(COLLISIONLAYER layer, int16_t xPos, int16_t yPos, uint8_t *outAngle)
+{
+	int16_t distance = GetCollisionV(xPos, yPos, layer, true, outAngle);
+	if (outAngle != nullptr)
+		*outAngle = ((*outAngle) & 1) ? 0x80 : (*outAngle);
+	return distance;
+}
+
+int16_t OBJECT::CheckCollisionLeft_1Point(COLLISIONLAYER layer, int16_t xPos, int16_t yPos, uint8_t *outAngle)
+{
+	int16_t distance = GetCollisionH(xPos, yPos, layer, true, outAngle);
+	if (outAngle != nullptr)
+		*outAngle = ((*outAngle) & 1) ? 0x40 : (*outAngle);
+	return distance;
+}
+
+int16_t OBJECT::CheckCollisionRight_1Point(COLLISIONLAYER layer, int16_t xPos, int16_t yPos, uint8_t *outAngle)
+{
+	int16_t distance = GetCollisionH(xPos, yPos, layer, false, outAngle);
+	if (outAngle != nullptr)
+		*outAngle = ((*outAngle) & 1) ? 0xC0 : (*outAngle);
 	return distance;
 }
 
@@ -399,7 +423,94 @@ void OBJECT::Fragment(size_t num, const OBJECT_FRAGMENTMAP *fragmap, OBJECTFUNCT
 	PlaySound(SOUNDID_COLLAPSE);
 }
 
-//Object collision functions
+//Player to object collision functions
+void OBJECT::AttachPlayer(PLAYER *player, size_t i)
+{
+	//If already standing on an object, clear that object's standing bit
+	if (player->status.shouldNotFall && player->interact != nullptr)
+		player->interact->playerContact[i].standing = false; //Clear the previous object stood on's standing bit
+	
+	//Set to stand on this object
+	player->interact = this;
+	player->angle = 0;
+	player->yVel = 0;
+	player->inertia = player->xVel;
+	
+	//Land on object
+	player->status.shouldNotFall = true;
+	playerContact[i].standing = true;
+	
+	if (player->status.inAir)
+	{
+		player->status.inAir = false;
+		#ifndef SONICMANIA_DROPDASH
+			player->LandOnFloor_ExitBall();
+		#else
+			if (player->characterType != CHARACTERTYPE_SONIC || player->abilityProperty != (DROPDASH_CHARGE + 2))
+				player->LandOnFloor_ExitBall();
+			else
+			{
+				//If charging a dropdash, release it
+				player->LandOnFloor_SetState();
+				player->abilityProperty = (DROPDASH_CHARGE + 2);
+				player->CheckDropdashRelease();
+			}
+		#endif
+	}
+}
+
+void OBJECT::MovePlayer(PLAYER *player, int16_t width, int16_t height, int16_t lastXPos, const int8_t *slope, bool doubleSlope)
+{
+	//Offset height according to our slope
+	if (slope != nullptr)
+	{
+		if (!player->status.shouldNotFall) //????
+			return;
+		
+		//Get our x-position for getting the slope
+		int16_t xDiff = (player->x.pos - lastXPos) + width;
+		if (renderFlags.xFlip)
+			xDiff = (~xDiff) + (width * 2);
+		
+		//Offset using the appropriate slope
+		if (doubleSlope)
+		{
+			//Double xDiff because slope will be interleaved, and if reverse gravity, use the bottom slope
+			xDiff *= 2;
+			if (player->status.reverseGravity)
+				height += slope[xDiff + 1] - slope[xDiff];
+			else
+				height += slope[xDiff];
+		}
+		else
+		{
+			if (player->status.reverseGravity)
+				height -= slope[xDiff];
+			else
+				height += slope[xDiff];
+		}
+	}
+	
+	//Get our top
+	int16_t top;
+	if (player->status.reverseGravity)
+		top = y.pos + height;
+	else
+		top = y.pos - height;
+	
+	//Check if we're in an intangible state
+	if (player->objectControl.disableObjectInteract || player->routine == PLAYERROUTINE_DEATH || player->debug != 0)
+		return;
+	
+	//Move with the platform
+	player->x.pos += (x.pos - lastXPos);
+	
+	if (player->status.reverseGravity)
+		player->y.pos = top + player->yRadius;
+	else
+		player->y.pos = top - player->yRadius;
+}
+
 void OBJECT::SolidObjectTop(int16_t width, int16_t height, int16_t lastXPos, bool setAirOnExit, const int8_t *slope)
 {
 	for (size_t i = 0; i < gLevel->playerList.size(); i++)
@@ -414,7 +525,7 @@ void OBJECT::SolidObjectTop(int16_t width, int16_t height, int16_t lastXPos, boo
 			int16_t xDiff = player->x.pos - lastXPos + width;
 			
 			if (!player->status.inAir && xDiff >= 0 && xDiff < width * 2)
-				player->MoveWithObject(this, width, height, lastXPos, slope, false);
+				MovePlayer(player, width, height, lastXPos, slope, false);
 			else
 				ReleasePlayer(player, i, setAirOnExit);
 		}
@@ -454,7 +565,7 @@ bool OBJECT::LandOnTopSolid(PLAYER *player, size_t i, int16_t width1, int16_t wi
 		
 		//Land on top of the platform
 		player->y.pos += yThing + 4;
-		player->AttachToObject(this, i);
+		AttachPlayer(player, i);
 		return true;
 	}
 	else
@@ -469,7 +580,7 @@ bool OBJECT::LandOnTopSolid(PLAYER *player, size_t i, int16_t width1, int16_t wi
 		
 		//Land on top of the platform
 		player->y.pos += yThing + 4;
-		player->AttachToObject(this, i);
+		AttachPlayer(player, i);
 		return true;
 	}
 }
@@ -505,7 +616,7 @@ OBJECT_SOLIDTOUCH OBJECT::SolidObjectFull(int16_t width, int16_t height_air, int
 			}
 			
 			//Move with the object
-			player->MoveWithObject(this, width, height_standing, lastXPos, slope, doubleSlope);
+			MovePlayer(player, width, height_standing, lastXPos, slope, doubleSlope);
 			continue;
 		}
 		else
@@ -649,7 +760,7 @@ void OBJECT::SolidObjectFull_Cont(OBJECT_SOLIDTOUCH *solidTouch, PLAYER *player,
 									player->y.pos += (yDiff + 1);
 								else
 									player->y.pos -= (yDiff + 1);
-								player->AttachToObject(this, i);
+								AttachPlayer(player, i);
 								
 								//Set top touch flag
 								if (solidTouch != nullptr)
@@ -732,6 +843,25 @@ void OBJECT::SolidObjectFull_ClearPush(PLAYER *player, size_t i)
 		//Clear pushing flags
 		playerContact[i].pushing = false;
 		player->status.pushing = false;
+	}
+}
+
+void OBJECT::CollideStandingPlayersWithLevel()
+{
+	for (size_t i = 0; i < gLevel->playerList.size(); i++)
+	{
+		//Get the player
+		PLAYER *player = gLevel->playerList[i];
+		
+		//Check floor if touching and release if so
+		if (playerContact[i].standing)
+		{
+			if (CheckCollisionDown_1Point(COLLISIONLAYER_NORMAL_TOP, player->x.pos, player->y.pos + player->yRadius, nullptr) < 0)
+			{
+				playerContact[i].standing = false;
+				player->status.inAir = true;
+			}
+		}
 	}
 }
 

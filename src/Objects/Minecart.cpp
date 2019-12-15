@@ -39,7 +39,7 @@ void ObjMinecart(OBJECT *object)
 			object->MoveAndFall();
 			
 			//Check for the floor
-			int16_t distance = object->CheckFloorEdge(COLLISIONLAYER_NORMAL_TOP, object->x.pos, object->y.pos, nullptr);
+			int16_t distance = object->CheckCollisionDown_1Point(COLLISIONLAYER_NORMAL_TOP, object->x.pos, object->y.pos + object->yRadius, nullptr);
 			if (distance >= 0)
 				break;
 			
@@ -62,7 +62,7 @@ void ObjMinecart(OBJECT *object)
 				
 				//Check for collision with the floor
 				uint8_t lastAngle = object->angle;
-				int16_t floorDistance = object->CheckFloorEdge(COLLISIONLAYER_NORMAL_TOP, object->x.pos, object->y.pos + 8, &object->angle);
+				int16_t floorDistance = object->CheckCollisionDown_1Point(COLLISIONLAYER_NORMAL_TOP, object->x.pos, object->y.pos + 8 + object->yRadius, &object->angle);
 				
 				if (object->angle & 0x1 || floorDistance >= 14 || abs((int8_t)(object->angle - lastAngle)) >= 0x20)
 				{
@@ -105,7 +105,7 @@ void ObjMinecart(OBJECT *object)
 				//Check for collision with the floor
 				if (object->yVel >= 0)
 				{
-					int16_t floorDistance = object->CheckFloorEdge(COLLISIONLAYER_NORMAL_TOP, object->x.pos, object->y.pos + 8, &object->angle);
+					int16_t floorDistance = object->CheckCollisionDown_1Point(COLLISIONLAYER_NORMAL_TOP, object->x.pos, object->y.pos + 8 + object->yRadius, &object->angle);
 					if (floorDistance < 0)
 					{
 						//Become grounded

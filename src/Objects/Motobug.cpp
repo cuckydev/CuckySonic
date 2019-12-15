@@ -59,7 +59,7 @@ void ObjMotobug(OBJECT *object)
 			object->MoveAndFall();
 			
 			//Check for the floor
-			int16_t distance = object->CheckFloorEdge(COLLISIONLAYER_NORMAL_TOP, object->x.pos, object->y.pos, nullptr);
+			int16_t distance = object->CheckCollisionDown_1Point(COLLISIONLAYER_NORMAL_TOP, object->x.pos, object->y.pos + object->yRadius, nullptr);
 			if (distance >= 0)
 				break;
 			
@@ -95,7 +95,7 @@ void ObjMotobug(OBJECT *object)
 					//Move and check if we're going over an edge
 					object->Move();
 					
-					int16_t distance = object->CheckFloorEdge(COLLISIONLAYER_NORMAL_TOP, object->x.pos, object->y.pos, nullptr);
+					int16_t distance = object->CheckCollisionDown_1Point(COLLISIONLAYER_NORMAL_TOP, object->x.pos, object->y.pos + object->yRadius, nullptr);
 					if (distance < -8 || distance >= 12)
 					{
 						//Set state and wait

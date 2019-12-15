@@ -146,7 +146,7 @@ void ObjSpiral(OBJECT *object) //Also MTZ cylinder
 						continue;
 					
 					//Set the player to run on the spiral
-					player->AttachToObject(object, i);
+					object->AttachPlayer(player, i);
 				}
 				else
 				{

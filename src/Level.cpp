@@ -16,12 +16,12 @@
 OBJECTFUNCTION objFuncSonic1[] = {
 	nullptr, nullptr, nullptr, &ObjPathSwitcher, nullptr, nullptr, nullptr, nullptr,
 	nullptr, nullptr, nullptr, nullptr, nullptr, &ObjGoalpost, nullptr, nullptr,
-	nullptr, &ObjBridge, nullptr, nullptr, nullptr, &ObjGHZSwingingPlatform, nullptr, nullptr,
+	nullptr, &ObjBridge, nullptr, nullptr, nullptr, &ObjGHZSwingingPlatform, nullptr, &ObjGHZSpikeLog,
 	&ObjGHZPlatform, nullptr, &ObjGHZLedge, nullptr, &ObjSonic1Scenery, nullptr, nullptr, &ObjCrabmeat,
 	nullptr, nullptr, &ObjBuzzBomber, nullptr, nullptr, &ObjRingSpawner, &ObjMonitor, nullptr,
 	nullptr, nullptr, nullptr, &ObjChopper, nullptr, nullptr, nullptr, nullptr,
 	nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, &ObjGHZSpikes, nullptr,
-	nullptr, nullptr, nullptr, &ObjPurpleRock, &ObjGHZSmashableWall, nullptr, nullptr, nullptr,
+	nullptr, nullptr, nullptr, &ObjGHZPurpleRock, &ObjGHZSmashableWall, nullptr, nullptr, nullptr,
 	&ObjMotobug, &ObjSpring, &ObjNewtron, nullptr, &ObjGHZEdgeWall, nullptr, nullptr, nullptr,
 	nullptr, &ObjGHZWaterfallSound, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
 	nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
@@ -113,13 +113,14 @@ std::string preloadTexture_GHZ[] = {
 std::string preloadMappings_GHZ[] = {
 	//Stage objects
 	"data/Object/GHZBridge.map",
-	"data/Object/GHZEdgeWall.map",
-	"data/Object/GHZLedge.map",
 	"data/Object/GHZPlatform.map",
+	"data/Object/GHZLedge.map",
 	"data/Object/GHZSwingingPlatform.map",
-	"data/Object/GHZPurpleRock.map",
-	"data/Object/GHZSmashableWall.map",
 	"data/Object/GHZSpikes.map",
+	"data/Object/GHZEdgeWall.map",
+	"data/Object/GHZSmashableWall.map",
+	"data/Object/GHZSpikeLog.map",
+	"data/Object/GHZPurpleRock.map",
 	//Badniks
 	"data/Object/BuzzBomber.map",
 	"data/Object/Motobug.map",

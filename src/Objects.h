@@ -28,6 +28,7 @@ void ObjGHZSwingingPlatform(OBJECT *object);
 void ObjGHZSpikes(OBJECT *object);
 void ObjGHZEdgeWall(OBJECT *object);
 void ObjGHZSmashableWall(OBJECT *object);
-void ObjPurpleRock(OBJECT *object);
+void ObjGHZSpikeLog(OBJECT *object);
+void ObjGHZPurpleRock(OBJECT *object);
 
 void ObjMinecart(OBJECT *object);

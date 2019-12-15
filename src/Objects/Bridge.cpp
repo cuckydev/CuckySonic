@@ -50,12 +50,8 @@ void ObjBridge(OBJECT *object)
 	{
 		case 0:
 		{
-			//Set our properties
+			//Increment routine
 			object->routine++;
-			object->priority = 3;
-			object->renderFlags.alignPlane = true;
-			object->widthPixels = 128;
-			object->heightPixels = 32;
 			
 			//Get our type properties
 			int16_t bridgeLeft = object->x.pos - (object->subtype * 8);

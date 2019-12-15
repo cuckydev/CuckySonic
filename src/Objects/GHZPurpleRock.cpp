@@ -4,7 +4,7 @@
 #include "../Game.h"
 #include "../Log.h"
 
-void ObjPurpleRock(OBJECT *object)
+void ObjGHZPurpleRock(OBJECT *object)
 {
 	switch (object->routine)
 	{

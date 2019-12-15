@@ -22,7 +22,7 @@ void ObjMonitor_ChkOverEdge(OBJECT *object, int i, PLAYER *player)
 	if (!player->status.inAir && xDiff >= 0 && xDiff < MONITOR_WIDTH * 2)
 	{
 		//Move on top of the monitor
-		player->MoveWithObject(object, MONITOR_WIDTH, MONITOR_HEIGHT + 1, object->x.pos, nullptr, false);
+		object->MovePlayer(player, MONITOR_WIDTH, MONITOR_HEIGHT + 1, object->x.pos, nullptr, false);
 	}
 	else
 	{
@@ -255,7 +255,7 @@ void ObjMonitor(OBJECT *object)
 				//Fall and check for the floor
 				object->MoveAndFall();
 				
-				int16_t distance = object->CheckFloorEdge(COLLISIONLAYER_NORMAL_TOP, object->x.pos, object->y.pos, nullptr);
+				int16_t distance = object->CheckCollisionDown_1Point(COLLISIONLAYER_NORMAL_TOP, object->x.pos, object->y.pos + object->yRadius, nullptr);
 				if (distance < 0)
 				{
 					//Land on the ground and stop falling

@@ -169,7 +169,7 @@ void ObjNewtron(OBJECT *object)
 						//Fall, and check if we're on a floor yet
 						object->MoveAndFall();
 						
-						int16_t distance = object->CheckFloorEdge(COLLISIONLAYER_NORMAL_TOP, object->x.pos, object->y.pos, nullptr);
+						int16_t distance = object->CheckCollisionDown_1Point(COLLISIONLAYER_NORMAL_TOP, object->x.pos, object->y.pos + object->yRadius, nullptr);
 						if (distance < 0)
 						{
 							//We've touched a floor, clip out and prepare for our next routine
@@ -201,7 +201,7 @@ void ObjNewtron(OBJECT *object)
 					//Move and move across floor
 					object->Move();
 					
-					int16_t distance = object->CheckFloorEdge(COLLISIONLAYER_NORMAL_TOP, object->x.pos + (object->status.xFlip ? -16 : 16), object->y.pos, nullptr);
+					int16_t distance = object->CheckCollisionDown_1Point(COLLISIONLAYER_NORMAL_TOP, object->x.pos + (object->status.xFlip ? -16 : 16), object->y.pos + object->yRadius, nullptr);
 					if (distance >= -8 && distance < 12)
 						object->y.pos += distance; //Still near floor, match y position
 					else

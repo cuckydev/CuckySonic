@@ -11,13 +11,6 @@
 #include "Object.h"
 #include "Objects.h"
 
-//Constants
-#define NO_FLOOR_ANGLE	3	//Floor angle values' "no floor" flag (must be an odd number)
-
-#define PEELOUT_CHARGE	30
-#define SPINDASH_CHARGE	45
-#define DROPDASH_CHARGE	20
-
 //Bug-fixes
 //#define FIX_SPINDASH_JUMP       //When you jump the frame after you spindash, you'll jump straight upwards
 //#define FIX_HORIZONTAL_WRAP     //In the originals, for some reason, the LevelBoundaries uses unsigned checks, meaning if you go off to the left, you'll be sent to the right boundary
@@ -1053,13 +1046,11 @@ void PLAYER::CheckCollisionRight_2Point(COLLISIONLAYER layer, int16_t xPos, int1
 }
 
 //Get distance functions
-uint8_t PLAYER::AngleSide(uint8_t angleSide) { return (floorAngle1 & 0x01) ? angleSide : floorAngle1; }
-
 int16_t PLAYER::CheckCollisionDown_1Point(COLLISIONLAYER layer, int16_t xPos, int16_t yPos, uint8_t *outAngle)
 {
 	int16_t distance = GetCollisionV(xPos, yPos, layer, false, &floorAngle1);
 	if (outAngle != nullptr)
-		*outAngle = AngleSide(0x00);
+		*outAngle = ((*outAngle) & 1) ? 0x00 : (*outAngle);
 	return distance;
 }
 
@@ -1067,7 +1058,7 @@ int16_t PLAYER::CheckCollisionUp_1Point(COLLISIONLAYER layer, int16_t xPos, int1
 {
 	int16_t distance = GetCollisionV(xPos, yPos, layer, true, &floorAngle1);
 	if (outAngle != nullptr)
-		*outAngle = AngleSide(0x80);
+		*outAngle = ((*outAngle) & 1) ? 0x80 : (*outAngle);
 	return distance;
 }
 
@@ -1075,7 +1066,7 @@ int16_t PLAYER::CheckCollisionLeft_1Point(COLLISIONLAYER layer, int16_t xPos, in
 {
 	int16_t distance = GetCollisionH(xPos, yPos, layer, true, &floorAngle1);
 	if (outAngle != nullptr)
-		*outAngle = AngleSide(0x40);
+		*outAngle = ((*outAngle) & 1) ? 0x40 : (*outAngle);
 	return distance;
 }
 
@@ -1083,7 +1074,7 @@ int16_t PLAYER::CheckCollisionRight_1Point(COLLISIONLAYER layer, int16_t xPos, i
 {
 	int16_t distance = GetCollisionH(xPos, yPos, layer, false, &floorAngle1);
 	if (outAngle != nullptr)
-		*outAngle = AngleSide(0xC0);
+		*outAngle = ((*outAngle) & 1) ? 0xC0 : (*outAngle);
 	return distance;
 }
 
@@ -5027,93 +5018,6 @@ void PLAYER::CheckObjectTouch()
 	
 	//Restore our original invincibility to before the double spin attack modified it
 	item.isInvincible = wasInvincible;
-}
-
-void PLAYER::AttachToObject(OBJECT *object, size_t i)
-{
-	//If already standing on an object, clear that object's standing bit
-	if (status.shouldNotFall && interact != nullptr)
-		interact->playerContact[i].standing = false; //Clear the previous object stood on's standing bit
-	
-	//Set to stand on this object
-	interact = object;
-	angle = 0;
-	yVel = 0;
-	inertia = xVel;
-	
-	//Land on object
-	status.shouldNotFall = true;
-	object->playerContact[i].standing = true;
-	
-	if (status.inAir)
-	{
-		status.inAir = false;
-		#ifndef SONICMANIA_DROPDASH
-			LandOnFloor_ExitBall();
-		#else
-			if (characterType != CHARACTERTYPE_SONIC || abilityProperty != (DROPDASH_CHARGE + 2))
-				LandOnFloor_ExitBall();
-			else
-			{
-				//If charging a dropdash, release it
-				LandOnFloor_SetState();
-				abilityProperty = (DROPDASH_CHARGE + 2);
-				CheckDropdashRelease();
-			}
-		#endif
-	}
-}
-
-void PLAYER::MoveWithObject(OBJECT *platform, int16_t width, int16_t height, int16_t lastXPos, const int8_t *slope, bool doubleSlope)
-{
-	//Offset height according to our slope
-	if (slope != nullptr)
-	{
-		if (!status.shouldNotFall) //????
-			return;
-		
-		//Get our x-position on the platform for getting the slope
-		int16_t xDiff = (x.pos - lastXPos) + width;
-		if (platform->renderFlags.xFlip)
-			xDiff = (~xDiff) + (width * 2);
-		
-		//Offset using the appropriate slope
-		if (doubleSlope)
-		{
-			//Double xDiff because slope will be interleaved, and if reverse gravity, use the bottom slope
-			xDiff *= 2;
-			if (status.reverseGravity)
-				height += slope[xDiff + 1] - slope[xDiff];
-			else
-				height += slope[xDiff];
-		}
-		else
-		{
-			if (status.reverseGravity)
-				height -= slope[xDiff];
-			else
-				height += slope[xDiff];
-		}
-	}
-	
-	//Get our top
-	int16_t top;
-	if (status.reverseGravity)
-		top = platform->y.pos + height;
-	else
-		top = platform->y.pos - height;
-	
-	//Check if we're in an intangible state
-	if (objectControl.disableObjectInteract || routine == PLAYERROUTINE_DEATH || debug != 0)
-		return;
-	
-	//Move with the platform
-	x.pos += (platform->x.pos - lastXPos);
-	
-	if (status.reverseGravity)
-		y.pos = top + yRadius;
-	else
-		y.pos = top - yRadius;
 }
 
 //Item functions
