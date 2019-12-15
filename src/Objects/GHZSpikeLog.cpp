@@ -55,7 +55,7 @@ void ObjGHZSpikeLog(OBJECT *object)
 			
 			//Create our log segments
 			int16_t logLeft = object->x.pos - (object->subtype * 8);
-			for (unsigned int i = 0; i <= (object->subtype - 2); i++)
+			for (unsigned int i = 0; i < object->subtype; i++)
 			{
 				OBJECT *newSegment = new OBJECT(&ObjGHZSpikeLog_Segment);
 				newSegment->x.pos = logLeft + 16 * i;
