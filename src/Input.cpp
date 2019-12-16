@@ -1,3 +1,4 @@
+#include <string.h>
 #include "Backend/Input.h"
 #include "Input.h"
 #include "Filesystem.h"

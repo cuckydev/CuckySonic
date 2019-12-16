@@ -1,3 +1,6 @@
+#Constants
+PKGCONFIG = pkg-config
+
 #Release and debug
 ifeq ($(RELEASE), 1)
 	CXXFLAGS = -O3 -flto -Wall -Wextra -pedantic
@@ -30,21 +33,6 @@ ifeq ($(WINDOWS), 1)
 	endif
 endif
 
-#Use SDL2 as the default backend if one wasn't explicitly chosen
-BACKEND ?= SDL2
-
-#Backend flags and libraries
-ifeq ($(BACKEND), SDL2)
-	CXXFLAGS += `pkg-config --cflags sdl2` -DBACKEND_SDL2
-
-	ifeq ($(STATIC), 1)
-		LDFLAGS += -static
-		LIBS += `pkg-config --libs sdl2 --static`
-	else
-		LIBS += `pkg-config --libs sdl2`
-	endif
-endif
-
 #Nintendo Switch compilation
 ifeq ($(SWITCH), 1)
 	ifeq ($(strip $(DEVKITPRO)),)
@@ -57,10 +45,25 @@ ifeq ($(SWITCH), 1)
 
 	CXXFLAGS += -march=armv8-a+crc+crypto -mtune=cortex-a57 -mtp=soft -fPIE -DSWITCH $(INCLUDE)
 	LIBS += -specs=$(DEVKITPRO)/libnx/switch.specs -L$(LIBNX)/lib -lnx -lm
-	PKGCONFIG = $(DEVKITPRO)/portlibs/switch/bin/aarch64-none-elf-pkg-config
+	PKGCONFIG = $(DEVKITPRO)/portlibs/switch/bin/aarch64-none-elf-$(PKGCONFIG)
 
 	ifdef ENABLE_NXLINK
 		CXXFLAGS += -DENABLE_NXLINK
+	endif
+endif
+
+#Use SDL2 as the default backend if one wasn't explicitly chosen
+BACKEND ?= SDL2
+
+#Backend flags and libraries
+ifeq ($(BACKEND), SDL2)
+	CXXFLAGS += `$(PKGCONFIG) --cflags sdl2` -DBACKEND_SDL2
+
+	ifeq ($(STATIC), 1)
+		LDFLAGS += -static
+		LIBS += `$(PKGCONFIG) --libs sdl2 --static`
+	else
+		LIBS += `$(PKGCONFIG) --libs sdl2`
 	endif
 endif
 
