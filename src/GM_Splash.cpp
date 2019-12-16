@@ -58,7 +58,7 @@ bool GM_Splash(bool *bError)
 			int inY = y - (gRenderSpec.height - splashTexture.height) / 2;
 			
 			xOff = GetSin((y) + (animFrame * 2)) * 15 / 0x100;
-			inY += GetCos((y * 2 / 3) + (animFrame * 3)) * 4 / 0x100;
+			inY += GetCos((y) + (animFrame * 4)) * 4 / 0x100;
 			
 			//Draw strip
 			if (inY >= 0 && inY < splashTexture.height)
@@ -77,7 +77,9 @@ bool GM_Splash(bool *bError)
 			break;
 		
 		//Increment frame counter
-		frame++; animFrame++;
+		if (!(gController[0].held.left && gController[0].held.right))
+			frame++;
+		animFrame++;
 	}
 	
 	//Go to title

@@ -5,6 +5,10 @@
 #include "Log.h"
 #include "Error.h"
 
+//Binding save constants
+#define BINDSAVE_NAME	"InputBind.ibs"	//The name of the file
+const char *bindsaveSign = "IBV01";		//The signature, change this if you change the bindings structure or the binding enums in any way
+
 //Controller state and default bindings
 CONTROLLER gController[CONTROLLERS];
 
@@ -160,15 +164,60 @@ bool InitializeInput()
 {
 	LOG(("Initializing input... "));
 	
-	//Load our saved input bindings or use default input bindings
-	if (0)
+	//Attempt to load our saved input bindings
+	FS_FILE fp(gPrefPath + BINDSAVE_NAME, "rb");
+	enum
 	{
-		//TODO: load saved bindings
+		FPFAIL_NONE,
+		FPFAIL_FILEOPEN,
+		FPFAIL_INVALID_SIGNATURE,
+	} fpFail = FPFAIL_NONE;
+	
+	if (!fp.fail)
+	{
+		//Check our signature
+		char *signature = new char[strlen(bindsaveSign)];
+		fp.Read(signature, 1, strlen(bindsaveSign));
+		
+		if (strncmp(signature, bindsaveSign, strlen(bindsaveSign)))
+		{
+			//Invalid signature fail
+			fpFail = FPFAIL_INVALID_SIGNATURE;
+		}
+		else
+		{
+			//Read bindings from file now that the signature's been confirmed
+			for (size_t i = 0; i < CONTROLLERS; i++)
+				fp.Read(&gController[i].binds, 1, sizeof(BUTTONBINDS));
+		}
 	}
 	else
 	{
-		LOG(("Using default input bindings\n"));
-		for (int i = 0; i < CONTROLLERS; i++)
+		//File open failure
+		fpFail = FPFAIL_FILEOPEN;
+	}
+	
+	//Check if we've failed and use default bindings
+	if (fpFail != FPFAIL_NONE)
+	{
+		//Get our fail string
+		const char *failstr;
+		switch (fpFail)
+		{
+			case FPFAIL_FILEOPEN:
+				failstr = fp.fail;
+				break;
+			case FPFAIL_INVALID_SIGNATURE:
+				failstr = "Invalid signature";
+				break;
+			default:
+				failstr = "Unknown error";
+				break;
+		}
+		
+		//Print failure and use default bindings
+		LOG(("NOTE: Using default input bindings - %s\n", failstr));
+		for (size_t i = 0; i < CONTROLLERS; i++)
 			gController[i].binds = defaultBinds[i];
 	}
 	
@@ -179,5 +228,22 @@ bool InitializeInput()
 void QuitInput()
 {
 	LOG(("Ending input... "));
+	
+	//Save our input bindings
+	FS_FILE fp(gPrefPath + BINDSAVE_NAME, "wb");
+	if (fp.fail != nullptr)
+	{
+		//Failed to open file
+		LOG(("Failed to save input bindings: %s\n", fp.fail));
+		return;
+	}
+	else
+	{
+		//Save our bindings
+		fp.Write(bindsaveSign, 1, strlen(bindsaveSign));
+		for (size_t i = 0; i < CONTROLLERS; i++)
+			fp.Write(&gController[i].binds, 1, sizeof(BUTTONBINDS));
+	}
+	
 	LOG(("Success!\n"));
 }

@@ -67,9 +67,7 @@ class FS_FILE
 		//One byte
 		inline uint8_t	ReadU8()
 		{
-			uint8_t byte;
-			Read(&byte, 1, 1);
-			return byte;
+			return fgetc(fp);
 		}
 		
 		//Multi-byte big endian
@@ -114,6 +112,54 @@ class FS_FILE
 			uint8_t bytes[8];
 			Read(bytes, 1, 8);
 			return ((uint64_t)bytes[7] << 56) | ((uint64_t)bytes[6] << 48) | ((uint64_t)bytes[5] << 40) | ((uint64_t)bytes[4] << 32) | ((uint32_t)bytes[3] << 24) | ((uint32_t)bytes[2] << 16) | ((uint16_t)bytes[1] << 8) | bytes[0];
+		}
+		
+		//Write functions
+		//Any size
+		inline size_t Write(const void *ptr, size_t size, size_t maxnum)	{ return fwrite(ptr, size, maxnum, fp); }
+		
+		//One byte
+		inline void	WriteU8(uint8_t val)
+		{
+			fputc(val, fp);
+		}
+		
+		//Multi-byte big endian
+		inline void	WriteBE16(uint16_t val)
+		{
+			for (size_t i = 2; i-- != 0;)
+				fputc(val >> (8 * i), fp);
+		}
+		
+		inline void	WriteBE32(uint32_t val)
+		{
+			for (size_t i = 4; i-- != 0;)
+				fputc(val >> (8 * i), fp);
+		}
+		
+		inline void	WriteBE64(uint64_t val)
+		{
+			for (size_t i = 8; i-- != 0;)
+				fputc(val >> (8 * i), fp);
+		}
+		
+		//Multi-byte little endian
+		inline void	WriteLE16(uint16_t val)
+		{
+			for (size_t i = 0; i < 2; i++)
+				fputc(val >> (8 * i), fp);
+		}
+		
+		inline void	WriteLE32(uint32_t val)
+		{
+			for (size_t i = 0; i < 4; i++)
+				fputc(val >> (8 * i), fp);
+		}
+		
+		inline void	WriteLE64(uint64_t val)
+		{
+			for (size_t i = 0; i < 8; i++)
+				fputc(val >> (8 * i), fp);
 		}
 		
 		//Seek and tell functions

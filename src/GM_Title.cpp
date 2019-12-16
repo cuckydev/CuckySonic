@@ -192,7 +192,7 @@ bool GM_Title(bool *bError)
 		bExit = HandleEvents();
 		
 		//Fade in/out
-		bool breakThisState = false;
+		bool bBreak = false;
 		
 		if (!selected)
 		{
@@ -205,7 +205,7 @@ bool GM_Title(bool *bError)
 			//Fade asset sheet and background palette out
 			bool res1 = PaletteFadeOutToBlack(titleTexture.loadedPalette);
 			bool res2 = PaletteFadeOutToBlack(background.texture->loadedPalette);
-			breakThisState = res1 && res2;
+			bBreak = res1 && res2;
 		}
 		
 		//Move title screen at beginning
@@ -294,7 +294,7 @@ bool GM_Title(bool *bError)
 		if ((*bError = gSoftwareBuffer->RenderToScreen(nullptr)) == true)
 			break;
 		
-		if (breakThisState)
+		if (bBreak)
 			break;
 		
 		//Increment frame
