@@ -45,7 +45,7 @@ ifeq ($(SWITCH), 1)
 
 	CXXFLAGS += -march=armv8-a+crc+crypto -mtune=cortex-a57 -mtp=soft -fPIE -DSWITCH $(INCLUDE)
 	LIBS += -specs=$(DEVKITPRO)/libnx/switch.specs -L$(LIBNX)/lib -lnx -lm
-	PKGCONFIG = $(DEVKITPRO)/portlibs/switch/bin/aarch64-none-elf-$(PKGCONFIG)
+	PKGCONFIG = $(DEVKITPRO)/portlibs/switch/bin/aarch64-none-elf-pkg-config
 
 	ifdef ENABLE_NXLINK
 		CXXFLAGS += -DENABLE_NXLINK
