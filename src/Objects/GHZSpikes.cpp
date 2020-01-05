@@ -24,7 +24,7 @@ void ObjGHZSpikes_Hurt(OBJECT *object, PLAYER *player)
 		#endif
 		
 		//Offset player position and hurt them
-		player->yPosLong -= (player->yVel << 8);
+		player->yLong -= (player->yVel << 8);
 		player->Hurt(object);
 	}
 }

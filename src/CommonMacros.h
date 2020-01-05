@@ -1,26 +1,26 @@
 #pragma once
 #ifdef ENDIAN_BIG
-	//Big endian - [pos>sub] = long
-	#define POSDEF(axis)	\
+	//Big endian - [high>low] = long
+	#define FPDEF(name, highType, highName, lowType, lowName, longType)	\
 		union	\
 		{	\
 			struct	\
 			{	\
-				int16_t pos;	\
-				uint16_t sub;	\
-			} axis;	\
-			int32_t	axis##PosLong = 0;	\
+				highType highName;	\
+				lowType lowName;	\
+			} name;	\
+			longType name##Long = 0;	\
 		};
 #else
-	//Little endian - [sub<pos] = long
-	#define POSDEF(axis)	\
+	//Little endian - [high<low] = long
+	#define FPDEF(name, highType, highName, lowType, lowName, longType)	\
 		union	\
 		{	\
 			struct	\
 			{	\
-				uint16_t sub;	\
-				int16_t pos;	\
-			} axis;	\
-			int32_t	axis##PosLong = 0;	\
+				lowType lowName;	\
+				highType highName;	\
+			} name;	\
+			longType name##Long = 0;	\
 		};
 #endif

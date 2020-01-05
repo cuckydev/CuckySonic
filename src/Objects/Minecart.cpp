@@ -165,7 +165,7 @@ void ObjMinecart(OBJECT *object)
 				PLAYER *player = gLevel->playerList[v];
 				
 				//Push velocity stuff
-				if (solid.side[v] && player->spindashing == false)
+				if (solid.side[v] && player->forceRollOrSpindash == false)
 				{
 					if (player->x.pos < object->x.pos && player->controlHeld.right)
 					{
@@ -187,7 +187,7 @@ void ObjMinecart(OBJECT *object)
 						
 						//Move with minecart if pushing into it
 						if (object->xVel > 0)
-							player->xPosLong += (player->xVel + 0x100) * 0x100;
+							player->xLong += (player->xVel + 0x100) * 0x100;
 						else
 							player->x.pos++;
 					}
@@ -211,7 +211,7 @@ void ObjMinecart(OBJECT *object)
 						
 						//Move with minecart if pushing into it
 						if (object->xVel < 0)
-							player->xPosLong += (player->xVel - 0x100) * 0x100;
+							player->xLong += (player->xVel - 0x100) * 0x100;
 						else
 							player->x.pos--;
 					}

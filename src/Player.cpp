@@ -292,7 +292,7 @@ void ObjSpindashDust(OBJECT *object)
 					object->mapping.mappings = gLevel->GetObjectMappings("data/Object/SpindashDust.map");
 					
 					//Is the player still spindashing?
-					if (object->parentPlayer->routine != PLAYERROUTINE_CONTROL || object->parentPlayer->spindashing == false)
+					if (object->parentPlayer->routine != PLAYERROUTINE_CONTROL || object->parentPlayer->forceRollOrSpindash == false)
 					{
 						object->anim = 0;
 						break;
@@ -1048,7 +1048,7 @@ void PLAYER::CheckCollisionRight_2Point(COLLISIONLAYER layer, int16_t xPos, int1
 //Get distance functions
 int16_t PLAYER::CheckCollisionDown_1Point(COLLISIONLAYER layer, int16_t xPos, int16_t yPos, uint8_t *outAngle)
 {
-	int16_t distance = GetCollisionV(xPos, yPos, layer, false, &floorAngle1);
+	int16_t distance = GetCollisionV(xPos, yPos, layer, false, outAngle);
 	if (outAngle != nullptr)
 		*outAngle = ((*outAngle) & 1) ? 0x00 : (*outAngle);
 	return distance;
@@ -1056,7 +1056,7 @@ int16_t PLAYER::CheckCollisionDown_1Point(COLLISIONLAYER layer, int16_t xPos, in
 
 int16_t PLAYER::CheckCollisionUp_1Point(COLLISIONLAYER layer, int16_t xPos, int16_t yPos, uint8_t *outAngle)
 {
-	int16_t distance = GetCollisionV(xPos, yPos, layer, true, &floorAngle1);
+	int16_t distance = GetCollisionV(xPos, yPos, layer, true, outAngle);
 	if (outAngle != nullptr)
 		*outAngle = ((*outAngle) & 1) ? 0x80 : (*outAngle);
 	return distance;
@@ -1064,7 +1064,7 @@ int16_t PLAYER::CheckCollisionUp_1Point(COLLISIONLAYER layer, int16_t xPos, int1
 
 int16_t PLAYER::CheckCollisionLeft_1Point(COLLISIONLAYER layer, int16_t xPos, int16_t yPos, uint8_t *outAngle)
 {
-	int16_t distance = GetCollisionH(xPos, yPos, layer, true, &floorAngle1);
+	int16_t distance = GetCollisionH(xPos, yPos, layer, true, outAngle);
 	if (outAngle != nullptr)
 		*outAngle = ((*outAngle) & 1) ? 0x40 : (*outAngle);
 	return distance;
@@ -1072,7 +1072,7 @@ int16_t PLAYER::CheckCollisionLeft_1Point(COLLISIONLAYER layer, int16_t xPos, in
 
 int16_t PLAYER::CheckCollisionRight_1Point(COLLISIONLAYER layer, int16_t xPos, int16_t yPos, uint8_t *outAngle)
 {
-	int16_t distance = GetCollisionH(xPos, yPos, layer, false, &floorAngle1);
+	int16_t distance = GetCollisionH(xPos, yPos, layer, false, outAngle);
 	if (outAngle != nullptr)
 		*outAngle = ((*outAngle) & 1) ? 0xC0 : (*outAngle);
 	return distance;
@@ -1107,8 +1107,8 @@ int16_t PLAYER::GetDistancePerpendicular(uint8_t inAngle)
 //Get distance of walls in front of us (and a frame ahead)
 int16_t PLAYER::GetWallDistance(uint8_t inAngle)
 {
-	int16_t xPos = (xPosLong + (xVel << 8)) >> 16;
-	int16_t yPos = (yPosLong + (yVel * (status.reverseGravity ? -0x100 : 0x100))) >> 16;
+	int16_t xPos = (xLong + (xVel << 8)) >> 16;
+	int16_t yPos = (yLong + (yVel << 8) * (status.reverseGravity ? -1 : 1)) >> 16;
 
 	floorAngle1 = inAngle;
 	floorAngle2 = inAngle;
@@ -1130,19 +1130,19 @@ int16_t PLAYER::GetWallDistance(uint8_t inAngle)
 	switch (offAngle & 0xC0)
 	{
 		case 0x00: //Downwards
-			return CheckCollisionDown_1Point(lrbSolidLayer, xPos, yPos + 10, nullptr);
+			return CheckCollisionDown_1Point(lrbSolidLayer, xPos, yPos + 10, &floorAngle1);
 		case 0x80: //Upwards
-			return CheckCollisionUp_1Point(lrbSolidLayer, xPos, yPos - 10, nullptr);
+			return CheckCollisionUp_1Point(lrbSolidLayer, xPos, yPos - 10, &floorAngle1);
 		case 0x40: //Left
 			//If at a shallow angle, offset the position down 8 pixels (keep us from clipping up small steps)
 			if ((angle & 0x38) == 0)
 				yPos += 8;
-			return CheckCollisionLeft_1Point(lrbSolidLayer, xPos - 10, yPos, nullptr);
+			return CheckCollisionLeft_1Point(lrbSolidLayer, xPos - 10, yPos, &floorAngle1);
 		case 0xC0: //Right
 			//If at a shallow angle, offset the position down 8 pixels (keep us from clipping up small steps)
 			if ((angle & 0x38) == 0)
 				yPos += 8;
-			return CheckCollisionRight_1Point(lrbSolidLayer, xPos + 10, yPos, nullptr);
+			return CheckCollisionRight_1Point(lrbSolidLayer, xPos + 10, yPos, &floorAngle1);
 	}
 	return 0;
 }
@@ -1729,7 +1729,7 @@ void PLAYER::AirCollision()
 //Functions for landing on the ground
 void PLAYER::LandOnFloor()
 {
-	if (status.pinballMode || spindashing)
+	if (forceRollOrSpindash)
 	{
 		//Do not exit ball form if in pinball mode
 		LandOnFloor_SetState();
@@ -1873,7 +1873,7 @@ bool PLAYER::Spindash()
 	#if (defined(SONIC1_NO_SPINDASH) || defined(SONICCD_SPINDASH))
 		return true;
 	#else
-		if (spindashing == false)
+		if (forceRollOrSpindash == false)
 		{
 			//We must be ducking in order to spindash
 			if (anim != PLAYERANIMATION_DUCK)
@@ -1887,7 +1887,7 @@ bool PLAYER::Spindash()
 				PlaySound(SOUNDID_SPINDASH_REV);
 				
 				//Set spindash variables
-				spindashing = true;
+				spindashForceRoll = {true, false}; //spindashing, forceRoll
 				spindashCounter = 0;
 				
 				//Make our spindash dust visible
@@ -1911,7 +1911,7 @@ bool PLAYER::Spindash()
 			YSHIFT_ON_FLOOR(5);
 			
 			//Release spindash
-			spindashing = false;
+			forceRollOrSpindash = false;
 			
 			//Set our speed
 			if (super)
@@ -1944,7 +1944,7 @@ bool PLAYER::Spindash()
 			//Reduce our spindash counter
 			if (spindashCounter != 0)
 			{
-				uint16_t nextCounter = (spindashCounter - spindashCounter / 0x20);
+				uint16_t nextCounter = (spindashCounter - (spindashCounter >> 5));
 				
 				//The original makes sure the spindash counter is 0 if it underflows (which seems to be impossible, to my knowledge)
 				if (nextCounter <= spindashCounter)
@@ -2508,8 +2508,8 @@ void PLAYER::JumpHeight()
 	}
 	else
 	{
-		//Cap our upwards velocity if in pinball mode / spindashing
-		if (!(status.pinballMode || spindashing) && yVel < -0xFC0)
+		//Cap our upwards velocity if not forced to roll
+		if (forceRollOrSpindash == false && yVel < -0xFC0)
 			yVel = -0xFC0;
 	}
 }
@@ -3198,7 +3198,7 @@ void PLAYER::Roll()
 			{
 				if (mabs(inertia) >= 0x100)
 					PerformRoll();
-				else if (cdSPTimer == 0)
+				else if (cdSPTimer == 0 && status.shouldNotFall == false)
 				{
 					#ifndef FIX_DUCK_CONDITION
 						anim = PLAYERANIMATION_DUCK;
@@ -3257,7 +3257,7 @@ void PLAYER::RollMovement()
 	if (!status.isSliding)
 	{
 		//Decelerate if pulling back
-		if (!(status.pinballMode || spindashing) && !moveLock)
+		if (forceRollOrSpindash == false && !moveLock)
 		{
 			if (controlHeld.left)
 				RollMoveLeft();
@@ -3349,9 +3349,9 @@ void PLAYER::RollMovement()
 		if (inertia == 0)
 	#endif
 		{
-			if (!(status.pinballMode || spindashing))
+			if (forceRollOrSpindash == false)
 			{
-				//Exit ball form
+				//Exit ball form if not force rolling
 				status.inBall = false;
 				xRadius = defaultXRadius;
 				yRadius = defaultYRadius;
@@ -3360,7 +3360,7 @@ void PLAYER::RollMovement()
 			}
 			else
 			{
-				//Speed us back up if we slow down
+				//Force roll - Speed us back up if we slow down
 				if (status.xFlip)
 					inertia = -0x400;
 				else
@@ -3448,10 +3448,7 @@ void PLAYER::HurtCheckGround()
 		inertia = 0;
 		
 		//Clear our object control
-		objectControl.disableOurMovement = false;
-		objectControl.disableAnimation = false;
-		objectControl.disableWallCollision = false;
-		objectControl.disableObjectInteract = false;
+		objectControl = {};
 		
 		//Reset animation and priority
 		anim = PLAYERANIMATION_WALK;
@@ -3462,7 +3459,7 @@ void PLAYER::HurtCheckGround()
 		
 		//Restart invulnerability timer
 		invulnerabilityTime = 120;
-		spindashing = false;
+		forceRollOrSpindash = false;
 	}
 }
 
@@ -3623,7 +3620,7 @@ void PLAYER::LevelBoundaries()
 		#define lbType uint16_t
 	#endif
 	
-	lbType nextPos = (xPosLong + (xVel << 8)) >> 16;
+	lbType nextPos = (xLong + (xVel << 8)) >> 16;
 	lbType leftBound = gLevel->leftBoundary + 0x10;
 	lbType rightBound = gLevel->rightBoundary + 0x40 - 0x18;
 	
@@ -3862,7 +3859,7 @@ void PLAYER::Animate()
 	else
 		aniList = animationList;
 	
-	//Handle animation reset based on prevAnim
+	//Handle animation reset if changed
 	if (anim != prevAnim)
 	{
 		prevAnim = anim;
@@ -3963,10 +3960,9 @@ void PLAYER::Animate()
 							angleIncrement *= WALK_FRAMES;
 						}
 						
-						//Check if our animation is going to loop
-						if (animation[1 + animFrame] == 0xFF)
+						//Get our next frame
+						if (animation[1 + animFrame] == PLYCOMMAND_RESTART)
 							animFrame = 0;
-						
 						mappingFrame = animation[1 + animFrame] + angleIncrement;
 
 					#ifndef SONIC1_WALK_ANIMATION
@@ -4033,7 +4029,6 @@ void PLAYER::Animate()
 							//Increment frame
 							animFrame++;
 						}
-						return;
 					}
 				}
 				else
@@ -4057,7 +4052,6 @@ void PLAYER::Animate()
 					
 					//Advance frame
 					AdvanceFrame(animation);
-					return;
 				}
 			}
 			else
@@ -4283,7 +4277,6 @@ void PLAYER::Animate()
 			
 			//Advance frame
 			AdvanceFrame(animation);
-			return;
 		}
 	}
 }
@@ -4336,11 +4329,11 @@ void PLAYER::ControlRoutine()
 		LevelBoundaries();
 		
 		//Move according to our velocity
-		xPosLong += xVel << 8;
+		xLong += xVel << 8;
 		if (status.reverseGravity)
-			yPosLong -= yVel << 8;
+			yLong -= yVel << 8;
 		else
-			yPosLong += yVel << 8;
+			yLong += yVel << 8;
 		
 		//Handle collision and falling off of slopes
 		GroundFloorCollision();
@@ -4349,7 +4342,7 @@ void PLAYER::ControlRoutine()
 	else if (status.inBall == true && status.inAir == false)
 	{
 		//Jump (if not in pinball mode)
-		if (!(status.pinballMode || spindashing) && !Jump())
+		if (forceRollOrSpindash == false && !Jump())
 			return;
 		
 		//Handle slope gravity and our movement
@@ -4364,11 +4357,11 @@ void PLAYER::ControlRoutine()
 	#endif
 		{
 			//Move according to our velocity
-			xPosLong += xVel << 8;
+			xLong += xVel << 8;
 			if (status.reverseGravity)
-				yPosLong -= yVel << 8;
+				yLong -= yVel << 8;
 			else
-				yPosLong += yVel << 8;
+				yLong += yVel << 8;
 		}
 		
 		//Handle collision and falling off of slopes
@@ -4386,11 +4379,11 @@ void PLAYER::ControlRoutine()
 		LevelBoundaries();
 		
 		//Move according to our velocity
-		xPosLong += xVel << 8;
+		xLong += xVel << 8;
 		if (status.reverseGravity)
-			yPosLong -= yVel << 8;
+			yLong -= yVel << 8;
 		else
-			yPosLong += yVel << 8;
+			yLong += yVel << 8;
 		
 		//Gravity (0x38 above water, 0x10 below water)
 		yVel += 0x38;
@@ -4538,11 +4531,11 @@ void PLAYER::Update()
 					}
 					
 					//Move according to our velocity
-					xPosLong += xVel << 8;
+					xLong += xVel << 8;
 					if (status.reverseGravity)
-						yPosLong -= yVel << 8;
+						yLong -= yVel << 8;
 					else
-						yPosLong += yVel << 8;
+						yLong += yVel << 8;
 					
 					//Gravity (0x30 above water, 0x10 below water)
 					yVel += 0x30;
@@ -4579,11 +4572,11 @@ void PLAYER::Update()
 					DeadCheckOffscreen();
 					
 					//Move and fall
-					xPosLong += xVel << 8;
+					xLong += xVel << 8;
 					if (status.reverseGravity)
-						yPosLong -= yVel << 8;
+						yLong -= yVel << 8;
 					else
-						yPosLong += yVel << 8;
+						yLong += yVel << 8;
 					yVel += 0x38;
 					
 					//Record pos and draw
@@ -4744,7 +4737,7 @@ void PLAYER::RestoreStateDebug()
 	
 	//Clear other state stuff
 	objectControl = {};
-	spindashing = false;
+	forceRollOrSpindash = false;
 	
 	//Clear speeds and inertia
 	xVel = 0;
@@ -4778,26 +4771,26 @@ void PLAYER::DebugControl()
 		
 		if (selectedControl.up)
 		{
-			yPosLong -= calcSpeed;
-			if (yPosLong < gLevel->topBoundaryTarget << 16)
-				yPosLong = gLevel->topBoundaryTarget << 16;
+			yLong -= calcSpeed;
+			if (yLong < gLevel->topBoundaryTarget << 16)
+				yLong = gLevel->topBoundaryTarget << 16;
 		}
 		else if (selectedControl.down)
 		{
-			yPosLong += calcSpeed;
-			if (yPosLong > gLevel->bottomBoundaryTarget << 16)
-				yPosLong = gLevel->bottomBoundaryTarget << 16;
+			yLong += calcSpeed;
+			if (yLong > gLevel->bottomBoundaryTarget << 16)
+				yLong = gLevel->bottomBoundaryTarget << 16;
 		}
 		
 		if (selectedControl.left)
 		{
-			xPosLong -= calcSpeed;
-			if (xPosLong < 0) //Doesn't check left boundary, just 0
-				xPosLong = 0;
+			xLong -= calcSpeed;
+			if (xLong < 0) //Doesn't check left boundary, just 0
+				xLong = 0;
 		}
 		else if (selectedControl.right)
 		{
-			xPosLong += calcSpeed;
+			xLong += calcSpeed;
 			//There's no boundary check here at all!
 		}
 	}

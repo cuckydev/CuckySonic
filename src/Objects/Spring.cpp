@@ -136,8 +136,7 @@ void ObjSpring(OBJECT *object)
 					
 					//Make us airborne
 					player->status.jumping = false;
-					player->spindashing = false;
-					player->status.pinballMode = false;
+					player->forceRollOrSpindash = false;
 					player->status.inAir = true;
 					player->status.shouldNotFall = false;
 					player->routine = PLAYERROUTINE_CONTROL;

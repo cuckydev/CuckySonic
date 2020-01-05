@@ -60,45 +60,49 @@ void ObjGHZSmashableWall(OBJECT *object)
 	//Fallthrough
 		case 1:
 		{
-			size_t i = 0;
-			PLAYER *player = gLevel->playerList[i];
-			
-			//Act as solid, and check if we're going into the wall
-			int16_t oldXVel = player->xVel;
-			OBJECT_SOLIDTOUCH touch = object->SolidObjectFull(27, 32, 32, object->x.pos, false, nullptr, false);
-			
-			if (touch.side[i])
+			for (size_t i = 0; i < gLevel->playerList.size(); i++)
 			{
-				//Make sure we meet the smashing conditions, and smash depending on our direction
-				if (player->characterType == CHARACTERTYPE_KNUCKLES || player->super || (player->barrier == BARRIER_FLAME && player->jumpAbility == 1) || (player->anim == PLAYERANIMATION_ROLL && mabs(oldXVel) >= 0x480 && !player->status.inAir))
+				//Get our player
+				PLAYER *player = gLevel->playerList[i];
+			
+				//Act as solid, and check if we're going into the wall
+				int16_t oldXVel = player->xVel;
+				OBJECT_SOLIDTOUCH touch = object->SolidObjectFull(27, 32, 32, object->x.pos, false, nullptr, false);
+				
+				if (touch.side[i])
 				{
-					//Move towards wall and smash
-					player->x.pos += 4; //Why is this done before position checking?
-					
-					const OBJECT_SMASHMAP *smashmap;
-					if (player->x.pos >= object->x.pos)
+					//Make sure we meet the smashing conditions, and smash depending on our direction
+					if (player->characterType == CHARACTERTYPE_KNUCKLES || player->super || (player->barrier == BARRIER_FLAME && player->jumpAbility == 1) || (player->anim == PLAYERANIMATION_ROLL && mabs(oldXVel) >= 0x480 && !player->status.inAir))
 					{
-						//Smash from the right
-						smashmap = smashmapRight;
+						//Move towards wall and smash
+						player->x.pos += 4; //Why is this done before position checking?
+						
+						const OBJECT_SMASHMAP *smashmap;
+						if (player->x.pos >= object->x.pos)
+						{
+							//Smash from the right
+							smashmap = smashmapRight;
+						}
+						else
+						{
+							//Smash from the left
+							player->x.pos -= 8;
+							smashmap = smashmapLeft;
+						}
+						
+						//Smash
+						player->xVel = oldXVel;
+						player->inertia = player->xVel;
+						player->status.pushing = false;
+						
+						object->playerContact[i].pushing = false;
+						object->Smash(8, smashmap, &ObjGHZWallFragment);
+						
+						//Delete us
+						object->deleteFlag = true;
+						gLevel->ReleaseObjectLoad(object);
+						break;
 					}
-					else
-					{
-						//Smash from the left
-						player->x.pos -= 8;
-						smashmap = smashmapLeft;
-					}
-					
-					//Smash
-					player->xVel = oldXVel;
-					player->inertia = player->xVel;
-					player->status.pushing = false;
-					
-					object->playerContact[i].pushing = false;
-					object->Smash(8, smashmap, &ObjGHZWallFragment);
-					
-					//Delete us
-					object->deleteFlag = true;
-					gLevel->ReleaseObjectLoad(object);
 				}
 			}
 			break;

@@ -57,14 +57,6 @@ class COLOUR
 		//Constructors
 		COLOUR() { return; } //Blank, for manual construction
 		
-		COLOUR(const COLOUR &copyColour) //Copies the given colour
-		{
-			//Copy our given colour
-			colour = copyColour.colour;
-			r = copyColour.r; g = copyColour.g; b = copyColour.b;
-			mr = copyColour.mr; mg = copyColour.mg; mb = copyColour.mb;
-		}
-		
 		COLOUR(const uint8_t setR, const uint8_t setG, const uint8_t setB) //Sets according to the given RGB
 		{
 			//Set our RGB accordingly and get our native colour
@@ -121,7 +113,7 @@ class PALETTE
 			//Copy given array
 			colour = new COLOUR[colours = setColours]{};
 			for (size_t i = 0; i < colours; i++)
-				colour[i] = COLOUR(setColour[i]);
+				colour[i] = setColour[i];
 		}
 		
 		//Destructor

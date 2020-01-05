@@ -8,7 +8,8 @@
 #include "Input.h"
 #include "Audio.h"
 
-#define SPLASH_TIME 120
+#define SPLASH_TIME 100
+#define TRANSITION_TIME 30
 
 bool GM_Splash(bool *bError)
 {
@@ -45,7 +46,7 @@ bool GM_Splash(bool *bError)
 				didPlayJingle = true;
 			}
 		}
-		else if (PaletteFadeOutToBlack(splashTexture.loadedPalette))
+		else if (frame >= SPLASH_TIME + TRANSITION_TIME)
 			bBreak = true;
 		
 		//Draw splash
@@ -59,6 +60,12 @@ bool GM_Splash(bool *bError)
 			
 			xOff = GetSin((y) + (animFrame * 2)) * 15 / 0x100;
 			inY += GetCos((y) + (animFrame * 4)) * 4 / 0x100;
+			
+			if (frame > SPLASH_TIME)
+			{
+				const double div = 1.0 / (1.0 - ((double)(frame - SPLASH_TIME) / TRANSITION_TIME));
+				inY = (int)((double)(inY - splashTexture.height / 2) / div) + (splashTexture.height / 2);
+			}
 			
 			//Draw strip
 			if (inY >= 0 && inY < splashTexture.height)

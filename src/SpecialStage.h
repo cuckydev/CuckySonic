@@ -33,45 +33,47 @@ class SPECIALSTAGE
 		//Player's state
 		struct
 		{
-			//Position (Extended from 8.8 of the original game to 16.16, to support larger stages)
-			POSDEF(x)
-			POSDEF(y)
+			//Position
+			FPDEF(x, uint8_t, pos, uint8_t, sub, uint16_t)
+			FPDEF(y, uint8_t, pos, uint8_t, sub, uint16_t)
 			
-			POSDEF(prevX)
-			POSDEF(prevY)
+			FPDEF(prevX, uint8_t, pos, uint8_t, sub, uint16_t)
+			FPDEF(prevY, uint8_t, pos, uint8_t, sub, uint16_t)
 			
-			//Movement direction and speed
-			uint8_t direction;	//Player's facing direction
-			int8_t turn;		//Player's turning speed (negative = left, positive = right, 0 = no turning)
-			int16_t speed;		//Player's current speed (negative = moving backwards) (8.8)
-			bool isForward;		//SCHG: Set if you're moving forward (maybe a bumper thing?)
+			//Movement
+			uint8_t angle = 0;		//(00 = North, 40 = West, 80 = South, C0 = East)
+			int8_t turn = 0;
+			bool turnLock = false;	
 			
-			struct
-			{
-				bool inAir : 1;
-				bool spring : 1;
-			} jumping;
-		} playerState;
+			int16_t velocity = 0;
+			
+			bool bumperLock = false;
+			bool advancing = false;
+			bool started = false;
+			bool isForward = false;
+			
+			uint8_t jumping = 0;
+			
+			uint8_t clearRoutine = 0;
+		} player;
 		
 		//Stage state
 		unsigned int ringsLeft = 0;
 		
-		unsigned int animFrame = 0;
-		unsigned int paletteFrame = 0;
+		uint16_t animFrame = 0;
+		uint8_t paletteFrame = 0;
 		
-		unsigned int rate = 0;
-		unsigned int rateTimer = 0;
-		
-		int backX = 0;
-		int backY = 0;
+		int16_t rate = 0;
+		int16_t rateTimer = 0;
 		
 	public:
 		SPECIALSTAGE(std::string name);
 		~SPECIALSTAGE();
 		
+		void MovePlayer();
 		void Update();
 		
-		void PalCycle();
-		
+		void RotatePalette();
+		void UpdateStageFrame();
 		void Draw();
 };

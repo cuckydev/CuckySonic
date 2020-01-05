@@ -96,7 +96,7 @@ GAMEMODE gGameMode;
 bool EnterGameLoop()
 {
 	//Initialize game memory
-	gGameMode = GAMEMODE_SPLASH; //Start at splash screen
+	gGameMode = GAMEMODE_SPECIALSTAGE; //Start at splash screen
 	
 	gScore = 0;
 	gNextScoreReward = SCORE_REWARD;

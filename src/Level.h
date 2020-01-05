@@ -150,8 +150,8 @@ struct OBJECT_LOAD
 	//Object data
 	OBJECTFUNCTION function = nullptr;
 	OBJECT_STATUS status;
-	POSDEF(x)
-	POSDEF(y)
+	FPDEF(x, int16_t, pos, uint8_t, sub, int32_t)
+	FPDEF(y, int16_t, pos, uint8_t, sub, int32_t)
 	unsigned int subtype = 0;
 	
 	//Current status
@@ -160,7 +160,7 @@ struct OBJECT_LOAD
 	bool specificBit = false;
 };
 
-//Level struct
+//Level class
 class LEVEL
 {
 	public:

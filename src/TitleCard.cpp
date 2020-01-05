@@ -126,12 +126,11 @@ void TITLECARD::UpdateAndDraw()
 	
 	//Draw background
 	const RECT backRc[] = {
-		{51, 17, 16, 16}, //Body
 		{68, 17, 16, 16}, //TL
 		{85, 17, 16, 16}, //TR
 		{68, 34, 16, 16}, //BL
 		{85, 34, 16, 16}, //BR
-		{0, 0, 0, 0}, //Open
+		{51, 17, 16, 16}, //Body
 	};
 	
 	for (int x = -(backX % 16u); x < gRenderSpec.width; x += 16)
@@ -139,7 +138,7 @@ void TITLECARD::UpdateAndDraw()
 		for (int y = -(backY % 16u); y < gRenderSpec.height; y += 16)
 		{
 			//Get how to draw the hole per tile
-			const RECT *rc = &backRc[0];
+			const RECT *rc = &backRc[4];
 			
 			if (openRadius)
 			{
@@ -153,12 +152,10 @@ void TITLECARD::UpdateAndDraw()
 				
 				//Open around focusX and focusY
 				int rad = (openRadius - mabs(ty));
-				if (mabs(tx) > rad)
-					rc = &backRc[0];
-				else if (mabs(tx) >= rad)
-					rc = &backRc[1 + (((ty >= 0) << 1) | (tx >= 0))];
-				else
-					rc = &backRc[5];
+				if (mabs(tx) == (rad + 1))
+					rc = &backRc[((ty >= 0) << 1) | (tx >= 0)];
+				else if (mabs(tx) <= rad)
+					continue;
 			}
 			
 			//Draw tile

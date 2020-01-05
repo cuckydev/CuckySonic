@@ -46,14 +46,14 @@ OBJECT::~OBJECT()
 //Generic object functions
 void OBJECT::Move()
 {
-	xPosLong += xVel << 8;
-	yPosLong += yVel << 8;
+	xLong += xVel << 8;
+	yLong += yVel << 8;
 }
 
 void OBJECT::MoveAndFall()
 {
-	xPosLong += xVel << 8;
-	yPosLong += yVel << 8;
+	xLong += xVel << 8;
+	yLong += yVel << 8;
 	yVel += 0x38;
 }
 

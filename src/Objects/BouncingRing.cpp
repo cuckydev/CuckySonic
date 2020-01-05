@@ -3,9 +3,9 @@
 #include "../MathUtil.h"
 
 //#define BOUNCINGRING_BLINK              //When set, the rings will blink shortly before despawning
+//#define BOUNCINGRING_ONLY_FLOOR	      //When set, like in the originals, bouncing rings will only check for floor collision
 
-//#define BOUNCINGRING_ONLY_FLOOR	        //When set, like in the originals, bouncing rings will only check for floor collision
-//#define BOUNCINGRING_ORIGINAL_COLLISION //When set, the game will filter the collision so only a quarter of the rings will check for collision in a frame
+#define BOUNCINGRING_COLLISIONSTEP 0x0 //0x0 - check every frame, 0x3 - Sonic 1 checking every 4 frames, 0x7 - Sonic 2 checking every 8 frames
 
 static const uint8_t animationCollect[] =	{0x05,0x04,0x05,0x06,0x07,ANICOMMAND_ADVANCE_ROUTINE};
 
@@ -51,16 +51,14 @@ void ObjBouncingRing(OBJECT *object)
 		case 1:
 		{
 			//Move and fall
-			object->xPosLong += object->xVel * 0x100;
+			object->xLong += object->xVel * 0x100;
 			if (object->parentPlayer != nullptr && object->parentPlayer->status.reverseGravity)
-				object->yPosLong -= object->yVel * 0x100;
+				object->yLong -= object->yVel * 0x100;
 			else
-				object->yPosLong += object->yVel * 0x100;
+				object->yLong += object->yVel * 0x100;
 			object->yVel += 0x18;
 			
-		#ifdef BOUNCINGRING_ORIGINAL_COLLISION
-			if ((gLevel->frameCounter + gLevel->objectList.pos_of_val(object)) % 4 == 0)
-		#endif
+			if (((gLevel->frameCounter + gLevel->objectList.pos_of_val(object)) & BOUNCINGRING_COLLISIONSTEP) == 0)
 			{
 				//Check for collision with the floor or ceiling
 				int16_t checkVel = object->yVel;

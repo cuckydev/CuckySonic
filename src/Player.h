@@ -133,8 +133,8 @@ class PLAYER
 		MAPPINGS *mappings = nullptr;
 		
 		//Position
-		POSDEF(x)
-		POSDEF(y)
+		FPDEF(x, int16_t, pos, uint8_t, sub, int32_t)
+		FPDEF(y, int16_t, pos, uint8_t, sub, int32_t)
 		
 		//Current routine
 		PLAYER_ROUTINE routine = PLAYERROUTINE_CONTROL;
@@ -177,7 +177,6 @@ class PLAYER
 			bool underwater = false;		//In water
 			bool jumping = false;			//Set if we're jumping
 			bool isSliding = false;			//If set, the player will slide about at their previous speed (Oil Ocean's oil slides)
-			bool pinballMode = false;		//If set, the player is forced to be rolling constantly (S-tubes, Casino Night things)
 			bool stickToConvex = false;		//If set, the collision will never detect us as running off of a ledge, or when we would normally detach from a ramp when going too fast (the wheel glitch from Carnival Night)
 			bool reverseGravity = false;	//If set, gravity is reversed (No, really?)
 			bool windTunnel = false;		//Inside a wind tunnel (Labyrinth Zone, Hydrocity)
@@ -234,8 +233,17 @@ class PLAYER
 		//Chain point counter
 		uint16_t chainPointCounter = 0;
 		
-		//Spindash state
-		bool spindashing = false;		//Set if we're spindashing
+		//Spindash state and also force roll
+		union
+		{
+			struct
+			{
+				bool spindashing : 1;	//Set if we're spindashing
+				bool forceRoll : 1;		//Set if we're forced to roll (S-tubes)
+			} spindashForceRoll;
+			bool forceRollOrSpindash = false;
+		};
+		
 		uint16_t spindashCounter = 0;	//Our counter for spindashing
 		
 		//CD Spindash/Peelout

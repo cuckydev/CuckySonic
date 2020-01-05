@@ -477,8 +477,8 @@ bool LEVEL::LoadObjects(LEVELTABLE *tableEntry)
 				OBJECT_LOAD *objectLoad = new OBJECT_LOAD;
 				objectLoad->function = tableEntry->objectFunctionList[id];
 				objectLoad->status = {xFlip, yFlip, releaseDestroyed, false, false};
-				objectLoad->xPosLong = xPos << 16;
-				objectLoad->yPosLong = yPos << 16;
+				objectLoad->xLong = xPos << 16;
+				objectLoad->yLong = yPos << 16;
 				objectLoad->subtype = subtype;
 				
 				objectLoad->loaded = nullptr;
@@ -519,8 +519,8 @@ bool LEVEL::LoadObjects(LEVELTABLE *tableEntry)
 			OBJECT_LOAD *objectLoad = new OBJECT_LOAD;
 			objectLoad->function = &ObjRing;
 			objectLoad->status = {false, false, false, false, false};
-			objectLoad->xPosLong = xPos << 16;
-			objectLoad->yPosLong = yPos << 16;
+			objectLoad->xLong = xPos << 16;
+			objectLoad->yLong = yPos << 16;
 			objectLoad->subtype = 0;
 			
 			objectLoad->loaded = nullptr;
@@ -813,12 +813,12 @@ void LEVEL::DynamicEvents()
 				
 				if (doRoll)
 				{
-					if (!player->status.pinballMode)
+					if (!player->spindashForceRoll.forceRoll)
 						player->PerformRoll();
-					player->status.pinballMode = true;
+					player->spindashForceRoll.forceRoll = true;
 				}
 				else
-					player->status.pinballMode = false;
+					player->spindashForceRoll.forceRoll = false;
 			}
 			break;
 		default:
@@ -969,8 +969,8 @@ void LEVEL::LinkObjectLoad(OBJECT *object)
 	OBJECT_LOAD *objectLoad = new OBJECT_LOAD;
 	objectLoad->function = object->function;
 	objectLoad->status = object->status;
-	objectLoad->xPosLong = object->xPosLong;
-	objectLoad->yPosLong = object->yPosLong;
+	objectLoad->xLong = object->xLong;
+	objectLoad->yLong = object->yLong;
 	objectLoad->subtype = object->subtype;
 	
 	objectLoad->loaded = object;
@@ -1018,8 +1018,8 @@ void LEVEL::CheckObjectLoad()
 			//Load the object if in-range
 			OBJECT *newObject = new OBJECT(objectLoadList[i]->function);
 			newObject->status = objectLoadList[i]->status;
-			newObject->xPosLong = objectLoadList[i]->xPosLong;
-			newObject->yPosLong = objectLoadList[i]->yPosLong;
+			newObject->xLong = objectLoadList[i]->xLong;
+			newObject->yLong = objectLoadList[i]->yLong;
 			newObject->subtype = objectLoadList[i]->subtype;
 			objectLoadList[i]->loaded = newObject;
 			

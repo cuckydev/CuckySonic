@@ -180,8 +180,8 @@ bool GM_Title(bool *bError)
 	bool selected = false;
 	
 	//Make our palette black for fade-in
-	FillPaletteBlack(titleTexture.loadedPalette);
-	FillPaletteBlack(background.texture->loadedPalette);
+	FillPaletteWhite(titleTexture.loadedPalette);
+	FillPaletteWhite(background.texture->loadedPalette);
 	
 	//Our loop
 	bool bExit = false;
@@ -197,8 +197,8 @@ bool GM_Title(bool *bError)
 		if (!selected)
 		{
 			//Fade asset sheet and background palette in
-			PaletteFadeInFromBlack(titleTexture.loadedPalette);
-			PaletteFadeInFromBlack(background.texture->loadedPalette);
+			PaletteFadeInFromWhite(titleTexture.loadedPalette);
+			PaletteFadeInFromWhite(background.texture->loadedPalette);
 		}
 		else
 		{

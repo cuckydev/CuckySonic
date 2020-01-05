@@ -6,7 +6,7 @@
 #include "Filesystem.h"
 
 //Render specification
-RENDERSPEC gRenderSpec = {398, 224, 2, 60.0, false, false};
+RENDERSPEC gRenderSpec = {320, 224, 2, 60.0, false, false};
 
 SOFTWAREBUFFER *gSoftwareBuffer;
 
@@ -211,6 +211,10 @@ void SOFTWAREBUFFER::DrawPoint(const int layer, const POINT *point, const COLOUR
 
 void SOFTWAREBUFFER::DrawQuad(const int layer, const RECT *quad, const COLOUR *colour)
 {
+	//Don't draw bad quads
+	if (quad->w <= 0 || quad->h <= 0)
+		return;
+	
 	//Setup our queue entry
 	RENDERQUEUE newEntry;
 	newEntry.dest = *quad;
@@ -254,6 +258,10 @@ void SOFTWAREBUFFER::DrawTexture(TEXTURE *texture, PALETTE *palette, const RECT 
 		newSrc = *src;
 	else
 		newSrc = {0, 0, texture->width, texture->height};
+	
+	//Don't draw bad quads
+	if (newSrc.w <= 0 || newSrc.h <= 0)
+		return;
 	
 	//Clip to the destination
 	if (x < 0)

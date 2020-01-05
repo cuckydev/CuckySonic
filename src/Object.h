@@ -132,8 +132,8 @@ class OBJECT
 		OBJECT_MAPPING mapping;
 		
 		//Position
-		POSDEF(x)
-		POSDEF(y)
+		FPDEF(x, int16_t, pos, uint8_t, sub, int32_t)
+		FPDEF(y, int16_t, pos, uint8_t, sub, int32_t)
 		
 		//Speeds
 		int16_t xVel = 0;		//Global X-velocity
