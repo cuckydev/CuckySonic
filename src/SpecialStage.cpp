@@ -236,11 +236,7 @@ void SPECIALSTAGE::UpdateStageFrame()
 	if (midTurn != 0)
 	{
 		animFrame = (midTurn >> 2) + 0x1F;
-		//paletteFrame &= 0x1E;
-		if ((paletteFrame - 1) & 0xF)
-			paletteFrame = 0x10;
-		else
-			paletteFrame = 0x00;
+		paletteFrame &= 0x1E;
 	}
 }
 
