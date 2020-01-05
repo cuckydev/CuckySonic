@@ -6,7 +6,7 @@
 #include "Filesystem.h"
 
 //Render specification
-RENDERSPEC gRenderSpec = {320, 224, 2, 60.0, false, false};
+RENDERSPEC gRenderSpec = {398, 224, 2, 60.0, false, false};
 
 SOFTWAREBUFFER *gSoftwareBuffer;
 

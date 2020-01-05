@@ -30,15 +30,15 @@ class SPECIALSTAGE
 		size_t width = 0, height = 0;
 		uint8_t *layout = nullptr;
 		
-		//Player's state
+		//Player state
 		struct
 		{
 			//Position
 			FPDEF(x, uint8_t, pos, uint8_t, sub, uint16_t)
 			FPDEF(y, uint8_t, pos, uint8_t, sub, uint16_t)
 			
-			FPDEF(prevX, uint8_t, pos, uint8_t, sub, uint16_t)
-			FPDEF(prevY, uint8_t, pos, uint8_t, sub, uint16_t)
+			FPDEF(lastX, uint8_t, pos, uint8_t, sub, uint16_t)
+			FPDEF(lastY, uint8_t, pos, uint8_t, sub, uint16_t)
 			
 			//Movement
 			uint8_t angle = 0;		//(00 = North, 40 = West, 80 = South, C0 = East)
@@ -66,14 +66,19 @@ class SPECIALSTAGE
 		int16_t rate = 0;
 		int16_t rateTimer = 0;
 		
+		//Background position
+		int backX = 0, backY = 0;
+		
 	public:
 		SPECIALSTAGE(std::string name);
 		~SPECIALSTAGE();
 		
+		void SpeedupStage();
 		void MovePlayer();
 		void Update();
 		
 		void RotatePalette();
 		void UpdateStageFrame();
+		void UpdateBackgroundPosition();
 		void Draw();
 };

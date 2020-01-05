@@ -2,13 +2,14 @@
 #include <string.h>
 
 #include "SpecialStage.h"
-#include "SpecialStage_PerspectiveArray.h"
 #include "Filesystem.h"
 #include "Log.h"
 #include "Error.h"
 #include "Audio.h"
 #include "Input.h"
 #include "MathUtil.h"
+
+#define SPEEDUP_TIME (30 * 60)
 
 //Special stage constructor and destructor
 SPECIALSTAGE::SPECIALSTAGE(std::string name)
@@ -74,7 +75,7 @@ SPECIALSTAGE::SPECIALSTAGE(std::string name)
 	
 	//Initialize state
 	rate = 0x1000;
-	rateTimer = 30 * 60;
+	rateTimer = SPEEDUP_TIME;
 	
 	LOG(("Success!\n"));
 }
@@ -89,6 +90,17 @@ SPECIALSTAGE::~SPECIALSTAGE()
 }
 
 //Stage update code
+void SPECIALSTAGE::SpeedupStage()
+{
+	//Speed up every 30 seconds
+	if (rateTimer == 0 || --rateTimer == 0)
+	{
+		//Reset timer and speed up
+		rateTimer = SPEEDUP_TIME;
+		if (rate != 0x2000)
+			rate += 0x400;
+	}
+}
 void SPECIALSTAGE::MovePlayer()
 {
 	//Handle player movement
@@ -165,7 +177,7 @@ void SPECIALSTAGE::MovePlayer()
 			{
 				//Move twice as fast if hit a spring
 				if (player.jumping == 0x81)
-					nextVel += nextVel;
+					nextVel *= 2;
 				
 				//Apply our velocity onto our position
 				int32_t sin = GetSin(player.angle) * nextVel; sin = ((sin & 0xFFFF0000) >> 16) | ((sin & 0x0000FFFF) << 16);
@@ -179,7 +191,8 @@ void SPECIALSTAGE::MovePlayer()
 
 void SPECIALSTAGE::Update()
 {
-	//Update player and other stuff
+	//Update stage and players
+	SpeedupStage();
 	MovePlayer();
 }
 
@@ -191,13 +204,7 @@ void SPECIALSTAGE::RotatePalette()
 	//Get our frame to index into the cycle
 	uint16_t frame = animFrame;
 	if (frame >= 0x20)
-	{
-		if (player.turn >= 0)
-			return;
-		else
-			frame = paletteFrame & 0x1F;
-	}
-	
+		frame = paletteFrame;
 	frame = 0x20 - (frame & 0x1F);
 	
 	//Copy our palette
@@ -209,20 +216,17 @@ void SPECIALSTAGE::RotatePalette()
 void SPECIALSTAGE::UpdateStageFrame()
 {
 	//Get our moving position
-	uint16_t movingPosition = 0;
+	int16_t movingPosition = 0;
 	if (player.angle & 0x40)
 		movingPosition = player.xLong + 0x100 + (player.yLong & 0x100);
 	else
 		movingPosition = player.yLong + (player.xLong & 0x100);
 	
-	//Invert if our angle is positive
+	//Reverse if angle is positive
 	if (player.angle < 0x80)
-	{
-		printf("%04X ", movingPosition);
-		movingPosition = 0x1F - movingPosition;
-	}
+		movingPosition = 0xF - movingPosition;
 	
-	//Get our new frame according to movingPosition
+	//Get our animation frame from our moving position
 	movingPosition = (movingPosition & 0x1F0) >> 4;
 	animFrame = movingPosition;
 	paletteFrame = movingPosition;
@@ -230,9 +234,35 @@ void SPECIALSTAGE::UpdateStageFrame()
 	//Use turning frames if turning
 	uint8_t midTurn = player.angle & 0x3C;
 	if (midTurn != 0)
+	{
 		animFrame = (midTurn >> 2) + 0x1F;
+		//paletteFrame &= 0x1E;
+		if ((paletteFrame - 1) & 0xF)
+			paletteFrame = 0x10;
+		else
+			paletteFrame = 0x00;
+	}
+}
+
+void SPECIALSTAGE::UpdateBackgroundPosition()
+{
+	//Get our movement delta
+	int16_t move;
+	if (player.angle & 0x40)
+		move = player.xLong - player.lastXLong;
+	else
+		move = player.yLong - player.lastYLong;
 	
-	printf("%02X %02X %02X\n", player.angle, animFrame, paletteFrame);
+	//Apply movement delta and angle to background position
+	if (player.angle >= 0x80)
+		backY -= move >> 2;
+	else
+		backY += move >> 2;
+	backX = player.angle << 2;
+	
+	//Remember last position
+	player.lastXLong = player.xLong;
+	player.lastYLong = player.yLong;
 }
 
 static const int ssStageMap[] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -248,12 +278,7 @@ void SPECIALSTAGE::Draw()
 	UpdateStageFrame();
 	
 	//Draw and update the background
-	int16_t movingPosition = (player.angle & 0x40) ? player.xLong : player.yLong;
-	if (player.angle >= 0x80)
-		movingPosition = -movingPosition;
-	
-	int backY = movingPosition >> 2;
-	int backX = player.angle << 2;
+	UpdateBackgroundPosition();
 	for (int x = -(-backX % (unsigned)backgroundTexture->width); x < gRenderSpec.width; x += backgroundTexture->width)
 		for (int y = -(-backY % (unsigned)backgroundTexture->height); y < gRenderSpec.height; y += backgroundTexture->height)
 			gSoftwareBuffer->DrawTexture(backgroundTexture, backgroundTexture->loadedPalette, nullptr, SPECIALSTAGE_RENDERLAYER_BACKGROUND, x, y, false, false);
