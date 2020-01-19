@@ -6,9 +6,9 @@
 //Get the layout tile at the given x,y coordinate
 TILE *GetTileAt(int16_t x, int16_t y)
 {
-	if (x < 0 || x >= (int16_t)(gLevel->layout.width * 16) || y < 0 || y >= (int16_t)(gLevel->layout.height * 16))
+	if (x < 0 || (size_t)(x / 16) >= gLevel->layout.width || y < 0 || (size_t)(y / 16) >= gLevel->layout.height)
 		return nullptr;
-	return &gLevel->layout.foreground[(y / 16) * gLevel->layout.width + (x / 16)];
+	return &gLevel->layout.foreground[(size_t)(y / 16) * gLevel->layout.width + (size_t)(x / 16)];
 }
 
 #define TILE_ON_LAYER(alt, lrb, tile) (!(alt ? ((!lrb && !tile->altTop) || (lrb && !tile->altLRB)) : ((!lrb && !tile->norTop) || (lrb && !tile->norLRB))))

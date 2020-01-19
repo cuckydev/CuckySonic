@@ -21,6 +21,7 @@
 //#define FIX_SPINATTACK_REFLECT  //In Sonic 3 and Knuckles, Sonic's double spin attack doesn't reflect projectiles, but the code suggests that it's supposed to
 
 //Game differences
+//#define SONIC1_FLOOR_CLIP            //In Sonic 2+, the maximum distance you're allowed to clip down to a floor was made to be based on your speed rather than always being 14
 //#define SONIC1_SLOPE_ANGLE           //In Sonic 2+, the floor's angle will be replaced with the player's cardinal floor angle if there's a 45+ degree difference
 //#define SONIC12_PUSH_CHECK           //In Sonic 3, it was changed so that you have to be facing towards a wall in order to start pushing into it
 //#define SONIC12_SANE_AIRCOLLISION    //For some reason, in Sonic 3 there was a weird modification to the airborne collision code... can't understand the purpose
@@ -865,7 +866,7 @@ void ObjInvincibilityStars(OBJECT *object)
 //Player class
 #define READ_SPEEDDEFINITION(definition)	definition.top = playerSpec.ReadBE16(); definition.acceleration = playerSpec.ReadBE16(); definition.deceleration = playerSpec.ReadBE16(); definition.rollDeceleration = playerSpec.ReadBE16(); definition.jumpForce = playerSpec.ReadBE16(); definition.jumpRelease = playerSpec.ReadBE16();
 
-PLAYER::PLAYER(std::string specPath, PLAYER *myFollow, size_t myController) : controller(myController), follow(myFollow)
+PLAYER::PLAYER(std::string specPath, int16_t xPos, int16_t yPos, PLAYER *myFollow, size_t myController) : controller(myController), follow(myFollow)
 {
 	//Load art and mappings
 	texture = gLevel->GetObjectTexture(specPath + ".bmp");
@@ -928,7 +929,9 @@ PLAYER::PLAYER(std::string specPath, PLAYER *myFollow, size_t myController) : co
 	//Render flags
 	renderFlags.alignPlane = true;
 	
-	//Initialize our record arrays
+	//Initialize position
+	x.pos = xPos;
+	y.pos = yPos;
 	ResetRecords(x.pos - 0x20, y.pos - 0x04);
 	
 	//Load our objects
@@ -1231,9 +1234,13 @@ void PLAYER::GroundFloorCollision()
 				else if (nearestDifference > 0)
 				{
 					//Get how far we can clip down to the floor
-					uint8_t clipLength = mabs(xVel >> 8) + 4;
-					if (clipLength >= 14)
-						clipLength = 14;
+					#ifndef SONIC1_FLOOR_CLIP
+						uint8_t clipLength = mabs(xVel >> 8) + 4;
+						if (clipLength >= 14)
+							clipLength = 14;
+					#else
+						uint8_t clipLength = 14;
+					#endif
 
 					if (nearestDifference > clipLength && !status.stickToConvex)
 					{
@@ -1266,9 +1273,13 @@ void PLAYER::GroundFloorCollision()
 				else if (nearestDifference > 0)
 				{
 					//Get how far we can clip down to the floor
-					uint8_t clipLength = mabs(yVel >> 8) + 4;
-					if (clipLength >= 14)
-						clipLength = 14;
+					#ifndef SONIC1_FLOOR_CLIP
+						uint8_t clipLength = mabs(yVel >> 8) + 4;
+						if (clipLength >= 14)
+							clipLength = 14;
+					#else
+						uint8_t clipLength = 14;
+					#endif
 
 					if (nearestDifference > clipLength && !status.stickToConvex)
 					{
@@ -1301,9 +1312,13 @@ void PLAYER::GroundFloorCollision()
 				else if (nearestDifference > 0)
 				{
 					//Get how far we can clip down to the floor
-					uint8_t clipLength = mabs(xVel >> 8) + 4;
-					if (clipLength >= 14)
-						clipLength = 14;
+					#ifndef SONIC1_FLOOR_CLIP
+						uint8_t clipLength = mabs(xVel >> 8) + 4;
+						if (clipLength >= 14)
+							clipLength = 14;
+					#else
+						uint8_t clipLength = 14;
+					#endif
 
 					if (nearestDifference > clipLength && !status.stickToConvex)
 					{
@@ -1336,9 +1351,13 @@ void PLAYER::GroundFloorCollision()
 				else if (nearestDifference > 0)
 				{
 					//Get how far we can clip down to the floor
-					uint8_t clipLength = mabs(yVel >> 8) + 4;
-					if (clipLength >= 14)
-						clipLength = 14;
+					#ifndef SONIC1_FLOOR_CLIP
+						uint8_t clipLength = mabs(yVel >> 8) + 4;
+						if (clipLength >= 14)
+							clipLength = 14;
+					#else
+						uint8_t clipLength = 14;
+					#endif
 
 					if (nearestDifference > clipLength && !status.stickToConvex)
 					{
@@ -2293,187 +2312,232 @@ const int16_t hyperDashVel[][2] = {
 
 void PLAYER::JumpAbilities()
 {
-	#ifdef SONICMANIA_DROPDASH
-		//Handle the dropdash charging
-		if (abilityProperty > (DROPDASH_CHARGE + 1))
-		{
-			//Check for releasing the already started dropdash
-			if (!(controlHeld.a || controlHeld.b || controlHeld.c))
-			{
-				//Release dropdash
-				abilityProperty = 0xFF;
-				anim = PLAYERANIMATION_ROLL;
-				return;
-			}
-		}
-		else if (abilityProperty >= 2 && abilityProperty <= (DROPDASH_CHARGE + 1))
-		{
-			//Wait for the dropdash to have charged up (DROPDASH_CHARGE frames of holding ABC)
-			if ((controlHeld.a || controlHeld.b || controlHeld.c) && ++abilityProperty > (DROPDASH_CHARGE + 1))
-			{
-				//Start dropdash
-				anim = PLAYERANIMATION_DROPDASH;
-				PlaySound(SOUNDID_DROPDASH);
-				return;
-			}
-		}
-	#endif
+	//If we're following someone, don't allow jump abilities unless under control
+	if (follow != nullptr && cpuTimer == 0)
+		return;
 	
-	//If we've pressed ABC, check for our jump abilities
-	if (jumpAbility == 0 && (controlPress.a || controlPress.b || controlPress.c))
+	switch (characterType)
 	{
-		//Clear the roll jump flag, so we regain horizontal control
-		#ifndef CONTROL_JA_DONT_CLEAR_ROLLJUMP
-			status.rollJumping = false;
-		#endif
-		
-		//Handle our super and hyper abilities
-		if (super)
-		{
-			if (!hyper)
-			{
-				//Set our jump ability flag... but don't do anything? (In Sonic 3 this caused conflicts with the water barrier)
-				jumpAbility = 1;
-				
-				#ifdef SONICMANIA_DROPDASH
-					//Check if we should initiate a dropdash
-					if (characterType == CHARACTERTYPE_SONIC)
-						abilityProperty = 2;
-				#endif
-				return;
-			}
-			else
-			{
-				//Make the camera lag behind us and set jump ability flag
-				scrollDelay = 0x2000;
-				ResetRecords(x.pos, y.pos);
-				jumpAbility = 1;
-				
-				//Get our velocity index from our input
-				size_t index = 0;
-				
-				if (controlHeld.up)
-					index |= (1 << 0);
-				if (controlHeld.down)
-					index |= (1 << 1);
-				if (controlHeld.left)
-					index |= (1 << 2);
-				if (controlHeld.right)
-					index |= (1 << 3);
-				
-				//If not holding any direction, dash left or right
-				if (index == 0 || index >= 0xB)
-				{
-					if (status.xFlip)
-						index = (1 << 2);
-					else
-						index = (1 << 3);
-				}
-				
-				//Set our velocity
-				xVel = hyperDashVel[index][0]; inertia = xVel;
-				yVel = hyperDashVel[index][1];
-				return;
-			}
-		}
-		
-		if (!item.isInvincible)
-		{
-			#ifndef SONIC12_NO_BARRIER_ABILITIES
-				//Check for barrier abilities
-				switch (barrier)
-				{
-					case BARRIER_FLAME:
-					{
-						//Update our barrier and ability flag
-						if (barrierObject != nullptr)
-							barrierObject->anim = 1;
-						jumpAbility = 1;
-						
-						//Dash in our facing direction
-						int16_t speed = 0x800;
-						if (status.xFlip)
-							speed = -speed;
-						
-						xVel = speed;
-						inertia = speed;
-						yVel = 0;
-						
-						//Make the camera lag behind us
-						scrollDelay = 0x2000;
-						ResetRecords(x.pos, y.pos);
-						PlaySound(SOUNDID_USE_FLAME_BARRIER);
-						return;
-					}
-					case BARRIER_LIGHTNING:
-					{
-						//Update our barrier and ability flag
-						if (barrierObject != nullptr)
-							barrierObject->anim = 1;
-						jumpAbility = 1;
-						
-						//Lightning barrier double jump
-						yVel = -0x680;
-						status.jumping = false;
-						PlaySound(SOUNDID_USE_LIGHTNING_BARRIER);
-						return;
-					}
-					case BARRIER_AQUA:
-					{
-						//Update our barrier and ability flag
-						if (barrierObject != nullptr)
-							barrierObject->anim = 1;
-						jumpAbility = 1;
-						
-						//Shoot down to the ground
-						#if (defined(SONICMANIA_AQUABOUNCE) || defined(ICBINS1_AQUABOUNCE))
-							xVel /= 2;
-						#else
-							xVel = 0;
-						#endif
-						inertia = 0;
-						yVel = 0x800;
-						PlaySound(SOUNDID_USE_AQUA_BARRIER);
-						return;
-					}
-					default:
-						break;
-				}
-			#endif
-			
-			//Check if we should do our super transformation
-			#if !(defined(SONIC1_NO_SUPER) || defined(SONIC2_SUPER_AT_PEAK))
-				if (SuperTransform())
-					return;
-			#endif
-			
-			if (characterType == CHARACTERTYPE_SONIC)
-			{
-				//Check for double spin attack
-				#ifndef SONIC12_NO_SPINATTACK
-					if (barrier == BARRIER_NULL)
-					{
-						//Update our barrier and ability flag
-						if (barrierObject != nullptr)
-								barrierObject->anim = 1;
-						jumpAbility = 1;
-						PlaySound(SOUNDID_DOUBLE_SPIN_ATTACK);
-					}
-				#endif
-				
-				//Initiate dropdash
-				#ifdef SONICMANIA_DROPDASH
-					abilityProperty = 2;
-				#endif
-			}
-		}
-		else
+		case CHARACTERTYPE_SONIC:
 		{
 			#ifdef SONICMANIA_DROPDASH
-				//Check if we should initiate a dropdash
-				if (characterType == CHARACTERTYPE_SONIC)
-					abilityProperty = 2;
+				//Handle the dropdash charging
+				if (abilityProperty > (DROPDASH_CHARGE + 1))
+				{
+					//Check for releasing the already started dropdash
+					if (!(controlHeld.a || controlHeld.b || controlHeld.c))
+					{
+						//Release dropdash
+						abilityProperty = 0xFF;
+						anim = PLAYERANIMATION_ROLL;
+						return;
+					}
+				}
+				else if (abilityProperty >= 2 && abilityProperty <= (DROPDASH_CHARGE + 1))
+				{
+					//Wait for the dropdash to have charged up (DROPDASH_CHARGE frames of holding ABC)
+					if ((controlHeld.a || controlHeld.b || controlHeld.c) && ++abilityProperty > (DROPDASH_CHARGE + 1))
+					{
+						//Start dropdash
+						anim = PLAYERANIMATION_DROPDASH;
+						PlaySound(SOUNDID_DROPDASH);
+						return;
+					}
+				}
 			#endif
+			
+			//If we've pressed ABC, check for our jump abilities
+			if (jumpAbility == 0 && (controlPress.a || controlPress.b || controlPress.c))
+			{
+				//Clear the roll jump flag, so we regain horizontal control
+				#ifndef CONTROL_JA_DONT_CLEAR_ROLLJUMP
+					status.rollJumping = false;
+				#endif
+				
+				//Handle our super and hyper abilities
+				if (super)
+				{
+					if (!hyper)
+					{
+						//Set our jump ability flag... but don't do anything? (In Sonic 3 this caused conflicts with the water barrier)
+						jumpAbility = 1;
+						
+						#ifdef SONICMANIA_DROPDASH
+							//Check if we should initiate a dropdash
+							if (characterType == CHARACTERTYPE_SONIC)
+								abilityProperty = 2;
+						#endif
+						return;
+					}
+					else
+					{
+						//Make the camera lag behind us and set jump ability flag
+						scrollDelay = 0x2000;
+						ResetRecords(x.pos, y.pos);
+						jumpAbility = 1;
+						
+						//Get our velocity index from our input
+						size_t index = 0;
+						
+						if (controlHeld.up)
+							index |= (1 << 0);
+						if (controlHeld.down)
+							index |= (1 << 1);
+						if (controlHeld.left)
+							index |= (1 << 2);
+						if (controlHeld.right)
+							index |= (1 << 3);
+						
+						//If not holding any direction, dash left or right
+						if (index == 0 || index >= 0xB)
+						{
+							if (status.xFlip)
+								index = (1 << 2);
+							else
+								index = (1 << 3);
+						}
+						
+						//Set our velocity
+						xVel = hyperDashVel[index][0]; inertia = xVel;
+						yVel = hyperDashVel[index][1];
+						return;
+					}
+				}
+				
+				if (!item.isInvincible)
+				{
+					#ifndef SONIC12_NO_BARRIER_ABILITIES
+						//Check for barrier abilities
+						switch (barrier)
+						{
+							case BARRIER_FLAME:
+							{
+								//Update our barrier and ability flag
+								if (barrierObject != nullptr)
+									barrierObject->anim = 1;
+								jumpAbility = 1;
+								
+								//Dash in our facing direction
+								int16_t speed = 0x800;
+								if (status.xFlip)
+									speed = -speed;
+								
+								xVel = speed;
+								inertia = speed;
+								yVel = 0;
+								
+								//Make the camera lag behind us
+								scrollDelay = 0x2000;
+								ResetRecords(x.pos, y.pos);
+								PlaySound(SOUNDID_USE_FLAME_BARRIER);
+								return;
+							}
+							case BARRIER_LIGHTNING:
+							{
+								//Update our barrier and ability flag
+								if (barrierObject != nullptr)
+									barrierObject->anim = 1;
+								jumpAbility = 1;
+								
+								//Lightning barrier double jump
+								yVel = -0x680;
+								status.jumping = false;
+								PlaySound(SOUNDID_USE_LIGHTNING_BARRIER);
+								return;
+							}
+							case BARRIER_AQUA:
+							{
+								//Update our barrier and ability flag
+								if (barrierObject != nullptr)
+									barrierObject->anim = 1;
+								jumpAbility = 1;
+								
+								//Shoot down to the ground
+								#if (defined(SONICMANIA_AQUABOUNCE) || defined(ICBINS1_AQUABOUNCE))
+									xVel /= 2;
+								#else
+									xVel = 0;
+								#endif
+								inertia = 0;
+								yVel = 0x800;
+								PlaySound(SOUNDID_USE_AQUA_BARRIER);
+								return;
+							}
+							default:
+								break;
+						}
+					#endif
+					
+					//Check if we should do our super transformation (if we're not following someone)
+					#if !(defined(SONIC1_NO_SUPER) || defined(SONIC2_SUPER_AT_PEAK))
+						if (follow == nullptr)
+						{
+							if (SuperTransform())
+								return;
+						}
+					#endif
+					
+					//Check for double spin attack
+					#ifndef SONIC12_NO_SPINATTACK
+						if (barrier == BARRIER_NULL)
+						{
+							//Update our barrier and ability flag
+							if (barrierObject != nullptr)
+									barrierObject->anim = 1;
+							jumpAbility = 1;
+							PlaySound(SOUNDID_DOUBLE_SPIN_ATTACK);
+						}
+					#endif
+					
+					//Initiate dropdash
+					#ifdef SONICMANIA_DROPDASH
+						abilityProperty = 2;
+					#endif
+				}
+				else
+				{
+					#ifdef SONICMANIA_DROPDASH
+						//Check if we should initiate a dropdash
+						if (characterType == CHARACTERTYPE_SONIC)
+							abilityProperty = 2;
+					#endif
+				}
+			}
+			break;
+		}
+		
+		case CHARACTERTYPE_TAILS:
+		{
+			//If we've pressed ABC, check for our jump abilities
+			if (jumpAbility == 0 && (controlPress.a || controlPress.b || controlPress.c))
+			{
+				//Check if we should do our super transformation (if we're not following someone)
+				#if !(defined(SONIC1_NO_SUPER) || defined(SONIC2_SUPER_AT_PEAK))
+					if (follow == nullptr)
+					{
+						if (SuperTransform())
+							return;
+					}
+				#endif
+			}
+			break;
+		}
+		
+		case CHARACTERTYPE_KNUCKLES:
+		{
+			//If we've pressed ABC, check for our jump abilities
+			if (jumpAbility == 0 && (controlPress.a || controlPress.b || controlPress.c))
+			{
+				//Check if we should do our super transformation (if we're not following someone)
+				#if !(defined(SONIC1_NO_SUPER) || defined(SONIC2_SUPER_AT_PEAK))
+					if (follow == nullptr)
+					{
+						if (SuperTransform())
+							return;
+					}
+				#endif
+			}
+			break;
 		}
 	}
 }
@@ -2500,10 +2564,13 @@ void PLAYER::JumpHeight()
 		//Cancel spindash / peelout
 		cdSPTimer = 0;
 		
-		//Transform if near peak of jump
+		//Transform if near peak of jump (if we're not following someone)
 		#if (!defined(SONIC1_NO_SUPER) && defined(SONIC2_SUPER_AT_PEAK))
-			if (!(yVel & 0xFF00))
-				SuperTransform();
+			if (follow == nullptr)
+			{
+				if (!(yVel & 0xFF00))
+					SuperTransform();
+			}
 		#endif
 	}
 	else
@@ -3254,10 +3321,10 @@ void PLAYER::RollMoveRight()
 
 void PLAYER::RollMovement()
 {
-	if (!status.isSliding)
+	if (status.isSliding == false || spindashForceRoll.forceRoll == true)
 	{
 		//Decelerate if pulling back
-		if (forceRollOrSpindash == false && !moveLock)
+		if (moveLock == 0)
 		{
 			if (controlHeld.left)
 				RollMoveLeft();
@@ -3272,8 +3339,7 @@ void PLAYER::RollMovement()
 				//Get our charge rate and speed (top speed x2, x1.5 if using speed shoes)
 				int16_t spindashAccel = 0x4B;
 				int16_t spindashCap = top << 1;
-				
-				if (item.hasSpeedShoes)
+				if (item.hasSpeedShoes == true)
 					spindashCap -= (top >> 1);
 				
 				//Reverse if facing left
@@ -3390,8 +3456,9 @@ void PLAYER::DeadCheckOffscreen()
 	int16_t cameraY = gLevel->camera->yPos;
 	cameraLock = true;
 	
-	//Stop the timer
-	gLevel->updateTime = false;
+	//Stop the timer if lead player
+	if (follow == nullptr)
+		gLevel->updateTime = false;
 	
 	//Check if we're off-screen
 	#ifndef SONIC12_DEATH_RESPAWN
@@ -3410,11 +3477,19 @@ void PLAYER::DeadCheckOffscreen()
 			return;
 	#endif
 	
-	//Enter respawn state
-	routine = PLAYERROUTINE_RESET_LEVEL;
-	restartCountdown = 60;
-	
-	gLives--;
+	if (follow == nullptr)
+	{
+		//Lose a life and enter respawn state if lead player
+		routine = PLAYERROUTINE_RESET_LEVEL;
+		restartCountdown = 60;
+		gLives--;
+	}
+	else
+	{
+		//Respawn as CPU if not lead player
+		routine = PLAYERROUTINE_CONTROL;
+		CPU_InitState();
+	}
 }
 
 void PLAYER::HurtCheckGround()
@@ -3522,10 +3597,10 @@ bool PLAYER::Hurt(OBJECT *hit)
 		//Check if we should die
 		if (*rings == 0)
 		{
-			//Ww have no more rings so die using the sound id we've gotten earlier
+			//We have no more rings so die using the sound id we've gotten earlier
 			return Kill(soundId);
 		}
-		else
+		else if (follow == nullptr)
 		{
 			//Lose rings
 			OBJECT *ringObject = new OBJECT(&ObjBouncingRing_Spawner);
@@ -3782,7 +3857,8 @@ void PLAYER::UpdateSuper()
 {
 	if (super)
 	{
-		if (gLevel->updateTime)
+		//Revert to regular if the stage is no longer updating or we're not the lead player
+		if (gLevel->updateTime && follow == nullptr)
 		{
 			//Wait about 60 frames (61) before depleting rings
 			if (--superTimer >= 0)
@@ -4282,9 +4358,461 @@ void PLAYER::Animate()
 }
 
 //CPU control code
-void PLAYER::CPUControl()
+void PLAYER::CPU_SetFlyingAnimation()
 {
+	//TODO: im lazy
+	anim = PLAYERANIMATION_ROLL;
+}
+
+void PLAYER::CPU_InitState()
+{
+	//Initialize cpu timers
+	cpuTimer = 0;
+	cpuFlyTimer = 0;
+	cpuRoutine = CPUROUTINE_INIT_FLY;
 	
+	//Initialize object and movement status
+	objectControl = {true, false, false, true}; //$81
+	status = {}; status.inAir = true;
+	
+	//Initialize position
+	x.pos = 0x7F00;
+	y.pos = 0;
+	
+	//Initialize other flags
+	jumpAbility = 0;
+}
+
+void PLAYER::CPU_RespawnOffscreen()
+{
+	if (!renderFlags.isOnscreen)
+	{
+		//If the object we were standing on god unloaded, start flying
+		if (status.shouldNotFall)
+		{
+			if (interact != cpuInteract)
+			{
+				CPU_InitState();
+				return;
+			}
+		}
+		
+		//If we've been off-screen for 300 frames, respawn
+		if (++cpuFlyTimer >= 300)
+		{
+			CPU_InitState();
+			return;
+		}
+	}
+	else
+	{
+		//Reset fly respawn timer
+		cpuFlyTimer = 0;
+	}
+	
+	//Remember interact as cpu interact
+	if (status.shouldNotFall)
+		cpuInteract = interact;
+}
+
+void PLAYER::CPU_Control()
+{
+	//If our is making inputs, let them move for 10 seconds
+	if (gController[controller].held.start || gController[controller].held.a || gController[controller].held.b || gController[controller].held.c || gController[controller].held.right || gController[controller].held.left || gController[controller].held.down || gController[controller].held.up)
+		cpuTimer = 60 * 10;
+	
+	switch (cpuRoutine)
+	{
+		case CPUROUTINE_INIT:
+		{
+			objectControl = {};
+			cpuRoutine = CPUROUTINE_FOLLOW;
+			cpuFlyTimer = 0;
+			break;
+		}
+		
+		case CPUROUTINE_INIT_FLY:
+		{
+			//Check if we should exit this routine (waiting to respawn)
+			if (!(controlHeld.a || controlHeld.b || controlHeld.c || controlHeld.start))
+			{
+				if (gLevel->frameCounter & 0x3F)
+					break;
+				if (follow->objectControl.disableObjectInteract)
+					break;
+				//if (follow->status.bit7) //???
+				//	break;
+			}
+			
+			//Go to flying routine and set target position or something
+			cpuRoutine = CPUROUTINE_FLYING;
+			cpuTargetX = (x.pos = follow->x.pos);
+			cpuTargetY = follow->y.pos;
+			
+			//Respawn above following player
+			if (!status.reverseGravity)
+				y.pos = cpuTargetY - 0xC0;
+			else
+				y.pos = cpuTargetY + 0xC0;
+			
+			//High priority
+			highPriority = true;
+			priority = 2;
+			
+			//Reset our state... like... a lot of it
+			xVel = 0;
+			yVel = 0;
+			inertia = 0;
+			flipType = 0;
+			jumpAbility = 0;
+			status = {}; status.inAir = true;
+			airRemaining = 30;
+			objectControl = {true, false, false, true}; //$81
+			flipsRemaining = 0;
+			flipSpeed = 0;
+			moveLock = 0;
+			invulnerabilityTime = 0;
+			invincibilityTime = 0;
+			speedShoesTime = 0;
+			item = {};
+			barrier = BARRIER_NULL;
+			scrollDelay = 0; //ok
+			lastFloorAngle1 = 0;
+			lastFloorAngle2 = 0;
+			forceRollOrSpindash = false;
+			spindashCounter = 0;
+			interact = nullptr;
+			break;
+		}
+			
+		case CPUROUTINE_FLYING:
+		{
+			//Handle how we should act off-screen
+			if (!renderFlags.isOnscreen)
+			{
+				if (++cpuFlyTimer >= 300)
+				{
+					//If we've been off-screen for 300 frames or so, respawn again
+					cpuFlyTimer = 0;
+					cpuRoutine = CPUROUTINE_INIT_FLY;
+					objectControl = {true, false, false, true}; //$81
+					status = {}; status.inAir = true;
+					xVel = 0;
+					yVel = 0;
+					abilityProperty = 0xF0;
+					CPU_SetFlyingAnimation();
+					break;
+				}
+			}
+			else
+			{
+				abilityProperty = 0xF0;
+				status.inAir = true;
+				CPU_SetFlyingAnimation();
+				abilityProperty = 0;
+			}
+			
+			//Get our target position
+			PLAYER_RECORD record = follow->record[(follow->recordPos - 0x10) % (unsigned)PLAYER_RECORD_LENGTH];
+			cpuTargetX = record.x;
+			cpuTargetY = record.y;
+			
+			//Follow target position (X-position)
+			int16_t xDiff = x.pos - cpuTargetX;
+			
+			if (xDiff != 0)
+			{
+				//Get how much we should move
+				int16_t xMove = mmin(mabs(xDiff) >> 4, 0xC) + abs(follow->xVel) + 1;
+				
+				if (xDiff >= 0)
+				{
+					//Move left
+					status.xFlip = true;
+					
+					if (xMove >= xDiff)
+					{
+						//Use negative xDiff (move left)
+						xMove = -xDiff;
+						xDiff = 0;
+					}
+					else
+					{
+						//Negate movement (move left)
+						xMove = -xMove;
+					}
+				}
+				else
+				{
+					//Move right
+					status.xFlip = false;
+					xDiff = -xDiff;
+					
+					if (xMove >= xDiff)
+					{
+						//Use negative xDiff (move right)
+						xMove = xDiff;
+						xDiff = 0;
+					}
+				}
+				
+				//Apply to position
+				x.pos += xMove;
+			}
+			
+			//Fly down to target position
+			int16_t yDiff = cpuTargetY - y.pos;
+			if (yDiff < 0)
+				y.pos--;
+			else if (yDiff > 0)
+				y.pos++;
+			
+			//If we're near the player, stop flying
+			if (cpuTargetY >= 0 && yDiff == 0 && xDiff == 0 && follow->routine < PLAYERROUTINE_DEATH)
+			{
+				//Stop flying
+				cpuRoutine = CPUROUTINE_FOLLOW;
+				objectControl = {};
+				anim = PLAYERANIMATION_WALK;
+				xVel = 0;
+				yVel = 0;
+				inertia = 0;
+				bool wasUnderwater = status.underwater;
+				status = {}; status.underwater = wasUnderwater;
+				status.inAir = true;
+				moveLock = 0;
+				highPriority = follow->highPriority;
+				topSolidLayer = follow->topSolidLayer;
+				lrbSolidLayer = follow->lrbSolidLayer;
+			}
+			else
+			{
+				//Keep us locked
+				objectControl = {true, false, false, true}; //$81
+			}
+			break;
+		}
+			
+		case CPUROUTINE_FOLLOW:
+		{
+			//If following player is dead, start flying
+			if (follow->routine >= PLAYERROUTINE_DEATH)
+			{
+				//Start flying
+				cpuRoutine = CPUROUTINE_FLYING;
+				forceRollOrSpindash = false;
+				spindashCounter = 0;
+				objectControl = {true, false, false, true}; //$81
+				status = {}; status.inAir = true;
+				anim = PLAYERANIMATION_ROLL; //PLAYERANIMATION_FLYING;
+			}
+			else
+			{
+				//Respawn if we've been off-screen for a while
+				CPU_RespawnOffscreen();
+				
+				if (cpuTimer == 0 && objectControl.disableObjectInteract == false && item.dontLoseRings == false)
+				{
+					//If we're stuck, prepare to spindash
+					if ((moveLock != 0 && inertia == 0) || follow->controlHeld.up)
+						cpuRoutine = CPUROUTINE_INIT_SPINDASH;
+					
+					//Follow target
+					PLAYER_RECORD record = follow->record[(follow->recordPos - 0x10) % (unsigned)PLAYER_RECORD_LENGTH];
+					int16_t tgtX = record.x;
+					int16_t tgtY = record.y;
+					
+					CONTROLMASK followHeld = record.controlHeld;
+					CONTROLMASK followPress = record.controlPress;
+					PLAYER_STATUS followStatus = record.status;
+					
+					//Stand to the left of target if they're not standing on an object and inertia is < $400
+					if (!follow->status.shouldNotFall && follow->inertia < 0x400)
+						tgtX -= 0x20;
+					
+					if (status.pushing == false || followStatus.pushing == true)
+					{
+						//Move towards our target position
+						tgtX -= x.pos;
+						
+						if (tgtX != 0)
+						{
+							if (tgtX < 0)
+							{
+								//Negate move x (absolute)
+								tgtX = -tgtX;
+								
+								//Forcibly move left if far enough away
+								if (tgtX >= 0x30)
+								{
+									followHeld.left = true; followHeld.right = false;
+									followPress.left = true; followPress.right = false;
+								}
+								
+								//Some sort of drag thing
+								if (inertia != 0 && status.xFlip == true && objectControl.disableOurMovement == false)
+									x.pos--;
+							}
+							else
+							{
+								//Forcibly move right if far enough away
+								if (tgtX >= 0x30)
+								{
+									followHeld.left = false; followHeld.right = true;
+									followPress.left = false; followPress.right = true;
+								}
+								
+								//Some sort of drag thing
+								if (inertia != 0 && status.xFlip == false && objectControl.disableOurMovement == false)
+									x.pos++;
+							}
+						}
+						else
+						{
+							//Match target's x flip
+							status.xFlip = followStatus.xFlip;
+						}
+						
+						//Hold ABC while jumping
+						if (cpuJumping == true)
+						{
+							//Hold ABC
+							followHeld.a = true;
+							followHeld.b = true;
+							followHeld.c = true;
+							
+							if (status.inAir == false)
+							{
+								//We've landed on the ground so clear jumping flag and fallthrough to push check code
+								cpuJumping = false;
+							}
+							else
+							{
+								//Copy current follow control state
+								controlHeld = followHeld;
+								controlPress = followPress;
+								break;
+							}
+						}
+						
+						//Prioritize copying inputs if far away
+						if ((gLevel->frameCounter & 0xFF) != 0 && tgtX >= 0x40)
+						{
+							//Copy current follow control state
+							controlHeld = followHeld;
+							controlPress = followPress;
+							break;
+						}
+						
+						//If we're below our target, jump
+						tgtY -= y.pos;
+						
+						if (tgtY < 0)
+						{
+							//If we're not far enough below the target, don't bother trying to jump
+							if (-tgtY < 0x20)
+							{
+								//Copy current follow control state
+								controlHeld = followHeld;
+								controlPress = followPress;
+								break;
+							}
+						}
+						else
+						{
+							//Copy current follow control state
+							controlHeld = followHeld;
+							controlPress = followPress;
+							break;
+						}
+					}
+					
+					//Check if we should jump every about $40 frames
+					if ((gLevel->frameCounter & 0x3F) == 0 && anim != PLAYERANIMATION_DUCK)
+					{
+						//Jump up
+						followHeld.a = true; followPress.a = true;
+						followHeld.b = true; followPress.b = true;
+						followHeld.c = true; followPress.c = true;
+						cpuJumping = true;
+					}
+					
+					//Copy current follow control state
+					controlHeld = followHeld;
+					controlPress = followPress;
+				}
+				else
+				{
+					//Decrement idle timer
+					if (cpuTimer)
+						cpuTimer--;
+				}
+			}
+			break;
+		}
+		
+		case CPUROUTINE_INIT_SPINDASH:
+		{
+			//Respawn if we've been off-screen for a while
+			CPU_RespawnOffscreen();
+			
+			if (cpuTimer == 0 && moveLock == 0)
+			{
+				if (forceRollOrSpindash == false)
+				{
+					//Wait until we've stopped and prepare to start spindashing
+					if (inertia != 0)
+						break;
+					
+					//Face towards following player
+					if (x.pos < follow->x.pos)
+						status.xFlip = false;
+					else
+						status.xFlip = true;
+					
+					//Hold down
+					controlHeld = {}; controlHeld.down = true;
+					controlPress = {}; controlPress.down = true;
+					
+					//Wait for us to finally be ducking, but give up after up to $80 frames
+					if ((gLevel->frameCounter & 0x7F) != 0)
+					{
+						if (anim != PLAYERANIMATION_DUCK)
+							break;
+						
+						controlHeld.a = true; controlPress.a = true;
+						controlHeld.b = true; controlPress.b = true;
+						controlHeld.c = true; controlPress.c = true;
+						break;
+					}
+				}
+				else
+				{
+					//Hold down
+					controlHeld = {}; controlHeld.down = true;
+					controlPress = {}; controlPress.down = true;
+					
+					//Release eventually (up to $80 frames)
+					if ((gLevel->frameCounter & 0x7F) != 0)
+					{
+						//Charge every about $20 frames
+						if ((gLevel->frameCounter & 0x1F) == 0)
+						{
+							controlHeld.a = true; controlPress.a = true;
+							controlHeld.b = true; controlPress.b = true;
+							controlHeld.c = true; controlPress.c = true;
+						}
+						break;
+					}
+				}
+				
+				//Stop spindashing and enter regular routine
+				controlHeld = {};
+				cpuRoutine = CPUROUTINE_FOLLOW;
+			}
+			break;
+		}
+	}
 }
 
 //Update
@@ -4481,7 +5009,7 @@ void PLAYER::Update()
 						}
 						
 						//Use our CPU to update our input
-						CPUControl();
+						CPU_Control();
 					}
 					
 					if (objectControl.disableOurMovement)

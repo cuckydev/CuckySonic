@@ -31,9 +31,8 @@ enum LEVEL_RENDERLAYER
 //Level formats
 enum LEVELFORMAT
 {
-	LEVELFORMAT_CHUNK128,			//Chunk data with specified width and height
-	LEVELFORMAT_CHUNK128_SONIC2,	//Chunk data that's always 128 x 16
-	LEVELFORMAT_TILE,				//16x16 tile data with specified width and height
+	LEVELFORMAT_CHUNK128,			//128x128 chunks
+	LEVELFORMAT_TILE16,				//16x16 tiles
 };
 
 enum OBJECTFORMAT
@@ -58,7 +57,6 @@ enum LEVELID
 {
 	LEVELID_GHZ1,
 	LEVELID_GHZ2,
-	LEVELID_GHZ3,
 	LEVELID_EHZ1,
 	LEVELID_EHZ2,
 	LEVELID_MAX,
@@ -191,7 +189,7 @@ class LEVEL
 		size_t collisionTiles = 0;
 		COLLISIONTILE *collisionTile = nullptr;
 		
-		//Boundaries
+		//Boundaries and dynamic events
 		uint16_t leftBoundary = 0;
 		uint16_t rightBoundary = 0;
 		uint16_t topBoundary = 0;
@@ -201,6 +199,8 @@ class LEVEL
 		uint16_t rightBoundaryTarget = 0;
 		uint16_t topBoundaryTarget = 0;
 		uint16_t bottomBoundaryTarget = 0;
+		
+		int dynamicEventRoutine = 0;
 		
 		//Players and objects
 		LINKEDLIST<PLAYER*> playerList;

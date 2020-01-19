@@ -33,10 +33,10 @@ enum PLAYER_ROUTINE
 enum PLAYERCPU_ROUTINE
 {
 	CPUROUTINE_INIT,
-	CPUROUTINE_SPAWNING,
+	CPUROUTINE_INIT_FLY,
 	CPUROUTINE_FLYING,
-	CPUROUTINE_NORMAL,
-	CPUROUTINE_PANIC,
+	CPUROUTINE_FOLLOW,
+	CPUROUTINE_INIT_SPINDASH,
 };
 
 //Other enumerations
@@ -195,6 +195,7 @@ class PLAYER
 			//Status
 			bool isInvincible = false;	//Do we have invincibility
 			bool hasSpeedShoes = false;	//Do we have speed shoes
+			bool dontLoseRings = false;	//If set, we won't lose rings, used by MGZ spinning tops
 			
 			//Barrier effects
 			bool barrierReflect = false;	//Reflects projectiles
@@ -320,12 +321,14 @@ class PLAYER
 		//CPU state
 		PLAYERCPU_ROUTINE cpuRoutine = CPUROUTINE_INIT;
 		int cpuOverride = 0;
-		unsigned int cpuTimer = 0;
+		unsigned int cpuTimer = 0, cpuFlyTimer = 0;
+		int16_t cpuTargetX = 0, cpuTargetY = 0;
+		OBJECT *cpuInteract = nullptr;
 		bool cpuJumping = false;
 		
 		//Input specification (controller and player to follow)
-		size_t controller;
-		PLAYER *follow;
+		size_t controller = 0;
+		PLAYER *follow = nullptr;
 		
 		//Current input state
 		CONTROLMASK controlHeld;
@@ -333,7 +336,7 @@ class PLAYER
 		bool controlLock = false;
 		
 	public:
-		PLAYER(std::string specPath, PLAYER *myFollow, size_t myController);
+		PLAYER(std::string specPath, int16_t xPos, int16_t yPos, PLAYER *myFollow, size_t myController);
 		~PLAYER();
 		
 		void SetSpeedFromDefinition(SPEEDDEFINITION definition);
@@ -408,7 +411,10 @@ class PLAYER
 		void FlipAngle();
 		void Animate();
 		
-		void CPUControl();
+		void CPU_SetFlyingAnimation();
+		void CPU_InitState();
+		void CPU_RespawnOffscreen();
+		void CPU_Control();
 		
 		void ControlRoutine();
 		void Update();

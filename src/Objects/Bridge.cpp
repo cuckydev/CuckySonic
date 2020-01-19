@@ -105,14 +105,17 @@ void ObjBridge(OBJECT *object)
 					if (object->playerContact[i].standing)
 					{
 						//If a secondary player, pull the bridge position slightly towards us
-						int16_t standingLog = ((player->x.pos - object->x.pos) + bridgeWidth) / 16;
+						unsigned int standingLog = ((player->x.pos - object->x.pos) + bridgeWidth) / 16;
 						
 						if (i != 0)
 						{
-							if (standingLog < scratch->depressPosition)
-								scratch->depressPosition--;
-							else if (standingLog > scratch->depressPosition)
-								scratch->depressPosition++;
+							if (standingLog < object->subtype)
+							{
+								if (standingLog < scratch->depressPosition)
+									scratch->depressPosition--;
+								else if (standingLog > scratch->depressPosition)
+									scratch->depressPosition++;
+							}
 						}
 					#ifdef FIX_DEPRESS_DELAY
 						else

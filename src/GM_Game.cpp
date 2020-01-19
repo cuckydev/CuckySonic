@@ -13,14 +13,14 @@ LEVEL *gLevel;
 int gGameLoadLevel = 0;
 int gGameLoadCharacter = 0;
 
+static const char *sonicAndTails[] =	{"data/Sonic/Sonic", "data/Sonic/Sonic", nullptr};
 static const char *sonicOnly[] =		{"data/Sonic/Sonic", nullptr};
-static const char *sonicAndTails[] =	{"data/Sonic/Sonic", "data/Tails/Tails", nullptr};
-static const char *tailsOnly[] =		{"data/Knuckles/Knuckles", nullptr};
-static const char *knucklesOnly[] =		{"data/Knuckles/Knuckles", nullptr};
+static const char *tailsOnly[] =		{"data/Sonic/Sonic", nullptr};
+static const char *knucklesOnly[] =		{"data/Sonic/Sonic", nullptr};
 
 static const char **characterSetList[] = {
-	sonicOnly,
 	sonicAndTails,
+	sonicOnly,
 	tailsOnly,
 	knucklesOnly,
 };

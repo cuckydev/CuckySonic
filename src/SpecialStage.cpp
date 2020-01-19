@@ -48,17 +48,6 @@ SPECIALSTAGE::SPECIALSTAGE(std::string name)
 		return;
 	}
 	
-	//Read layout header
-	width = fp.ReadBE16();
-	height = fp.ReadBE16();
-	
-	layout = new uint8_t[width * height];
-	if (layout == nullptr)
-	{
-		Error(fail = "Failed to allocate the internal stage layout");
-		return;
-	}
-	
 	//Read and update the stage's palette
 	uint8_t r1 = fp.ReadU8(); uint8_t g1 = fp.ReadU8(); uint8_t b1 = fp.ReadU8();
 	uint8_t r2 = fp.ReadU8(); uint8_t g2 = fp.ReadU8(); uint8_t b2 = fp.ReadU8();
@@ -67,8 +56,8 @@ SPECIALSTAGE::SPECIALSTAGE(std::string name)
 	RotatePalette();
 	
 	//Read the layout data
-	fp.Read(layout, width * height, 1);		//Actual sphere map on the stage
-	player.angle = (fp.ReadBE16()) >> 8;	//Original game sucks, read as a word into the byte's address (68000 is big-endian, so it only uses the high byte)
+	fp.Read(layout, SS_WIDTH * SS_HEIGHT, 1);	//Actual sphere map on the stage
+	player.angle = (fp.ReadBE16()) >> 8;		//Original game sucks, read as a word into the byte's address (68000 is big-endian, so it only uses the high byte)
 	player.xLong =   fp.ReadBE16();
 	player.yLong =   fp.ReadBE16();
 	ringsLeft = fp.ReadBE16();
@@ -76,6 +65,8 @@ SPECIALSTAGE::SPECIALSTAGE(std::string name)
 	//Initialize state
 	rate = 0x1000;
 	rateTimer = SPEEDUP_TIME;
+	
+	//Create player objects
 	
 	LOG(("Success!\n"));
 }
@@ -86,7 +77,6 @@ SPECIALSTAGE::~SPECIALSTAGE()
 	delete stageTexture;
 	delete sphereTexture;
 	delete backgroundTexture;
-	delete[] layout;
 }
 
 //Stage update code
@@ -104,12 +94,12 @@ void SPECIALSTAGE::SpeedupStage()
 void SPECIALSTAGE::MovePlayer()
 {
 	//Handle player movement
-	uint16_t movingPosition = (player.angle & 0x40) ? player.xLong : player.yLong;
+	uint16_t movingPositionE0 = ((player.angle & 0x40) ? player.xLong : player.yLong) & 0xE0;
 	
 	//Update turning if not touched a spring
 	if (player.jumping < 0x80)
 	{
-		if (player.turn != 0 && (movingPosition & 0xE0) == 0)
+		if (player.turn != 0 && movingPositionE0 == 0)
 		{
 			//Turn and check if we're finished (facing in a cardinal direction)
 			player.angle += player.turn;
@@ -123,13 +113,16 @@ void SPECIALSTAGE::MovePlayer()
 		}
 		
 		//Stop turn lock
-		if ((movingPosition & 0xE0) != 0)
+		if (movingPositionE0 != 0)
 			player.turnLock = false;
 	}
 	
 	//Handle movement conditions
 	if (player.clearRoutine == 0)
 	{
+		//Acceleration
+		int16_t nextVel = player.velocity;
+		
 		if (player.bumperLock == false)
 		{
 			//Start moving if up is pressed
@@ -140,7 +133,6 @@ void SPECIALSTAGE::MovePlayer()
 			}
 			
 			//Acceleration
-			int16_t nextVel = player.velocity;
 			if (player.started == true)
 			{
 				if (player.advancing == false || player.velocity < 0)
@@ -156,36 +148,29 @@ void SPECIALSTAGE::MovePlayer()
 						nextVel = rate;
 				}
 			}
-			
-			//Check if we should turn
-			if (player.turnLock == false)
-			{
-				if (gController[0].held.left)
-					player.turn =  4;
-				if (gController[0].held.right)
-					player.turn = -4;
-			}
-			
-			//Apply our new velocity
-			player.velocity = nextVel;
-			
-			if (player.bumperLock == true)
-			{
-				
-			}
-			else
-			{
-				//Move twice as fast if hit a spring
-				if (player.jumping == 0x81)
-					nextVel *= 2;
-				
-				//Apply our velocity onto our position
-				int32_t sin = GetSin(player.angle) * nextVel; sin = ((sin & 0xFFFF0000) >> 16) | ((sin & 0x0000FFFF) << 16);
-				int32_t cos = GetCos(player.angle) * nextVel; cos = ((cos & 0xFFFF0000) >> 16) | ((cos & 0x0000FFFF) << 16);
-				player.xLong -= sin;
-				player.yLong -= cos;
-			}
 		}
+			
+		//Check if we should turn
+		if (player.turnLock == false)
+		{
+			if (gController[0].held.left)
+				player.turn =  4;
+			if (gController[0].held.right)
+				player.turn = -4;
+		}
+		
+		//Apply our new velocity
+		player.velocity = nextVel;
+		
+		//Move twice as fast if hit a spring
+		if (player.jumping == 0x81)
+			nextVel *= 2;
+		
+		//Apply our velocity onto our position
+		int32_t sin = GetSin(player.angle) * nextVel; sin = ((sin & 0xFFFF0000) >> 16) | ((sin & 0x0000FFFF) << 16);
+		int32_t cos = GetCos(player.angle) * nextVel; cos = ((cos & 0xFFFF0000) >> 16) | ((cos & 0x0000FFFF) << 16);
+		player.xLong -= sin;
+		player.yLong -= cos;
 	}
 }
 
@@ -284,10 +269,4 @@ void SPECIALSTAGE::Draw()
 	
 	RECT stageRect = {0, ssStageMap[animFrame] * 240, stageTexture->width, 240};
 	gSoftwareBuffer->DrawTexture(stageTexture, stageTexture->loadedPalette, &stageRect, SPECIALSTAGE_RENDERLAYER_STAGE, xCenter - stageTexture->width / 2, yCenter - 240 / 2, false, false);
-	
-	for (int x = 0; x < 0x20; x++)
-	{
-		POINT point = {x, 0};
-		gSoftwareBuffer->DrawPoint(0, &point, &stageTexture->loadedPalette->colour[1 + x]);
-	}
 }

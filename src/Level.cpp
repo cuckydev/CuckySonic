@@ -149,29 +149,24 @@ std::string preloadMappings_EHZ[] = {
 LEVELTABLE gLevelTable[LEVELID_MAX] = {
 	//ZONEID_GHZ
 		/*LEVELID_GHZ1*/ {ZONEID_GHZ, "Green Hill Zone", "Act 1",
-							LEVELFORMAT_CHUNK128_SONIC2, OBJECTFORMAT_SONIC1, ARTFORMAT_BMP,
+							LEVELFORMAT_CHUNK128, OBJECTFORMAT_SONIC1, ARTFORMAT_BMP,
 							"data/Level/GHZ/ghz1", "data/Level/GHZ/ghz", "data/Level/sonic1", "data/Level/GHZ/ghz", "GHZ",
 							preloadTexture_GHZ, preloadMappings_GHZ, &GHZ_Background, &GHZ_PaletteCycle, objFuncSonic1,
-							0x0050, 0x03B0, 0x0000, 0x255F, 0x0000, 0x03E0},
+							0x0050, 0x03B0, 0x0000, 0x44CB, 0x0000, 0x03E0},
 		/*LEVELID_GHZ2*/ {ZONEID_GHZ, "Green Hill Zone", "Act 2",
-							LEVELFORMAT_CHUNK128_SONIC2, OBJECTFORMAT_SONIC1, ARTFORMAT_BMP,
+							LEVELFORMAT_CHUNK128, OBJECTFORMAT_SONIC1, ARTFORMAT_BMP,
 							"data/Level/GHZ/ghz2", "data/Level/GHZ/ghz", "data/Level/sonic1", "data/Level/GHZ/ghz", "GHZ",
 							preloadTexture_GHZ, preloadMappings_GHZ, &GHZ_Background, &GHZ_PaletteCycle, objFuncSonic1,
-							0x0050, 0x00FC, 0x0000, 0x214B, 0x0000, 0x03E0},
-		/*LEVELID_GHZ3*/ {ZONEID_GHZ, "Green Hill Zone", "Act 3",
-							LEVELFORMAT_CHUNK128_SONIC2, OBJECTFORMAT_SONIC1, ARTFORMAT_BMP,
-							"data/Level/GHZ/ghz3", "data/Level/GHZ/ghz", "data/Level/sonic1", "data/Level/GHZ/ghz", "GHZ",
-							preloadTexture_GHZ, preloadMappings_GHZ, &GHZ_Background, &GHZ_PaletteCycle, objFuncSonic1,
-							0x0050, 0x03B0, 0x0000, 0x2A00, 0x0000, 0x03E0},
+							0x0050, 0x03B0, 0x0000, 0x3A40, 0x0000, 0x03E0},
 	
 	//ZONEID_EHZ
 		/*LEVELID_EHZ1*/ {ZONEID_EHZ, "Emerald Hill Zone", "Act 1",
-							LEVELFORMAT_CHUNK128_SONIC2, OBJECTFORMAT_SONIC2, ARTFORMAT_BMP,
+							LEVELFORMAT_CHUNK128, OBJECTFORMAT_SONIC2, ARTFORMAT_BMP,
 							"data/Level/EHZ/ehz1", "data/Level/EHZ/ehz", "data/Level/sonic2", "data/Level/EHZ/ehz", "EHZ",
 							preloadTexture_EHZ, preloadMappings_EHZ, &EHZ_Background, &EHZ_PaletteCycle, objFuncSonic2,
 							0x0060, 0x028F, 0x0000, 0x2A40, 0x0000, 0x0400},
 		/*LEVELID_EHZ2*/ {ZONEID_EHZ, "Emerald Hill Zone", "Act 2",
-							LEVELFORMAT_CHUNK128_SONIC2, OBJECTFORMAT_SONIC2, ARTFORMAT_BMP,
+							LEVELFORMAT_CHUNK128, OBJECTFORMAT_SONIC2, ARTFORMAT_BMP,
 							"data/Level/EHZ/ehz2", "data/Level/EHZ/ehz", "data/Level/sonic2", "data/Level/EHZ/ehz", "EHZ",
 							preloadTexture_EHZ, preloadMappings_EHZ, &EHZ_Background, &EHZ_PaletteCycle, objFuncSonic2,
 							0x0060, 0x028F, 0x0000, 0x29E0, 0x0000, 0x0500},
@@ -185,7 +180,6 @@ bool LEVEL::LoadMappings(LEVELTABLE *tableEntry)
 	//Load chunk mappings
 	switch (tableEntry->format)
 	{
-		case LEVELFORMAT_CHUNK128_SONIC2:
 		case LEVELFORMAT_CHUNK128:
 		{
 			//Open our chunk mapping file
@@ -249,19 +243,10 @@ bool LEVEL::LoadLayout(LEVELTABLE *tableEntry)
 	//Read our layout file
 	switch (tableEntry->format)
 	{
-		case LEVELFORMAT_CHUNK128_SONIC2:
 		case LEVELFORMAT_CHUNK128:
 			//Get our level dimensions (upscaled to tiles)
-			if (tableEntry->format == LEVELFORMAT_CHUNK128)
-			{
-				layout.width = layoutFile.ReadBE16() * 8;
-				layout.height = layoutFile.ReadBE16() * 8;
-			}
-			else
-			{
-				layout.width = 0x80 * 8;
-				layout.height = 0x10 * 8;
-			}
+			layout.width = layoutFile.ReadBE16() * 8;
+			layout.height = layoutFile.ReadBE16() * 8;
 			
 			//Allocate our layout
 			layout.foreground = new TILE[layout.width * layout.height];
@@ -277,19 +262,14 @@ bool LEVEL::LoadLayout(LEVELTABLE *tableEntry)
 				//Read foreground line
 				for (size_t cx = 0; cx < layout.width; cx += 8)
 				{
-					//Read our chunk index
+					//Read our chunks as their 8x8 tiles
 					uint8_t chunk = layoutFile.ReadU8();
-					
-					//Get our tiles
-					for (int tv = 0; tv < 8 * 8; tv++)
+					for (size_t tv = 0; tv < 8 * 8; tv++)
 						layout.foreground[(cy + (tv / 8)) * layout.width + (cx + (tv % 8))] = chunkMapping[chunk].tile[tv];
 				}
-				
-				//Skip background line (not used)
-				layoutFile.Seek(layout.width / 8, SEEK_CUR);
 			}
 			break;
-		case LEVELFORMAT_TILE:
+		case LEVELFORMAT_TILE16:
 			//Get our level dimensions
 			layout.width = layoutFile.ReadBE32();
 			layout.height = layoutFile.ReadBE32();
@@ -688,7 +668,7 @@ LEVEL::LEVEL(int id, const char *players[])
 	for (int i = 0; *players != nullptr; i++, players++)
 	{
 		//Create our player
-		PLAYER *newPlayer = new PLAYER(*players, follow, i);
+		PLAYER *newPlayer = new PLAYER(*players, tableEntry->startX - (i * 0x20), tableEntry->startY, follow, i);
 		if (newPlayer->fail != nullptr)
 		{
 			fail = newPlayer->fail;
@@ -696,8 +676,6 @@ LEVEL::LEVEL(int id, const char *players[])
 			return;
 		}
 		
-		newPlayer->x.pos = tableEntry->startX - (i * 16);
-		newPlayer->y.pos = tableEntry->startY;
 		follow = newPlayer;
 		playerList.link_back(newPlayer);
 	}
@@ -798,7 +776,7 @@ void LEVEL::DynamicEvents()
 				PLAYER *player = playerList[i];
 				if (player->x.pos < 0 || player->x.pos >= (int16_t)(gLevel->layout.width * 16) || player->y.pos < 0 || player->y.pos >= (int16_t)(gLevel->layout.height * 16))
 					continue;
-				TILE *tile = &gLevel->layout.foreground[(player->y.pos / 16) * gLevel->layout.width + (player->x.pos / 16)];;
+				TILE *tile = &gLevel->layout.foreground[(size_t)(player->y.pos / 16) * gLevel->layout.width + (size_t)(player->x.pos / 16)];
 				
 				//If this is an S-tube chunk tile, roll
 				bool doRoll = false;
@@ -826,50 +804,75 @@ void LEVEL::DynamicEvents()
 	}
 	
 	//Level specific events
-	int16_t checkX = camera->xPos + (gRenderSpec.width - 320) / 2;
-	int16_t checkY = camera->yPos + (gRenderSpec.height - 224) / 2;
+	uint16_t checkX = camera->xPos + (gRenderSpec.width - 320) / 2;
+	uint16_t checkY = camera->yPos + (gRenderSpec.height - 224) / 2;
 	
 	switch (levelId)
 	{
 		case LEVELID_GHZ1: //Green Hill Zone Act 1
-			if (checkX < 0x1780)
-				bottomBoundaryTarget = 0x3E0;
+			if (checkX >= 0x2000 + 0x2380)
+				bottomBoundaryTarget = 0x300 + 0x200 + 0xE0;
+			else if (checkX >= 0x1500 + 0x2380)
+				bottomBoundaryTarget = 0x400 + 0x200 + 0xE0;
+			else if (checkX >= 0xED0 + 0x2380)
+				bottomBoundaryTarget = 0x200 + 0x200 + 0xE0;
+			else if (checkX >= 0x2380)
+				bottomBoundaryTarget = 0x300 + 0x200 + 0xE0;
+			else if (checkX >= 0x1780)
+				bottomBoundaryTarget = 0x400 + 0xE0;
 			else
-				bottomBoundaryTarget = 0x4E0;
+				bottomBoundaryTarget = 0x300 + 0xE0;
 			break;
-		case LEVELID_GHZ2:
-			if (checkX >= 0x2000)
-				bottomBoundaryTarget = 0x3E0;
-			else if (checkX >= 0x1500)
-				bottomBoundaryTarget = 0x4E0;
-			else if (checkX >= 0xED0)
-				bottomBoundaryTarget = 0x2E0;
-			else
-				bottomBoundaryTarget = 0x3E0;
-			break;
-		case LEVELID_GHZ3:
-			bottomBoundaryTarget = 0x3E0;
-			if (checkX < 0x380)
-				break;
-			bottomBoundaryTarget = 0x3F0;
-			if (checkX < 0x960)
-				break;
-			if (checkY >= 0x280)
+		case LEVELID_GHZ2: //Green Hill Zone Act 2
+			switch (dynamicEventRoutine)
 			{
-				bottomBoundaryTarget = 0x4E0;
-				if (checkX < 0x1380)
-				{
-					bottomBoundary = 0x5A0;
-					bottomBoundaryTarget = 0x5A0;
-				}
-				if (checkX < 0x1700)
+				case 0:
+					if (checkX >= 0x3700)
+					{
+						bottomBoundaryTarget = 0x5F8;
+					}
+					else if (checkX >= 0x2D80)
+					{
+						bottomBoundaryTarget = 0x580;
+					}
+					else if (checkX >= 0x2980)
+					{
+						bottomBoundaryTarget = 0x500;
+					}
+					else
+					{
+						bottomBoundaryTarget = 0x300 + 0xE0;
+						if (checkX < 0x380)
+							break;
+						bottomBoundaryTarget = 0x310 + 0xE0;
+						if (checkX < 0x960)
+							break;
+						if (checkY >= 0x280)
+						{
+							bottomBoundaryTarget = 0x400 + 0xE0;
+							if (checkX < 0x1380)
+							{
+								bottomBoundaryTarget = 0x4C0 + 0xE0;
+								bottomBoundary = 0x4C0 + 0xE0;
+							}
+							if (checkX < 0x1700)
+								break;
+						}
+						bottomBoundaryTarget = 0x300 + 0xE0;
+						dynamicEventRoutine = 1;
+					}
+					break;
+				case 1:
+					if (checkX < 0x960 || checkX >= 0x2980)
+						dynamicEventRoutine = 0;
 					break;
 			}
-			bottomBoundaryTarget = 0x3E0;
 			break;
 		default:
 			break;
 	}
+	
+	printf("%X\n", bottomBoundaryTarget);
 	
 	//Move up/down to the boundary
 	int16_t move = 2;
@@ -1222,18 +1225,17 @@ void LEVEL::Draw()
 	//Draw foreground
 	if (layout.foreground != nullptr && tileTexture != nullptr && camera != nullptr)
 	{
-		int cLeft = mmax(camera->xPos / 16, 0);
-		int cTop = mmax(camera->yPos / 16, 0);
-		int cRight = mmin(upperRound(camera->xPos + (int)gRenderSpec.width, 16) / 16, (int)gLevel->layout.width - 1);
-		int cBottom = mmin(upperRound(camera->yPos + (int)gRenderSpec.height, 16) / 16, (int)gLevel->layout.height - 1);
+		size_t cLeft = mmax(camera->xPos / 16, 0);
+		size_t cTop = mmax(camera->yPos / 16, 0);
+		size_t cRight = mmin(upperRound(camera->xPos + (size_t)gRenderSpec.width, 16) / 16, (size_t)gLevel->layout.width - 1);
+		size_t cBottom = mmin(upperRound(camera->yPos + (size_t)gRenderSpec.height, 16) / 16, (size_t)gLevel->layout.height - 1);
 		
-		for (int ty = cTop; ty < cBottom; ty++)
+		for (size_t ty = cTop; ty < cBottom; ty++)
 		{
-			for (int tx = cLeft; tx < cRight; tx++)
+			for (size_t tx = cLeft; tx < cRight; tx++)
 			{
 				//Get tile
 				TILE *tile = &layout.foreground[ty * layout.width + tx];
-				
 				if (tile->tile >= tiles || tile->tile >= tileTexture->height / 16)
 					continue;
 				

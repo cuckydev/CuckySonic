@@ -378,8 +378,13 @@ bool Backend_HandleEvents()
 				
 			case SDL_CONTROLLERDEVICEADDED: //Controller (not joystick) connected
 				for (size_t i = 0; i < CONTROLLERS; i++)
+				{
 					if (controller[i] == nullptr)
+					{
 						controller[i] = SDL_GameControllerOpen(event.cdevice.which);
+						break;
+					}
+				}
 				break;
 				
 			case SDL_CONTROLLERDEVICEREMOVED: //Controller (not joystick) disconnecting

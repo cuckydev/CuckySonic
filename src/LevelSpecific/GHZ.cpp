@@ -1,5 +1,6 @@
 #include "../Level.h"
 #include "../Game.h"
+#include "../MathUtil.h"
 
 void GHZ_PaletteCycle()
 {
@@ -31,7 +32,7 @@ void GHZ_Background(BACKGROUND *background, bool doScroll, int cameraX, int came
 	int16_t scrollBG1 = cameraX / 2;
 	int16_t scrollBG2 = cameraX * 3 / 8;
 	
-	int16_t backY = -(cameraY / -0x20 + 0x20);
+	int16_t backY = mmin(-(cameraY / -0x20 + 0x20), 0);
 	
 	//Scroll clouds
 	static uint32_t cloudScroll[3] = {0, 0, 0};

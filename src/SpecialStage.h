@@ -2,16 +2,22 @@
 #include <stdint.h>
 #include "Render.h"
 #include "CommonMacros.h"
-#include "Audio.h"
 
+//Enumerations
 enum SPECIALSTAGE_RENDERLAYER
 {
+	SPECIALSTAGE_RENDERLAYER_HUD,
 	SPECIALSTAGE_RENDERLAYER_PLAYERS,
 	SPECIALSTAGE_RENDERLAYER_SPHERES,
 	SPECIALSTAGE_RENDERLAYER_STAGE,
 	SPECIALSTAGE_RENDERLAYER_BACKGROUND,
 };
 
+//Constants
+#define SS_WIDTH	0x20
+#define SS_HEIGHT	0x20
+
+//Special stage class
 class SPECIALSTAGE
 {
 	public:
@@ -27,8 +33,7 @@ class SPECIALSTAGE
 		TEXTURE *backgroundTexture = nullptr;
 		
 		//Stage layout
-		size_t width = 0, height = 0;
-		uint8_t *layout = nullptr;
+		uint8_t layout[SS_WIDTH * SS_HEIGHT];
 		
 		//Player state
 		struct
@@ -55,6 +60,8 @@ class SPECIALSTAGE
 			uint8_t jumping = 0;
 			
 			uint8_t clearRoutine = 0;
+			
+			uint16_t interact = 0;
 		} player;
 		
 		//Stage state
