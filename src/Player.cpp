@@ -4476,7 +4476,7 @@ void PLAYER::CPU_Control()
 			speedShoesTime = 0;
 			item = {};
 			barrier = BARRIER_NULL;
-			scrollDelay = 0; //ok
+			scrollDelay = 0;
 			lastFloorAngle1 = 0;
 			lastFloorAngle2 = 0;
 			forceRollOrSpindash = false;
@@ -4614,7 +4614,7 @@ void PLAYER::CPU_Control()
 				if (cpuTimer == 0 && objectControl.disableObjectInteract == false && item.dontLoseRings == false)
 				{
 					//If we're stuck, prepare to spindash
-					if ((moveLock != 0 && inertia == 0) || follow->controlHeld.up)
+					if (moveLock != 0 && inertia == 0)
 						cpuRoutine = CPUROUTINE_INIT_SPINDASH;
 					
 					//Follow target

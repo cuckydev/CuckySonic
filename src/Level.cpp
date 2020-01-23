@@ -676,7 +676,8 @@ LEVEL::LEVEL(int id, const char *players[])
 			return;
 		}
 		
-		follow = newPlayer;
+		if (follow == nullptr)
+			follow = newPlayer;
 		playerList.link_back(newPlayer);
 	}
 	
@@ -831,7 +832,7 @@ void LEVEL::DynamicEvents()
 					{
 						bottomBoundaryTarget = 0x5F8;
 					}
-					else if (checkX >= 0x2D80)
+					else if (checkX >= 0x2E00)
 					{
 						bottomBoundaryTarget = 0x580;
 					}
@@ -871,8 +872,6 @@ void LEVEL::DynamicEvents()
 		default:
 			break;
 	}
-	
-	printf("%X\n", bottomBoundaryTarget);
 	
 	//Move up/down to the boundary
 	int16_t move = 2;
