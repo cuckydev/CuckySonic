@@ -27,6 +27,7 @@ class FS_FILE
 		//Destructor - Close file
 		~FS_FILE()
 		{
+			if (fp != nullptr)
 			//Close our opened file
 			fclose(fp);
 		}
