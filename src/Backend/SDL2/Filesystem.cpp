@@ -2,6 +2,8 @@
 #include "SDL_filesystem.h"
 #include "../../GameConstants.h"
 
+#include <iostream>
+
 bool Backend_GetPaths(std::string *basePath, std::string *prefPath)
 {
 	//Allow SDL to get our paths
@@ -18,5 +20,7 @@ bool Backend_GetPaths(std::string *basePath, std::string *prefPath)
 		*prefPath = std::string(gotPrefPath);
 	else if (prefPath != nullptr && basePath != nullptr)
 		*prefPath = *basePath;
+	
+	std::cout << *prefPath << std::endl;
 	return false;
 }

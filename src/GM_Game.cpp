@@ -19,7 +19,7 @@ static const char *tailsOnly[] =		{"data/Sonic/Sonic", nullptr};
 static const char *knucklesOnly[] =		{"data/Sonic/Sonic", nullptr};
 
 static const char **characterSetList[] = {
-	sonicAndTails,
+	sonicOnly,//sonicAndTails,
 	sonicOnly,
 	tailsOnly,
 	knucklesOnly,

@@ -203,7 +203,7 @@ class SOFTWAREBUFFER
 		bool RenderToScreen(const COLOUR *backgroundColour);
 		
 		//Blit function
-		template <typename T> inline void BlitQueue(const COLOUR *backgroundColour, T *buffer, const int pitch)
+		template <typename T> __attribute__((hot)) inline void BlitQueue(const COLOUR *backgroundColour, T *buffer, const int pitch)
 		{
 			//Clear to the given background colour
 			if (backgroundColour != nullptr)
